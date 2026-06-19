@@ -1,0 +1,9 @@
+# Internal production notes — never published
+.scripts/
+
+# Local-only Claude Code config (machine-specific permissions)
+.claude/settings.local.json
+
+# OS / editor cruft
+.DS_Store
+*.swp
