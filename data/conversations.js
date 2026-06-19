@@ -1206,22 +1206,23 @@ window.CONVERSATIONS = {
           server: "geotab",
           name: "Get",
           args: { database: "demo_fh4", typeName: "Device", propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
-          summary: "50 vehicles, 10 distinct VINs",
+          summary: "50 vehicles, 50 distinct VINs",
           result:
             '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "WMAR62ZZ5LT034475" },\n' +
-            '  { "name": "Demo - 08", "vehicleIdentificationNumber": "WDB9076571P106588" },\n' +
+            '  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588" },\n' +
+            '  { "name": "Demo - 08", "vehicleIdentificationNumber": "WDB9076571P106590" },\n' +
             '  { "name": "Demo - 21", "vehicleIdentificationNumber": "VF611A364JD011741" },\n' +
-            '  … (10 distinct VINs across 50 vehicles)\n]',
+            '  … (50 distinct VINs, but only 5 distinct WMI+VDS prefixes — same manufacturer/model codes repeat, serials don\'t)\n]',
         },
         {
           type: "claude",
-          text: "50 vehicles, but only 10 distinct VINs — so let me decode those 10 to see what's actually in this fleet.",
+          text: "Every vehicle has its own VIN, like a real fleet — but the first 11 characters (manufacturer + model code) repeat across groups, only the serial differs. So decoding one VIN per group tells me the model for all 50.",
         },
         {
           type: "tool",
           server: "geotab",
           name: "DecodeVins",
-          args: { database: "demo_fh4", vins: ["WMAR62ZZ5LT034475", "WDB9076571P106588", "WDF9634031C001659", "VF611A364JD011741", "WEB63372313280840"] },
+          args: { database: "demo_fh4", vins: ["WMAR62ZZ5LT034475", "WDB9076571P106590", "WDF9634031C001659", "VF611A364JD011741", "WEB63372313280840"] },
           summary: "MAN coach · Mercedes Sprinter · Actros · Renault T · Mercedes Intouro",
           result:
             '[\n  { "make": "MAN", "model": "Lion\'s Intercity C", "year": "2020" },\n' +
