@@ -330,6 +330,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚐 What's actually in this fleet?", say: "While we're at it — what kind of vehicles am I actually running? Decode the fleet.", next: "ep9-fleet" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -432,6 +433,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Stop guessing why. Ask."] },
       ],
       choices: [
+        { label: "🔧 Now check for faults too", say: "While that alert is live, show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -634,6 +636,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚐 Decode those two vehicles", say: "What kind of vehicles are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -705,6 +708,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔧 Now triage the faults", say: "Now show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
+        { label: "🚐 What's in the new Valencia group?", say: "What kind of vehicles ended up in the Valencia Region group?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -763,10 +767,50 @@ window.CONVERSATIONS = {
             "The draft's sitting in your Drafts folder whenever you want to review and send it.\n\n" +
             "*(Demo uses a test mailbox/calendar — never a real recipient.)*",
         },
+      ],
+      choices: [
+        { label: "📤 Send the draft now", say: "It looks right — send the draft now.", next: "ep5-send" },
+        { label: "🗓️ Just confirm the slot, hold the email", say: "Leave the email in Drafts for now — just confirm the calendar hold.", next: "ep5-hold" },
+      ],
+    },
+
+    "ep5-send": {
+      id: "ep5-send",
+      title: "Ep5 · Send the draft",
+      db: "demo_fh4",
+      events: [
         {
-          type: "endcard",
-          lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."],
+          type: "tool",
+          server: "gmail",
+          name: "send_message",
+          args: { draftId: "r-…" },
+          summary: "Sent to garage@test-mailbox.example",
+          write: true,
+          result: '{ "messageId": "r-…", "status": "sent" }',
         },
+        {
+          type: "claude",
+          text: "Sent. The garage now has the fault details and the vehicle's plate; your tentative 09:00 slot is already on the calendar waiting for their confirmation.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
+      ],
+      choices: [
+        { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep5-hold": {
+      id: "ep5-hold",
+      title: "Ep5 · Hold the email, keep the slot",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text: "Understood — the email stays in Drafts untouched, and the **tentative 09:00 slot stays on the calendar** so you don't lose the booking window while you decide. Nothing's been sent.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
         { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
@@ -816,6 +860,58 @@ window.CONVERSATIONS = {
             "- **Salesforce:** I found the open case (**00012345**, \"Delivery arrived after 16:00\") and logged that GPS timestamp directly as a comment on it.\n\n" +
             "Whoever picks up the case next sees the proof inline — no separate spreadsheet, no \"let me go check the tracker.\"\n\n" +
             "*(Demo uses a test Salesforce org — never a real customer record.)*",
+        },
+      ],
+      choices: [
+        { label: "✉️ Also close the case and notify the rep", say: "Go ahead and close the case, and let the account rep know it's resolved.", next: "ep13-close" },
+        { label: "📌 Just leave the proof logged, don't close it", say: "Leave it logged on the case for now — don't close it yet.", next: "ep13-leaveopen" },
+      ],
+    },
+
+    "ep13-close": {
+      id: "ep13-close",
+      title: "Ep13 · Close the case",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "update_case",
+          args: { caseNumber: "00012345", status: "Closed", reason: "Resolved — GPS log confirms on-time arrival" },
+          summary: "Case 00012345 closed",
+          write: true,
+          result: '{ "caseNumber": "00012345", "status": "Closed" }',
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "notify_owner",
+          args: { caseNumber: "00012345", message: "Closed — GPS proof attached, arrival was on time." },
+          summary: "Account rep notified",
+          write: true,
+          result: '{ "status": "notified" }',
+        },
+        {
+          type: "claude",
+          text: "Case **00012345** is closed with the GPS timestamp as the resolution reason, and the account rep has been notified so they can follow up with the customer directly.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
+      ],
+      choices: [
+        { label: "🚐 What kind of van is Demo - 12?", say: "What kind of vehicle is Demo - 12? Decode the fleet.", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep13-leaveopen": {
+      id: "ep13-leaveopen",
+      title: "Ep13 · Leave the case open",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text: "Done — the GPS proof stays logged as a comment on Case **00012345**, and the case itself stays **Open** for whoever's handling the customer conversation to close when they're ready.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
@@ -870,6 +966,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🧠 Show Ace's reasoning", say: "Show me how Ace got there.", next: "ep7-reasoning" },
+        { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -892,6 +989,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔧 Now ask Ace about faults", say: "Now ask Ace which vehicles have the most faults this week.", next: "ep8-maintenance" },
+        { label: "📋 Run the full weekly review", say: "Now give me the full weekly fleet review.", next: "ep1-answer" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -943,6 +1041,8 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🚐 What is Demo - 08, exactly?", say: "What kind of vehicle is Demo - 08? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
+        { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -996,6 +1096,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "📊 Show that as a chart", say: "Show me the fleet composition as a chart.", next: "ep9-fleet-chart" },
         { label: "🌍 Which of these hit the Valencia zone?", say: "Which of these vehicles drive through Valencia's low-emission zone?", next: "ep3-answer" },
+        { label: "🔋 Dig into the EV-conversion case", say: "Make the case for converting the Sprinters to EV — what would it take?", next: "ep9-ev" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1023,6 +1124,36 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🌍 Which of these hit the Valencia zone?", say: "Which of these vehicles drive through Valencia's low-emission zone?", next: "ep3-answer" },
+        { label: "🔋 Dig into the EV-conversion case", say: "Make the case for converting the Sprinters to EV — what would it take?", next: "ep9-ev" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-ev": {
+      id: "ep9-ev",
+      title: "Ep9 · EV-conversion case (Sprinters)",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Trip", search: { deviceSearch: { ids: ["Demo - 06", "Demo - 07", "Demo - 08", "Demo - 09", "Demo - 10"] }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Sprinters average ~62 mi/day, max single trip ~140 mi",
+          result: '{ "avgDailyMiles": 62, "maxSingleTrip_mi": 140, "longestGapBetweenTrips_h": 9 }',
+        },
+        {
+          type: "claude",
+          text:
+            "The five Sprinters average about **62 miles a day**, with the longest single trip around **140 miles** and a roughly **9-hour** gap overnight between routes — that's well inside what current mid-size EV vans can do on a charge, with the overnight gap doubling as charge time.\n\n" +
+            "Compare that to the coaches and Actros/Renault tractors: long-haul, heavier loads, tighter turnaround — none of that profile. The Sprinters are the one segment of this fleet where an EV swap is a realistic near-term move, not a someday one.\n\n" +
+            "*(Daily-mileage figures here are illustrative for the demo — directionally consistent with Sprinter usage, not a guaranteed live total.)*",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "It knows what you actually drive — not just how many."] },
+      ],
+      choices: [
+        { label: "🌍 Check them against the Valencia zone", say: "Do these same Sprinters drive through Valencia's low-emission zone?", next: "ep3-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1058,6 +1189,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
+        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What kind of vehicle is Demo - 01? Decode the fleet.", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -1173,6 +1305,60 @@ window.CONVERSATIONS = {
       choices: [
         { label: "📊 Show distances as a chart", say: "Show me each vehicle's distance from the job as a chart.", next: "ep-dispatch-chart" },
         { label: "🗺️ Show me on a map", say: "Show me where these vehicles are on a map.", next: "ep-dispatch-map" },
+        { label: "🚐 Dispatch Demo - 45", say: "Send Demo - 45 to the job.", next: "ep-dispatch-send-45" },
+        { label: "🚐 Dispatch Demo - 50 instead", say: "Actually, send Demo - 50 to the job.", next: "ep-dispatch-send-50" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-dispatch-send-45": {
+      id: "ep-dispatch-send-45",
+      title: "Ep-Dispatch · Dispatch Demo - 45",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Trip", entity: { device: "Demo - 45", note: "Dispatched to downtown job" } },
+          summary: "Job assigned to Demo - 45",
+          write: true,
+          result: '{ "result": "Tripb…dispatch-45" }',
+        },
+        {
+          type: "claude",
+          text: "Demo - 45 is dispatched — the closest free unit, about 1.0 mile out. Demo - 50 stays available as backup.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Dispatch off the live fix, not a cached map."] },
+      ],
+      choices: [
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-dispatch-send-50": {
+      id: "ep-dispatch-send-50",
+      title: "Ep-Dispatch · Dispatch Demo - 50",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Trip", entity: { device: "Demo - 50", note: "Dispatched to downtown job" } },
+          summary: "Job assigned to Demo - 50",
+          write: true,
+          result: '{ "result": "Tripb…dispatch-50" }',
+        },
+        {
+          type: "claude",
+          text: "Demo - 50 is dispatched — 1.1 miles out and free. Noted that Demo - 45 was the closer option if you need a faster ETA next time.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Dispatch off the live fix, not a cached map."] },
+      ],
+      choices: [
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1199,6 +1385,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚐 Dispatch Demo - 45", say: "Send Demo - 45 to the job.", next: "ep-dispatch-send-45" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1224,6 +1411,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚐 Dispatch Demo - 50", say: "Send Demo - 50 to the job.", next: "ep-dispatch-send-50" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1285,13 +1473,11 @@ window.CONVERSATIONS = {
             "Two fleets, two different failure modes: Vegas's risk is **behavioral**, Spain's is **mechanical and concentrated**. " +
             "Worth briefing the board on each separately — they need different fixes.",
         },
-        {
-          type: "endcard",
-          lines: ["Geotab MCP Connector", "One ask, two fleets, no spreadsheet stitched by hand."],
-        },
       ],
       choices: [
         { label: "📊 Break that down in charts", say: "Break that down in charts.", next: "ep-exec-chart" },
+        { label: "🚦 Drill into Vegas — the behavioral risk", say: "Drill into Vegas first — why is speeding up there?", next: "ep2-answer" },
+        { label: "🔧 Drill into Spain — the mechanical risk", say: "Drill into Spain first — what's going on with all those faults?", next: "ep8-maintenance" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1326,6 +1512,8 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚦 Drill into Vegas speeding", say: "Drill into Vegas — why is speeding up there?", next: "ep2-answer" },
+        { label: "🔧 Drill into Spain faults", say: "Drill into Spain — what's going on with all those faults?", next: "ep8-maintenance" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1375,6 +1563,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🔔 Set the speed alert anyway", say: "Set up that posted-speed alert across the fleet regardless.", next: "ep2-action" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
