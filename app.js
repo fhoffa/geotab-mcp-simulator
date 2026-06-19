@@ -398,12 +398,12 @@
     if (history.replaceState) history.replaceState(null, "", "#" + id);
 
     var toolContainer = null;
-    if (node.db) toolContainer = addDbBadge(node.db);
 
     for (var k = 0; k < (node.events || []).length; k++) {
       if (myToken !== playToken) return; // superseded
       var ev = node.events[k];
       if (ev.type === "tool") {
+        if (ev.server === "geotab" && !toolContainer) toolContainer = addDbBadge(node.db);
         var toolTarget = ev.server === "geotab" ? toolContainer : null;
         var pending = showToolPending(ev, toolTarget);
         await wait(toolDelay(ev));
@@ -411,6 +411,7 @@
         if (myToken !== playToken) return;
         addToolCard(ev, toolTarget);
       } else if (ev.type === "claude") {
+        toolContainer = null; // next run of tool calls gets its own badge, in order
         var typer = showTyping();
         await wait(thinkDelay(ev.text));
         typer.remove();
@@ -418,22 +419,27 @@
         var prose = addBubbleShell("claude");
         if (!(await streamProse(prose, ev.text, myToken))) return;
       } else if (ev.type === "system") {
+        toolContainer = null;
         await wait(jitter(BASE.system));
         if (myToken !== playToken) return;
         addSystem(ev.text);
       } else if (ev.type === "chart") {
+        toolContainer = null;
         await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addChart(ev);
       } else if (ev.type === "map") {
+        toolContainer = null;
         await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addMap(ev);
       } else if (ev.type === "endcard") {
+        toolContainer = null;
         await wait(jitter(BASE.gap));
         if (myToken !== playToken) return;
         addEndcard(ev.lines || []);
       } else if (ev.type === "media") {
+        toolContainer = null;
         await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addMedia(ev);
