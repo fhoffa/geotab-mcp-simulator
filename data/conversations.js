@@ -162,7 +162,7 @@ window.CONVERSATIONS = {
         {
           label: "🚐 What's actually in my fleet?",
           say:
-            "Decode my Spain fleet from the VINs — what makes, models and vehicle types am I actually running, " +
+            "What makes and models am I actually running on the Spain fleet, " +
             "and which are realistic EV-conversion candidates?",
           next: "ep9-fleet",
         },
@@ -203,6 +203,10 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
+          type: "claude",
+          text: "Let me pull this together — starting with how many vehicles are actually reporting.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "GetCountOf",
@@ -211,12 +215,20 @@ window.CONVERSATIONS = {
           result: '{ "result": 50 }',
         },
         {
+          type: "claude",
+          text: "**50 vehicles**, all live. Now the headline question: any active faults this week?",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "GetCountOf",
           args: { database: "demo_fh_vegas4", typeName: "FaultData", search: { fromDate: "…7 days ago", toDate: "now" } },
           summary: "0 active faults",
           result: '{ "result": 0 }',
+        },
+        {
+          type: "claude",
+          text: "**0 active faults.** So if there's a story this week, it's behavior, not breakdowns — checking driving exceptions.",
         },
         {
           type: "tool",
@@ -230,6 +242,12 @@ window.CONVERSATIONS = {
             '  { "rule": "RulePostedSpeedingId", "device": "b2", "activeFrom": "…" },\n' +
             '  …\n]\n' +
             '// the whole-fleet aggregate (via Ace) shows ~99–100 events across many vehicles',
+        },
+        {
+          type: "claude",
+          text:
+            "All exceptions this week are **posted-speed speeding**, and it's spread across many vehicles — not one bad actor. " +
+            "Last thing before I write this up: HOS, just to spot-check the rulesets in play.",
         },
         {
           type: "tool",
@@ -330,7 +348,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 What's actually in this fleet?", say: "While we're at it — what kind of vehicles am I actually running? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What's actually in this fleet?", say: "While we're at it — what make and model are these vehicles, actually?", next: "ep9-fleet" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -343,6 +361,10 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
+          type: "claude",
+          text: "Let me pull the raw exception events first and see who's leading.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Get",
@@ -352,6 +374,13 @@ window.CONVERSATIONS = {
             '// only the newest 200 of ~5,645 events (page cap)\n' +
             '{ "first-page leaders": ["Demo - 01", "Demo - 02"] }\n' +
             '// ⚠ chronological artifact — NOT a whole-fleet ranking',
+        },
+        {
+          type: "claude",
+          text:
+            "On the raw pull, **Demo - 01** and **Demo - 02** are way out front. But that's only the *newest 200* of " +
+            "**~5,645** events this week — ~3.5% of the data. Before I blame a van, let me have **Geotab Ace** aggregate " +
+            "the whole week across the whole fleet.",
         },
         {
           type: "tool",
@@ -406,6 +435,10 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
+          type: "claude",
+          text: "On it — creating a fleet-wide posted-speed rule first.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Add",
@@ -413,6 +446,10 @@ window.CONVERSATIONS = {
           summary: "Rule created",
           write: true,
           result: '{ "result": "RuleaXX…posted-speed-fleet" }',
+        },
+        {
+          type: "claude",
+          text: "Rule's live. Now routing the alert to your fleet manager.",
         },
         {
           type: "tool",
@@ -446,6 +483,10 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
+          type: "claude",
+          text: "Let me check today's news rather than rely on what I already know about Valencia's low-emission zone.",
+        },
+        {
           type: "tool",
           server: "web",
           name: "web_search",
@@ -455,6 +496,12 @@ window.CONVERSATIONS = {
             "valencia.es · autopista.es · valenciabonita.es · race.es\n" +
             '"~27.8 km²; 278 ANPR cameras active; €200 statutory fine; ZBE ordinance rejected 22 Dec 2025 — ' +
             'cameras monitoring, not fining; restrictions phased 2026 → 2028; cleaner labels favoured"',
+        },
+        {
+          type: "claude",
+          text:
+            "The zone is genuinely in flux — 278 cameras already on, a €200 statutory fine, but the ordinance was " +
+            "rejected in December so it's monitoring, not fining, for now. Let me check whether any of your vehicles are actually in that area.",
         },
         {
           type: "tool",
@@ -489,7 +536,7 @@ window.CONVERSATIONS = {
             "Create a zone in Geotab matching Valencia's ZBE and add an alert for when our vehicles enter it.",
           next: "ep3-prefs",
         },
-        { label: "🚐 What are the affected vehicles?", say: "What kind of vehicles are Demo - 23 and Demo - 31? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What are the affected vehicles?", say: "What make and model are Demo - 23 and Demo - 31?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -527,6 +574,10 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
+          type: "claude",
+          text: "Starting with the zone itself — drawing the ZBE polygon in Geotab.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Add",
@@ -536,6 +587,10 @@ window.CONVERSATIONS = {
           result: '{ "result": "Zoneb…zbe-valencia" }',
         },
         {
+          type: "claude",
+          text: "Zone's in. Now the entry rule, since that's what you asked for.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Add",
@@ -543,6 +598,10 @@ window.CONVERSATIONS = {
           summary: "Entry rule live",
           write: true,
           result: '{ "result": "Ruleb…zbe-entry" }',
+        },
+        {
+          type: "claude",
+          text: "And routing the alert to your fleet manager.",
         },
         {
           type: "tool",
@@ -575,6 +634,10 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
+          type: "claude",
+          text: "Starting with the zone itself — drawing the ZBE polygon in Geotab.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Add",
@@ -584,6 +647,10 @@ window.CONVERSATIONS = {
           result: '{ "result": "Zoneb…zbe-valencia" }',
         },
         {
+          type: "claude",
+          text: "Zone's in. Now the rule — you wanted both entry and exit covered.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Add",
@@ -591,6 +658,10 @@ window.CONVERSATIONS = {
           summary: "Entry + exit rule live",
           write: true,
           result: '{ "result": "Ruleb…zbe-entry-exit" }',
+        },
+        {
+          type: "claude",
+          text: "And routing the alert to the whole Valencia ops group, not just one manager.",
         },
         {
           type: "tool",
@@ -624,10 +695,19 @@ window.CONVERSATIONS = {
         {
           type: "map",
           title: "ZBE València · zone + affected vehicles",
+          zone: {
+            label: "ZBE València",
+            labelX: 50,
+            labelY: 78,
+            points: [
+              [38, 22], [52, 18], [66, 26], [72, 38], [70, 52],
+              [74, 62], [64, 72], [50, 70], [40, 60], [30, 50],
+              [28, 36], [34, 28],
+            ],
+          },
           pins: [
-            { label: "ZBE València (zone)", x: 50, y: 50, status: "target" },
             { label: "Demo - 23", x: 44, y: 40, status: "busy" },
-            { label: "Demo - 31", x: 60, y: 62, status: "busy" },
+            { label: "Demo - 31", x: 60, y: 52, status: "busy" },
           ],
         },
         {
@@ -636,7 +716,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 Decode those two vehicles", say: "What kind of vehicles are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet" },
+        { label: "🚐 What make and model are these?", say: "What make and model are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -649,6 +729,10 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
+          type: "claude",
+          text: "Five chores — let's knock them out one at a time. First, the depot geofence.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Add",
@@ -656,6 +740,10 @@ window.CONVERSATIONS = {
           summary: "Depot geofence created (300 m)",
           write: true,
           result: '{ "result": "Zoneb…depot" }',
+        },
+        {
+          type: "claude",
+          text: "300 m ring's in. Next, an idling alert.",
         },
         {
           type: "tool",
@@ -667,6 +755,10 @@ window.CONVERSATIONS = {
           result: '{ "result": "Ruleb…idling" }',
         },
         {
+          type: "claude",
+          text: "Rule's live — flags anything idling past 15 minutes. Now clearing Demo - 06's acknowledged faults after its service.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "DismissFaults",
@@ -676,6 +768,10 @@ window.CONVERSATIONS = {
           result: '{ "dismissed": ["b1397", "b1398", "b1399"] }',
         },
         {
+          type: "claude",
+          text: "Cleared. Setting up the Valencia region group next.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Add",
@@ -683,6 +779,10 @@ window.CONVERSATIONS = {
           summary: "Group created (add-only via MCP)",
           write: true,
           result: '{ "result": "Groupb…valencia" }',
+        },
+        {
+          type: "claude",
+          text: "Group's created. Last one — routing those idling alerts to a manager.",
         },
         {
           type: "tool",
@@ -722,6 +822,10 @@ window.CONVERSATIONS = {
       events: [
         { type: "system", text: "This flow spans three connectors: **Geotab + Gmail + Google Calendar**." },
         {
+          type: "claude",
+          text: "Pulling Demo - 06's fault first to see what we're dealing with.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Get",
@@ -732,12 +836,20 @@ window.CONVERSATIONS = {
             '  { "device": "b6", "diagnostic": "GpsAntennaShortCircuitId", "dateTime": "2026-06-18T07:10Z" }\n]',
         },
         {
+          type: "claude",
+          text: "Device unplugged / GPS antenna fault — it'll stop reporting position until checked. Let me get the vehicle's make/model and plate so the garage knows what's coming in.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Get",
           args: { database: "demo_fh4", typeName: "Device", search: { id: "b6" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber", "licensePlate"] } },
           summary: "Demo - 06 — Mercedes-Benz Sprinter, plate VAL-4471-B",
           result: '[\n  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588", "licensePlate": "VAL-4471-B" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Mercedes-Benz Sprinter, plate VAL-4471-B. Drafting the email to the garage now — I'll leave it in Drafts for you to review.",
         },
         {
           type: "tool",
@@ -747,6 +859,10 @@ window.CONVERSATIONS = {
           summary: "Draft saved (NOT sent)",
           write: true,
           result: '{ "draftId": "r-…", "status": "in Drafts, awaiting your review" }',
+        },
+        {
+          type: "claude",
+          text: "Draft's saved, not sent. And while I'm at it, holding a tentative service slot so you don't lose the booking window.",
         },
         {
           type: "tool",
@@ -795,7 +911,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -813,7 +929,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -827,6 +943,10 @@ window.CONVERSATIONS = {
       events: [
         { type: "system", text: "This flow spans two connectors: **Geotab + Salesforce**." },
         {
+          type: "claude",
+          text: "Let's check the GPS log first — where was Demo - 12 actually yesterday?",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Get",
@@ -836,12 +956,20 @@ window.CONVERSATIONS = {
             '[\n  { "device": "Demo - 12", "latitude": 41.123, "longitude": 2.456, "dateTime": "2026-06-18T14:32Z", "note": "matches customer site geofence" }\n]',
         },
         {
+          type: "claude",
+          text: "Inside the customer geofence at 14:32 — well before 16:00. Now let me find the case this relates to.",
+        },
+        {
           type: "tool",
           server: "salesforce",
           name: "get_case",
           args: { caseNumber: "00012345" },
           summary: "Case 00012345 — \"Delivery arrived after 16:00\" — Open",
           result: '{ "caseNumber": "00012345", "subject": "Delivery arrived after 16:00", "status": "Open", "account": "Test Account Ltd." }',
+        },
+        {
+          type: "claude",
+          text: "Found it — that's the case claiming a late delivery. Logging the GPS timestamp on it as proof.",
         },
         {
           type: "tool",
@@ -874,6 +1002,10 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
+          type: "claude",
+          text: "Closing the case with the GPS log as the resolution reason.",
+        },
+        {
           type: "tool",
           server: "salesforce",
           name: "update_case",
@@ -881,6 +1013,10 @@ window.CONVERSATIONS = {
           summary: "Case 00012345 closed",
           write: true,
           result: '{ "caseNumber": "00012345", "status": "Closed" }',
+        },
+        {
+          type: "claude",
+          text: "Closed. Now letting the account rep know so they can follow up with the customer.",
         },
         {
           type: "tool",
@@ -898,7 +1034,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 12?", say: "What kind of vehicle is Demo - 12? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -916,7 +1052,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 12?", say: "What kind of vehicle is Demo - 12? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1002,12 +1138,20 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
+          type: "claude",
+          text: "Let me count this week's fault records first.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "GetCountOf",
           args: { database: "demo_fh4", typeName: "FaultData", search: { fromDate: "…7 days ago", toDate: "now" } },
           summary: "599 fault records this week",
           result: '{ "result": 599 }',
+        },
+        {
+          type: "claude",
+          text: "**599** sounds like a fire to fight everywhere. Before drawing that conclusion, let me have Ace break it down per vehicle.",
         },
         {
           type: "tool",
@@ -1040,7 +1184,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 What is Demo - 08, exactly?", say: "What kind of vehicle is Demo - 08? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What is Demo - 08, exactly?", say: "What make and model is Demo - 08?", next: "ep9-fleet" },
         { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
         { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
@@ -1054,6 +1198,10 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
+          type: "claude",
+          text: "Let me pull the VINs across the fleet first.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Get",
@@ -1064,6 +1212,10 @@ window.CONVERSATIONS = {
             '  { "name": "Demo - 08", "vehicleIdentificationNumber": "WDB9076571P106588" },\n' +
             '  { "name": "Demo - 21", "vehicleIdentificationNumber": "VF611A364JD011741" },\n' +
             '  … (10 distinct VINs across 50 vehicles)\n]',
+        },
+        {
+          type: "claude",
+          text: "50 vehicles, only 10 distinct VINs — now decoding those to see what's actually in this fleet.",
         },
         {
           type: "tool",
@@ -1189,7 +1341,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
-        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What kind of vehicle is Demo - 01? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What make and model is Demo - 01?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -1427,12 +1579,20 @@ window.CONVERSATIONS = {
           text: "Querying **both** demo databases — demo_fh_vegas4 (Las Vegas) and demo_fh4 (Spain)…",
         },
         {
+          type: "claude",
+          text: "Starting with utilization right now — Vegas first.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "Get",
           args: { database: "demo_fh_vegas4", typeName: "DeviceStatusInfo", propertySelector: { fields: ["isDriving"] }, resultsLimit: 50 },
           summary: "21 / 50 driving right now (42%)",
           result: "// 50 records → 21 isDriving:true",
+        },
+        {
+          type: "claude",
+          text: "Vegas is at 42%. Now Spain.",
         },
         {
           type: "tool",
@@ -1443,12 +1603,20 @@ window.CONVERSATIONS = {
           result: "// 50 records → 10 isDriving:true",
         },
         {
+          type: "claude",
+          text: "Spain's at 20% — about half Vegas's utilization. Next, safety: exception events this week, Vegas first.",
+        },
+        {
           type: "tool",
           server: "geotab",
           name: "GetCountOf",
           args: { database: "demo_fh_vegas4", typeName: "ExceptionEvent", search: { fromDate: "…7 days ago", toDate: "now" } },
           summary: "4,933 exception events this week",
           result: '{ "result": 4933 }',
+        },
+        {
+          type: "claude",
+          text: "4,933 for Vegas. And Spain's count for the same week.",
         },
         {
           type: "tool",
