@@ -536,7 +536,7 @@ window.CONVERSATIONS = {
             "Create a zone in Geotab matching Valencia's ZBE and add an alert for when our vehicles enter it.",
           next: "ep3-prefs",
         },
-        { label: "🚐 What are the affected vehicles?", say: "What make and model are Demo - 23 and Demo - 31?", next: "ep9-fleet" },
+        { label: "🚐 What are the affected vehicles?", say: "What make and model are Demo - 23 and Demo - 31?", next: "ep9-fleet-23-31" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -717,7 +717,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 What make and model are these?", say: "What make and model are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet" },
+        { label: "🚐 What make and model are these?", say: "What make and model are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet-23-31" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -806,7 +806,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔧 Now triage the faults", say: "Now show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
-        { label: "🚐 What's in the new Valencia group?", say: "What kind of vehicles ended up in the Valencia Region group?", next: "ep9-fleet" },
+        { label: "🚐 What's in the new Valencia group?", say: "What kind of vehicles ended up in the Valencia Region group?", next: "ep9-fleet-23-31" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -910,7 +910,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet-06" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -928,7 +928,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet-06" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1033,7 +1033,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet" },
+        { label: "🚚 What kind of vehicle is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet-12" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1051,7 +1051,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet" },
+        { label: "🚚 What kind of vehicle is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet-12" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1184,10 +1184,181 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 What is Demo - 08, exactly?", say: "What make and model is Demo - 08?", next: "ep9-fleet" },
+        { label: "🚐 What is Demo - 08, exactly?", say: "What make and model is Demo - 08?", next: "ep9-fleet-08" },
         { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
         { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ------------------------------------------- ep9 · single-vehicle lookups */
+    "ep9-fleet-08": {
+      id: "ep9-fleet-08",
+      title: "Ep9 · What is Demo - 08",
+      db: "demo_fh4",
+      events: [
+        { type: "claude", text: "Let me check Demo - 08's VIN." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { name: "Demo - 08" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "Demo - 08 — VIN WDB9076571P106590",
+          result: '[\n  { "name": "Demo - 08", "vehicleIdentificationNumber": "WDB9076571P106590" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["WDB9076571P106590"] },
+          summary: "Mercedes-Benz Sprinter 907",
+          result: '[\n  { "make": "Mercedes-Benz", "model": "Sprinter 907" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Demo - 08 is a Mercedes-Benz Sprinter 907 — one of your 5 light vans, Demo - 06 through 10.",
+        },
+      ],
+      choices: [
+        { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
+        { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
+        { label: "📊 What's the rest of the fleet running?", say: "What about the rest of the fleet — what's the full mix?", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep9-fleet-06": {
+      id: "ep9-fleet-06",
+      title: "Ep9 · What is Demo - 06",
+      db: "demo_fh4",
+      events: [
+        { type: "claude", text: "Let me check Demo - 06's VIN." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { name: "Demo - 06" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "Demo - 06 — VIN WDB9076571P106588",
+          result: '[\n  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["WDB9076571P106588"] },
+          summary: "Mercedes-Benz Sprinter 907",
+          result: '[\n  { "make": "Mercedes-Benz", "model": "Sprinter 907" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Demo - 06 is a Mercedes-Benz Sprinter 907 — one of your 5 light vans.",
+        },
+      ],
+      choices: [
+        { label: "📊 What's the rest of the fleet running?", say: "What about the rest of the fleet — what's the full mix?", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-12": {
+      id: "ep9-fleet-12",
+      title: "Ep9 · What is Demo - 12",
+      db: "demo_fh4",
+      events: [
+        { type: "claude", text: "Let me check Demo - 12's VIN." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { name: "Demo - 12" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "Demo - 12 — VIN WDF9634031C001659",
+          result: '[\n  { "name": "Demo - 12", "vehicleIdentificationNumber": "WDF9634031C001659" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["WDF9634031C001659"] },
+          summary: "Mercedes-Benz New Actros",
+          result: '[\n  { "make": "Mercedes-Benz", "model": "New Actros" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Demo - 12 is a Mercedes-Benz New Actros — one of your 10 heavy goods units, which tracks with it running customer deliveries.",
+        },
+      ],
+      choices: [
+        { label: "📊 What's the rest of the fleet running?", say: "What about the rest of the fleet — what's the full mix?", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-23-31": {
+      id: "ep9-fleet-23-31",
+      title: "Ep9 · What are Demo - 23 & Demo - 31",
+      db: "demo_fh4",
+      events: [
+        { type: "claude", text: "Let me check both VINs." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { ids: ["Demo - 23", "Demo - 31"] }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "2 VINs",
+          result:
+            '[\n  { "name": "Demo - 23", "vehicleIdentificationNumber": "VF611A364JD011743" },\n' +
+            '  { "name": "Demo - 31", "vehicleIdentificationNumber": "WMAR62ZZ5LT034495" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["VF611A364JD011743", "WMAR62ZZ5LT034495"] },
+          summary: "Renault T · MAN Lion's Intercity C",
+          result:
+            '[\n  { "make": "Renault", "model": "T", "year": "2018", "engine": "Euro 6", "body": "Tractor" },\n' +
+            '  { "make": "MAN", "model": "Lion\'s Intercity C", "year": "2020" }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "Different vehicle types, same zone: Demo - 23 is a Renault T tractor (Euro 6) and Demo - 31 is a MAN " +
+            "Lion's Intercity coach — one hauling freight, one running a passenger route, both inside the ZBE right now.",
+        },
+      ],
+      choices: [
+        { label: "📊 What's the rest of the fleet running?", say: "What about the rest of the fleet — what's the full mix?", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-01-vegas": {
+      id: "ep9-fleet-01-vegas",
+      title: "Ep9 · What is Demo - 01 (Vegas)",
+      db: "demo_fh_vegas4",
+      events: [
+        { type: "claude", text: "Let me check Demo - 01's VIN." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Device", search: { name: "Demo - 01" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "Demo - 01 — placeholder VIN, can't be decoded",
+          result: '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "00000000000000000" }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "That's not a real VIN — it's the same placeholder value every vehicle in the Vegas fleet uses, so there's " +
+            "nothing to decode here. Unlike Spain, this fleet's VIN data is a gap, not a fact — I can't tell you make or model off this database.",
+        },
+      ],
+      choices: [
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
       ],
     },
 
@@ -1352,7 +1523,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
-        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What make and model is Demo - 01?", next: "ep9-fleet" },
+        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What make and model is Demo - 01?", next: "ep9-fleet-01-vegas" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
