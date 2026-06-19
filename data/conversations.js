@@ -586,9 +586,17 @@ window.CONVERSATIONS = {
         },
         {
           type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { id: "b6" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber", "licensePlate"] } },
+          summary: "Demo - 06 — Mercedes-Benz Sprinter, plate VAL-4471-B",
+          result: '[\n  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588", "licensePlate": "VAL-4471-B" }\n]',
+        },
+        {
+          type: "tool",
           server: "gmail",
           name: "create_draft",
-          args: { to: "garage@test-mailbox.example", subject: "Demo - 06 — fault check please" },
+          args: { to: "garage@test-mailbox.example", subject: "Demo - 06 (Mercedes-Benz Sprinter, plate VAL-4471-B) — fault check please" },
           summary: "Draft saved (NOT sent)",
           write: true,
           result: '{ "draftId": "r-…", "status": "in Drafts, awaiting your review" }',
@@ -606,8 +614,8 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "Here's the chain, across three tools:\n" +
-            "- **Geotab:** Demo - 06 logged a fault on 18 Jun — *device unplugged / GPS antenna* (it'll stop reporting position until checked).\n" +
-            "- **Gmail:** I drafted an email to the garage with the vehicle and fault details — **left in Drafts for you to review and send**, not sent automatically.\n" +
+            "- **Geotab:** Demo - 06 logged a fault on 18 Jun — *device unplugged / GPS antenna* (it'll stop reporting position until checked). It's a **Mercedes-Benz Sprinter, plate VAL-4471-B**.\n" +
+            "- **Gmail:** I drafted an email to the garage naming the vehicle (make/model + plate) and the fault details — **left in Drafts for you to review and send**, not sent automatically.\n" +
             "- **Calendar:** I put a **tentative** service slot on tomorrow at 09:00.\n\n" +
             "The draft's sitting in your Drafts folder whenever you want to review and send it.\n\n" +
             "*(Demo uses a test mailbox/calendar — never a real recipient.)*",
