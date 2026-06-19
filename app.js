@@ -200,18 +200,15 @@
 
   // human-ish typing cadence: a couple of characters at a time, irregular
   // pacing, cursor blinking at the end of what's been "typed" so far.
-  // The bubble is sized to its final text up front (via a hidden measuring
-  // clone) so it appears full-width immediately instead of growing from a
-  // tiny starting box as characters are typed.
+  // The bubble is pinned to its max allowed width (the same cap CSS gives
+  // .row.user .bubble) up front, like a roomy text box, so it doesn't grow
+  // narrow-to-wide as characters are typed; it shrinks back to fit the
+  // final text once typing finishes.
   function typeUserText(prose, text, myToken) {
     var bubble = prose.parentElement;
-    var clone = prose.cloneNode(false);
-    clone.innerHTML = renderMarkdown(text);
-    clone.style.visibility = "hidden";
-    bubble.appendChild(clone);
-    var finalWidth = clone.getBoundingClientRect().width;
-    bubble.removeChild(clone);
-    bubble.style.width = Math.ceil(finalWidth) + "px";
+    var row = bubble.parentElement;
+    var maxWidth = row.getBoundingClientRect().width * 0.8; // matches .row.user .bubble's max-width: 80%
+    bubble.style.width = Math.floor(maxWidth) + "px";
     return revealText(prose, text, myToken, { chunk: 2, tick: 24, jitterTick: true, caret: true }).then(function (ok) {
       bubble.style.width = "";
       return ok;
