@@ -1346,17 +1346,67 @@ window.CONVERSATIONS = {
           server: "geotab",
           name: "Get",
           args: { database: "demo_fh_vegas4", typeName: "Device", search: { name: "Demo - 01" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
-          summary: "Demo - 01 — placeholder VIN, can't be decoded",
-          result: '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "00000000000000000" }\n]',
+          summary: "Demo - 01 — VIN 1FTBR1Y84PK500125",
+          result: '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "1FTBR1Y84PK500125" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh_vegas4", vins: ["1FTBR1Y84PK500125"] },
+          summary: "Ford Transit 250 cargo van",
+          result: '[\n  { "make": "Ford", "model": "Transit 250", "body": "Cargo Van" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Demo - 01 is a Ford Transit 250 cargo van — one of 35 in this fleet, the other 15 being F-150 pickups for the heavier callouts.",
+        },
+      ],
+      choices: [
+        { label: "📊 What's the rest of the Vegas fleet running?", say: "What about the rest of the Vegas fleet — what's the full mix?", next: "ep9-fleet-vegas" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-vegas": {
+      id: "ep9-fleet-vegas",
+      title: "Ep9 · What's in the Vegas fleet",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Device", propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "50 vehicles, 50 distinct VINs",
+          result:
+            '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "1FTBR1Y84PK500125" },\n' +
+            '  { "name": "Demo - 45", "vehicleIdentificationNumber": "1FTFW1E84PK612049" },\n' +
+            '  { "name": "Demo - 50", "vehicleIdentificationNumber": "1FTFW1E84PK612054" },\n' +
+            '  … (50 distinct VINs, 2 distinct WMI+VDS prefixes)\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh_vegas4", vins: ["1FTBR1Y84PK500125", "1FTFW1E84PK612040"] },
+          summary: "Ford Transit 250 · Ford F-150",
+          result:
+            '[\n  { "make": "Ford", "model": "Transit 250", "body": "Cargo Van" },\n' +
+            '  { "make": "Ford", "model": "F-150", "body": "Pickup" }\n]',
         },
         {
           type: "claude",
           text:
-            "That's not a real VIN — it's the same placeholder value every vehicle in the Vegas fleet uses, so there's " +
-            "nothing to decode here. Unlike Spain, this fleet's VIN data is a gap, not a fact — I can't tell you make or model off this database.",
+            "Vegas is a field-service fleet: 35 Ford Transit 250 cargo vans doing the bulk of the downtown dispatch " +
+            "work, and 15 Ford F-150 pickups for the heavier callouts. Short urban hops all day, back to a depot at night " +
+            "— that's actually a stronger EV-conversion profile than Spain's, even though the speeding numbers say this " +
+            "fleet's real problem right now is behavioral, not the hardware.",
         },
       ],
       choices: [
+        { label: "🚦 Drill into Vegas speeding", say: "Drill into Vegas — why is speeding up there?", next: "ep2-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1810,7 +1860,7 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "Putting both fleets side by side: utilization right now is Vegas 21/50 driving (42%) vs Spain 10/50 (20%). On safety, Vegas logged 4,933 exceptions this week vs Spain's 1,347 — nearly 4x — which lines up with the fleet-wide speeding pattern already flagged.\n\n" +
-            "Maintenance flips the other way: Spain logged 599 faults (one Sprinter van, Demo - 08, owns 112 of them) vs Vegas's zero. And on sustainability, Spain's VINs decode into a real fleet mix — 30 coaches, 15 heavy trucks/tractors, 5 EV-candidate Sprinter vans — while Vegas's VINs are all the same placeholder value, so there's no EV-transition conversation to even start there. That data gap is its own line item for the board.\n\n" +
+            "Maintenance flips the other way: Spain logged 599 faults (one Sprinter van, Demo - 08, owns 112 of them) vs Vegas's zero. And on sustainability, both fleets' VINs decode now — Spain's is 30 coaches, 15 heavy trucks/tractors, 5 EV-candidate Sprinter vans, while Vegas is 35 Transit cargo vans and 15 F-150 pickups doing short urban hops. Vegas is actually the stronger EV case on paper; the thing holding it back from that conversation is the speeding, not the hardware.\n\n" +
             "Two fleets, two different failure modes: Vegas's risk is behavioral, Spain's is mechanical and concentrated. Worth briefing the board on each separately since they need different fixes.",
         },
       ],
