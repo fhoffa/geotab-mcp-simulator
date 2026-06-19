@@ -434,10 +434,11 @@ WS5b.** Then **WS0**, then the content pages (WS1/WS2/WS3a/WS5a) in parallel.
 
 To make the "real" path and the connect beat authentic, these would help:
 
-1. **Claude connector setup** — screenshots of adding the Geotab MCP connector in
-   Claude (Settings → Connectors → add, the auth/OAuth screen, the "connected"
-   state). Used on the **Try-it-for-real** page (WS2) and optionally to make the
-   simulator's `connect`/`authorize` beat look real.
+1. **Claude connector setup** — ✅ *partial: `assets/mcp-claude-add-connector.png`
+   received* (the "Add custom connector" dialog; confirms the connector URL
+   **`https://mcp.geotab.com/mygeotab`**). Still want the **auth/OAuth** screen and
+   the **"connected"** state. Used on the **Try-it-for-real** page (WS2) and
+   optionally to make the simulator's `connect`/`authorize` beat look real.
 2. **MyGeotab** — a screenshot of the **demo registration** page
    (https://my.geotab.com/registration.html) and, if you have it, a clean shot of a
    MyGeotab map/zone screen we can use as a *static* graphic (WS9, WS3-zone).
