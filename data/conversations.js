@@ -1359,9 +1359,9 @@ window.CONVERSATIONS = {
           args: { database: "demo_fh4", typeName: "FaultData", search: { deviceSearch: { id: "b6" }, fromDate: "…30 days ago", toDate: "now" } },
           summary: "Demo - 08 — 14 faults in 30 days, 9 of them the same code",
           result:
-            '[\n  { "diagnostic": "EngineCoolantOverTempId", "count": 9 },\n' +
-            '  { "diagnostic": "DeviceHasBeenUnpluggedId", "count": 3 },\n' +
-            '  { "diagnostic": "GpsAntennaShortCircuitId", "count": 2 }\n]',
+            '[\n  { "diagnostic": "DeviceHasBeenUnpluggedId", "count": 9 },\n' +
+            '  { "diagnostic": "GpsAntennaShortCircuitId", "count": 3 },\n' +
+            '  { "diagnostic": "AllPowerRemovedId", "count": 2 }\n]',
         },
         {
           type: "claude",
@@ -1373,34 +1373,34 @@ window.CONVERSATIONS = {
           server: "geotab",
           name: "Get",
           args: { database: "demo_fh4", typeName: "Trip", search: { deviceSearch: { id: "b6" }, fromDate: "…30 days ago", toDate: "now" } },
-          summary: "Demo - 08 — 2,140 mi in 30 days vs. fleet avg 2,080 mi",
-          result: '{ "device": "Demo - 08", "distance_mi": 2140, "fleetAvg_mi": 2080 }',
+          summary: "Demo - 08 — 2,140 mi in 30 days vs. fleet avg 5,800 mi",
+          result: '{ "device": "Demo - 08", "distance_mi": 2140, "fleetAvg_mi": 5800 }',
         },
         {
           type: "claude",
           text:
-            "**Ruled out** — its mileage is unremarkable, basically fleet average. So this isn't \"it just drives more.\"\n\n" +
+            "**Ruled out, and the opposite of what I expected** — Demo - 08 has driven *less* than a third of the fleet average this month. Fewer miles but more faults makes exposure even less likely as the explanation.\n\n" +
             "**Hypothesis 2 — harsh driving forcing sensor faults?** Hard braking/acceleration can sometimes trip false positives on engine sensors. Checking its exception events.",
         },
         {
           type: "tool",
           server: "geotab",
           name: "Get",
-          args: { database: "demo_fh4", typeName: "ExceptionEvent", search: { deviceSearch: { id: "b6" }, ruleSearch: { id: "HarshBrakingId,HarshAccelerationId" }, fromDate: "…30 days ago", toDate: "now" } },
-          summary: "Demo - 08 — 1 harsh-braking event in 30 days (fleet avg: 4)",
-          result: '{ "device": "Demo - 08", "harshEvents": 1, "fleetAvg": 4 }',
+          args: { database: "demo_fh4", typeName: "ExceptionEvent", search: { deviceSearch: { id: "b6" }, ruleSearch: { id: "HarshBrakingId" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Demo - 08 — 3 harsh-braking events in 30 days (fleet avg: 2.5)",
+          result: '{ "device": "Demo - 08", "harshEvents": 3, "fleetAvg": 2.5 }',
         },
         {
           type: "claude",
           text:
-            "**Ruled out too** — if anything it's driven *more* gently than average. Not a driver-behavior story either.\n\n" +
-            "**Hypothesis 3 — one component, recurring.** Going back to that fault breakdown: 9 of the 14 faults are the exact same diagnostic code. Pulling the dates to see if they cluster.",
+            "**Ruled out too** — close to fleet average, nothing that points to rough handling. Not a driver-behavior story either.\n\n" +
+            "**Hypothesis 3 — one component, recurring.** Going back to that fault breakdown: 9 of the 14 faults are the exact same diagnostic code, *device unplugged*. Pulling the dates to see if they cluster.",
         },
         {
           type: "tool",
           server: "geotab",
           name: "Get",
-          args: { database: "demo_fh4", typeName: "FaultData", search: { deviceSearch: { id: "b6" }, diagnosticSearch: { id: "EngineCoolantOverTempId" }, fromDate: "…30 days ago", toDate: "now" } },
+          args: { database: "demo_fh4", typeName: "FaultData", search: { deviceSearch: { id: "b6" }, diagnosticSearch: { id: "DeviceHasBeenUnpluggedId" }, fromDate: "…30 days ago", toDate: "now" } },
           summary: "all 9 dated after 22 May — none before",
           result:
             '[\n  { "dateTime": "2026-05-22T…" }, { "dateTime": "2026-05-24T…" }, { "dateTime": "2026-05-29T…" },\n' +
@@ -1409,16 +1409,15 @@ window.CONVERSATIONS = {
         {
           type: "claude",
           text:
-            "**Found it.** All 9 coolant-overtemp faults start on **22 May** and none before — that's not random wear, that's a single point in time where something changed. Pattern fits a **failing coolant temperature sensor** (intermittent false-high readings) rather than the engine actually overheating nine separate times.\n\n" +
-            "So the real story took three rounds, not one: not exposure, not the driver, but **one part, since one date.** That's a sensor swap for the shop to confirm — not nine unrelated incidents to dismiss one by one.\n\n" +
-            "*(Diagnostic name here is illustrative for the demo, not a verified Geotab catalog ID — the investigation method is the point.)*",
+            "**Found it.** All 9 \"device unplugged\" faults start on **22 May** and none before — that's not random wear, that's a single point in time where something changed. Pattern fits a **loose power connector or harness** (intermittent disconnect) rather than nine separate unrelated unplug events.\n\n" +
+            "So the real story took three rounds, not one: not exposure, not the driver, but **one connector, since one date.** That's a harness check for the shop to confirm — not nine unrelated incidents to dismiss one by one.",
         },
       ],
       choices: [
         {
           label: "📧 Fault → email garage → book service",
           say:
-            "Pull Demo - 08's fault details, draft an email to the garage about the coolant sensor, and put a tentative service slot on my calendar for tomorrow morning.",
+            "Pull Demo - 08's fault details, draft an email to the garage about the loose power connector, and put a tentative service slot on my calendar for tomorrow morning.",
           next: "ep5-answer",
         },
         { label: "🔧 Now triage the rest of the fleet", say: "Now show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
