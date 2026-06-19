@@ -162,7 +162,7 @@ window.CONVERSATIONS = {
         {
           label: "🚐 What's actually in my fleet?",
           say:
-            "Decode my Spain fleet from the VINs — what makes, models and vehicle types am I actually running, " +
+            "What makes and models am I actually running on the Spain fleet, " +
             "and which are realistic EV-conversion candidates?",
           next: "ep9-fleet",
         },
@@ -348,7 +348,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 What's actually in this fleet?", say: "While we're at it — what kind of vehicles am I actually running? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What's actually in this fleet?", say: "While we're at it — what make and model are these vehicles, actually?", next: "ep9-fleet" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -536,7 +536,7 @@ window.CONVERSATIONS = {
             "Create a zone in Geotab matching Valencia's ZBE and add an alert for when our vehicles enter it.",
           next: "ep3-prefs",
         },
-        { label: "🚐 What are the affected vehicles?", say: "What kind of vehicles are Demo - 23 and Demo - 31? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What are the affected vehicles?", say: "What make and model are Demo - 23 and Demo - 31?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -695,10 +695,19 @@ window.CONVERSATIONS = {
         {
           type: "map",
           title: "ZBE València · zone + affected vehicles",
+          zone: {
+            label: "ZBE València",
+            labelX: 50,
+            labelY: 78,
+            points: [
+              [38, 22], [52, 18], [66, 26], [72, 38], [70, 52],
+              [74, 62], [64, 72], [50, 70], [40, 60], [30, 50],
+              [28, 36], [34, 28],
+            ],
+          },
           pins: [
-            { label: "ZBE València (zone)", x: 50, y: 50, status: "target" },
             { label: "Demo - 23", x: 44, y: 40, status: "busy" },
-            { label: "Demo - 31", x: 60, y: 62, status: "busy" },
+            { label: "Demo - 31", x: 60, y: 52, status: "busy" },
           ],
         },
         {
@@ -707,7 +716,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 Decode those two vehicles", say: "What kind of vehicles are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet" },
+        { label: "🚐 What make and model are these?", say: "What make and model are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -902,7 +911,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -920,7 +929,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1025,7 +1034,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 12?", say: "What kind of vehicle is Demo - 12? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1043,7 +1052,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 12?", say: "What kind of vehicle is Demo - 12? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1175,7 +1184,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 What is Demo - 08, exactly?", say: "What kind of vehicle is Demo - 08? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What is Demo - 08, exactly?", say: "What make and model is Demo - 08?", next: "ep9-fleet" },
         { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
         { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
@@ -1332,7 +1341,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
-        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What kind of vehicle is Demo - 01? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What make and model is Demo - 01?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },

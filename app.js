@@ -305,6 +305,23 @@
     var card = el("div", "map-card");
     if (ev.title) card.appendChild(el("div", "map-title", escapeHtml(ev.title)));
     var canvas = el("div", "map-canvas");
+    if (ev.zone && ev.zone.points && ev.zone.points.length) {
+      var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "map-zone-svg");
+      svg.setAttribute("viewBox", "0 0 100 100");
+      svg.setAttribute("preserveAspectRatio", "none");
+      var poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      poly.setAttribute("class", "map-zone-shape");
+      poly.setAttribute("points", ev.zone.points.map(function (pt) { return pt[0] + "," + pt[1]; }).join(" "));
+      svg.appendChild(poly);
+      canvas.appendChild(svg);
+      if (ev.zone.label) {
+        var zoneTag = el("div", "map-zone-label", escapeHtml(ev.zone.label));
+        zoneTag.style.left = (ev.zone.labelX != null ? ev.zone.labelX : 50) + "%";
+        zoneTag.style.top = (ev.zone.labelY != null ? ev.zone.labelY : 50) + "%";
+        canvas.appendChild(zoneTag);
+      }
+    }
     (ev.pins || []).forEach(function (p) {
       var pin = el("div", "map-pin map-pin-" + (p.status || "free"));
       pin.style.left = (p.x || 0) + "%";
