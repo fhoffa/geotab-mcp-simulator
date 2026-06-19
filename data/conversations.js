@@ -1075,7 +1075,7 @@ window.CONVERSATIONS = {
           },
           summary: "ranked answer + bar chart + reasoning trace",
           result:
-            '{\n  "answer": "1. Demo - 01: 100\\n2. Demo - 15: 99\\n3. Demo - 16: 99\\n4. Demo - 08: 99\\n5. Demo - 04: 99",\n' +
+            '{\n  "answer": "1. Demo - 08: 188\\n2. Demo - 15: 61\\n3. Demo - 01: 54\\n4. Demo - 16: 47\\n5. Demo - 04: 39",\n' +
             '  "chart": { "type": "bar", "title": "Top 5 Vehicles by Number of Speeding Events" },\n' +
             '  "reasoning": "Outcome / Understanding / Process …"\n}',
         },
@@ -1084,19 +1084,19 @@ window.CONVERSATIONS = {
           text:
             "That's **Geotab Ace**. I asked in plain English — no SQL — and Ace wrote the query, ran it across your " +
             "whole fleet, and returned a ranked answer, a **chart**, and a **reasoning trace**.\n\n" +
-            "Notice the shape: the top five are **within a single event of each other (~99–100)**. Speeding here is " +
-            "**fleet-wide**, not one outlier — exactly the whole-fleet aggregation a quick raw query (capped at the " +
-            "newest rows) gets wrong.",
+            "Notice the shape: **Demo - 08 is running away with it at 188** — roughly 3x the next vehicle, and the " +
+            "rest trail off normally. That's the same van that's already been flagged twice this review for faults. " +
+            "Worth a single conversation with that driver before it shows up as a third unrelated-looking problem.",
         },
         {
           type: "chart",
           title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
           bars: [
-            { label: "Demo - 01", value: 100 },
-            { label: "Demo - 15", value: 99 },
-            { label: "Demo - 16", value: 99 },
-            { label: "Demo - 08", value: 99 },
-            { label: "Demo - 04", value: 99 },
+            { label: "Demo - 08", value: 188 },
+            { label: "Demo - 15", value: 61 },
+            { label: "Demo - 01", value: 54 },
+            { label: "Demo - 16", value: 47 },
+            { label: "Demo - 04", value: 39 },
           ],
         },
       ],
@@ -1116,7 +1116,7 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "Ace returns its work, not just an answer:\n\n" +
-            "**Outcome** — Top 5 by speeding events (last 7 days): Demo - 01 (100), then Demo - 15, 16, 08, 04 at 99 each; a bar chart was included.\n\n" +
+            "**Outcome** — Top 5 by speeding events (last 7 days): Demo - 08 (188), then Demo - 15 (61), Demo - 01 (54), Demo - 16 (47), Demo - 04 (39); a bar chart was included.\n\n" +
             "**Understanding** — You wanted the five vehicles with the most speeding events in the last seven days, with a count for each.\n\n" +
             "**Process** — Reviewed the fleet's event data for the past 7 days, isolated speeding events per vehicle, counted and ranked them, returned the top five.\n\n" +
             "So you can see exactly what it counted and how — worth a look if a number ever seems off.",
