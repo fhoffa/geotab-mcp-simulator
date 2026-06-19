@@ -241,6 +241,113 @@ content must be reconciled. See **WS6**.
 
 ---
 
+## WS11 — New episode backlog (personas × real tools)  ⬜ 🔬
+
+**Goal:** broaden the simulator beyond the fleet-manager lens. Today's six
+episodes are mostly "the manager's Monday." Real fleets have **distinct roles
+with distinct needs** (the vibe-guide's four pillars — *productivity, safety,
+compliance, sustainability* — plus dispatch/maintenance), and the live MCP
+exposes **several real tools we don't use yet.** Each story below is a *pitch*,
+not a script: it names the persona, the question, the candidate **real** MCP
+tools, and the teaching beat. **None are grounded yet** — before any ships,
+capture the live MCP reply on `demo_fh_vegas4` / `demo_fh4`, fill in real
+numbers, and flip 🔬 → ✅. **Do not fabricate tool results** (same bar as the
+existing episodes).
+
+> Source inspiration: `github.com/fhoffa/geotab-vibe-guide` (pillars, agentic
+> monitoring, safety coaching, maintenance tickets) mapped onto unused tools in
+> the live Geotab MCP: `SearchMedia`, `GetMediaUrl`, `DownloadMediaFile`,
+> `GetEmissionComplianceDeadline`, `EmissionEnrollDevices`,
+> `GetPostedRoadSpeedsForDevice`, `SendReportProcessingRequest`, `DecodeVins`,
+> `GetDevicesInformation`, plus `Set`/`Remove` (only `Add` is used so far).
+
+### Backlog (each = one new hub choice + answer node, optional action node)
+
+- [ ] **Ep-Dashcam — "Show me what happened" (Safety / risk officer)** 🔬
+  - *Ask:* "Demo-NN had a harsh-braking event yesterday — pull the dashcam clip
+    around that moment so I can see what happened, then start a coaching note."
+  - *Tools:* `Get`(ExceptionEvent, harsh braking) → `SearchMedia`(device +
+    time window) → `GetMediaUrl` / `DownloadMediaFile`.
+  - *Teaching beat:* MCP bridges telematics → **video** → coaching in one
+    thread; the event timestamp *is* the media query. Strong, visual.
+  - *Grounding risk:* **HIGH** — demo fleets may have no media/dashcam. Verify
+    `SearchMedia` returns anything; if not, either skip or disclose as scripted.
+
+- [ ] **Ep-Emissions — "Who's facing a compliance deadline?" (Compliance / sustainability)** 🔬
+  - *Ask:* "Are any of my vehicles facing an emissions-compliance deadline (e.g.
+    CARB Clean Truck Check)? Which still need enrolling — go ahead and enroll them."
+  - *Tools:* `GetEmissionComplianceDeadline` (read) → `EmissionEnrollDevices`
+    (**write/action**). Likely US-relevant → try `demo_fh_vegas4` first.
+  - *Teaching beat:* surfaces a **regulatory deadline** + a one-step enroll
+    action — compliance pillar, and a brand-new write verb beyond `Add`.
+
+- [ ] **Ep-PostedSpeed — "Was the limit really what we think?" (Supervisor / driver dispute)** 🔬
+  - *Ask:* "Demo-01 disputes a speeding flag on a stretch of road — pull the
+    *posted* road speed for that device's route so we coach on facts, not memory."
+  - *Tools:* `GetPostedRoadSpeedsForDevice` (+ `Get` ExceptionEvent for context).
+  - *Teaching beat:* ground a coaching/HR conversation in **objective posted
+    limits**; pairs perfectly with the fleet-wide speeding story (Ep2/Ep7).
+
+- [ ] **Ep-Report — "Email me the Excel every Monday" (Operations / finance admin)** 🔬
+  - *Ask:* "I need a fleet-utilization report as a file for the finance review —
+    generate it and send it to me on a schedule."
+  - *Tools:* `SendReportProcessingRequest`.
+  - *Teaching beat:* MCP can drive **Geotab's own reporting engine** and deliver
+    a real artifact — conversational ask → formal deliverable. Complements the
+    "package as a skill" beat (Ep1) and the dashboard artifact (WS8).
+
+- [ ] **Ep-Dispatch — "Who's closest and free right now?" (Dispatcher / operations)** ✅-ish
+  - *Ask:* "A job just came in near downtown — which vehicle is closest and
+    available right now?"
+  - *Tools:* `GetDevicesInformation` / `Get`(DeviceStatusInfo) for live
+    positions (already proven real in Ep3) + a simple nearest calc.
+  - *Teaching beat:* real-time **operational decisioning** (productivity pillar),
+    a genuinely different role from the reflective "manager's review." Could
+    reuse the WS9 map artifact to plot the pick.
+
+- [ ] **Ep-Maintenance — "Triage the whole shop's worklist" (Maintenance manager)** ✅-ish
+  - *Ask:* "Across the fleet, which vehicles have active faults right now — give
+    me a prioritized worklist for the shop."
+  - *Tools:* `GetCountOf`/`Get`(FaultData) on `demo_fh4` (**593 faults / 7d**,
+    Demo-06 active — already verified) + `GetDevicesInformation` to enrich.
+  - *Teaching beat:* turn **593 raw faults into a ranked worklist**; vivid
+    contrast with Vegas's *0 faults*. Distinct from Ep5 (one fault → one email):
+    this is fleet-wide triage. Optional action: `DismissFaults` on serviced ones.
+
+- [ ] **Ep-Electrify — "Which vans should go electric?" (Sustainability / fleet planning)** 🔬
+  - *Ask:* "Which vehicles are the best EV-conversion candidates — short,
+    predictable routes with lots of idling — and what are they (make/model)?"
+  - *Tools:* `DecodeVins` (demo_fh4 has **real varied VINs** — MAN, Mercedes,
+    Renault) + `Get` idling exceptions + positions.
+  - *Teaching beat:* sustainability planning grounded in **real vehicle
+    identity** + behavior. Gives `DecodeVins` the narrative it lacked as a bare
+    utility (see findings log — VIN episode was dropped for *lack of story*).
+
+- [ ] **Ep-Exec — "Board snapshot across both regions" (Executive / fleet director)** ✅-ish
+  - *Ask:* "Give me a board-level snapshot across both fleets — safety,
+    compliance, sustainability, utilization — in five numbers."
+  - *Tools:* aggregate `GetCountOf` / `GetAceResults` across **both**
+    `demo_fh_vegas4` *and* `demo_fh4`.
+  - *Teaching beat:* the four pillars in one ask, **spanning two databases** (no
+    current episode does cross-DB). Natural home for the WS8 dashboard artifact.
+
+- **Files:** `data/conversations.js` (one node per answer, optional action node +
+  hub choice); some need the new `chart`/`dashboard`/`map` renderers (WS4/8/9).
+- **Depends on:** nothing structurally; **each is gated on a live MCP capture**
+  (that's the 🔬). Dispatch/Maintenance/Exec lean on already-verified data, so
+  they're the lowest-risk to ground first.
+- **Parallel:** yes — each episode is an isolated graph addition.
+- **Acceptance (per episode):** numbers match a live capture; tool names/args are
+  real; no claim contradicts the live aggregate; persona + teaching beat are clear.
+
+> **OPEN DECISION 3 — which to ground first?** Recommend the ✅-ish trio
+> (**Dispatch, Maintenance, Exec**) since their data is already verified, plus
+> **Emissions** and **PostedSpeed** as the highest-novelty *new-tool* showcases.
+> Dashcam is the most cinematic but the riskiest to ground — confirm media
+> exists on the demo DBs before investing.
+
+---
+
 ## Dependency / parallelization graph
 
 ```
