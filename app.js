@@ -213,23 +213,24 @@
         el("div", "media-disclosure", "🎬 Illustrative reconstruction — AI-generated, not a live MCP capture")
       );
     }
+    // Default to the fallback: a <video> with a missing/bad source doesn't reliably fire
+    // an "error" event (no-source resource selection often just leaves networkState at
+    // NETWORK_NO_SOURCE), so fail toward the safe state and only swap in the video once
+    // it actually has data.
+    var fallback = el(
+      "div",
+      "media-fallback show",
+      escapeHtml(ev.fallbackText || "Clip not found — see media/README.md to generate and drop it in.")
+    );
     var vid = document.createElement("video");
-    vid.className = "media-video";
+    vid.className = "media-video hidden";
     vid.controls = true;
     vid.preload = "metadata";
     if (ev.poster) vid.poster = ev.poster;
-    var source = document.createElement("source");
-    source.src = ev.src;
-    vid.appendChild(source);
-
-    var fallback = el(
-      "div",
-      "media-fallback",
-      escapeHtml(ev.fallbackText || "Clip not found — see media/README.md to generate and drop it in.")
-    );
-    vid.addEventListener("error", function () {
-      vid.remove();
-      fallback.classList.add("show");
+    vid.src = ev.src;
+    vid.addEventListener("loadeddata", function () {
+      vid.classList.remove("hidden");
+      fallback.classList.remove("show");
     });
 
     card.appendChild(vid);

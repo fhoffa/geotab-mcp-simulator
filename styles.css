@@ -376,6 +376,7 @@ body {
   border-radius: 8px;
   background: #000;
 }
+.media-video.hidden { display: none; }
 .media-fallback {
   display: none;
   width: 100%;
