@@ -208,24 +208,36 @@ content must be reconciled. See **WS6**.
 - **Parallel:** last. Acceptance: Lighthouse pass; shares render a card.
 
 ### WS10 — Code review follow-ups (engine hardening)  ⬜
-- **Goal:** address findings from the 19 Jun code review of `app.js`.
-- **Items:**
-  1. `escapeHtml()` (app.js:42-47) only escapes `&`/`<`/`>`. `inline()` (app.js:48-54)
-     interpolates the link URL straight into an `href="..."` attribute, so a `"` in
-     a markdown-link URL/label would break out of the attribute. No exploit today
-     (no `[text](url)` links exist in `data/conversations.js` yet), but fix before
-     anyone adds one: escape quotes too, and/or validate the URL scheme is `http(s)`.
-  2. Add a CI/pre-commit check that runs `checkGraph()`'s logic headlessly (load
-     `conversations.js`, assert every `next`/`choices[].next` resolves) and fails
-     the build — today a broken link only logs to the browser console.
-  3. Optional cleanup: collapse `addUserBubble`/`addClaudeProse` (app.js:114-132)
-     into one `addBubble(role, text)` helper; simplify `wait()` (app.js:102-111),
-     which runs a `setTimeout` *and* a 40ms-polling `setInterval` just to detect a
-     mid-wait `skip`.
-- **Files:** `app.js`; new lightweight test/check script (e.g. `scripts/check-graph.js`).
-- **Depends on:** nothing. **Parallel:** yes, isolated.
-- **Acceptance:** quote-breakout fixed; CI fails on a broken graph link; no behavior
-  change to playback.
+- **Goal:** track every finding from the 19 Jun code review of `app.js` as a
+  discrete to-do (none blocking; this repo had no open PR to review, so the
+  review covered the current `app.js`/`data/conversations.js` on `main`).
+- **To-dos:**
+  - [ ] **Security — href attribute-breakout.** `escapeHtml()` (app.js:42-47)
+    only escapes `&`/`<`/`>`, not quotes. `inline()` (app.js:48-54) interpolates
+    the markdown-link URL straight into `href="..."`, so a `"` in a URL/label
+    would break out of the attribute and allow injected attributes (e.g.
+    `onmouseover=`). No exploit today — no `[text](url)` links exist yet in
+    `data/conversations.js` — but fix before anyone adds one: escape quotes
+    too, and/or validate the URL scheme is `http(s)`.
+  - [ ] **CI — silent broken links.** `checkGraph()` (app.js:28-39) only
+    `console.error`s on a broken `next`/`choices[].next` reference; a broken
+    link can ship silently since nobody opens devtools to check. Add a
+    pre-commit/CI script that loads `conversations.js` headlessly and fails
+    the build on any unresolved link.
+  - [ ] **Test coverage.** No automated tests exist. At minimum, script the
+    `checkGraph()` invariants (every link resolves, every node reachable from
+    `start`) so authoring mistakes are caught before deploy, not by eyeballing.
+  - [ ] **Cleanup — duplicate bubble renderers.** `addUserBubble` and
+    `addClaudeProse` (app.js:114-132) are identical except for row/avatar
+    class and glyph; collapse into one `addBubble(role, text)` helper.
+  - [ ] **Cleanup — overcomplicated `wait()`.** `wait()` (app.js:102-111) runs
+    a `setTimeout` *and* a 40ms-polling `setInterval` just to detect a mid-wait
+    `skip` flip; simplify (e.g. check `skip` once per loop iteration like the
+    existing `myToken` guards do, or use a single cancelable timer).
+- **Files:** `app.js`; new lightweight check script (e.g. `scripts/check-graph.js`).
+- **Depends on:** nothing. **Parallel:** yes, each to-do is isolated.
+- **Acceptance:** quote-breakout fixed; CI fails on a broken graph link; no
+  behavior change to playback.
 
 ---
 
