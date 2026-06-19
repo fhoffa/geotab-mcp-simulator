@@ -24,6 +24,9 @@
   var tryRealBtn = document.getElementById("tryRealBtn");
   var tryRealBtnLanding = document.getElementById("tryRealBtnLanding");
   var tryRealClose = document.getElementById("tryRealClose");
+  var aboutBtn = document.getElementById("aboutBtn");
+  var aboutOverlay = document.getElementById("aboutOverlay");
+  var aboutClose = document.getElementById("aboutClose");
 
   // timing (ms) — baselines, scaled per-event below so a long answer or a
   // slower call (writes, web fetches) takes a believable beat longer than a
@@ -491,6 +494,8 @@
   function closeLanding() { landingOverlay.classList.add("hidden"); }
   function openTryReal() { closeLanding(); tryRealOverlay.classList.remove("hidden"); }
   function closeTryReal() { tryRealOverlay.classList.add("hidden"); }
+  function openAbout() { aboutOverlay.classList.remove("hidden"); }
+  function closeAbout() { aboutOverlay.classList.add("hidden"); }
 
   /* ------------------------------------------------------------- controls */
   function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
@@ -506,10 +511,14 @@
   tryRealBtnLanding.addEventListener("click", openTryReal);
   tryRealClose.addEventListener("click", closeTryReal);
   tryRealOverlay.addEventListener("click", function (e) { if (e.target === tryRealOverlay) closeTryReal(); });
+  aboutBtn.addEventListener("click", openAbout);
+  aboutClose.addEventListener("click", closeAbout);
+  aboutOverlay.addEventListener("click", function (e) { if (e.target === aboutOverlay) closeAbout(); });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
     closeMap();
     closeTryReal();
+    closeAbout();
     closeLanding();
   });
   // click the transcript while it's playing to fast-forward
