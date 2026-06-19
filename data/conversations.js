@@ -141,6 +141,13 @@ window.CONVERSATIONS = {
           next: "ep5-answer",
         },
         {
+          label: "💼 Settle a late-delivery dispute (Salesforce)",
+          say:
+            "A customer is disputing a late delivery yesterday and it's logged as an open Salesforce case. " +
+            "Check Demo - 12's actual arrival time at the customer site against the case, and log the proof on the case.",
+          next: "ep13-salesforce",
+        },
+        {
           label: "🤖 Ask Geotab Ace a question",
           say: "Using Geotab Ace — which 5 vehicles had the most speeding events in the last 7 days, and how many each?",
           next: "ep7-ace",
@@ -180,7 +187,12 @@ window.CONVERSATIONS = {
             "sustainability — in five numbers.",
           next: "ep-exec",
         },
-        { label: "🗺️ Show the story map", action: "map" },
+        {
+          label: "❓ Why does Demo - 08 keep faulting?",
+          say:
+            "Demo - 08 keeps showing up in the fault list. Why — dig into it and don't stop at the first explanation.",
+          next: "ep12-investigate",
+        },
       ],
     },
 
@@ -266,19 +278,51 @@ window.CONVERSATIONS = {
           server: "claude",
           name: "Create skill",
           args: { name: "geotab-weekly-review" },
-          summary: "geotab-weekly-review.skill created",
+          summary: "SKILL.md written — 90 lines, grounding rules + no-PII default included",
           write: true,
+          openByDefault: true,
           result:
-            "# Weekly Fleet Review (skill)\n" +
-            "steps: fleet size → faults → idling/harsh → HOS (per-driver) → DVIR → trips\n" +
-            "defaults: written brief · no PII (device names only) · summarize counts",
+            "---\n" +
+            "name: geotab-weekly-review\n" +
+            "description: >-\n" +
+            "  Produce a manager-ready weekly fleet review from a Geotab MCP connection —\n" +
+            "  fleet size, faults, speeding/harsh driving, HOS, DVIR, and trip activity — as a\n" +
+            "  short written brief. Encodes Geotab data quirks and a strict no-PII default so\n" +
+            "  the answer is correct and repeatable for anyone on the team.\n" +
+            "---\n\n" +
+            "# Geotab Weekly Fleet Review\n\n" +
+            "## When to use\n" +
+            "When the user asks for a weekly/periodic fleet review, a \"Monday morning\" summary, " +
+            "or \"how did the fleet do this week.\" Default window: last 7 days.\n\n" +
+            "## What to produce\n" +
+            "1. Fleet size  2. Faults/maintenance  3. Driving exceptions  4. HOS  5. DVIR  6. Trip activity\n" +
+            "End with a headline, a needs-attention list, and 2–3 recommended actions.\n\n" +
+            "## Grounding rules (avoid these traps)\n" +
+            "- Never report a raw Trip count — GetCountOf on Trip ignores the date window.\n" +
+            "- HOS is per-driver — DutyStatusViolation needs a userSearch; treat as a spot-check.\n" +
+            "- Don't infer outliers from a capped ExceptionEvent list — aggregate the whole window (e.g. via Ace).\n" +
+            "- A clean section is a finding, not a gap — report \"clean week,\" never invent data.\n" +
+            "- Summarize repeating demo data — report counts, don't dump raw rows.\n\n" +
+            "## No-PII default\n" +
+            "- Use device names, never driver names.\n" +
+            "- Watch the name field itself — some device names encode a person; fall back to make/model + a non-identifying id.\n" +
+            "- Never return emails, phone numbers, employee numbers, or per-person location histories.\n\n" +
+            "## Suggested tool flow\n" +
+            "GetCountOf Device → Get/GetCountOf FaultData → Get ExceptionEvent (or GetAceResults to rank) → " +
+            "spot-check DutyStatusViolation → Get DVIRLog → bounded Get Trip.\n\n" +
+            "## Output style\n" +
+            "Plain language, short sentences, manager-ready. No jargon, no raw JSON, no PII.\n\n" +
+            "(90 lines total — this is the trimmed preview.)",
         },
         {
           type: "claude",
           text:
-            "Done — I've packaged your routine as **`geotab-weekly-review.skill`**.\n\n" +
+            "Done — I've packaged your routine as **`geotab-weekly-review.skill`**, and it's not just a one-line " +
+            "macro. Open the card above: it encodes the actual Geotab gotchas (capped `ExceptionEvent` pages, " +
+            "per-driver HOS, the `Trip` count trap) and a strict no-PII default, so it doesn't just *repeat* — " +
+            "it gets those traps right every time, for anyone on the team.\n\n" +
             "Drop it into your team's shared skills and anyone can just say **\"run my weekly review\"** " +
-            "to get this same brief, without re-explaining the steps each time.",
+            "to get this same correct brief, without re-explaining the steps each time.",
         },
         {
           type: "endcard",
@@ -286,6 +330,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚐 What's actually in this fleet?", say: "While we're at it — what kind of vehicles am I actually running? Decode the fleet.", next: "ep9-fleet" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -388,6 +433,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Stop guessing why. Ask."] },
       ],
       choices: [
+        { label: "🔧 Now check for faults too", say: "While that alert is live, show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -440,12 +486,38 @@ window.CONVERSATIONS = {
         {
           label: "🗺️ Create the zone + entry alert",
           say:
-            "Create a zone in Geotab matching Valencia's ZBE, add a rule that alerts me whenever one of our " +
-            "vehicles enters it, and send the alert to one fleet manager.",
-          next: "ep3-action",
+            "Create a zone in Geotab matching Valencia's ZBE and add an alert for when our vehicles enter it.",
+          next: "ep3-prefs",
         },
         { label: "🚐 What are the affected vehicles?", say: "What kind of vehicles are Demo - 23 and Demo - 31? Decode the fleet.", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep3-prefs": {
+      id: "ep3-prefs",
+      title: "Ep3 · Alert preferences",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Before I wire this up — two quick choices so the alert actually fits how you work:\n\n" +
+            "**1. What should trigger it?** Just entries, or entries *and* exits (useful if you want to confirm a vehicle cleared the zone again)?\n" +
+            "**2. Who should get it?** One fleet manager, or the whole Valencia ops group?",
+        },
+      ],
+      choices: [
+        {
+          label: "🔔 Entry only → one manager",
+          say: "Entry alerts only, sent to one fleet manager.",
+          next: "ep3-action",
+        },
+        {
+          label: "🔔 Entry + exit → whole ops group",
+          say: "Alert on both entry and exit, sent to the whole Valencia ops group.",
+          next: "ep3-action-wide",
+        },
       ],
     },
 
@@ -491,6 +563,80 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "The news changed. Your fleet already adapted."] },
       ],
       choices: [
+        { label: "🗺️ Show the zone on a map", say: "Show me the ZBE zone and the affected vehicles on a map.", next: "ep3-map" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep3-action-wide": {
+      id: "ep3-action-wide",
+      title: "Ep3 · Create zone + rule (entry+exit, group)",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh4", typeName: "Zone", entity: { name: "ZBE València", points: "…polygon…" } },
+          summary: "Zone created",
+          write: true,
+          result: '{ "result": "Zoneb…zbe-valencia" }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh4", typeName: "Rule", entity: { name: "ZBE València — entry & exit" } },
+          summary: "Entry + exit rule live",
+          write: true,
+          result: '{ "result": "Ruleb…zbe-entry-exit" }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh4", typeName: "Notification", entity: { recipient: "Valencia ops group" } },
+          summary: "Alert routed to the whole ops group",
+          write: true,
+          result: '{ "result": "Notificationb…" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Done — zone **ZBE València** created, with alerts on **both entry and exit**, routed to the **whole Valencia ops group**. " +
+            "Everyone on that team will see a vehicle cross the line in either direction — not just the one manager.\n\n" +
+            "*(Optional next step: restrict it to non-compliant labels only — the older vans without an ECO/Zero badge.)*",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "The news changed. Your fleet already adapted."] },
+      ],
+      choices: [
+        { label: "🗺️ Show the zone on a map", say: "Show me the ZBE zone and the affected vehicles on a map.", next: "ep3-map" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep3-map": {
+      id: "ep3-map",
+      title: "Ep3 · ZBE zone on a map",
+      events: [
+        {
+          type: "map",
+          title: "ZBE València · zone + affected vehicles",
+          pins: [
+            { label: "ZBE València (zone)", x: 50, y: 50, status: "target" },
+            { label: "Demo - 23", x: 44, y: 40, status: "busy" },
+            { label: "Demo - 31", x: 60, y: 62, status: "busy" },
+          ],
+        },
+        {
+          type: "claude",
+          text: "Both **Demo - 23** and **Demo - 31** are sitting right inside the zone boundary right now — exactly the vehicles the new alert will watch.",
+        },
+      ],
+      choices: [
+        { label: "🚐 Decode those two vehicles", say: "What kind of vehicles are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -562,6 +708,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔧 Now triage the faults", say: "Now show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
+        { label: "🚐 What's in the new Valencia group?", say: "What kind of vehicles ended up in the Valencia Region group?", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -586,9 +733,17 @@ window.CONVERSATIONS = {
         },
         {
           type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { id: "b6" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber", "licensePlate"] } },
+          summary: "Demo - 06 — Mercedes-Benz Sprinter, plate VAL-4471-B",
+          result: '[\n  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588", "licensePlate": "VAL-4471-B" }\n]',
+        },
+        {
+          type: "tool",
           server: "gmail",
           name: "create_draft",
-          args: { to: "garage@test-mailbox.example", subject: "Demo - 06 — fault check please" },
+          args: { to: "garage@test-mailbox.example", subject: "Demo - 06 (Mercedes-Benz Sprinter, plate VAL-4471-B) — fault check please" },
           summary: "Draft saved (NOT sent)",
           write: true,
           result: '{ "draftId": "r-…", "status": "in Drafts, awaiting your review" }',
@@ -606,19 +761,162 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "Here's the chain, across three tools:\n" +
-            "- **Geotab:** Demo - 06 logged a fault on 18 Jun — *device unplugged / GPS antenna* (it'll stop reporting position until checked).\n" +
-            "- **Gmail:** I drafted an email to the garage with the vehicle and fault details — **left in Drafts for you to review and send**, not sent automatically.\n" +
+            "- **Geotab:** Demo - 06 logged a fault on 18 Jun — *device unplugged / GPS antenna* (it'll stop reporting position until checked). It's a **Mercedes-Benz Sprinter, plate VAL-4471-B**.\n" +
+            "- **Gmail:** I drafted an email to the garage naming the vehicle (make/model + plate) and the fault details — **left in Drafts for you to review and send**, not sent automatically.\n" +
             "- **Calendar:** I put a **tentative** service slot on tomorrow at 09:00.\n\n" +
             "The draft's sitting in your Drafts folder whenever you want to review and send it.\n\n" +
             "*(Demo uses a test mailbox/calendar — never a real recipient.)*",
         },
+      ],
+      choices: [
+        { label: "📤 Send the draft now", say: "It looks right — send the draft now.", next: "ep5-send" },
+        { label: "🗓️ Just confirm the slot, hold the email", say: "Leave the email in Drafts for now — just confirm the calendar hold.", next: "ep5-hold" },
+      ],
+    },
+
+    "ep5-send": {
+      id: "ep5-send",
+      title: "Ep5 · Send the draft",
+      db: "demo_fh4",
+      events: [
         {
-          type: "endcard",
-          lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."],
+          type: "tool",
+          server: "gmail",
+          name: "send_message",
+          args: { draftId: "r-…" },
+          summary: "Sent to garage@test-mailbox.example",
+          write: true,
+          result: '{ "messageId": "r-…", "status": "sent" }',
         },
+        {
+          type: "claude",
+          text: "Sent. The garage now has the fault details and the vehicle's plate; your tentative 09:00 slot is already on the calendar waiting for their confirmation.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
         { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep5-hold": {
+      id: "ep5-hold",
+      title: "Ep5 · Hold the email, keep the slot",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text: "Understood — the email stays in Drafts untouched, and the **tentative 09:00 slot stays on the calendar** so you don't lose the booking window while you decide. Nothing's been sent.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
+      ],
+      choices: [
+        { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ------------------------------------------------------- ep13 · Salesforce */
+    "ep13-salesforce": {
+      id: "ep13-salesforce",
+      title: "Ep13 · Geotab + Salesforce",
+      db: "demo_fh4",
+      events: [
+        { type: "system", text: "This flow spans two connectors: **Geotab + Salesforce**." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "LogRecord", search: { deviceSearch: { id: "ba" }, fromDate: "yesterday 00:00", toDate: "yesterday 23:59" } },
+          summary: "Demo - 12 arrived at the customer site 14:32 yesterday",
+          result:
+            '[\n  { "device": "Demo - 12", "latitude": 41.123, "longitude": 2.456, "dateTime": "2026-06-18T14:32Z", "note": "matches customer site geofence" }\n]',
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "get_case",
+          args: { caseNumber: "00012345" },
+          summary: "Case 00012345 — \"Delivery arrived after 16:00\" — Open",
+          result: '{ "caseNumber": "00012345", "subject": "Delivery arrived after 16:00", "status": "Open", "account": "Test Account Ltd." }',
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "add_case_comment",
+          args: { caseNumber: "00012345", body: "Geotab GPS log: Demo - 12 arrived on-site 14:32 (18 Jun), inside the customer geofence — well before the 16:00 the case describes." },
+          summary: "Comment logged on Case 00012345",
+          write: true,
+          result: '{ "commentId": "00a…", "status": "added" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's the chain, across two tools:\n" +
+            "- **Geotab:** Demo - 12's GPS log shows it inside the customer's geofence at **14:32 yesterday** — not after 16:00 as the case claims.\n" +
+            "- **Salesforce:** I found the open case (**00012345**, \"Delivery arrived after 16:00\") and logged that GPS timestamp directly as a comment on it.\n\n" +
+            "Whoever picks up the case next sees the proof inline — no separate spreadsheet, no \"let me go check the tracker.\"\n\n" +
+            "*(Demo uses a test Salesforce org — never a real customer record.)*",
+        },
+      ],
+      choices: [
+        { label: "✉️ Also close the case and notify the rep", say: "Go ahead and close the case, and let the account rep know it's resolved.", next: "ep13-close" },
+        { label: "📌 Just leave the proof logged, don't close it", say: "Leave it logged on the case for now — don't close it yet.", next: "ep13-leaveopen" },
+      ],
+    },
+
+    "ep13-close": {
+      id: "ep13-close",
+      title: "Ep13 · Close the case",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "update_case",
+          args: { caseNumber: "00012345", status: "Closed", reason: "Resolved — GPS log confirms on-time arrival" },
+          summary: "Case 00012345 closed",
+          write: true,
+          result: '{ "caseNumber": "00012345", "status": "Closed" }',
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "notify_owner",
+          args: { caseNumber: "00012345", message: "Closed — GPS proof attached, arrival was on time." },
+          summary: "Account rep notified",
+          write: true,
+          result: '{ "status": "notified" }',
+        },
+        {
+          type: "claude",
+          text: "Case **00012345** is closed with the GPS timestamp as the resolution reason, and the account rep has been notified so they can follow up with the customer directly.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
+      ],
+      choices: [
+        { label: "🚐 What kind of van is Demo - 12?", say: "What kind of vehicle is Demo - 12? Decode the fleet.", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep13-leaveopen": {
+      id: "ep13-leaveopen",
+      title: "Ep13 · Leave the case open",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text: "Done — the GPS proof stays logged as a comment on Case **00012345**, and the case itself stays **Open** for whoever's handling the customer conversation to close when they're ready.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
+      ],
+      choices: [
+        { label: "🚐 What kind of van is Demo - 12?", say: "What kind of vehicle is Demo - 12? Decode the fleet.", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -668,6 +966,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🧠 Show Ace's reasoning", say: "Show me how Ace got there.", next: "ep7-reasoning" },
+        { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -690,6 +989,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔧 Now ask Ace about faults", say: "Now ask Ace which vehicles have the most faults this week.", next: "ep8-maintenance" },
+        { label: "📋 Run the full weekly review", say: "Now give me the full weekly fleet review.", next: "ep1-answer" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -741,6 +1041,8 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🚐 What is Demo - 08, exactly?", say: "What kind of vehicle is Demo - 08? Decode the fleet.", next: "ep9-fleet" },
+        { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
+        { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -794,6 +1096,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "📊 Show that as a chart", say: "Show me the fleet composition as a chart.", next: "ep9-fleet-chart" },
         { label: "🌍 Which of these hit the Valencia zone?", say: "Which of these vehicles drive through Valencia's low-emission zone?", next: "ep3-answer" },
+        { label: "🔋 Dig into the EV-conversion case", say: "Make the case for converting the Sprinters to EV — what would it take?", next: "ep9-ev" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -821,6 +1124,36 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🌍 Which of these hit the Valencia zone?", say: "Which of these vehicles drive through Valencia's low-emission zone?", next: "ep3-answer" },
+        { label: "🔋 Dig into the EV-conversion case", say: "Make the case for converting the Sprinters to EV — what would it take?", next: "ep9-ev" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-ev": {
+      id: "ep9-ev",
+      title: "Ep9 · EV-conversion case (Sprinters)",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Trip", search: { deviceSearch: { ids: ["Demo - 06", "Demo - 07", "Demo - 08", "Demo - 09", "Demo - 10"] }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Sprinters average ~62 mi/day, max single trip ~140 mi",
+          result: '{ "avgDailyMiles": 62, "maxSingleTrip_mi": 140, "longestGapBetweenTrips_h": 9 }',
+        },
+        {
+          type: "claude",
+          text:
+            "The five Sprinters average about **62 miles a day**, with the longest single trip around **140 miles** and a roughly **9-hour** gap overnight between routes — that's well inside what current mid-size EV vans can do on a charge, with the overnight gap doubling as charge time.\n\n" +
+            "Compare that to the coaches and Actros/Renault tractors: long-haul, heavier loads, tighter turnaround — none of that profile. The Sprinters are the one segment of this fleet where an EV swap is a realistic near-term move, not a someday one.\n\n" +
+            "*(Daily-mileage figures here are illustrative for the demo — directionally consistent with Sprinter usage, not a guaranteed live total.)*",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "It knows what you actually drive — not just how many."] },
+      ],
+      choices: [
+        { label: "🌍 Check them against the Valencia zone", say: "Do these same Sprinters drive through Valencia's low-emission zone?", next: "ep3-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -856,7 +1189,89 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
+        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What kind of vehicle is Demo - 01? Decode the fleet.", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------------------- ep12 · why-investigation loop */
+    "ep12-investigate": {
+      id: "ep12-investigate",
+      title: "Ep12 · Investigation loop",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "FaultData", search: { deviceSearch: { id: "b6" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Demo - 08 — 14 faults in 30 days, 9 of them the same code",
+          result:
+            '[\n  { "diagnostic": "EngineCoolantOverTempId", "count": 9 },\n' +
+            '  { "diagnostic": "DeviceHasBeenUnpluggedId", "count": 3 },\n' +
+            '  { "diagnostic": "GpsAntennaShortCircuitId", "count": 2 }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "**Hypothesis 1 — is this just more driving exposure?** A van that's on the road more will naturally log more faults. Checking Demo - 08's mileage against the fleet average before I conclude anything.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Trip", search: { deviceSearch: { id: "b6" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Demo - 08 — 2,140 mi in 30 days vs. fleet avg 2,080 mi",
+          result: '{ "device": "Demo - 08", "distance_mi": 2140, "fleetAvg_mi": 2080 }',
+        },
+        {
+          type: "claude",
+          text:
+            "**Ruled out** — its mileage is unremarkable, basically fleet average. So this isn't \"it just drives more.\"\n\n" +
+            "**Hypothesis 2 — harsh driving forcing sensor faults?** Hard braking/acceleration can sometimes trip false positives on engine sensors. Checking its exception events.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "ExceptionEvent", search: { deviceSearch: { id: "b6" }, ruleSearch: { id: "HarshBrakingId,HarshAccelerationId" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Demo - 08 — 1 harsh-braking event in 30 days (fleet avg: 4)",
+          result: '{ "device": "Demo - 08", "harshEvents": 1, "fleetAvg": 4 }',
+        },
+        {
+          type: "claude",
+          text:
+            "**Ruled out too** — if anything it's driven *more* gently than average. Not a driver-behavior story either.\n\n" +
+            "**Hypothesis 3 — one component, recurring.** Going back to that fault breakdown: 9 of the 14 faults are the exact same diagnostic code. Pulling the dates to see if they cluster.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "FaultData", search: { deviceSearch: { id: "b6" }, diagnosticSearch: { id: "EngineCoolantOverTempId" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "all 9 dated after 22 May — none before",
+          result:
+            '[\n  { "dateTime": "2026-05-22T…" }, { "dateTime": "2026-05-24T…" }, { "dateTime": "2026-05-29T…" },\n' +
+            '  { "dateTime": "2026-06-02T…" }, "… 5 more, all after 22 May" ]',
+        },
+        {
+          type: "claude",
+          text:
+            "**Found it.** All 9 coolant-overtemp faults start on **22 May** and none before — that's not random wear, that's a single point in time where something changed. Pattern fits a **failing coolant temperature sensor** (intermittent false-high readings) rather than the engine actually overheating nine separate times.\n\n" +
+            "So the real story took three rounds, not one: not exposure, not the driver, but **one part, since one date.** That's a sensor swap for the shop to confirm — not nine unrelated incidents to dismiss one by one.\n\n" +
+            "*(Diagnostic name here is illustrative for the demo, not a verified Geotab catalog ID — the investigation method is the point.)*",
+        },
+      ],
+      choices: [
+        {
+          label: "📧 Fault → email garage → book service",
+          say:
+            "Pull Demo - 08's fault details, draft an email to the garage about the coolant sensor, and put a tentative service slot on my calendar for tomorrow morning.",
+          next: "ep5-answer",
+        },
+        { label: "🔧 Now triage the rest of the fleet", say: "Now show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
       ],
     },
 
@@ -890,6 +1305,60 @@ window.CONVERSATIONS = {
       choices: [
         { label: "📊 Show distances as a chart", say: "Show me each vehicle's distance from the job as a chart.", next: "ep-dispatch-chart" },
         { label: "🗺️ Show me on a map", say: "Show me where these vehicles are on a map.", next: "ep-dispatch-map" },
+        { label: "🚐 Dispatch Demo - 45", say: "Send Demo - 45 to the job.", next: "ep-dispatch-send-45" },
+        { label: "🚐 Dispatch Demo - 50 instead", say: "Actually, send Demo - 50 to the job.", next: "ep-dispatch-send-50" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-dispatch-send-45": {
+      id: "ep-dispatch-send-45",
+      title: "Ep-Dispatch · Dispatch Demo - 45",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Trip", entity: { device: "Demo - 45", note: "Dispatched to downtown job" } },
+          summary: "Job assigned to Demo - 45",
+          write: true,
+          result: '{ "result": "Tripb…dispatch-45" }',
+        },
+        {
+          type: "claude",
+          text: "Demo - 45 is dispatched — the closest free unit, about 1.0 mile out. Demo - 50 stays available as backup.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Dispatch off the live fix, not a cached map."] },
+      ],
+      choices: [
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-dispatch-send-50": {
+      id: "ep-dispatch-send-50",
+      title: "Ep-Dispatch · Dispatch Demo - 50",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Trip", entity: { device: "Demo - 50", note: "Dispatched to downtown job" } },
+          summary: "Job assigned to Demo - 50",
+          write: true,
+          result: '{ "result": "Tripb…dispatch-50" }',
+        },
+        {
+          type: "claude",
+          text: "Demo - 50 is dispatched — 1.1 miles out and free. Noted that Demo - 45 was the closer option if you need a faster ETA next time.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Dispatch off the live fix, not a cached map."] },
+      ],
+      choices: [
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -916,6 +1385,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚐 Dispatch Demo - 45", say: "Send Demo - 45 to the job.", next: "ep-dispatch-send-45" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -941,6 +1411,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚐 Dispatch Demo - 50", say: "Send Demo - 50 to the job.", next: "ep-dispatch-send-50" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1002,13 +1473,11 @@ window.CONVERSATIONS = {
             "Two fleets, two different failure modes: Vegas's risk is **behavioral**, Spain's is **mechanical and concentrated**. " +
             "Worth briefing the board on each separately — they need different fixes.",
         },
-        {
-          type: "endcard",
-          lines: ["Geotab MCP Connector", "One ask, two fleets, no spreadsheet stitched by hand."],
-        },
       ],
       choices: [
         { label: "📊 Break that down in charts", say: "Break that down in charts.", next: "ep-exec-chart" },
+        { label: "🚦 Drill into Vegas — the behavioral risk", say: "Drill into Vegas first — why is speeding up there?", next: "ep2-answer" },
+        { label: "🔧 Drill into Spain — the mechanical risk", say: "Drill into Spain first — what's going on with all those faults?", next: "ep8-maintenance" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1043,6 +1512,8 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🚦 Drill into Vegas speeding", say: "Drill into Vegas — why is speeding up there?", next: "ep2-answer" },
+        { label: "🔧 Drill into Spain faults", say: "Drill into Spain — what's going on with all those faults?", next: "ep8-maintenance" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1092,6 +1563,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🔔 Set the speed alert anyway", say: "Set up that posted-speed alert across the fleet regardless.", next: "ep2-action" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
