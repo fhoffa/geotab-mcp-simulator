@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://fhoffa.github.io/geotab-mcp-simulator/sitemap.xml
