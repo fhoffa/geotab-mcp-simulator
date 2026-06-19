@@ -207,6 +207,26 @@ content must be reconciled. See **WS6**.
   privacy-respecting analytics; favicon/og image; "copy link to this episode".
 - **Parallel:** last. Acceptance: Lighthouse pass; shares render a card.
 
+### WS10 — Code review follow-ups (engine hardening)  ⬜
+- **Goal:** address findings from the 19 Jun code review of `app.js`.
+- **Items:**
+  1. `escapeHtml()` (app.js:42-47) only escapes `&`/`<`/`>`. `inline()` (app.js:48-54)
+     interpolates the link URL straight into an `href="..."` attribute, so a `"` in
+     a markdown-link URL/label would break out of the attribute. No exploit today
+     (no `[text](url)` links exist in `data/conversations.js` yet), but fix before
+     anyone adds one: escape quotes too, and/or validate the URL scheme is `http(s)`.
+  2. Add a CI/pre-commit check that runs `checkGraph()`'s logic headlessly (load
+     `conversations.js`, assert every `next`/`choices[].next` resolves) and fails
+     the build — today a broken link only logs to the browser console.
+  3. Optional cleanup: collapse `addUserBubble`/`addClaudeProse` (app.js:114-132)
+     into one `addBubble(role, text)` helper; simplify `wait()` (app.js:102-111),
+     which runs a `setTimeout` *and* a 40ms-polling `setInterval` just to detect a
+     mid-wait `skip`.
+- **Files:** `app.js`; new lightweight test/check script (e.g. `scripts/check-graph.js`).
+- **Depends on:** nothing. **Parallel:** yes, isolated.
+- **Acceptance:** quote-breakout fixed; CI fails on a broken graph link; no behavior
+  change to playback.
+
 ---
 
 ## Dependency / parallelization graph
