@@ -24,11 +24,33 @@
   var tryRealBtn = document.getElementById("tryRealBtn");
   var tryRealBtnLanding = document.getElementById("tryRealBtnLanding");
   var tryRealClose = document.getElementById("tryRealClose");
+  var aboutBtn = document.getElementById("aboutBtn");
+  var aboutOverlay = document.getElementById("aboutOverlay");
+  var aboutClose = document.getElementById("aboutClose");
 
-  // timing (ms); halved-to-zero when the user clicks to skip a node's playback
-  var T = { tool: 480, type: 620, system: 360, gap: 220 };
+  // timing (ms) — baselines, scaled per-event below so a long answer or a
+  // slower call (writes, web fetches) takes a believable beat longer than a
+  // quick read; halved-to-zero when the user clicks to skip a node's playback
+  var BASE = { tool: 360, think: 380, system: 300, gap: 200 };
   var skip = false;
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function jitter(ms) { return Math.round(ms * (0.85 + Math.random() * 0.3)); } // +/-15%, feels less robotic
+  function wordCount(text) { return ((text || "").trim().match(/\S+/g) || []).length; }
+
+  // "thinking" pause before Claude starts streaming a reply — longer answers
+  // get a longer beat, like the model taking more time to plan them.
+  function thinkDelay(text) { return jitter(clamp(BASE.think + wordCount(text) * 14, 450, 1700)); }
+  // round-trip latency for a tool call — writes and external (web) fetches
+  // run a bit slower than a plain read, like a real MCP call would.
+  function toolDelay(ev) {
+    var d = BASE.tool;
+    if (ev.write) d += 260;
+    if (ev.server === "web") d += 340;
+    return jitter(d);
+  }
 
   /* ----------------------------------------------------------- integrity */
   function checkGraph() {
@@ -113,7 +135,13 @@
     if (html != null) e.innerHTML = html;
     return e;
   }
-  function scrollDown() { chatEl.scrollTop = chatEl.scrollHeight; window.scrollTo(0, document.body.scrollHeight); }
+  function scrollDown() {
+    // smooth while playing normally so motion tracks content arriving; snap
+    // instantly once the user fast-forwards (or asks for reduced motion)
+    var behavior = skip || reduceMotion ? "auto" : "smooth";
+    chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: behavior });
+    window.scrollTo({ top: document.body.scrollHeight, behavior: behavior });
+  }
   function wait(ms) {
     // playNode() already re-checks playToken after every wait(), and the click
     // handler flips `skip` synchronously — so a single short poll loop is enough
@@ -129,14 +157,51 @@
   }
 
   /* ----------------------------------------------------------- renderers */
-  function addBubble(role, text) {
+  function addBubbleShell(role) {
     var row = el("div", "row " + role);
     row.appendChild(el("div", "avatar " + role, role === "user" ? "you" : "✳"));
     var b = el("div", "bubble");
-    b.appendChild(el("div", "prose", renderMarkdown(text)));
+    var prose = el("div", "prose");
+    b.appendChild(prose);
     row.appendChild(b);
     chatEl.appendChild(row);
     scrollDown();
+    return prose;
+  }
+
+  function addBubble(role, text) {
+    var prose = addBubbleShell(role);
+    prose.innerHTML = renderMarkdown(text);
+    scrollDown();
+  }
+
+  // reveals text in growing chunks, checking playToken/skip between each so a
+  // restart or fast-forward can cut it short. `caret` shows a blinking cursor
+  // mid-reveal (for the user "typing"); without it the chunk is re-parsed as
+  // markdown each tick (for Claude's streamed replies).
+  async function revealText(prose, text, myToken, opts) {
+    for (var i = opts.chunk; i < text.length; i += opts.chunk) {
+      if (myToken !== playToken) return false;
+      if (skip) break;
+      var shown = text.slice(0, i);
+      prose.innerHTML = opts.caret ? escapeHtml(shown) + '<span class="caret"></span>' : renderMarkdown(shown);
+      scrollDown();
+      await wait(opts.jitterTick ? jitter(opts.tick) : opts.tick);
+    }
+    if (myToken !== playToken) return false;
+    prose.innerHTML = renderMarkdown(text);
+    scrollDown();
+    return true;
+  }
+
+  function streamProse(prose, text, myToken) {
+    return revealText(prose, text, myToken, { chunk: 6, tick: 40 });
+  }
+
+  // human-ish typing cadence: a couple of characters at a time, irregular
+  // pacing, cursor blinking at the end of what's been "typed" so far.
+  function typeUserText(prose, text, myToken) {
+    return revealText(prose, text, myToken, { chunk: 2, tick: 24, jitterTick: true, caret: true });
   }
 
   function addSystem(text) {
@@ -155,6 +220,16 @@
     chatEl.appendChild(wrap);
     scrollDown();
     return b; // subsequent tool cards append into this bubble
+  }
+
+  function showToolPending(ev, container) {
+    var row = el("div", "tool-pending");
+    row.setAttribute("data-server", ev.server || "geotab");
+    row.appendChild(el("span", "tool-dot pending"));
+    row.appendChild(el("span", "tool-pending-label", "Calling " + (ev.server || "geotab") + "." + ev.name + "…"));
+    (container || chatEl).appendChild(row);
+    scrollDown();
+    return row;
   }
 
   function addToolCard(ev, container) {
@@ -210,6 +285,25 @@
       row.appendChild(track);
       card.appendChild(row);
     });
+    chatEl.appendChild(card);
+    scrollDown();
+  }
+
+  function addMap(ev) {
+    var card = el("div", "map-card");
+    if (ev.title) card.appendChild(el("div", "map-title", escapeHtml(ev.title)));
+    var canvas = el("div", "map-canvas");
+    (ev.pins || []).forEach(function (p) {
+      var pin = el("div", "map-pin map-pin-" + (p.status || "free"));
+      pin.style.left = (p.x || 0) + "%";
+      pin.style.top = (p.y || 0) + "%";
+      pin.appendChild(el("span", "map-dot"));
+      var tagHtml = escapeHtml(p.label || "") + (p.value != null ? ' <span class="map-tag-val">· ' + escapeHtml(String(p.value)) + "mi</span>" : "");
+      pin.appendChild(el("span", "map-tag", tagHtml));
+      canvas.appendChild(pin);
+    });
+    card.appendChild(canvas);
+    card.appendChild(el("div", "map-disclosure", "🗺️ Illustrative map — relative positions, not to scale"));
     chatEl.appendChild(card);
     scrollDown();
   }
@@ -281,38 +375,46 @@
       if (myToken !== playToken) return; // superseded
       var ev = node.events[k];
       if (ev.type === "tool") {
-        await wait(T.tool);
+        var toolTarget = ev.server === "geotab" ? toolContainer : null;
+        var pending = showToolPending(ev, toolTarget);
+        await wait(toolDelay(ev));
+        pending.remove();
         if (myToken !== playToken) return;
-        addToolCard(ev, ev.server === "geotab" ? toolContainer : null);
+        addToolCard(ev, toolTarget);
       } else if (ev.type === "claude") {
         var typer = showTyping();
-        await wait(T.type);
+        await wait(thinkDelay(ev.text));
         typer.remove();
         if (myToken !== playToken) return;
-        addBubble("claude", ev.text);
+        var prose = addBubbleShell("claude");
+        if (!(await streamProse(prose, ev.text, myToken))) return;
       } else if (ev.type === "system") {
-        await wait(T.system);
+        await wait(jitter(BASE.system));
         if (myToken !== playToken) return;
         addSystem(ev.text);
       } else if (ev.type === "chart") {
-        await wait(T.tool);
+        await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addChart(ev);
+      } else if (ev.type === "map") {
+        await wait(jitter(BASE.tool));
+        if (myToken !== playToken) return;
+        addMap(ev);
       } else if (ev.type === "endcard") {
-        await wait(T.gap);
+        await wait(jitter(BASE.gap));
         if (myToken !== playToken) return;
         addEndcard(ev.lines || []);
       } else if (ev.type === "media") {
-        await wait(T.tool);
+        await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addMedia(ev);
       }
-      await wait(T.gap);
+      await wait(jitter(BASE.gap));
     }
     if (myToken !== playToken) return;
 
     if (node.choices && node.choices.length) renderChoices(node.choices);
-    else if (node.next) { await wait(T.gap); if (myToken === playToken) playNode(node.next); }
+    else if (node.next) { await wait(jitter(BASE.gap)); if (myToken === playToken) playNode(node.next); }
   }
 
   function renderChoices(choices) {
@@ -328,10 +430,16 @@
     scrollDown();
   }
 
-  function onChoice(c) {
+  async function onChoice(c) {
     if (c.action === "restart") { restart(); return; }
     if (c.action === "map") { openMap(); return; }
-    if (c.say || c.label) addBubble("user", c.say || c.label);
+    var myToken = playToken; // still the node whose choices are showing
+    trayEl.innerHTML = ""; // one shot — no double-clicking another chip mid-type
+    if (c.say || c.label) {
+      var prose = addBubbleShell("user");
+      if (!(await typeUserText(prose, c.say || c.label, myToken))) return;
+    }
+    if (myToken !== playToken) return;
     if (c.next) playNode(c.next);
   }
 
@@ -386,6 +494,8 @@
   function closeLanding() { landingOverlay.classList.add("hidden"); }
   function openTryReal() { closeLanding(); tryRealOverlay.classList.remove("hidden"); }
   function closeTryReal() { tryRealOverlay.classList.add("hidden"); }
+  function openAbout() { aboutOverlay.classList.remove("hidden"); }
+  function closeAbout() { aboutOverlay.classList.add("hidden"); }
 
   /* ------------------------------------------------------------- controls */
   function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
@@ -401,10 +511,14 @@
   tryRealBtnLanding.addEventListener("click", openTryReal);
   tryRealClose.addEventListener("click", closeTryReal);
   tryRealOverlay.addEventListener("click", function (e) { if (e.target === tryRealOverlay) closeTryReal(); });
+  aboutBtn.addEventListener("click", openAbout);
+  aboutClose.addEventListener("click", closeAbout);
+  aboutOverlay.addEventListener("click", function (e) { if (e.target === aboutOverlay) closeAbout(); });
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape") return;
     closeMap();
     closeTryReal();
+    closeAbout();
     closeLanding();
   });
   // click the transcript while it's playing to fast-forward

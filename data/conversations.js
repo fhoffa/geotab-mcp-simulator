@@ -234,14 +234,13 @@ window.CONVERSATIONS = {
             "**Headline** — 50 vehicles, all reporting live. **0 active faults.** The story this week is " +
             "*behavior, not breakdowns*: driving exceptions are **entirely posted-speed speeding**.\n\n" +
             "**Needs attention**\n" +
-            "- **Speeding is fleet-wide — not one bad actor.** Posted-speed events are spread across many vehicles; the top offenders are within a handful of events of each other. *(A quick raw pull can look like a single outlier — it isn't. Try the* **Why are speeding alerts up?** *scenario to see why.)*\n" +
+            "- **Speeding is fleet-wide — not one bad actor.** Posted-speed events are spread across many vehicles; the top offenders are within a handful of events of each other.\n" +
             "- **HOS:** *per-driver only* — the API won't return violations without naming a driver — so treat this as a spot-check, not a fleet-wide all-clear.\n" +
             "- **DVIR:** none logged this week.\n\n" +
             "**Recommended actions**\n" +
             "1. Treat speeding as a **fleet-wide** coaching + policy issue, not a single-driver one.\n" +
             "2. Stand up a live posted-speed alert so events are flagged in the moment — not next Monday.\n" +
             "3. Maintenance: nothing urgent — a genuinely clean week.\n\n" +
-            "> One pass, the whole week — instead of five separate reports.\n\n" +
             "*(I summarized trip activity qualitatively: the raw all-time trip counter isn't a useful weekly number.)*",
         },
       ],
@@ -278,9 +277,8 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "Done — I've packaged your routine as **`geotab-weekly-review.skill`**.\n\n" +
-            "Here's the part that changes the math: I didn't just answer this week, I packaged the " +
-            "*question*. Drop the skill into your team's shared skills and anyone can say " +
-            "**\"run my weekly review\"** and get this exact brief. The work you did once, everyone inherits.",
+            "Drop it into your team's shared skills and anyone can just say **\"run my weekly review\"** " +
+            "to get this same brief, without re-explaining the steps each time.",
         },
         {
           type: "endcard",
@@ -320,17 +318,6 @@ window.CONVERSATIONS = {
             '{ "answer": "1. Demo-01: 100  2. Demo-15: 99  3. Demo-16: 99  4. Demo-08: 99  5. Demo-04: 99" }',
         },
         {
-          type: "chart",
-          title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
-          bars: [
-            { label: "Demo - 01", value: 100 },
-            { label: "Demo - 15", value: 99 },
-            { label: "Demo - 16", value: 99 },
-            { label: "Demo - 08", value: 99 },
-            { label: "Demo - 04", value: 99 },
-          ],
-        },
-        {
           type: "claude",
           text:
             "Here's the trap. A quick **raw** pull returns only the newest ~200 events, and those happen to cluster " +
@@ -340,9 +327,19 @@ window.CONVERSATIONS = {
             "a *single event* of each other — about **99–100** speeding events each.\n\n" +
             "So it's **not one van — it's fleet-wide.** The 'why' isn't a person; it's systemic: shared routes, limits " +
             "and expectations. That changes the fix from *a conversation* to *a policy + a live guardrail.*\n\n" +
-            "*(Fair to the plain API: it can get this right too — count per vehicle, or page through all 5,645 events — I " +
-            "just shouldn't have trusted the first page. That's exactly what a **Geotab skill** enforces; Ace simply does " +
-            "the aggregation for you in one step.)*",
+            "*(To be fair, a careful per-vehicle count or paging through all 5,645 events would catch this too — I " +
+            "just shouldn't have trusted the first page.)*",
+        },
+        {
+          type: "chart",
+          title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
+          bars: [
+            { label: "Demo - 01", value: 100 },
+            { label: "Demo - 15", value: 99 },
+            { label: "Demo - 16", value: 99 },
+            { label: "Demo - 08", value: 99 },
+            { label: "Demo - 04", value: 99 },
+          ],
         },
       ],
       choices: [
@@ -386,7 +383,7 @@ window.CONVERSATIONS = {
           text:
             "Done. I created a **fleet-wide posted-speed rule** and routed the alert to **one fleet manager** " +
             "(by name — no email shown). Now any vehicle over the posted limit is flagged in the moment — not " +
-            "next Monday, and not just one van.\n\n*Diagnose → act → prevent.*",
+            "next Monday, and not just one van.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Stop guessing why. Ask."] },
       ],
@@ -427,15 +424,13 @@ window.CONVERSATIONS = {
         {
           type: "claude",
           text:
-            "I checked **today's** news, not my training data — and València's **Zona de Baixes Emissions (ZBE)** " +
-            "is genuinely **in flux**:\n" +
+            "I checked **today's** news rather than relying on what I already knew — and València's **Zona de Baixes " +
+            "Emissions (ZBE)** is genuinely **in flux**:\n" +
             "- It covers **~27.8 km²** (most of the city), watched by **278 ANPR cameras** that are **already switched on**.\n" +
             "- The statutory fine for a non-compliant entry is **€200**.\n" +
             "- **But** the city's ZBE ordinance was **rejected in December 2025** — so right now the cameras are " +
             "**monitoring, not fining**, and sources disagree on whether sanctions have started. Restrictions are " +
             "**phased 2026 → 2028**, tightening over time; cleaner labels (Zero/ECO) are favoured.\n\n" +
-            "That nuance is the whole point: a generic assistant would confidently quote old rules. The live read says " +
-            "*cameras on, fines on hold, rules still moving.*\n\n" +
             "**And your fleet?** **Demo - 23** and **Demo - 31** are operating in the Valencia area right now " +
             "(~39.4°N) — so whatever the final rules, you're exposed.\n\n" +
             "*(This is moving week to week — re-confirm on valencia.es before acting.)*",
@@ -561,8 +556,7 @@ window.CONVERSATIONS = {
             "3. **Faults cleared** — dismissed Demo - 06's acknowledged faults after its service.\n" +
             "4. **Region group** — your Valencia-area vehicles are now one reportable group.\n" +
             "5. **Alerts routed** — idling alerts go to one manager.\n\n" +
-            "Reporting tells you *what* to do. This one just **did** it — your AI stops being a dashboard and " +
-            "starts being a pair of hands.",
+            "All five are live now — nothing left to set up by hand later.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "It doesn't just report. It acts."] },
       ],
@@ -615,7 +609,7 @@ window.CONVERSATIONS = {
             "- **Geotab:** Demo - 06 logged a fault on 18 Jun — *device unplugged / GPS antenna* (it'll stop reporting position until checked).\n" +
             "- **Gmail:** I drafted an email to the garage with the vehicle and fault details — **left in Drafts for you to review and send**, not sent automatically.\n" +
             "- **Calendar:** I put a **tentative** service slot on tomorrow at 09:00.\n\n" +
-            "Three systems, one sentence. You just review and send — you stop being the glue between your own tools.\n\n" +
+            "The draft's sitting in your Drafts folder whenever you want to review and send it.\n\n" +
             "*(Demo uses a test mailbox/calendar — never a real recipient.)*",
         },
         {
@@ -652,6 +646,15 @@ window.CONVERSATIONS = {
             '  "reasoning": "Outcome / Understanding / Process …"\n}',
         },
         {
+          type: "claude",
+          text:
+            "That's **Geotab Ace**. I asked in plain English — no SQL — and Ace wrote the query, ran it across your " +
+            "whole fleet, and returned a ranked answer, a **chart**, and a **reasoning trace**.\n\n" +
+            "Notice the shape: the top five are **within a single event of each other (~99–100)**. Speeding here is " +
+            "**fleet-wide**, not one outlier — exactly the whole-fleet aggregation a quick raw query (capped at the " +
+            "newest rows) gets wrong.",
+        },
+        {
           type: "chart",
           title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
           bars: [
@@ -661,15 +664,6 @@ window.CONVERSATIONS = {
             { label: "Demo - 08", value: 99 },
             { label: "Demo - 04", value: 99 },
           ],
-        },
-        {
-          type: "claude",
-          text:
-            "That's **Geotab Ace**. I asked in plain English — no SQL — and Ace wrote the query, ran it across your " +
-            "whole fleet, and returned a ranked answer, a **chart**, and a **reasoning trace**.\n\n" +
-            "Notice the shape: the top five are **within a single event of each other (~99–100)**. Speeding here is " +
-            "**fleet-wide**, not one outlier — exactly the whole-fleet aggregation a quick raw query (capped at the " +
-            "newest rows) gets wrong.",
         },
       ],
       choices: [
@@ -690,7 +684,7 @@ window.CONVERSATIONS = {
             "**Outcome** — Top 5 by speeding events (last 7 days): Demo - 01 (100), then Demo - 15, 16, 08, 04 at 99 each; a bar chart was included.\n\n" +
             "**Understanding** — You wanted the five vehicles with the most speeding events in the last seven days, with a count for each.\n\n" +
             "**Process** — Reviewed the fleet's event data for the past 7 days, isolated speeding events per vehicle, counted and ranked them, returned the top five.\n\n" +
-            "That transparency is the point: you can see *what* it counted and *how* — so you can trust the number, or challenge it.",
+            "So you can see exactly what it counted and how — worth a look if a number ever seems off.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Ask in plain English. Ace does the analysis."] },
       ],
@@ -725,6 +719,15 @@ window.CONVERSATIONS = {
             '{ "answer": "1. Demo - 08: 112  2. Demo - 22: 7  3. Demo - 26: 7  4. Demo - 21: 7  5. Demo - 27: 4" }',
         },
         {
+          type: "claude",
+          text:
+            "**599 fault records** this week sounds like a fire to fight everywhere. It isn't.\n\n" +
+            "When Ace aggregates them per vehicle, **one van owns the problem: Demo - 08 logged 112 faults — about 1 in 5 of the entire fleet's total.** Everything else is in the single digits (the next four are 4–7 each).\n\n" +
+            "So your shop's worklist writes itself: **pull Demo - 08 in first** — it's not 50 problems, it's basically one. " +
+            "The other four vehicles on the list (4–7 faults each) can wait. For comparison, the Vegas fleet had **0** " +
+            "active faults all week, so this is specific to this van, not a fleet-wide maintenance issue.",
+        },
+        {
           type: "chart",
           title: "Top 5 vehicles by fault records · last 7 days (via Ace)",
           bars: [
@@ -734,15 +737,6 @@ window.CONVERSATIONS = {
             { label: "Demo - 21", value: 7 },
             { label: "Demo - 27", value: 4 },
           ],
-        },
-        {
-          type: "claude",
-          text:
-            "**599 fault records** this week sounds like a fire to fight everywhere. It isn't.\n\n" +
-            "When Ace aggregates them per vehicle, **one van owns the problem: Demo - 08 logged 112 faults — about 1 in 5 of the entire fleet's total.** Everything else is in the single digits (the next four are 4–7 each).\n\n" +
-            "So your shop's worklist writes itself: **pull Demo - 08 in first** — it's not 50 problems, it's basically one. " +
-            "Note the contrast with the speeding story: there it was genuinely *fleet-wide* with no outlier; here it's the opposite. " +
-            "**Aggregation is what tells you which shape you're in** — and the same Vegas fleet, by comparison, had **0** active faults all week.",
         },
       ],
       choices: [
@@ -783,6 +777,33 @@ window.CONVERSATIONS = {
             '  { "make": "Mercedes-Benz", "model": "Intouro", "plant": "Istanbul" }\n]',
         },
         {
+          type: "claude",
+          text:
+            "I pulled the VINs and decoded them — and this isn't the parcel-van fleet you might assume. It's a **passenger-transport operation**:\n\n" +
+            "- **30 intercity coaches** — 25 **MAN Lion's Intercity** (2020/2022) + 5 **Mercedes-Benz Intouro**\n" +
+            "- **15 heavy goods units** — 10 **Mercedes-Benz Actros** + 5 **Renault T** tractors (Euro 6)\n" +
+            "- **5 light vans** — **Mercedes-Benz Sprinter** *(Demo - 06 to 10 — including your fault hot-spot **Demo - 08**)*\n\n" +
+            "That mix matters for your EV question: your realistic **conversion candidates are the 5 Sprinter vans** " +
+            "(light, urban, predictable routes) — *not* the coaches and 40-tonne tractors, which aren't close to viable yet.",
+        },
+        {
+          type: "endcard",
+          lines: ["Geotab MCP Connector", "It knows what you actually drive — not just how many."],
+        },
+      ],
+      choices: [
+        { label: "📊 Show that as a chart", say: "Show me the fleet composition as a chart.", next: "ep9-fleet-chart" },
+        { label: "🌍 Which of these hit the Valencia zone?", say: "Which of these vehicles drive through Valencia's low-emission zone?", next: "ep3-answer" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-chart": {
+      id: "ep9-fleet-chart",
+      title: "Ep9 · Fleet composition chart",
+      events: [
+        {
           type: "chart",
           title: "Fleet composition · demo_fh4 (decoded from VINs)",
           bars: [
@@ -795,18 +816,7 @@ window.CONVERSATIONS = {
         },
         {
           type: "claude",
-          text:
-            "I pulled the VINs and decoded them — and this isn't the parcel-van fleet you might assume. It's a **passenger-transport operation**:\n\n" +
-            "- **30 intercity coaches** — 25 **MAN Lion's Intercity** (2020/2022) + 5 **Mercedes-Benz Intouro**\n" +
-            "- **15 heavy goods units** — 10 **Mercedes-Benz Actros** + 5 **Renault T** tractors (Euro 6)\n" +
-            "- **5 light vans** — **Mercedes-Benz Sprinter** *(Demo - 06 to 10 — including your fault hot-spot **Demo - 08**)*\n\n" +
-            "Why this matters: a generic assistant treats all 50 as interchangeable 'vehicles.' Grounded in the real VINs, the picture changes the plan — " +
-            "your realistic **EV-conversion candidates are the 5 Sprinter vans** (light, urban, predictable), *not* the coaches and 40-tonne tractors. " +
-            "Same connector, three minutes, no spreadsheet.",
-        },
-        {
-          type: "endcard",
-          lines: ["Geotab MCP Connector", "It knows what you actually drive — not just how many."],
+          text: "30 coaches, 15 heavy goods units, 5 light vans — the Sprinters are the only ones worth a second look for EV conversion.",
         },
       ],
       choices: [
@@ -869,6 +879,54 @@ window.CONVERSATIONS = {
             '  … (47 more)\n]',
         },
         {
+          type: "claude",
+          text:
+            "I pulled live positions for the whole fleet, not just the ones you'd think to check.\n\n" +
+            "**Demo - 45 is closest — about 1.0 mile from downtown — and it's parked (`isDriving: false`), so it's actually free.** " +
+            "**Demo - 50** is a close second at 1.1 miles, also parked. **Demo - 01** is nearer than most but **already driving at 59 mph** — closest isn't the same as *available*, so it's out.\n\n" +
+            "Both candidates' positions are seconds old (last ping ~20s before this query), so this isn't a stale guess — dispatch this off the live fix, not a cached map.",
+        },
+      ],
+      choices: [
+        { label: "📊 Show distances as a chart", say: "Show me each vehicle's distance from the job as a chart.", next: "ep-dispatch-chart" },
+        { label: "🗺️ Show me on a map", say: "Show me where these vehicles are on a map.", next: "ep-dispatch-map" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ------------------------------------------------------ ep-dispatch-map · live positions map */
+    "ep-dispatch-map": {
+      id: "ep-dispatch-map",
+      title: "Ep-Dispatch · Live positions map",
+      events: [
+        {
+          type: "map",
+          title: "Live positions vs. the job · downtown Las Vegas",
+          pins: [
+            { label: "Job site", x: 50, y: 48, status: "target" },
+            { label: "Demo - 45 (free)", x: 36, y: 60, status: "free", value: 1.0 },
+            { label: "Demo - 50 (free)", x: 64, y: 38, status: "free", value: 1.1 },
+            { label: "Demo - 01 (busy)", x: 74, y: 68, status: "busy", value: 1.6 },
+          ],
+        },
+        {
+          type: "claude",
+          text: "Both free units are tucked right around the job site — Demo - 45 a touch closer, Demo - 50 just over a block further. Demo - 01 is out past them and still moving, so it's not in play.",
+        },
+      ],
+      choices: [
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ------------------------------------------------------ ep-dispatch-chart · distance chart */
+    "ep-dispatch-chart": {
+      id: "ep-dispatch-chart",
+      title: "Ep-Dispatch · Distance chart",
+      events: [
+        {
           type: "chart",
           title: "Distance from the job (downtown Las Vegas) · miles",
           bars: [
@@ -879,11 +937,7 @@ window.CONVERSATIONS = {
         },
         {
           type: "claude",
-          text:
-            "I pulled live positions for the whole fleet, not just the ones you'd think to check.\n\n" +
-            "**Demo - 45 is closest — about 1.0 mile from downtown — and it's parked (`isDriving: false`), so it's actually free.** " +
-            "**Demo - 50** is a close second at 1.1 miles, also parked. **Demo - 01** is nearer than most but **already driving at 59 mph** — closest isn't the same as *available*, so it's out.\n\n" +
-            "Both candidates' positions are seconds old (last ping ~20s before this query), so this isn't a stale guess — dispatch this off the live fix, not a cached map.",
+          text: "Demo - 45 and Demo - 50 are both under a mile and a half out and free — either works. Demo - 01 is technically closer but already on a job.",
         },
       ],
       choices: [
@@ -934,6 +988,38 @@ window.CONVERSATIONS = {
           result: '{ "result": 1347 }',
         },
         {
+          type: "claude",
+          text:
+            "Here's both fleets side by side:\n\n" +
+            "- **Utilization (right now):** Vegas 21/50 driving (42%) vs Spain 10/50 (20%).\n" +
+            "- **Safety (exceptions, 7d):** Vegas logged **4,933** vs Spain's **1,347** — nearly 4× — consistent with " +
+            "the fleet-wide speeding pattern already flagged this week.\n" +
+            "- **Maintenance (faults, 7d):** flips the other way — Spain logged **599** (one Sprinter van, Demo - 08, " +
+            "owns 112 of them) vs Vegas's **0**.\n" +
+            "- **Sustainability:** Spain's VINs decode into a real fleet mix — 30 coaches, 15 heavy trucks/tractors, " +
+            "5 EV-candidate Sprinter vans. Vegas's VINs are all the same placeholder value, so there's no EV-transition " +
+            "conversation to even start there yet — that data gap is its own line item for the board.\n\n" +
+            "Two fleets, two different failure modes: Vegas's risk is **behavioral**, Spain's is **mechanical and concentrated**. " +
+            "Worth briefing the board on each separately — they need different fixes.",
+        },
+        {
+          type: "endcard",
+          lines: ["Geotab MCP Connector", "One ask, two fleets, no spreadsheet stitched by hand."],
+        },
+      ],
+      choices: [
+        { label: "📊 Break that down in charts", say: "Break that down in charts.", next: "ep-exec-chart" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ------------------------------------------------------ ep-exec-chart · both-fleet charts */
+    "ep-exec-chart": {
+      id: "ep-exec-chart",
+      title: "Ep-Exec · Utilization & exceptions charts",
+      events: [
+        {
           type: "chart",
           title: "Utilization right now · vehicles driving / 50",
           bars: [
@@ -953,22 +1039,7 @@ window.CONVERSATIONS = {
         },
         {
           type: "claude",
-          text:
-            "Same five-minute ask, both fleets, one connector:\n\n" +
-            "- **Utilization (right now):** Vegas 21/50 driving (42%) vs Spain 10/50 (20%).\n" +
-            "- **Safety (exceptions, 7d):** Vegas logged **4,933** vs Spain's **1,347** — nearly 4× — consistent with " +
-            "the fleet-wide speeding pattern already flagged this week.\n" +
-            "- **Maintenance (faults, 7d):** flips the other way — Spain logged **599** (one Sprinter van, Demo - 08, " +
-            "owns 112 of them) vs Vegas's **0**.\n" +
-            "- **Sustainability:** Spain's VINs decode into a real fleet mix — 30 coaches, 15 heavy trucks/tractors, " +
-            "5 EV-candidate Sprinter vans. Vegas's VINs are all the same placeholder value, so there's no EV-transition " +
-            "conversation to even start there yet — that data gap is its own line item for the board.\n\n" +
-            "Two fleets, two different failure modes: Vegas's risk is **behavioral**, Spain's is **mechanical and concentrated**. " +
-            "You'd brief each very differently — and you just did, across two databases, without leaving the chat.",
-        },
-        {
-          type: "endcard",
-          lines: ["Geotab MCP Connector", "One ask, two fleets, no spreadsheet stitched by hand."],
+          text: "Vegas drives more and breaks the rules more; Spain drives less but breaks down more. Same fleet size, opposite risk profile.",
         },
       ],
       choices: [
@@ -1012,9 +1083,8 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "Once footage like this is actually wired up, the ask doesn't change much — *\"pull the clip for that " +
-            "speeding flag on Demo - 01\"* — but the connector can now hand you the moment itself, not just the " +
-            "telemetry. Pair it with the posted-speed check: the road tells you the limit, the clip tells you what " +
-            "the driver saw.",
+            "speeding flag on Demo - 01\"* — but I'd be able to hand you the moment itself, not just the telemetry. " +
+            "Pair it with the posted-speed check: the road tells you the limit, the clip tells you what the driver saw.",
         },
         {
           type: "endcard",
