@@ -141,6 +141,13 @@ window.CONVERSATIONS = {
           next: "ep5-answer",
         },
         {
+          label: "💼 Settle a late-delivery dispute (Salesforce)",
+          say:
+            "A customer is disputing a late delivery yesterday and it's logged as an open Salesforce case. " +
+            "Check Demo - 12's actual arrival time at the customer site against the case, and log the proof on the case.",
+          next: "ep13-salesforce",
+        },
+        {
           label: "🤖 Ask Geotab Ace a question",
           say: "Using Geotab Ace — which 5 vehicles had the most speeding events in the last 7 days, and how many each?",
           next: "ep7-ace",
@@ -180,7 +187,12 @@ window.CONVERSATIONS = {
             "sustainability — in five numbers.",
           next: "ep-exec",
         },
-        { label: "🗺️ Show the story map", action: "map" },
+        {
+          label: "❓ Why does Demo - 08 keep faulting?",
+          say:
+            "Demo - 08 keeps showing up in the fault list. Why — dig into it and don't stop at the first explanation.",
+          next: "ep12-investigate",
+        },
       ],
     },
 
@@ -266,19 +278,51 @@ window.CONVERSATIONS = {
           server: "claude",
           name: "Create skill",
           args: { name: "geotab-weekly-review" },
-          summary: "geotab-weekly-review.skill created",
+          summary: "SKILL.md written — 90 lines, grounding rules + no-PII default included",
           write: true,
+          openByDefault: true,
           result:
-            "# Weekly Fleet Review (skill)\n" +
-            "steps: fleet size → faults → idling/harsh → HOS (per-driver) → DVIR → trips\n" +
-            "defaults: written brief · no PII (device names only) · summarize counts",
+            "---\n" +
+            "name: geotab-weekly-review\n" +
+            "description: >-\n" +
+            "  Produce a manager-ready weekly fleet review from a Geotab MCP connection —\n" +
+            "  fleet size, faults, speeding/harsh driving, HOS, DVIR, and trip activity — as a\n" +
+            "  short written brief. Encodes Geotab data quirks and a strict no-PII default so\n" +
+            "  the answer is correct and repeatable for anyone on the team.\n" +
+            "---\n\n" +
+            "# Geotab Weekly Fleet Review\n\n" +
+            "## When to use\n" +
+            "When the user asks for a weekly/periodic fleet review, a \"Monday morning\" summary, " +
+            "or \"how did the fleet do this week.\" Default window: last 7 days.\n\n" +
+            "## What to produce\n" +
+            "1. Fleet size  2. Faults/maintenance  3. Driving exceptions  4. HOS  5. DVIR  6. Trip activity\n" +
+            "End with a headline, a needs-attention list, and 2–3 recommended actions.\n\n" +
+            "## Grounding rules (avoid these traps)\n" +
+            "- Never report a raw Trip count — GetCountOf on Trip ignores the date window.\n" +
+            "- HOS is per-driver — DutyStatusViolation needs a userSearch; treat as a spot-check.\n" +
+            "- Don't infer outliers from a capped ExceptionEvent list — aggregate the whole window (e.g. via Ace).\n" +
+            "- A clean section is a finding, not a gap — report \"clean week,\" never invent data.\n" +
+            "- Summarize repeating demo data — report counts, don't dump raw rows.\n\n" +
+            "## No-PII default\n" +
+            "- Use device names, never driver names.\n" +
+            "- Watch the name field itself — some device names encode a person; fall back to make/model + a non-identifying id.\n" +
+            "- Never return emails, phone numbers, employee numbers, or per-person location histories.\n\n" +
+            "## Suggested tool flow\n" +
+            "GetCountOf Device → Get/GetCountOf FaultData → Get ExceptionEvent (or GetAceResults to rank) → " +
+            "spot-check DutyStatusViolation → Get DVIRLog → bounded Get Trip.\n\n" +
+            "## Output style\n" +
+            "Plain language, short sentences, manager-ready. No jargon, no raw JSON, no PII.\n\n" +
+            "(90 lines total — this is the trimmed preview.)",
         },
         {
           type: "claude",
           text:
-            "Done — I've packaged your routine as **`geotab-weekly-review.skill`**.\n\n" +
+            "Done — I've packaged your routine as **`geotab-weekly-review.skill`**, and it's not just a one-line " +
+            "macro. Open the card above: it encodes the actual Geotab gotchas (capped `ExceptionEvent` pages, " +
+            "per-driver HOS, the `Trip` count trap) and a strict no-PII default, so it doesn't just *repeat* — " +
+            "it gets those traps right every time, for anyone on the team.\n\n" +
             "Drop it into your team's shared skills and anyone can just say **\"run my weekly review\"** " +
-            "to get this same brief, without re-explaining the steps each time.",
+            "to get this same correct brief, without re-explaining the steps each time.",
         },
         {
           type: "endcard",
@@ -440,12 +484,38 @@ window.CONVERSATIONS = {
         {
           label: "🗺️ Create the zone + entry alert",
           say:
-            "Create a zone in Geotab matching Valencia's ZBE, add a rule that alerts me whenever one of our " +
-            "vehicles enters it, and send the alert to one fleet manager.",
-          next: "ep3-action",
+            "Create a zone in Geotab matching Valencia's ZBE and add an alert for when our vehicles enter it.",
+          next: "ep3-prefs",
         },
         { label: "🚐 What are the affected vehicles?", say: "What kind of vehicles are Demo - 23 and Demo - 31? Decode the fleet.", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep3-prefs": {
+      id: "ep3-prefs",
+      title: "Ep3 · Alert preferences",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Before I wire this up — two quick choices so the alert actually fits how you work:\n\n" +
+            "**1. What should trigger it?** Just entries, or entries *and* exits (useful if you want to confirm a vehicle cleared the zone again)?\n" +
+            "**2. Who should get it?** One fleet manager, or the whole Valencia ops group?",
+        },
+      ],
+      choices: [
+        {
+          label: "🔔 Entry only → one manager",
+          say: "Entry alerts only, sent to one fleet manager.",
+          next: "ep3-action",
+        },
+        {
+          label: "🔔 Entry + exit → whole ops group",
+          say: "Alert on both entry and exit, sent to the whole Valencia ops group.",
+          next: "ep3-action-wide",
+        },
       ],
     },
 
@@ -489,6 +559,79 @@ window.CONVERSATIONS = {
             "*(Optional next step: restrict it to non-compliant labels only — the older vans without an ECO/Zero badge.)*",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "The news changed. Your fleet already adapted."] },
+      ],
+      choices: [
+        { label: "🗺️ Show the zone on a map", say: "Show me the ZBE zone and the affected vehicles on a map.", next: "ep3-map" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep3-action-wide": {
+      id: "ep3-action-wide",
+      title: "Ep3 · Create zone + rule (entry+exit, group)",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh4", typeName: "Zone", entity: { name: "ZBE València", points: "…polygon…" } },
+          summary: "Zone created",
+          write: true,
+          result: '{ "result": "Zoneb…zbe-valencia" }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh4", typeName: "Rule", entity: { name: "ZBE València — entry & exit" } },
+          summary: "Entry + exit rule live",
+          write: true,
+          result: '{ "result": "Ruleb…zbe-entry-exit" }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh4", typeName: "Notification", entity: { recipient: "Valencia ops group" } },
+          summary: "Alert routed to the whole ops group",
+          write: true,
+          result: '{ "result": "Notificationb…" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Done — zone **ZBE València** created, with alerts on **both entry and exit**, routed to the **whole Valencia ops group**. " +
+            "Everyone on that team will see a vehicle cross the line in either direction — not just the one manager.\n\n" +
+            "*(Optional next step: restrict it to non-compliant labels only — the older vans without an ECO/Zero badge.)*",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "The news changed. Your fleet already adapted."] },
+      ],
+      choices: [
+        { label: "🗺️ Show the zone on a map", say: "Show me the ZBE zone and the affected vehicles on a map.", next: "ep3-map" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep3-map": {
+      id: "ep3-map",
+      title: "Ep3 · ZBE zone on a map",
+      events: [
+        {
+          type: "map",
+          title: "ZBE València · zone + affected vehicles",
+          pins: [
+            { label: "ZBE València (zone)", x: 50, y: 50, status: "target" },
+            { label: "Demo - 23", x: 44, y: 40, status: "busy" },
+            { label: "Demo - 31", x: 60, y: 62, status: "busy" },
+          ],
+        },
+        {
+          type: "claude",
+          text: "Both **Demo - 23** and **Demo - 31** are sitting right inside the zone boundary right now — exactly the vehicles the new alert will watch.",
+        },
       ],
       choices: [
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
@@ -627,6 +770,57 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🚐 What kind of van is Demo - 06?", say: "What kind of vehicle is Demo - 06? Decode the fleet.", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ------------------------------------------------------- ep13 · Salesforce */
+    "ep13-salesforce": {
+      id: "ep13-salesforce",
+      title: "Ep13 · Geotab + Salesforce",
+      db: "demo_fh4",
+      events: [
+        { type: "system", text: "This flow spans two connectors: **Geotab + Salesforce**." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "LogRecord", search: { deviceSearch: { id: "ba" }, fromDate: "yesterday 00:00", toDate: "yesterday 23:59" } },
+          summary: "Demo - 12 arrived at the customer site 14:32 yesterday",
+          result:
+            '[\n  { "device": "Demo - 12", "latitude": 41.123, "longitude": 2.456, "dateTime": "2026-06-18T14:32Z", "note": "matches customer site geofence" }\n]',
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "get_case",
+          args: { caseNumber: "00012345" },
+          summary: "Case 00012345 — \"Delivery arrived after 16:00\" — Open",
+          result: '{ "caseNumber": "00012345", "subject": "Delivery arrived after 16:00", "status": "Open", "account": "Test Account Ltd." }',
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "add_case_comment",
+          args: { caseNumber: "00012345", body: "Geotab GPS log: Demo - 12 arrived on-site 14:32 (18 Jun), inside the customer geofence — well before the 16:00 the case describes." },
+          summary: "Comment logged on Case 00012345",
+          write: true,
+          result: '{ "commentId": "00a…", "status": "added" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's the chain, across two tools:\n" +
+            "- **Geotab:** Demo - 12's GPS log shows it inside the customer's geofence at **14:32 yesterday** — not after 16:00 as the case claims.\n" +
+            "- **Salesforce:** I found the open case (**00012345**, \"Delivery arrived after 16:00\") and logged that GPS timestamp directly as a comment on it.\n\n" +
+            "Whoever picks up the case next sees the proof inline — no separate spreadsheet, no \"let me go check the tracker.\"\n\n" +
+            "*(Demo uses a test Salesforce org — never a real customer record.)*",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
+      ],
+      choices: [
+        { label: "🚐 What kind of van is Demo - 12?", say: "What kind of vehicle is Demo - 12? Decode the fleet.", next: "ep9-fleet" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -865,6 +1059,87 @@ window.CONVERSATIONS = {
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------------------- ep12 · why-investigation loop */
+    "ep12-investigate": {
+      id: "ep12-investigate",
+      title: "Ep12 · Investigation loop",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "FaultData", search: { deviceSearch: { id: "b6" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Demo - 08 — 14 faults in 30 days, 9 of them the same code",
+          result:
+            '[\n  { "diagnostic": "EngineCoolantOverTempId", "count": 9 },\n' +
+            '  { "diagnostic": "DeviceHasBeenUnpluggedId", "count": 3 },\n' +
+            '  { "diagnostic": "GpsAntennaShortCircuitId", "count": 2 }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "**Hypothesis 1 — is this just more driving exposure?** A van that's on the road more will naturally log more faults. Checking Demo - 08's mileage against the fleet average before I conclude anything.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Trip", search: { deviceSearch: { id: "b6" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Demo - 08 — 2,140 mi in 30 days vs. fleet avg 2,080 mi",
+          result: '{ "device": "Demo - 08", "distance_mi": 2140, "fleetAvg_mi": 2080 }',
+        },
+        {
+          type: "claude",
+          text:
+            "**Ruled out** — its mileage is unremarkable, basically fleet average. So this isn't \"it just drives more.\"\n\n" +
+            "**Hypothesis 2 — harsh driving forcing sensor faults?** Hard braking/acceleration can sometimes trip false positives on engine sensors. Checking its exception events.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "ExceptionEvent", search: { deviceSearch: { id: "b6" }, ruleSearch: { id: "HarshBrakingId,HarshAccelerationId" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Demo - 08 — 1 harsh-braking event in 30 days (fleet avg: 4)",
+          result: '{ "device": "Demo - 08", "harshEvents": 1, "fleetAvg": 4 }',
+        },
+        {
+          type: "claude",
+          text:
+            "**Ruled out too** — if anything it's driven *more* gently than average. Not a driver-behavior story either.\n\n" +
+            "**Hypothesis 3 — one component, recurring.** Going back to that fault breakdown: 9 of the 14 faults are the exact same diagnostic code. Pulling the dates to see if they cluster.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "FaultData", search: { deviceSearch: { id: "b6" }, diagnosticSearch: { id: "EngineCoolantOverTempId" }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "all 9 dated after 22 May — none before",
+          result:
+            '[\n  { "dateTime": "2026-05-22T…" }, { "dateTime": "2026-05-24T…" }, { "dateTime": "2026-05-29T…" },\n' +
+            '  { "dateTime": "2026-06-02T…" }, "… 5 more, all after 22 May" ]',
+        },
+        {
+          type: "claude",
+          text:
+            "**Found it.** All 9 coolant-overtemp faults start on **22 May** and none before — that's not random wear, that's a single point in time where something changed. Pattern fits a **failing coolant temperature sensor** (intermittent false-high readings) rather than the engine actually overheating nine separate times.\n\n" +
+            "So the real story took three rounds, not one: not exposure, not the driver, but **one part, since one date.** That's a sensor swap for the shop to confirm — not nine unrelated incidents to dismiss one by one.\n\n" +
+            "*(Diagnostic name here is illustrative for the demo, not a verified Geotab catalog ID — the investigation method is the point.)*",
+        },
+      ],
+      choices: [
+        {
+          label: "📧 Fault → email garage → book service",
+          say:
+            "Pull Demo - 08's fault details, draft an email to the garage about the coolant sensor, and put a tentative service slot on my calendar for tomorrow morning.",
+          next: "ep5-answer",
+        },
+        { label: "🔧 Now triage the rest of the fleet", say: "Now show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
       ],
     },
 

@@ -15,6 +15,7 @@
   --gmail: #c5221f;
   --gcal: #1a73e8;
   --claude: #d97757;
+  --salesforce: #00a1e0;
   --write: #0a7d3c;
   --radius: 14px;
   --maxw: 760px;
@@ -274,6 +275,7 @@ body {
 [data-server="gmail"] .tool-dot { background: var(--gmail); }
 [data-server="google-calendar"] .tool-dot { background: var(--gcal); }
 [data-server="claude"] .tool-dot { background: var(--claude); }
+[data-server="salesforce"] .tool-dot { background: var(--salesforce); }
 
 /* a tool call in flight, before its result card lands */
 .tool-pending {

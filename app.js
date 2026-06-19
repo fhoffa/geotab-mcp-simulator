@@ -200,8 +200,22 @@
 
   // human-ish typing cadence: a couple of characters at a time, irregular
   // pacing, cursor blinking at the end of what's been "typed" so far.
+  // The bubble is sized to its final text up front (via a hidden measuring
+  // clone) so it appears full-width immediately instead of growing from a
+  // tiny starting box as characters are typed.
   function typeUserText(prose, text, myToken) {
-    return revealText(prose, text, myToken, { chunk: 2, tick: 24, jitterTick: true, caret: true });
+    var bubble = prose.parentElement;
+    var clone = prose.cloneNode(false);
+    clone.innerHTML = renderMarkdown(text);
+    clone.style.visibility = "hidden";
+    bubble.appendChild(clone);
+    var finalWidth = clone.getBoundingClientRect().width;
+    bubble.removeChild(clone);
+    bubble.style.width = Math.ceil(finalWidth) + "px";
+    return revealText(prose, text, myToken, { chunk: 2, tick: 24, jitterTick: true, caret: true }).then(function (ok) {
+      bubble.style.width = "";
+      return ok;
+    });
   }
 
   function addSystem(text) {
@@ -257,6 +271,7 @@
     head.addEventListener("click", function () { card.classList.toggle("open"); });
     card.appendChild(head);
     card.appendChild(body);
+    if (ev.openByDefault) card.classList.add("open");
     (container || chatEl).appendChild(card);
     scrollDown();
   }
