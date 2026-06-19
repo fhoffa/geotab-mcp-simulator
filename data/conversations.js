@@ -536,7 +536,7 @@ window.CONVERSATIONS = {
             "Create a zone in Geotab matching Valencia's ZBE and add an alert for when our vehicles enter it.",
           next: "ep3-prefs",
         },
-        { label: "🚐 What are the affected vehicles?", say: "What make and model are Demo - 23 and Demo - 31?", next: "ep9-fleet" },
+        { label: "🚐 What are the affected vehicles?", say: "What make and model are Demo - 23 and Demo - 31?", next: "ep9-fleet-23-31" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -717,7 +717,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 What make and model are these?", say: "What make and model are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet" },
+        { label: "🚐 What make and model are these?", say: "What make and model are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet-23-31" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -806,7 +806,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔧 Now triage the faults", say: "Now show me the maintenance worklist for this fleet.", next: "ep8-maintenance" },
-        { label: "🚐 What's in the new Valencia group?", say: "What kind of vehicles ended up in the Valencia Region group?", next: "ep9-fleet" },
+        { label: "🚐 What's in the new Valencia group?", say: "What kind of vehicles ended up in the Valencia Region group?", next: "ep9-fleet-23-31" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -910,7 +910,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet-06" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -928,7 +928,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet" },
+        { label: "🚐 What kind of van is Demo - 06?", say: "What make and model is Demo - 06?", next: "ep9-fleet-06" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1033,7 +1033,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet" },
+        { label: "🚚 What kind of vehicle is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet-12" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1051,7 +1051,7 @@ window.CONVERSATIONS = {
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
       ],
       choices: [
-        { label: "🚐 What kind of van is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet" },
+        { label: "🚚 What kind of vehicle is Demo - 12?", say: "What make and model is Demo - 12?", next: "ep9-fleet-12" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1184,10 +1184,231 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🚐 What is Demo - 08, exactly?", say: "What make and model is Demo - 08?", next: "ep9-fleet" },
+        { label: "🚐 What is Demo - 08, exactly?", say: "What make and model is Demo - 08?", next: "ep9-fleet-08" },
         { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
         { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ------------------------------------------- ep9 · single-vehicle lookups */
+    "ep9-fleet-08": {
+      id: "ep9-fleet-08",
+      title: "Ep9 · What is Demo - 08",
+      db: "demo_fh4",
+      events: [
+        { type: "claude", text: "Let me check Demo - 08's VIN." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { name: "Demo - 08" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "Demo - 08 — VIN WDB9076571P106590",
+          result: '[\n  { "name": "Demo - 08", "vehicleIdentificationNumber": "WDB9076571P106590" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["WDB9076571P106590"] },
+          summary: "Mercedes-Benz Sprinter 907",
+          result: '[\n  { "make": "Mercedes-Benz", "model": "Sprinter 907" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Demo - 08 is a Mercedes-Benz Sprinter 907 — one of your 5 light vans, Demo - 06 through 10.",
+        },
+      ],
+      choices: [
+        { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
+        { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
+        { label: "📊 What's the rest of the fleet running?", say: "What about the rest of the fleet — what's the full mix?", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep9-fleet-06": {
+      id: "ep9-fleet-06",
+      title: "Ep9 · What is Demo - 06",
+      db: "demo_fh4",
+      events: [
+        { type: "claude", text: "Let me check Demo - 06's VIN." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { name: "Demo - 06" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "Demo - 06 — VIN WDB9076571P106588",
+          result: '[\n  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["WDB9076571P106588"] },
+          summary: "Mercedes-Benz Sprinter 907",
+          result: '[\n  { "make": "Mercedes-Benz", "model": "Sprinter 907" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Demo - 06 is a Mercedes-Benz Sprinter 907 — one of your 5 light vans.",
+        },
+      ],
+      choices: [
+        { label: "📊 What's the rest of the fleet running?", say: "What about the rest of the fleet — what's the full mix?", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-12": {
+      id: "ep9-fleet-12",
+      title: "Ep9 · What is Demo - 12",
+      db: "demo_fh4",
+      events: [
+        { type: "claude", text: "Let me check Demo - 12's VIN." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { name: "Demo - 12" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "Demo - 12 — VIN WDF9634031C001659",
+          result: '[\n  { "name": "Demo - 12", "vehicleIdentificationNumber": "WDF9634031C001659" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["WDF9634031C001659"] },
+          summary: "Mercedes-Benz New Actros",
+          result: '[\n  { "make": "Mercedes-Benz", "model": "New Actros" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Demo - 12 is a Mercedes-Benz New Actros — one of your 10 heavy goods units, which tracks with it running customer deliveries.",
+        },
+      ],
+      choices: [
+        { label: "📊 What's the rest of the fleet running?", say: "What about the rest of the fleet — what's the full mix?", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-23-31": {
+      id: "ep9-fleet-23-31",
+      title: "Ep9 · What are Demo - 23 & Demo - 31",
+      db: "demo_fh4",
+      events: [
+        { type: "claude", text: "Let me check both VINs." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { ids: ["Demo - 23", "Demo - 31"] }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "2 VINs",
+          result:
+            '[\n  { "name": "Demo - 23", "vehicleIdentificationNumber": "VF611A364JD011743" },\n' +
+            '  { "name": "Demo - 31", "vehicleIdentificationNumber": "WMAR62ZZ5LT034495" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["VF611A364JD011743", "WMAR62ZZ5LT034495"] },
+          summary: "Renault T · MAN Lion's Intercity C",
+          result:
+            '[\n  { "make": "Renault", "model": "T", "year": "2018", "engine": "Euro 6", "body": "Tractor" },\n' +
+            '  { "make": "MAN", "model": "Lion\'s Intercity C", "year": "2020" }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "Different vehicle types, same zone: Demo - 23 is a Renault T tractor (Euro 6) and Demo - 31 is a MAN " +
+            "Lion's Intercity coach — one hauling freight, one running a passenger route, both inside the ZBE right now.",
+        },
+      ],
+      choices: [
+        { label: "📊 What's the rest of the fleet running?", say: "What about the rest of the fleet — what's the full mix?", next: "ep9-fleet" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-01-vegas": {
+      id: "ep9-fleet-01-vegas",
+      title: "Ep9 · What is Demo - 01 (Vegas)",
+      db: "demo_fh_vegas4",
+      events: [
+        { type: "claude", text: "Let me check Demo - 01's VIN." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Device", search: { name: "Demo - 01" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "Demo - 01 — VIN 1FTBR1Y84PK500125",
+          result: '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "1FTBR1Y84PK500125" }\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh_vegas4", vins: ["1FTBR1Y84PK500125"] },
+          summary: "Ford Transit 250 cargo van",
+          result: '[\n  { "make": "Ford", "model": "Transit 250", "body": "Cargo Van" }\n]',
+        },
+        {
+          type: "claude",
+          text: "Demo - 01 is a Ford Transit 250 cargo van — one of 35 in this fleet, the other 15 being F-150 pickups for the heavier callouts.",
+        },
+      ],
+      choices: [
+        { label: "📊 What's the rest of the Vegas fleet running?", say: "What about the rest of the Vegas fleet — what's the full mix?", next: "ep9-fleet-vegas" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-fleet-vegas": {
+      id: "ep9-fleet-vegas",
+      title: "Ep9 · What's in the Vegas fleet",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Device", propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "50 vehicles, 50 distinct VINs",
+          result:
+            '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "1FTBR1Y84PK500125" },\n' +
+            '  { "name": "Demo - 45", "vehicleIdentificationNumber": "1FTFW1E84PK612049" },\n' +
+            '  { "name": "Demo - 50", "vehicleIdentificationNumber": "1FTFW1E84PK612054" },\n' +
+            '  … (50 distinct VINs, 2 distinct WMI+VDS prefixes)\n]',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh_vegas4", vins: ["1FTBR1Y84PK500125", "1FTFW1E84PK612040"] },
+          summary: "Ford Transit 250 · Ford F-150",
+          result:
+            '[\n  { "make": "Ford", "model": "Transit 250", "body": "Cargo Van" },\n' +
+            '  { "make": "Ford", "model": "F-150", "body": "Pickup" }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "Vegas is a field-service fleet: 35 Ford Transit 250 cargo vans doing the bulk of the downtown dispatch " +
+            "work, and 15 Ford F-150 pickups for the heavier callouts. Short urban hops all day, back to a depot at night " +
+            "— that's actually a stronger EV-conversion profile than Spain's, even though the speeding numbers say this " +
+            "fleet's real problem right now is behavioral, not the hardware.",
+        },
+      ],
+      choices: [
+        { label: "🚦 Drill into Vegas speeding", say: "Drill into Vegas — why is speeding up there?", next: "ep2-answer" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
       ],
     },
 
@@ -1206,22 +1427,23 @@ window.CONVERSATIONS = {
           server: "geotab",
           name: "Get",
           args: { database: "demo_fh4", typeName: "Device", propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
-          summary: "50 vehicles, 10 distinct VINs",
+          summary: "50 vehicles, 50 distinct VINs",
           result:
             '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "WMAR62ZZ5LT034475" },\n' +
-            '  { "name": "Demo - 08", "vehicleIdentificationNumber": "WDB9076571P106588" },\n' +
+            '  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588" },\n' +
+            '  { "name": "Demo - 08", "vehicleIdentificationNumber": "WDB9076571P106590" },\n' +
             '  { "name": "Demo - 21", "vehicleIdentificationNumber": "VF611A364JD011741" },\n' +
-            '  … (10 distinct VINs across 50 vehicles)\n]',
+            '  … (50 distinct VINs, but only 5 distinct WMI+VDS prefixes — same manufacturer/model codes repeat, serials don\'t)\n]',
         },
         {
           type: "claude",
-          text: "50 vehicles, but only 10 distinct VINs — so let me decode those 10 to see what's actually in this fleet.",
+          text: "Every vehicle has its own VIN, like a real fleet — but the first 11 characters (manufacturer + model code) repeat across groups, only the serial differs. So decoding one VIN per group tells me the model for all 50.",
         },
         {
           type: "tool",
           server: "geotab",
           name: "DecodeVins",
-          args: { database: "demo_fh4", vins: ["WMAR62ZZ5LT034475", "WDB9076571P106588", "WDF9634031C001659", "VF611A364JD011741", "WEB63372313280840"] },
+          args: { database: "demo_fh4", vins: ["WMAR62ZZ5LT034475", "WDB9076571P106590", "WDF9634031C001659", "VF611A364JD011741", "WEB63372313280840"] },
           summary: "MAN coach · Mercedes Sprinter · Actros · Renault T · Mercedes Intouro",
           result:
             '[\n  { "make": "MAN", "model": "Lion\'s Intercity C", "year": "2020" },\n' +
@@ -1351,7 +1573,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
         { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
-        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What make and model is Demo - 01?", next: "ep9-fleet" },
+        { label: "🚐 What kind of vehicle is Demo - 01?", say: "What make and model is Demo - 01?", next: "ep9-fleet-01-vegas" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -1638,7 +1860,7 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "Putting both fleets side by side: utilization right now is Vegas 21/50 driving (42%) vs Spain 10/50 (20%). On safety, Vegas logged 4,933 exceptions this week vs Spain's 1,347 — nearly 4x — which lines up with the fleet-wide speeding pattern already flagged.\n\n" +
-            "Maintenance flips the other way: Spain logged 599 faults (one Sprinter van, Demo - 08, owns 112 of them) vs Vegas's zero. And on sustainability, Spain's VINs decode into a real fleet mix — 30 coaches, 15 heavy trucks/tractors, 5 EV-candidate Sprinter vans — while Vegas's VINs are all the same placeholder value, so there's no EV-transition conversation to even start there. That data gap is its own line item for the board.\n\n" +
+            "Maintenance flips the other way: Spain logged 599 faults (one Sprinter van, Demo - 08, owns 112 of them) vs Vegas's zero. And on sustainability, both fleets' VINs decode now — Spain's is 30 coaches, 15 heavy trucks/tractors, 5 EV-candidate Sprinter vans, while Vegas is 35 Transit cargo vans and 15 F-150 pickups doing short urban hops. Vegas is actually the stronger EV case on paper; the thing holding it back from that conversation is the speeding, not the hardware.\n\n" +
             "Two fleets, two different failure modes: Vegas's risk is behavioral, Spain's is mechanical and concentrated. Worth briefing the board on each separately since they need different fixes.",
         },
       ],
