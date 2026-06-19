@@ -1233,7 +1233,7 @@ window.CONVERSATIONS = {
         {
           type: "claude",
           text:
-            "I pulled the VINs and decoded them — and this isn't the parcel-van fleet you might assume. It's a **passenger-transport operation**:\n\n" +
+            "I pulled the VINs and decoded them. This is a **passenger-transport operation**, not a delivery fleet:\n\n" +
             "- **30 intercity coaches** — 25 **MAN Lion's Intercity** (2020/2022) + 5 **Mercedes-Benz Intouro**\n" +
             "- **15 heavy goods units** — 10 **Mercedes-Benz Actros** + 5 **Renault T** tractors (Euro 6)\n" +
             "- **5 light vans** — **Mercedes-Benz Sprinter** *(Demo - 06 to 10 — including your fault hot-spot **Demo - 08**)*\n\n" +
