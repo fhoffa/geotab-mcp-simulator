@@ -374,6 +374,57 @@ body {
 }
 .chart-val { color: #fff; font-size: 11.5px; font-weight: 700; padding-right: 7px; }
 
+/* -------------------------------------------------------------------- map */
+.map-card {
+  border: 1px solid var(--tool-line);
+  background: var(--tool-bg);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 6px 0;
+  animation: rise 0.25s ease both;
+}
+.map-title { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); margin-bottom: 10px; }
+.map-canvas {
+  position: relative;
+  height: 200px;
+  border-radius: 8px;
+  background-color: #eef1ea;
+  background-image:
+    linear-gradient(0deg, transparent 24%, color-mix(in srgb, var(--ink) 6%, transparent) 25%, color-mix(in srgb, var(--ink) 6%, transparent) 26%, transparent 27%, transparent 74%, color-mix(in srgb, var(--ink) 6%, transparent) 75%, color-mix(in srgb, var(--ink) 6%, transparent) 76%, transparent 77%, transparent),
+    linear-gradient(90deg, transparent 24%, color-mix(in srgb, var(--ink) 6%, transparent) 25%, color-mix(in srgb, var(--ink) 6%, transparent) 26%, transparent 27%, transparent 74%, color-mix(in srgb, var(--ink) 6%, transparent) 75%, color-mix(in srgb, var(--ink) 6%, transparent) 76%, transparent 77%, transparent);
+  overflow: hidden;
+}
+.map-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.map-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  flex: 0 0 auto;
+}
+.map-pin-free .map-dot { background: var(--geotab); }
+.map-pin-busy .map-dot { background: var(--accent-ink); }
+.map-pin-target .map-dot { background: var(--ink); width: 14px; height: 14px; }
+.map-tag {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--bg) 85%, white);
+  border: 1px solid var(--tool-line);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+.map-tag-val { font-weight: 400; color: var(--ink-soft); }
+.map-disclosure { font-size: 11px; color: var(--ink-soft); margin-top: 8px; }
+
 /* ------------------------------------------------------------------- media */
 .media-card {
   border: 1px solid var(--tool-line);

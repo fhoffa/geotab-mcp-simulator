@@ -889,6 +889,33 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "📊 Show distances as a chart", say: "Show me each vehicle's distance from the job as a chart.", next: "ep-dispatch-chart" },
+        { label: "🗺️ Show me on a map", say: "Show me where these vehicles are on a map.", next: "ep-dispatch-map" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ------------------------------------------------------ ep-dispatch-map · live positions map */
+    "ep-dispatch-map": {
+      id: "ep-dispatch-map",
+      title: "Ep-Dispatch · Live positions map",
+      events: [
+        {
+          type: "map",
+          title: "Live positions vs. the job · downtown Las Vegas",
+          pins: [
+            { label: "Job site", x: 50, y: 48, status: "target" },
+            { label: "Demo - 45 (free)", x: 36, y: 60, status: "free", value: 1.0 },
+            { label: "Demo - 50 (free)", x: 64, y: 38, status: "free", value: 1.1 },
+            { label: "Demo - 01 (busy)", x: 74, y: 68, status: "busy", value: 1.6 },
+          ],
+        },
+        {
+          type: "claude",
+          text: "Both free units are tucked right around the job site — Demo - 45 a touch closer, Demo - 50 just over a block further. Demo - 01 is out past them and still moving, so it's not in play.",
+        },
+      ],
+      choices: [
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],

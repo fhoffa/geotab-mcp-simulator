@@ -286,6 +286,25 @@
     scrollDown();
   }
 
+  function addMap(ev) {
+    var card = el("div", "map-card");
+    if (ev.title) card.appendChild(el("div", "map-title", escapeHtml(ev.title)));
+    var canvas = el("div", "map-canvas");
+    (ev.pins || []).forEach(function (p) {
+      var pin = el("div", "map-pin map-pin-" + (p.status || "free"));
+      pin.style.left = (p.x || 0) + "%";
+      pin.style.top = (p.y || 0) + "%";
+      pin.appendChild(el("span", "map-dot"));
+      var tagHtml = escapeHtml(p.label || "") + (p.value != null ? ' <span class="map-tag-val">· ' + escapeHtml(String(p.value)) + "mi</span>" : "");
+      pin.appendChild(el("span", "map-tag", tagHtml));
+      canvas.appendChild(pin);
+    });
+    card.appendChild(canvas);
+    card.appendChild(el("div", "map-disclosure", "🗺️ Illustrative map — relative positions, not to scale"));
+    chatEl.appendChild(card);
+    scrollDown();
+  }
+
   function addMedia(ev) {
     var card = el("div", "media-card");
     if (ev.illustrative) {
@@ -374,6 +393,10 @@
         await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addChart(ev);
+      } else if (ev.type === "map") {
+        await wait(jitter(BASE.tool));
+        if (myToken !== playToken) return;
+        addMap(ev);
       } else if (ev.type === "endcard") {
         await wait(jitter(BASE.gap));
         if (myToken !== playToken) return;
