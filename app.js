@@ -172,23 +172,33 @@
     scrollDown();
   }
 
-  // reveals text the way it streams in: re-render the growing prefix through
-  // the markdown parser on every tick, so formatting resolves as it would for
-  // real model output, and the chat scrolls along with it instead of jumping
-  // once a whole reply lands.
-  async function streamProse(prose, text, myToken) {
-    var chunk = 6; // chars per tick
-    for (var i = chunk; i < text.length; i += chunk) {
+  // reveals text in growing chunks, checking playToken/skip between each so a
+  // restart or fast-forward can cut it short. `caret` shows a blinking cursor
+  // mid-reveal (for the user "typing"); without it the chunk is re-parsed as
+  // markdown each tick (for Claude's streamed replies).
+  async function revealText(prose, text, myToken, opts) {
+    for (var i = opts.chunk; i < text.length; i += opts.chunk) {
       if (myToken !== playToken) return false;
       if (skip) break;
-      prose.innerHTML = renderMarkdown(text.slice(0, i));
+      var shown = text.slice(0, i);
+      prose.innerHTML = opts.caret ? escapeHtml(shown) + '<span class="caret"></span>' : renderMarkdown(shown);
       scrollDown();
-      await wait(40);
+      await wait(opts.jitterTick ? jitter(opts.tick) : opts.tick);
     }
     if (myToken !== playToken) return false;
     prose.innerHTML = renderMarkdown(text);
     scrollDown();
     return true;
+  }
+
+  function streamProse(prose, text, myToken) {
+    return revealText(prose, text, myToken, { chunk: 6, tick: 40 });
+  }
+
+  // human-ish typing cadence: a couple of characters at a time, irregular
+  // pacing, cursor blinking at the end of what's been "typed" so far.
+  function typeUserText(prose, text, myToken) {
+    return revealText(prose, text, myToken, { chunk: 2, tick: 24, jitterTick: true, caret: true });
   }
 
   function addSystem(text) {
@@ -394,10 +404,16 @@
     scrollDown();
   }
 
-  function onChoice(c) {
+  async function onChoice(c) {
     if (c.action === "restart") { restart(); return; }
     if (c.action === "map") { openMap(); return; }
-    if (c.say || c.label) addBubble("user", c.say || c.label);
+    var myToken = playToken; // still the node whose choices are showing
+    trayEl.innerHTML = ""; // one shot — no double-clicking another chip mid-type
+    if (c.say || c.label) {
+      var prose = addBubbleShell("user");
+      if (!(await typeUserText(prose, c.say || c.label, myToken))) return;
+    }
+    if (myToken !== playToken) return;
     if (c.next) playNode(c.next);
   }
 
