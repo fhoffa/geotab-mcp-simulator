@@ -207,37 +207,44 @@ content must be reconciled. See **WS6**.
   privacy-respecting analytics; favicon/og image; "copy link to this episode".
 - **Parallel:** last. Acceptance: Lighthouse pass; shares render a card.
 
-### WS10 — Code review follow-ups (engine hardening)  ⬜
+### WS10 — Code review follow-ups (engine hardening)  ✅
 - **Goal:** track every finding from the 19 Jun code review of `app.js` as a
   discrete to-do (none blocking; this repo had no open PR to review, so the
   review covered the current `app.js`/`data/conversations.js` on `main`).
 - **To-dos:**
-  - [ ] **Security — href attribute-breakout.** `escapeHtml()` (app.js:42-47)
-    only escapes `&`/`<`/`>`, not quotes. `inline()` (app.js:48-54) interpolates
-    the markdown-link URL straight into `href="..."`, so a `"` in a URL/label
-    would break out of the attribute and allow injected attributes (e.g.
-    `onmouseover=`). No exploit today — no `[text](url)` links exist yet in
-    `data/conversations.js` — but fix before anyone adds one: escape quotes
-    too, and/or validate the URL scheme is `http(s)`.
-  - [ ] **CI — silent broken links.** `checkGraph()` (app.js:28-39) only
-    `console.error`s on a broken `next`/`choices[].next` reference; a broken
-    link can ship silently since nobody opens devtools to check. Add a
-    pre-commit/CI script that loads `conversations.js` headlessly and fails
-    the build on any unresolved link.
-  - [ ] **Test coverage.** No automated tests exist. At minimum, script the
-    `checkGraph()` invariants (every link resolves, every node reachable from
-    `start`) so authoring mistakes are caught before deploy, not by eyeballing.
-  - [ ] **Cleanup — duplicate bubble renderers.** `addUserBubble` and
-    `addClaudeProse` (app.js:114-132) are identical except for row/avatar
-    class and glyph; collapse into one `addBubble(role, text)` helper.
-  - [ ] **Cleanup — overcomplicated `wait()`.** `wait()` (app.js:102-111) runs
-    a `setTimeout` *and* a 40ms-polling `setInterval` just to detect a mid-wait
-    `skip` flip; simplify (e.g. check `skip` once per loop iteration like the
-    existing `myToken` guards do, or use a single cancelable timer).
-- **Files:** `app.js`; new lightweight check script (e.g. `scripts/check-graph.js`).
+  - [x] **Security — href attribute-breakout.** `escapeHtml()` now also
+    escapes `"` → `&quot;` and `'` → `&#39;` (it runs over the full raw
+    markdown before `inline()`'s link regex ever sees it, so the breakout is
+    closed at the source). Added a second line of defense, `safeHref(url)`,
+    which restricts `[text](url)` hrefs to `http(s)://` and falls back to `#`
+    otherwise — closes the `javascript:`/`data:` URI vector that quote-escaping
+    alone doesn't touch. Verified via Playwright: existing apostrophes in
+    prose (`isn't`, `it's`) still render as literal glyphs, no double-escaping
+    artifacts.
+  - [x] **CI — silent broken links.** Added `scripts/check-graph.js`: loads
+    `data/conversations.js` headlessly (`global.window = {}` + `require`),
+    checks every `next`/`choices[].next` resolves *and* every node is
+    reachable via BFS from `start`, exits non-zero on any problem. Verified it
+    fails (exit 1, 18 problems) against a deliberately-broken copy and passes
+    (exit 0) against the real graph (19 nodes).
+  - [x] **Test coverage.** Folded into `scripts/check-graph.js` above — the
+    reachability check wasn't part of `app.js`'s `checkGraph()` at all, so
+    this is strictly more coverage than existed before, with no new test
+    framework (keeps the zero-dependency philosophy).
+  - [x] **Cleanup — duplicate bubble renderers.** `addUserBubble`/
+    `addClaudeProse` collapsed into one `addBubble(role, text)`; both call
+    sites (`playNode()`'s `"claude"` branch, `onChoice()`) updated. Verified
+    via Playwright: `.row.claude` and `.row.user` both render with correct
+    classes/avatars.
+  - [x] **Cleanup — overcomplicated `wait()`.** Simplified to a single
+    `setInterval` poll loop (dropped the redundant `setTimeout`). Verified
+    click-to-skip still fast-forwards mid-wait (tray choices appeared in
+    ~240ms vs. the un-skipped multi-second duration).
+- **Files:** `app.js`; `scripts/check-graph.js` (new).
 - **Depends on:** nothing. **Parallel:** yes, each to-do is isolated.
 - **Acceptance:** quote-breakout fixed; CI fails on a broken graph link; no
-  behavior change to playback.
+  behavior change to playback. All four verified live via Playwright against
+  a local static server, not just `node --check`.
 
 ---
 

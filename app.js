@@ -43,14 +43,23 @@
     return s
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+  function safeHref(url) {
+    // only allow http(s) links; escapeHtml() already neutralized quotes, but a
+    // javascript:/data: URL would still execute without this scheme check.
+    return /^https?:\/\//i.test(url) ? url : "#";
   }
   function inline(s) {
     return s
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, text, url) {
+        return '<a href="' + safeHref(url) + '" target="_blank" rel="noopener">' + text + "</a>";
+      });
   }
   function renderMarkdown(text) {
     var lines = escapeHtml(text).split("\n");
@@ -100,30 +109,23 @@
   }
   function scrollDown() { chatEl.scrollTop = chatEl.scrollHeight; window.scrollTo(0, document.body.scrollHeight); }
   function wait(ms) {
+    // playNode() already re-checks playToken after every wait(), and the click
+    // handler flips `skip` synchronously — so a single short poll loop is enough
+    // to fast-forward mid-wait without a second timer.
     return new Promise(function (res) {
-      var t = setTimeout(res, skip ? 0 : ms);
-      // if skip flips on mid-wait, resolve soon
-      if (!skip) {
-        var iv = setInterval(function () { if (skip) { clearTimeout(t); clearInterval(iv); res(); } }, 40);
-        setTimeout(function () { clearInterval(iv); }, ms + 60);
-      }
+      var elapsed = 0;
+      var step = 40;
+      var iv = setInterval(function () {
+        elapsed += step;
+        if (skip || elapsed >= ms) { clearInterval(iv); res(); }
+      }, step);
     });
   }
 
   /* ----------------------------------------------------------- renderers */
-  function addUserBubble(text) {
-    var row = el("div", "row user");
-    row.appendChild(el("div", "avatar user", "you"));
-    var b = el("div", "bubble");
-    b.appendChild(el("div", "prose", renderMarkdown(text)));
-    row.appendChild(b);
-    chatEl.appendChild(row);
-    scrollDown();
-  }
-
-  function addClaudeProse(text) {
-    var row = el("div", "row claude");
-    row.appendChild(el("div", "avatar claude", "✳"));
+  function addBubble(role, text) {
+    var row = el("div", "row " + role);
+    row.appendChild(el("div", "avatar " + role, role === "user" ? "you" : "✳"));
     var b = el("div", "bubble");
     b.appendChild(el("div", "prose", renderMarkdown(text)));
     row.appendChild(b);
@@ -281,7 +283,7 @@
         await wait(T.type);
         typer.remove();
         if (myToken !== playToken) return;
-        addClaudeProse(ev.text);
+        addBubble("claude", ev.text);
       } else if (ev.type === "system") {
         await wait(T.system);
         if (myToken !== playToken) return;
@@ -323,7 +325,7 @@
   function onChoice(c) {
     if (c.action === "restart") { restart(); return; }
     if (c.action === "map") { openMap(); return; }
-    if (c.say || c.label) addUserBubble(c.say || c.label);
+    if (c.say || c.label) addBubble("user", c.say || c.label);
     if (c.next) playNode(c.next);
   }
 
