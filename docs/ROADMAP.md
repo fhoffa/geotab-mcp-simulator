@@ -241,18 +241,37 @@ content must be reconciled. See **WS6**.
 
 ---
 
-## WS11 — New episode backlog (personas × real tools)  ⬜ 🔬
+## WS11 — New episode backlog (personas × real tools)  🟡 (3 shipped, grounded live)
 
-**Goal:** broaden the simulator beyond the fleet-manager lens. Today's six
-episodes are mostly "the manager's Monday." Real fleets have **distinct roles
+> **Grounding pass done 19 Jun 2026** against the live MCP. Verdicts below are
+> from real calls, not guesses. **Shipped & grounded:** Maintenance triage (Ep8),
+> Fleet composition (Ep9), Posted-speed check (Ep10) — now live in
+> `data/conversations.js`. **Dead ends:** Dashcam (`SearchMedia` → empty on Vegas,
+> HTTP 500 on Spain — no media on the demo DBs) and Emissions
+> (`GetEmissionComplianceDeadline` → "Device not registered for emission
+> reporting" — no enrolled devices). **Still open:** Dispatch + Exec (data verified,
+> not yet built). Captured facts:
+> - `FaultData` 7d: **demo_fh4 = 599**, **demo_fh_vegas4 = 0**.
+> - Ace fault breakdown (demo_fh4): **Demo-08 = 112**, then Demo-22/26/21 = 7, Demo-27 = 4 → one clear outlier.
+> - `DecodeVins` (demo_fh4): 10 distinct VINs → 25 MAN Lion's Intercity coaches,
+>   10 Mercedes Actros trucks, 5 Renault T tractors (Euro 6), 5 Mercedes Intouro
+>   coaches, 5 Mercedes Sprinter vans (Demo-06…10, incl. fault hot-spot Demo-08).
+> - `GetPostedRoadSpeedsForDevice` (Demo-01, 18 Jun): per-segment limits 10–65 mph
+>   (clean mph values; `-1` = no posted limit on file; some `isEstimate`).
+> - demo_fh_vegas4 VINs are all the placeholder `1N4AL3AP0HN000000` → composition
+>   story must use demo_fh4.
+
+
+
+**Goal:** broaden the simulator beyond the fleet-manager lens. The original six
+episodes were mostly "the manager's Monday." Real fleets have **distinct roles
 with distinct needs** (the vibe-guide's four pillars — *productivity, safety,
 compliance, sustainability* — plus dispatch/maintenance), and the live MCP
-exposes **several real tools we don't use yet.** Each story below is a *pitch*,
-not a script: it names the persona, the question, the candidate **real** MCP
-tools, and the teaching beat. **None are grounded yet** — before any ships,
-capture the live MCP reply on `demo_fh_vegas4` / `demo_fh4`, fill in real
-numbers, and flip 🔬 → ✅. **Do not fabricate tool results** (same bar as the
-existing episodes).
+exposes **several real tools the simulator didn't use.** Each story below names
+the persona, the question, the candidate **real** MCP tools, and the teaching
+beat. Items marked SHIPPED were grounded against the live MCP and built into
+`data/conversations.js`; the rest stay 🔬 until a live capture confirms them.
+**Never fabricate tool results** (same bar as the existing episodes).
 
 > Source inspiration: `github.com/fhoffa/geotab-vibe-guide` (pillars, agentic
 > monitoring, safety coaching, maintenance tickets) mapped onto unused tools in
@@ -263,73 +282,63 @@ existing episodes).
 
 ### Backlog (each = one new hub choice + answer node, optional action node)
 
-- [ ] **Ep-Dashcam — "Show me what happened" (Safety / risk officer)** 🔬
-  - *Ask:* "Demo-NN had a harsh-braking event yesterday — pull the dashcam clip
-    around that moment so I can see what happened, then start a coaching note."
-  - *Tools:* `Get`(ExceptionEvent, harsh braking) → `SearchMedia`(device +
-    time window) → `GetMediaUrl` / `DownloadMediaFile`.
-  - *Teaching beat:* MCP bridges telematics → **video** → coaching in one
-    thread; the event timestamp *is* the media query. Strong, visual.
-  - *Grounding risk:* **HIGH** — demo fleets may have no media/dashcam. Verify
-    `SearchMedia` returns anything; if not, either skip or disclose as scripted.
+- [x] **Ep8 · Maintenance — "Triage the whole shop's worklist" (Maintenance manager)** ✅ SHIPPED
+  - *Ask:* "Across the fleet, which vehicles have active faults — give me a
+    prioritized worklist for the shop."
+  - *Tools:* `GetCountOf`(FaultData) + `GetAceResults` on `demo_fh4`.
+  - *Grounded:* **599 faults / 7d**; Ace breakdown → **Demo-08 = 112** (one clear
+    outlier, ~1 in 5), then 7/7/7/4. Vegas = **0** for contrast.
+  - *Teaching beat (live):* 599 looks like chaos but it's basically one vehicle —
+    the *opposite* shape from the fleet-wide speeding story; aggregation tells you
+    which shape you're in. Cross-links to Ep9 ("what is Demo-08?").
 
-- [ ] **Ep-Emissions — "Who's facing a compliance deadline?" (Compliance / sustainability)** 🔬
-  - *Ask:* "Are any of my vehicles facing an emissions-compliance deadline (e.g.
-    CARB Clean Truck Check)? Which still need enrolling — go ahead and enroll them."
-  - *Tools:* `GetEmissionComplianceDeadline` (read) → `EmissionEnrollDevices`
-    (**write/action**). Likely US-relevant → try `demo_fh_vegas4` first.
-  - *Teaching beat:* surfaces a **regulatory deadline** + a one-step enroll
-    action — compliance pillar, and a brand-new write verb beyond `Add`.
+- [x] **Ep9 · Fleet composition — "What's actually in my fleet?" (Sustainability / planning)** ✅ SHIPPED
+  - *Ask:* "Decode my fleet from the VINs — what am I running, and which are
+    realistic EV-conversion candidates?"
+  - *Tools:* `Get`(Device, VINs) + `DecodeVins` on `demo_fh4`.
+  - *Grounded:* 25 MAN Lion's Intercity coaches, 10 Mercedes Actros trucks, 5
+    Renault T tractors (Euro 6), 5 Mercedes Intouro coaches, 5 Mercedes Sprinter
+    vans. EV candidates = the 5 Sprinter vans.
+  - *Teaching beat (live):* it's a **passenger-transport operation**, not parcel
+    vans — the real VINs change the plan. Gives `DecodeVins` the narrative the
+    dropped VIN episode lacked.
 
-- [ ] **Ep-PostedSpeed — "Was the limit really what we think?" (Supervisor / driver dispute)** 🔬
-  - *Ask:* "Demo-01 disputes a speeding flag on a stretch of road — pull the
-    *posted* road speed for that device's route so we coach on facts, not memory."
-  - *Tools:* `GetPostedRoadSpeedsForDevice` (+ `Get` ExceptionEvent for context).
-  - *Teaching beat:* ground a coaching/HR conversation in **objective posted
-    limits**; pairs perfectly with the fleet-wide speeding story (Ep2/Ep7).
+- [x] **Ep10 · Posted-speed — "Was the limit really what we think?" (Supervisor / dispute)** ✅ SHIPPED
+  - *Ask:* "Demo-01 disputes a speeding flag — pull the posted road speed along
+    its actual route."
+  - *Tools:* `GetPostedRoadSpeedsForDevice` on `demo_fh_vegas4`.
+  - *Grounded:* per-segment limits **10–65 mph** for Demo-01 on 18 Jun; `-1` = no
+    posted limit on file; some `isEstimate`.
+  - *Teaching beat (live):* coach on the road, not a hunch; closes the loop on the
+    fleet-wide speeding finding. Cross-links to the Ep2 speed-alert action.
 
-- [ ] **Ep-Report — "Email me the Excel every Monday" (Operations / finance admin)** 🔬
-  - *Ask:* "I need a fleet-utilization report as a file for the finance review —
-    generate it and send it to me on a schedule."
-  - *Tools:* `SendReportProcessingRequest`.
-  - *Teaching beat:* MCP can drive **Geotab's own reporting engine** and deliver
-    a real artifact — conversational ask → formal deliverable. Complements the
-    "package as a skill" beat (Ep1) and the dashboard artifact (WS8).
-
-- [ ] **Ep-Dispatch — "Who's closest and free right now?" (Dispatcher / operations)** ✅-ish
+- [ ] **Ep-Dispatch — "Who's closest and free right now?" (Dispatcher / operations)** ✅ grounded, not built
   - *Ask:* "A job just came in near downtown — which vehicle is closest and
     available right now?"
-  - *Tools:* `GetDevicesInformation` / `Get`(DeviceStatusInfo) for live
-    positions (already proven real in Ep3) + a simple nearest calc.
-  - *Teaching beat:* real-time **operational decisioning** (productivity pillar),
-    a genuinely different role from the reflective "manager's review." Could
-    reuse the WS9 map artifact to plot the pick.
+  - *Tools:* `Get`(DeviceStatusInfo) for live positions — **verified**: real Vegas
+    lat/long + `isDriving` + speed (note: `GetDevicesInformation` is Go-Focus
+    *camera* health only, NOT general positions — use DeviceStatusInfo).
+  - *Teaching beat:* real-time operational decisioning (productivity pillar);
+    `isDriving:false` ≈ "available." Natural home for the WS9 map artifact.
 
-- [ ] **Ep-Maintenance — "Triage the whole shop's worklist" (Maintenance manager)** ✅-ish
-  - *Ask:* "Across the fleet, which vehicles have active faults right now — give
-    me a prioritized worklist for the shop."
-  - *Tools:* `GetCountOf`/`Get`(FaultData) on `demo_fh4` (**593 faults / 7d**,
-    Demo-06 active — already verified) + `GetDevicesInformation` to enrich.
-  - *Teaching beat:* turn **593 raw faults into a ranked worklist**; vivid
-    contrast with Vegas's *0 faults*. Distinct from Ep5 (one fault → one email):
-    this is fleet-wide triage. Optional action: `DismissFaults` on serviced ones.
-
-- [ ] **Ep-Electrify — "Which vans should go electric?" (Sustainability / fleet planning)** 🔬
-  - *Ask:* "Which vehicles are the best EV-conversion candidates — short,
-    predictable routes with lots of idling — and what are they (make/model)?"
-  - *Tools:* `DecodeVins` (demo_fh4 has **real varied VINs** — MAN, Mercedes,
-    Renault) + `Get` idling exceptions + positions.
-  - *Teaching beat:* sustainability planning grounded in **real vehicle
-    identity** + behavior. Gives `DecodeVins` the narrative it lacked as a bare
-    utility (see findings log — VIN episode was dropped for *lack of story*).
-
-- [ ] **Ep-Exec — "Board snapshot across both regions" (Executive / fleet director)** ✅-ish
+- [ ] **Ep-Exec — "Board snapshot across both regions" (Executive / fleet director)** ✅ grounded, not built
   - *Ask:* "Give me a board-level snapshot across both fleets — safety,
     compliance, sustainability, utilization — in five numbers."
   - *Tools:* aggregate `GetCountOf` / `GetAceResults` across **both**
-    `demo_fh_vegas4` *and* `demo_fh4`.
+    `demo_fh_vegas4` *and* `demo_fh4`. Verified building blocks: 50/50 devices,
+    0/599 faults.
   - *Teaching beat:* the four pillars in one ask, **spanning two databases** (no
     current episode does cross-DB). Natural home for the WS8 dashboard artifact.
+
+- [ ] ~~**Ep-Dashcam** (Safety / risk officer)~~ ❌ NOT VIABLE on demo DBs —
+  `SearchMedia` returns empty (Vegas) / HTTP 500 (Spain). Revisit only if a demo
+  fleet with camera media becomes available.
+- [ ] ~~**Ep-Emissions** (Compliance)~~ ❌ NOT VIABLE as-is —
+  `GetEmissionComplianceDeadline` returns "Device not registered for emission
+  reporting"; no enrolled devices on the demo DBs. Would require enrolling first
+  (and `EmissionEnrollDevices` mutates the fleet).
+- [ ] **Ep-Report** (Operations / finance admin) 🔬 — `SendReportProcessingRequest`
+  not yet probed; viability unknown. Lower priority.
 
 - **Files:** `data/conversations.js` (one node per answer, optional action node +
   hub choice); some need the new `chart`/`dashboard`/`map` renderers (WS4/8/9).
