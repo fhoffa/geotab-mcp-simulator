@@ -18,6 +18,12 @@
   var mapOverlay = document.getElementById("mapOverlay");
   var mapBody = document.getElementById("mapBody");
   var mapClose = document.getElementById("mapClose");
+  var landingOverlay = document.getElementById("landingOverlay");
+  var startSimBtn = document.getElementById("startSimBtn");
+  var tryRealOverlay = document.getElementById("tryRealOverlay");
+  var tryRealBtn = document.getElementById("tryRealBtn");
+  var tryRealBtnLanding = document.getElementById("tryRealBtnLanding");
+  var tryRealClose = document.getElementById("tryRealClose");
 
   // timing (ms); halved-to-zero when the user clicks to skip a node's playback
   var T = { tool: 480, type: 620, system: 360, gap: 220 };
@@ -377,6 +383,10 @@
   }
   function closeMap() { mapOverlay.classList.add("hidden"); }
 
+  function closeLanding() { landingOverlay.classList.add("hidden"); }
+  function openTryReal() { closeLanding(); tryRealOverlay.classList.remove("hidden"); }
+  function closeTryReal() { tryRealOverlay.classList.add("hidden"); }
+
   /* ------------------------------------------------------------- controls */
   function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
   function restart() { playToken++; clearChat(); playNode(GRAPH.start); }
@@ -386,7 +396,17 @@
   mapBtn.addEventListener("click", openMap);
   mapClose.addEventListener("click", closeMap);
   mapOverlay.addEventListener("click", function (e) { if (e.target === mapOverlay) closeMap(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMap(); });
+  startSimBtn.addEventListener("click", closeLanding);
+  tryRealBtn.addEventListener("click", openTryReal);
+  tryRealBtnLanding.addEventListener("click", openTryReal);
+  tryRealClose.addEventListener("click", closeTryReal);
+  tryRealOverlay.addEventListener("click", function (e) { if (e.target === tryRealOverlay) closeTryReal(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    closeMap();
+    closeTryReal();
+    closeLanding();
+  });
   // click the transcript while it's playing to fast-forward
   chatEl.addEventListener("click", function (e) {
     if (e.target.closest(".tool-head")) return; // let card toggles work

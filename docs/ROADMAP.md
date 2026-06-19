@@ -80,39 +80,44 @@ content must be reconciled. See **WS6**.
 - **Acceptance:** every page shares one header/footer; nav highlights current page;
   simulator still works; all links resolve.
 
-### WS1 — Landing page  ⬜
+### WS1 — Landing page  🟡 (shipped as an overlay, not a dedicated page)
 - **Goal:** explain the connector in 1 screen; two CTAs ("Try the simulator" /
   "Try it for real"); a strip of the six use cases; client-agnostic message.
-- **Files:** `index.html` content.
-- **Depends on:** WS0.  **Parallel:** yes, after WS0.
-- **Acceptance:** loads with no JS errors; both CTAs route correctly; mobile OK.
+- **Shipped (19 Jun):** a `#landingOverlay` modal in `index.html`, shown on load,
+  framed for the target persona (a fleet manager who already knows Geotab and
+  may have used ChatGPT): 3 value-prop bullets (plain-English questions,
+  client-agnostic — Claude/Copilot/ChatGPT/etc. all speak to the same open MCP
+  server, try-risk-free), two CTAs (`▶ Try the simulator` / `🔌 Ready to connect
+  your real account?`). Verified via Playwright on desktop + mobile (390×844):
+  loads with no JS errors, both CTAs route correctly, panel scrolls on short
+  viewports so the CTAs stay reachable.
+- **Not done:** the "strip of six use cases" and the full standalone page (still
+  gated behind WS0's multi-page restructuring) — this is the single-page,
+  zero-build version of the same content.
+- **Files:** `index.html`, `styles.css` (`.landing-panel`, `.hero-*`, `.cta-*`), `app.js`.
+- **Depends on:** WS0 for the *page* version.  **Parallel:** done without it for now.
+- **Acceptance:** loads with no JS errors; both CTAs route correctly; mobile OK. ✅
 
-### WS2 — "Try it for real" page (+ PII warning)  ⬜ 🔬(URLs)
+### WS2 — "Try it for real" guide (+ PII warning)  🟡 (shipped as an overlay, not a dedicated page)
 - **Goal:** step-by-step to (1) get a free Geotab demo database, (2) connect the
   Geotab MCP connector to an AI client, (3) understand PII obligations.
-- **Content:**
-  - Step 1 — Get a free Geotab demo database. *(VERIFY exact public signup/demo
-    URL — do not invent. Likely Geotab demo request / partner path.)*
-  - Step 2 — Connect the Geotab MCP connector. *(VERIFY the connector directory /
-    setup link for Claude; note other clients → WS5.)*
-  - Step 3 — **PII warning (prominent):** when you connect a *real/production*
-    database, the connector inherits your MyGeotab permissions and can surface
-    **personal data** (driver names, employee numbers, emails on distribution
-    lists, precise location histories). Before doing this:
-    - Review your **DPA / contract** with your AI provider and your **GDPR /
-      works-council / data-minimisation** obligations.
-    - **Mitigation A — instruct the AI to avoid PII:** work at the vehicle/asset
-      level ("use device names, not driver names; never return emails or phone
-      numbers").
-    - **Mitigation B — use a skill that enforces no-PII** (see WS3) so it's not
-      left to per-prompt discipline.
-    - Note: **demo databases are anonymised** ("Demo - NN", `UnknownDriverId`) so
-      they're safe to experiment on; production is where the risk lives.
-  - "Not legal advice" line; mirror language from the series bible §5.
-- **Files:** `try-real.html`.
-- **Depends on:** WS0; content-verify task for URLs (can stub with TODO links).
-- **Parallel:** yes. Acceptance: 3 clear steps; PII box visually prominent; links
-  either verified or clearly marked "confirm before launch".
+- **Shipped (19 Jun):** a `#tryRealOverlay` modal, reachable from the landing CTA
+  and anytime from a header button (`🔌 Connect real account`):
+  - Step 1 — Get access to a MyGeotab database. *(Deliberately did **not** invent
+    a signup URL — points to "your Geotab account rep or fleet admin" instead,
+    per this doc's own caution above. Still TODO if/when a verified public
+    signup link exists.)*
+  - Step 2 — Connect the connector to your assistant of choice — names Claude,
+    Microsoft Copilot, and ChatGPT explicitly as interchangeable MCP clients
+    (the "Copilot is a choice too" point folded in here, not deferred to WS5).
+  - Step 3 — **PII warning**, styled as a prominent dashed amber box
+    (`.pii-box`, mirrors the `media-disclosure` convention): DPA/GDPR review,
+    vehicle/asset-level mitigation, demo DBs are anonymised, "not legal advice"
+    line. Verified via Playwright screenshot — visually distinct, not buried.
+- **Files:** `index.html`, `styles.css` (`.steps-list`, `.pii-box`), `app.js`.
+- **Depends on:** WS0 for the *page* version; URL-verification still open.
+- **Acceptance:** 3 clear steps; PII box visually prominent; links either
+  verified or clearly marked "confirm before launch". ✅ (as an overlay)
 
 ### WS3 — Skills (page + publishable skill artifacts)  🟡 (WS3b artifact ✅; WS3a page ⬜)
 - **Goal:** explain *why* skills matter (grounding Geotab↔AI language) and ship a

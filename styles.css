@@ -486,6 +486,62 @@ body {
 .map-depth-1 { margin-left: 16px; }
 .map-depth-2 { margin-left: 32px; }
 
+/* ------------------------------------------------------------------- hero */
+.landing-panel { width: min(640px, 100%); }
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-ink);
+  margin: 0 0 6px;
+}
+.hero-title { font-size: 22px; line-height: 1.25; margin: 0 0 10px; }
+.hero-sub { font-size: 14.5px; color: var(--ink-soft); margin: 0 0 14px; }
+.hero-bullets { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.hero-bullets li {
+  font-size: 13.5px;
+  line-height: 1.5;
+  background: var(--tool-bg);
+  border: 1px solid var(--tool-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.hero-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.cta-btn {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.cta-btn:active { transform: scale(0.98); }
+.cta-primary { background: var(--accent); border-color: var(--accent-ink); color: #fff; }
+.cta-primary:hover { background: var(--accent-ink); }
+.cta-secondary { background: var(--panel); color: var(--ink); }
+.cta-secondary:hover { background: var(--bg); border-color: #d7d1c6; }
+.hero-foot { font-size: 12px; color: var(--ink-soft); margin: 12px 0 0; }
+
+/* -------------------------------------------------------------- try-real */
+.steps-list { margin: 0; padding: 0 0 0 22px; display: flex; flex-direction: column; gap: 14px; }
+.steps-list li { font-size: 14px; line-height: 1.55; }
+.pii-box {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #6b4316;
+  background: #fdf1e3;
+  border: 1px dashed #e3b274;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.pii-box p { margin: 0 0 8px; }
+.pii-box ul { margin: 0 0 8px; padding-left: 18px; }
+.pii-box .pii-foot { font-style: italic; font-size: 12px; color: #8a6a3f; margin-bottom: 0; }
+
 /* --------------------------------------------------------------- responsive */
 @media (max-width: 560px) {
   .brand-sub { display: none; }

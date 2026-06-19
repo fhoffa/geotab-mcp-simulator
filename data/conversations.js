@@ -54,7 +54,9 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "**Hi, I'm Claude.** I can work directly with your fleet through the " +
-            "**Geotab MCP connector** — reading live data *and* taking actions, all from chat.\n\n" +
+            "**Geotab MCP connector** — reading live data *and* taking actions, all from chat. " +
+            "*(The connector is an open MCP server — Microsoft Copilot, ChatGPT, and other MCP clients " +
+            "can connect to it too. I'm just today's example.)*\n\n" +
             "This page is a **simulator**: you'll pick from suggested questions instead of typing, " +
             "and the replies are pre-recorded. But every figure you'll see was pulled from a real " +
             "Geotab demo fleet. Connect the connector to begin.",

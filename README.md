@@ -16,6 +16,15 @@ experience is grounded in real data.
 > production fleet. Not affiliated with Anthropic — the chat styling is a
 > stylistic homage.
 
+On load you'll see a **landing overlay** that frames the value prop for a fleet
+manager who already knows Geotab: plain-English fleet questions, a note that the
+connector is an open MCP server (Claude, Microsoft Copilot, ChatGPT, and other
+MCP clients can all speak to it — Claude is just today's example), and two CTAs
+— jump into the simulator, or open the **"Connect your real account"** overlay
+(reachable anytime from the header), which walks through getting MyGeotab
+access, connecting the connector to your assistant of choice, and a prominent
+PII warning before touching production data.
+
 ## What you can try
 
 Connect the (simulated) connector, then pick any of six scenarios:
