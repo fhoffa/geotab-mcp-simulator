@@ -268,12 +268,27 @@ body {
 }
 .tool-body pre:last-child { margin-bottom: 0; }
 
-/* per-server dot colors */
-.tool-card[data-server="geotab"] .tool-dot { background: var(--geotab); }
-.tool-card[data-server="web"] .tool-dot { background: var(--web); }
-.tool-card[data-server="gmail"] .tool-dot { background: var(--gmail); }
-.tool-card[data-server="google-calendar"] .tool-dot { background: var(--gcal); }
-.tool-card[data-server="claude"] .tool-dot { background: var(--claude); }
+/* per-server dot colors (shared by tool cards and the pending-call line) */
+[data-server="geotab"] .tool-dot { background: var(--geotab); }
+[data-server="web"] .tool-dot { background: var(--web); }
+[data-server="gmail"] .tool-dot { background: var(--gmail); }
+[data-server="google-calendar"] .tool-dot { background: var(--gcal); }
+[data-server="claude"] .tool-dot { background: var(--claude); }
+
+/* a tool call in flight, before its result card lands */
+.tool-pending {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  margin: 6px 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--ink-soft);
+  animation: rise 0.2s ease both;
+}
+.tool-dot.pending { animation: pending-pulse 0.9s ease-in-out infinite; }
+@keyframes pending-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
 
 /* db badge under an answer's tools */
 .db-badge {

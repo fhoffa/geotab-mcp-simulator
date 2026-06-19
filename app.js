@@ -25,10 +25,29 @@
   var tryRealBtnLanding = document.getElementById("tryRealBtnLanding");
   var tryRealClose = document.getElementById("tryRealClose");
 
-  // timing (ms); halved-to-zero when the user clicks to skip a node's playback
-  var T = { tool: 480, type: 620, system: 360, gap: 220 };
+  // timing (ms) — baselines, scaled per-event below so a long answer or a
+  // slower call (writes, web fetches) takes a believable beat longer than a
+  // quick read; halved-to-zero when the user clicks to skip a node's playback
+  var BASE = { tool: 360, think: 380, system: 300, gap: 200 };
   var skip = false;
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function jitter(ms) { return Math.round(ms * (0.85 + Math.random() * 0.3)); } // +/-15%, feels less robotic
+  function wordCount(text) { return ((text || "").trim().match(/\S+/g) || []).length; }
+
+  // "thinking" pause before Claude starts streaming a reply — longer answers
+  // get a longer beat, like the model taking more time to plan them.
+  function thinkDelay(text) { return jitter(clamp(BASE.think + wordCount(text) * 14, 450, 1700)); }
+  // round-trip latency for a tool call — writes and external (web) fetches
+  // run a bit slower than a plain read, like a real MCP call would.
+  function toolDelay(ev) {
+    var d = BASE.tool;
+    if (ev.write) d += 260;
+    if (ev.server === "web") d += 340;
+    return jitter(d);
+  }
 
   /* ----------------------------------------------------------- integrity */
   function checkGraph() {
@@ -113,7 +132,13 @@
     if (html != null) e.innerHTML = html;
     return e;
   }
-  function scrollDown() { chatEl.scrollTop = chatEl.scrollHeight; window.scrollTo(0, document.body.scrollHeight); }
+  function scrollDown() {
+    // smooth while playing normally so motion tracks content arriving; snap
+    // instantly once the user fast-forwards (or asks for reduced motion)
+    var behavior = skip || reduceMotion ? "auto" : "smooth";
+    chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: behavior });
+    window.scrollTo({ top: document.body.scrollHeight, behavior: behavior });
+  }
   function wait(ms) {
     // playNode() already re-checks playToken after every wait(), and the click
     // handler flips `skip` synchronously — so a single short poll loop is enough
@@ -129,14 +154,41 @@
   }
 
   /* ----------------------------------------------------------- renderers */
-  function addBubble(role, text) {
+  function addBubbleShell(role) {
     var row = el("div", "row " + role);
     row.appendChild(el("div", "avatar " + role, role === "user" ? "you" : "✳"));
     var b = el("div", "bubble");
-    b.appendChild(el("div", "prose", renderMarkdown(text)));
+    var prose = el("div", "prose");
+    b.appendChild(prose);
     row.appendChild(b);
     chatEl.appendChild(row);
     scrollDown();
+    return prose;
+  }
+
+  function addBubble(role, text) {
+    var prose = addBubbleShell(role);
+    prose.innerHTML = renderMarkdown(text);
+    scrollDown();
+  }
+
+  // reveals text the way it streams in: re-render the growing prefix through
+  // the markdown parser on every tick, so formatting resolves as it would for
+  // real model output, and the chat scrolls along with it instead of jumping
+  // once a whole reply lands.
+  async function streamProse(prose, text, myToken) {
+    var chunk = 6; // chars per tick
+    for (var i = chunk; i < text.length; i += chunk) {
+      if (myToken !== playToken) return false;
+      if (skip) break;
+      prose.innerHTML = renderMarkdown(text.slice(0, i));
+      scrollDown();
+      await wait(40);
+    }
+    if (myToken !== playToken) return false;
+    prose.innerHTML = renderMarkdown(text);
+    scrollDown();
+    return true;
   }
 
   function addSystem(text) {
@@ -155,6 +207,16 @@
     chatEl.appendChild(wrap);
     scrollDown();
     return b; // subsequent tool cards append into this bubble
+  }
+
+  function showToolPending(ev, container) {
+    var row = el("div", "tool-pending");
+    row.setAttribute("data-server", ev.server || "geotab");
+    row.appendChild(el("span", "tool-dot pending"));
+    row.appendChild(el("span", "tool-pending-label", "Calling " + (ev.server || "geotab") + "." + ev.name + "…"));
+    (container || chatEl).appendChild(row);
+    scrollDown();
+    return row;
   }
 
   function addToolCard(ev, container) {
@@ -281,38 +343,42 @@
       if (myToken !== playToken) return; // superseded
       var ev = node.events[k];
       if (ev.type === "tool") {
-        await wait(T.tool);
+        var toolTarget = ev.server === "geotab" ? toolContainer : null;
+        var pending = showToolPending(ev, toolTarget);
+        await wait(toolDelay(ev));
+        pending.remove();
         if (myToken !== playToken) return;
-        addToolCard(ev, ev.server === "geotab" ? toolContainer : null);
+        addToolCard(ev, toolTarget);
       } else if (ev.type === "claude") {
         var typer = showTyping();
-        await wait(T.type);
+        await wait(thinkDelay(ev.text));
         typer.remove();
         if (myToken !== playToken) return;
-        addBubble("claude", ev.text);
+        var prose = addBubbleShell("claude");
+        if (!(await streamProse(prose, ev.text, myToken))) return;
       } else if (ev.type === "system") {
-        await wait(T.system);
+        await wait(jitter(BASE.system));
         if (myToken !== playToken) return;
         addSystem(ev.text);
       } else if (ev.type === "chart") {
-        await wait(T.tool);
+        await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addChart(ev);
       } else if (ev.type === "endcard") {
-        await wait(T.gap);
+        await wait(jitter(BASE.gap));
         if (myToken !== playToken) return;
         addEndcard(ev.lines || []);
       } else if (ev.type === "media") {
-        await wait(T.tool);
+        await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addMedia(ev);
       }
-      await wait(T.gap);
+      await wait(jitter(BASE.gap));
     }
     if (myToken !== playToken) return;
 
     if (node.choices && node.choices.length) renderChoices(node.choices);
-    else if (node.next) { await wait(T.gap); if (myToken === playToken) playNode(node.next); }
+    else if (node.next) { await wait(jitter(BASE.gap)); if (myToken === playToken) playNode(node.next); }
   }
 
   function renderChoices(choices) {
