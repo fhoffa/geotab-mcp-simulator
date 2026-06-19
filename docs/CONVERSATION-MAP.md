@@ -18,6 +18,8 @@ flowchart TD
     hub -->|"🔧 Triage maintenance"| ep8["Ep8 · Triage the worklist<br/>demo_fh4"]
     hub -->|"🚐 What's in my fleet?"| ep9["Ep9 · Fleet composition<br/>demo_fh4"]
     hub -->|"🛣️ Was that road that fast?"| ep10["Ep10 · Posted-speed check<br/>demo_fh_vegas4"]
+    hub -->|"🚐 Closest vehicle?"| epD["Ep-Dispatch · Closest available<br/>demo_fh_vegas4"]
+    hub -->|"📊 Board snapshot"| epX["Ep-Exec · Both fleets snapshot<br/>cross-DB"]
     hub -.->|"🗺️ Story map"| MAP(("open map overlay"))
 
     ep1 -->|"🛠️ Make it a skill"| ep1s["Ep1 · Package as a skill"]
@@ -51,10 +53,11 @@ flowchart TD
     ep9 -->|"🌍 Valencia exposure?"| ep3
     ep9 -->|"↩︎ Ask something else"| hub
     ep10 -->|"🔔 Set a speed alert"| ep2a
+    ep10 -->|"📹 Pull the dashcam"| epDC["Ep-Dashcam · Illustrative clip<br/>demo_fh_vegas4"]
     ep10 -->|"↩︎ Ask something else"| hub
 ```
 
-## Nodes (16)
+## Nodes (19)
 
 | id | title | database | leads to |
 |---|---|---|---|
@@ -73,10 +76,19 @@ flowchart TD
 | `ep7-reasoning` | Ace reasoning | demo_fh_vegas4 | `ep8-maintenance`, `hub`, restart |
 | `ep8-maintenance` | Triage the worklist | demo_fh4 | `ep9-fleet`, `hub` |
 | `ep9-fleet` | Fleet composition | demo_fh4 | `ep3-answer`, `hub`, restart |
-| `ep10-postedspeed` | Posted-speed check | demo_fh_vegas4 | `ep2-action`, `hub` |
+| `ep10-postedspeed` | Posted-speed check | demo_fh_vegas4 | `ep2-action`, `ep-dashcam`, `hub` |
+| `ep-dispatch` | Closest available vehicle | demo_fh_vegas4 | `hub`, restart |
+| `ep-exec` | Board snapshot, both fleets | demo_fh_vegas4 + demo_fh4 | `hub`, restart |
+| `ep-dashcam` | Pull the clip (illustrative) | demo_fh_vegas4 | `hub`, restart |
 
 Episodes now **cross-link** as well as branch to their own action node — e.g.
 maintenance → fleet composition → Valencia exposure, or speeding → posted-speed
-→ live alert — so the same nine entry points open many distinct paths. New
-bifurcations slot in by adding a node and a choice — see the README's
-"Extending the graph" section.
+→ live alert → dashcam — so the same eleven entry points open many distinct
+paths. `ep-dispatch` and `ep-exec` are grounded entirely from live MCP calls
+(positions, exception/fault counts across both databases). `ep-dashcam` is the
+one episode with a non-real beat: `SearchMedia` genuinely returns nothing on
+either demo DB, so the node shows that real (empty) result honestly, then
+plays a clearly-disclosed **illustrative** clip — see `media/README.md` for
+the generation prompt and disclosure convention (mirrors `app.js`'s
+`media-disclosure` banner). New bifurcations slot in by adding a node and a
+choice — see the README's "Extending the graph" section.

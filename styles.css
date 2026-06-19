@@ -347,6 +347,50 @@ body {
 }
 .chart-val { color: #fff; font-size: 11.5px; font-weight: 700; padding-right: 7px; }
 
+/* ------------------------------------------------------------------- media */
+.media-card {
+  border: 1px solid var(--tool-line);
+  background: var(--tool-bg);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 6px 0;
+  animation: rise 0.25s ease both;
+}
+.media-disclosure {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9a5b1f;
+  background: #fdf1e3;
+  border: 1px dashed #e3b274;
+  border-radius: 7px;
+  padding: 5px 9px;
+  margin-bottom: 9px;
+}
+.media-video {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 8px;
+  background: #000;
+}
+.media-fallback {
+  display: none;
+  width: 100%;
+  max-width: 480px;
+  padding: 30px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+  background: #efece4;
+  border: 1px dashed var(--tool-line);
+  border-radius: 8px;
+}
+.media-fallback.show { display: block; }
+.media-caption { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+
 /* ------------------------------------------------------------------- tray */
 .tray {
   position: sticky;

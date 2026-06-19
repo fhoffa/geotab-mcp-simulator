@@ -19,6 +19,11 @@
  *               { type:"endcard", lines:[...] }               styled end card
  *               { type:"tool", server, name, args, summary,   a tool call firing
  *                              result, write? }
+ *               { type:"chart", title, bars:[{label,value}] }   labeled bar chart
+ *               { type:"media", src, poster?, caption?,         a video clip; set
+ *                              illustrative:true, fallbackText? } illustrative:true
+ *                              whenever it's a simulated/generated clip, not a real
+ *                              MCP media result (see media/README.md)
  *   choices : buttons the user can pick (omit to auto-advance with `next`)
  *               { label, say?, next?, action? }
  *               - label : chip text
@@ -158,6 +163,20 @@ window.CONVERSATIONS = {
             "A driver is disputing a speeding flag on Demo - 01. Pull the posted road speed along its actual " +
             "route so we can coach on facts, not memory.",
           next: "ep10-postedspeed",
+        },
+        {
+          label: "🚐 Who's closest and free right now?",
+          say:
+            "A job just came in near downtown Las Vegas — which vehicle is closest and actually " +
+            "available right now?",
+          next: "ep-dispatch",
+        },
+        {
+          label: "📊 Give me a board snapshot, both fleets",
+          say:
+            "Give me a board-level snapshot across both fleets — utilization, safety, maintenance and " +
+            "sustainability — in five numbers.",
+          next: "ep-exec",
         },
         { label: "🗺️ Show the story map", action: "map" },
       ],
@@ -824,7 +843,185 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
+        { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ------------------------------------------------------ ep-dispatch · closest vehicle */
+    "ep-dispatch": {
+      id: "ep-dispatch",
+      title: "Ep-Dispatch · Closest available vehicle",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "DeviceStatusInfo", propertySelector: { fields: ["device", "latitude", "longitude", "speed", "isDriving"] }, resultsLimit: 50 },
+          summary: "50 live positions · 21 driving, 29 parked right now",
+          result:
+            '[\n  { "device": { "id": "b1" },  "name": "Demo - 01", "latitude": 36.1662, "longitude": -115.1689, "speed": 59,  "isDriving": true  },\n' +
+            '  { "device": { "id": "b2D" }, "name": "Demo - 45", "latitude": 36.1661, "longitude": -115.1577, "speed": 0,   "isDriving": false },\n' +
+            '  { "device": { "id": "b32" }, "name": "Demo - 50", "latitude": 36.1659, "longitude": -115.1584, "speed": 0,   "isDriving": false },\n' +
+            '  … (47 more)\n]',
+        },
+        {
+          type: "chart",
+          title: "Distance from the job (downtown Las Vegas) · miles",
+          bars: [
+            { label: "Demo - 45 (free)", value: 1.0 },
+            { label: "Demo - 50 (free)", value: 1.1 },
+            { label: "Demo - 01 (busy)", value: 1.6 },
+          ],
+        },
+        {
+          type: "claude",
+          text:
+            "I pulled live positions for the whole fleet, not just the ones you'd think to check.\n\n" +
+            "**Demo - 45 is closest — about 1.0 mile from downtown — and it's parked (`isDriving: false`), so it's actually free.** " +
+            "**Demo - 50** is a close second at 1.1 miles, also parked. **Demo - 01** is nearer than most but **already driving at 59 mph** — closest isn't the same as *available*, so it's out.\n\n" +
+            "Both candidates' positions are seconds old (last ping ~20s before this query), so this isn't a stale guess — dispatch this off the live fix, not a cached map.",
+        },
+      ],
+      choices: [
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ------------------------------------------------------ ep-exec · board snapshot */
+    "ep-exec": {
+      id: "ep-exec",
+      title: "Ep-Exec · Board snapshot, both fleets",
+      events: [
+        {
+          type: "system",
+          text: "Querying **both** demo databases — demo_fh_vegas4 (Las Vegas) and demo_fh4 (Spain)…",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "DeviceStatusInfo", propertySelector: { fields: ["isDriving"] }, resultsLimit: 50 },
+          summary: "21 / 50 driving right now (42%)",
+          result: "// 50 records → 21 isDriving:true",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "DeviceStatusInfo", propertySelector: { fields: ["isDriving"] }, resultsLimit: 50 },
+          summary: "10 / 50 driving right now (20%)",
+          result: "// 50 records → 10 isDriving:true",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "ExceptionEvent", search: { fromDate: "…7 days ago", toDate: "now" } },
+          summary: "4,933 exception events this week",
+          result: '{ "result": 4933 }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh4", typeName: "ExceptionEvent", search: { fromDate: "…7 days ago", toDate: "now" } },
+          summary: "1,347 exception events this week",
+          result: '{ "result": 1347 }',
+        },
+        {
+          type: "chart",
+          title: "Utilization right now · vehicles driving / 50",
+          bars: [
+            { label: "Vegas", value: 21 },
+            { label: "Spain", value: 10 },
+          ],
+        },
+        {
+          type: "chart",
+          title: "Exceptions (7d) & faults (7d) · both fleets",
+          bars: [
+            { label: "Vegas exc.", value: 4933 },
+            { label: "Spain exc.", value: 1347 },
+            { label: "Spain faults", value: 599 },
+            { label: "Vegas faults", value: 0 },
+          ],
+        },
+        {
+          type: "claude",
+          text:
+            "Same five-minute ask, both fleets, one connector:\n\n" +
+            "- **Utilization (right now):** Vegas 21/50 driving (42%) vs Spain 10/50 (20%).\n" +
+            "- **Safety (exceptions, 7d):** Vegas logged **4,933** vs Spain's **1,347** — nearly 4× — consistent with " +
+            "the fleet-wide speeding pattern already flagged this week.\n" +
+            "- **Maintenance (faults, 7d):** flips the other way — Spain logged **599** (one Sprinter van, Demo - 08, " +
+            "owns 112 of them) vs Vegas's **0**.\n" +
+            "- **Sustainability:** Spain's VINs decode into a real fleet mix — 30 coaches, 15 heavy trucks/tractors, " +
+            "5 EV-candidate Sprinter vans. Vegas's VINs are all the same placeholder value, so there's no EV-transition " +
+            "conversation to even start there yet — that data gap is its own line item for the board.\n\n" +
+            "Two fleets, two different failure modes: Vegas's risk is **behavioral**, Spain's is **mechanical and concentrated**. " +
+            "You'd brief each very differently — and you just did, across two databases, without leaving the chat.",
+        },
+        {
+          type: "endcard",
+          lines: ["Geotab MCP Connector", "One ask, two fleets, no spreadsheet stitched by hand."],
+        },
+      ],
+      choices: [
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ------------------------------------------------- ep-dashcam · illustrative clip */
+    "ep-dashcam": {
+      id: "ep-dashcam",
+      title: "Ep-Dashcam · Pull the clip (illustrative)",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "SearchMedia",
+          args: { database: "demo_fh_vegas4", deviceId: "b1 (Demo - 01)", fromDate: "18 Jun 00:00", toDate: "18 Jun 23:59", mediaType: "Video" },
+          summary: "no media records found",
+          result: '{ "result": [] }',
+        },
+        {
+          type: "claude",
+          text:
+            "`SearchMedia` is a real, live tool — but this demo database has **no dashcam hardware enrolled**, so it " +
+            "genuinely comes back empty (Spain's demo DB returns a server error for the same call). I won't fake a " +
+            "result for a tool that just told us *no*.\n\n" +
+            "What I *can* show you is what this review looks like once camera media is connected — flagged clearly " +
+            "below as a reconstruction, not a capture.",
+        },
+        {
+          type: "media",
+          illustrative: true,
+          src: "media/dashcam-demo01-harsh-brake.mp4",
+          poster: "media/dashcam-demo01-harsh-brake.jpg",
+          caption: "Forward dashcam, Demo - 01 — hard-braking event (illustrative; generation prompt in media/README.md).",
+          fallbackText: "No clip generated yet — see media/README.md for the prompt, then drop the file in media/.",
+        },
+        {
+          type: "claude",
+          text:
+            "Once footage like this is actually wired up, the ask doesn't change much — *\"pull the clip for that " +
+            "speeding flag on Demo - 01\"* — but the connector can now hand you the moment itself, not just the " +
+            "telemetry. Pair it with the posted-speed check: the road tells you the limit, the clip tells you what " +
+            "the driver saw.",
+        },
+        {
+          type: "endcard",
+          lines: ["Geotab MCP Connector", "Same connector, once camera media is enrolled — today it's honest about not having any."],
+        },
+      ],
+      choices: [
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
       ],
     },
   },

@@ -206,6 +206,39 @@
     scrollDown();
   }
 
+  function addMedia(ev) {
+    var card = el("div", "media-card");
+    if (ev.illustrative) {
+      card.appendChild(
+        el("div", "media-disclosure", "🎬 Illustrative reconstruction — AI-generated, not a live MCP capture")
+      );
+    }
+    var vid = document.createElement("video");
+    vid.className = "media-video";
+    vid.controls = true;
+    vid.preload = "metadata";
+    if (ev.poster) vid.poster = ev.poster;
+    var source = document.createElement("source");
+    source.src = ev.src;
+    vid.appendChild(source);
+
+    var fallback = el(
+      "div",
+      "media-fallback",
+      escapeHtml(ev.fallbackText || "Clip not found — see media/README.md to generate and drop it in.")
+    );
+    vid.addEventListener("error", function () {
+      vid.remove();
+      fallback.classList.add("show");
+    });
+
+    card.appendChild(vid);
+    card.appendChild(fallback);
+    if (ev.caption) card.appendChild(el("div", "media-caption", escapeHtml(ev.caption)));
+    chatEl.appendChild(card);
+    scrollDown();
+  }
+
   function showTyping() {
     var row = el("div", "row claude typing-row");
     row.appendChild(el("div", "avatar claude", "✳"));
@@ -260,6 +293,10 @@
         await wait(T.gap);
         if (myToken !== playToken) return;
         addEndcard(ev.lines || []);
+      } else if (ev.type === "media") {
+        await wait(T.tool);
+        if (myToken !== playToken) return;
+        addMedia(ev);
       }
       await wait(T.gap);
     }

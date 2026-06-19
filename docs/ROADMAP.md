@@ -241,16 +241,15 @@ content must be reconciled. See **WS6**.
 
 ---
 
-## WS11 — New episode backlog (personas × real tools)  🟡 (3 shipped, grounded live)
+## WS11 — New episode backlog (personas × real tools)  🟢 (6 shipped, grounded live)
 
 > **Grounding pass done 19 Jun 2026** against the live MCP. Verdicts below are
 > from real calls, not guesses. **Shipped & grounded:** Maintenance triage (Ep8),
-> Fleet composition (Ep9), Posted-speed check (Ep10) — now live in
-> `data/conversations.js`. **Dead ends:** Dashcam (`SearchMedia` → empty on Vegas,
-> HTTP 500 on Spain — no media on the demo DBs) and Emissions
+> Fleet composition (Ep9), Posted-speed check (Ep10), Dispatch, Exec snapshot,
+> and Dashcam (illustrative) — all now live in `data/conversations.js`.
+> **Dead end (as a live-data episode):** Emissions
 > (`GetEmissionComplianceDeadline` → "Device not registered for emission
-> reporting" — no enrolled devices). **Still open:** Dispatch + Exec (data verified,
-> not yet built). Captured facts:
+> reporting" — no enrolled devices). Captured facts:
 > - `FaultData` 7d: **demo_fh4 = 599**, **demo_fh_vegas4 = 0**.
 > - Ace fault breakdown (demo_fh4): **Demo-08 = 112**, then Demo-22/26/21 = 7, Demo-27 = 4 → one clear outlier.
 > - `DecodeVins` (demo_fh4): 10 distinct VINs → 25 MAN Lion's Intercity coaches,
@@ -260,6 +259,13 @@ content must be reconciled. See **WS6**.
 >   (clean mph values; `-1` = no posted limit on file; some `isEstimate`).
 > - demo_fh_vegas4 VINs are all the placeholder `1N4AL3AP0HN000000` → composition
 >   story must use demo_fh4.
+> - `DeviceStatusInfo` live positions (19 Jun ~04:10 UTC): Vegas 21/50 driving
+>   (42%), Spain 10/50 (20%); closest *available* (`isDriving:false`) vehicle to
+>   a downtown-Vegas job is **Demo - 45**, ~1.0 mi away.
+> - `ExceptionEvent` 7d: **demo_fh_vegas4 = 4,933**, **demo_fh4 = 1,347**.
+> - `SearchMedia` (demo_fh_vegas4, Demo-01, full day): real call, empty result —
+>   no camera media enrolled on the demo DB. Confirmed dead end for *live*
+>   footage; revived as an **illustrative** episode instead (see Ep-Dashcam below).
 
 
 
@@ -312,27 +318,42 @@ beat. Items marked SHIPPED were grounded against the live MCP and built into
   - *Teaching beat (live):* coach on the road, not a hunch; closes the loop on the
     fleet-wide speeding finding. Cross-links to the Ep2 speed-alert action.
 
-- [ ] **Ep-Dispatch — "Who's closest and free right now?" (Dispatcher / operations)** ✅ grounded, not built
+- [x] **Ep-Dispatch — "Who's closest and free right now?" (Dispatcher / operations)** ✅ SHIPPED
   - *Ask:* "A job just came in near downtown — which vehicle is closest and
     available right now?"
-  - *Tools:* `Get`(DeviceStatusInfo) for live positions — **verified**: real Vegas
-    lat/long + `isDriving` + speed (note: `GetDevicesInformation` is Go-Focus
-    *camera* health only, NOT general positions — use DeviceStatusInfo).
-  - *Teaching beat:* real-time operational decisioning (productivity pillar);
-    `isDriving:false` ≈ "available." Natural home for the WS9 map artifact.
+  - *Tools:* `Get`(DeviceStatusInfo) for live positions — real Vegas lat/long +
+    `isDriving` + speed (note: `GetDevicesInformation` is Go-Focus *camera*
+    health only, NOT general positions — use DeviceStatusInfo).
+  - *Grounded:* live snapshot, 19 Jun ~04:10 UTC — **Demo - 45** closest *and*
+    available (parked) at ~1.0 mi from a downtown-Vegas job; **Demo - 01** is
+    nearer-ish but driving 59 mph, so it's excluded as busy.
+  - *Teaching beat (live):* real-time operational decisioning (productivity
+    pillar); `isDriving:false` ≈ "available," and closest-by-distance alone
+    would have picked the wrong vehicle. Natural home for a future WS9 map artifact.
 
-- [ ] **Ep-Exec — "Board snapshot across both regions" (Executive / fleet director)** ✅ grounded, not built
+- [x] **Ep-Exec — "Board snapshot across both regions" (Executive / fleet director)** ✅ SHIPPED
   - *Ask:* "Give me a board-level snapshot across both fleets — safety,
     compliance, sustainability, utilization — in five numbers."
-  - *Tools:* aggregate `GetCountOf` / `GetAceResults` across **both**
-    `demo_fh_vegas4` *and* `demo_fh4`. Verified building blocks: 50/50 devices,
-    0/599 faults.
-  - *Teaching beat:* the four pillars in one ask, **spanning two databases** (no
-    current episode does cross-DB). Natural home for the WS8 dashboard artifact.
+  - *Tools:* `Get`(DeviceStatusInfo) + `GetCountOf`(ExceptionEvent) across
+    **both** `demo_fh_vegas4` *and* `demo_fh4`, plus prior Ep8/Ep9 facts.
+  - *Grounded:* utilization 21/50 (Vegas) vs 10/50 (Spain) driving right now;
+    exceptions 7d 4,933 (Vegas) vs 1,347 (Spain); faults 7d 0 (Vegas) vs 599
+    (Spain); Spain's VINs decode into a real fleet (EV candidates exist), Vegas's
+    don't (placeholder VINs — its own action item).
+  - *Teaching beat (live):* the four pillars in one ask, **spanning two
+    databases** — and the two fleets fail in *opposite* ways (behavioral vs
+    mechanical risk), so one board slide doesn't fit both.
 
-- [ ] ~~**Ep-Dashcam** (Safety / risk officer)~~ ❌ NOT VIABLE on demo DBs —
-  `SearchMedia` returns empty (Vegas) / HTTP 500 (Spain). Revisit only if a demo
-  fleet with camera media becomes available.
+- [x] **Ep-Dashcam — "Pull the clip" (Safety / risk officer)** ✅ SHIPPED (illustrative)
+  - *Ask:* "Pull the dashcam clip for that speeding/braking moment."
+  - *Tools:* `SearchMedia` — **real call, confirmed empty** on demo_fh_vegas4 (no
+    camera media enrolled); the episode shows that honest empty result, then
+    plays a clearly-disclosed **illustrative** clip (not a real MCP capture) —
+    see `media/README.md` for the generation prompt and `app.js`'s
+    `media-disclosure` banner for the in-app label.
+  - *Teaching beat:* the tool is real even when the demo data isn't — and the
+    simulator says so instead of faking a result. Cross-links from Ep10
+    (posted-speed dispute) since it's the same vehicle, Demo - 01.
 - [ ] ~~**Ep-Emissions** (Compliance)~~ ❌ NOT VIABLE as-is —
   `GetEmissionComplianceDeadline` returns "Device not registered for emission
   reporting"; no enrolled devices on the demo DBs. Would require enrolling first
@@ -341,19 +362,21 @@ beat. Items marked SHIPPED were grounded against the live MCP and built into
   not yet probed; viability unknown. Lower priority.
 
 - **Files:** `data/conversations.js` (one node per answer, optional action node +
-  hub choice); some need the new `chart`/`dashboard`/`map` renderers (WS4/8/9).
+  hub choice); new `media` event type (`app.js`/`styles.css`) for the illustrative
+  Dashcam clip; `media/README.md` holds the generation prompt.
 - **Depends on:** nothing structurally; **each is gated on a live MCP capture**
-  (that's the 🔬). Dispatch/Maintenance/Exec lean on already-verified data, so
-  they're the lowest-risk to ground first.
+  (that's the 🔬) — except Dashcam, which is gated on a *generated* clip (see
+  `media/README.md`); the episode works either way (styled fallback if the file
+  isn't there yet).
 - **Parallel:** yes — each episode is an isolated graph addition.
 - **Acceptance (per episode):** numbers match a live capture; tool names/args are
   real; no claim contradicts the live aggregate; persona + teaching beat are clear.
+  For Dashcam specifically: the tool call shown is real and honestly empty: only
+  the clip itself is illustrative, and it's labeled as such in-app.
 
-> **OPEN DECISION 3 — which to ground first?** Recommend the ✅-ish trio
-> (**Dispatch, Maintenance, Exec**) since their data is already verified, plus
-> **Emissions** and **PostedSpeed** as the highest-novelty *new-tool* showcases.
-> Dashcam is the most cinematic but the riskiest to ground — confirm media
-> exists on the demo DBs before investing.
+> **OPEN DECISION 3 — resolved.** Dispatch, Exec, and Dashcam are now shipped
+> alongside Maintenance/Fleet/PostedSpeed. Only **Emissions** (needs device
+> enrollment first — a write action) and **Ep-Report** (unprobed) remain open.
 
 ---
 
