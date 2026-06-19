@@ -18,6 +18,12 @@
   var mapOverlay = document.getElementById("mapOverlay");
   var mapBody = document.getElementById("mapBody");
   var mapClose = document.getElementById("mapClose");
+  var landingOverlay = document.getElementById("landingOverlay");
+  var startSimBtn = document.getElementById("startSimBtn");
+  var tryRealOverlay = document.getElementById("tryRealOverlay");
+  var tryRealBtn = document.getElementById("tryRealBtn");
+  var tryRealBtnLanding = document.getElementById("tryRealBtnLanding");
+  var tryRealClose = document.getElementById("tryRealClose");
 
   // timing (ms); halved-to-zero when the user clicks to skip a node's playback
   var T = { tool: 480, type: 620, system: 360, gap: 220 };
@@ -43,14 +49,23 @@
     return s
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+  function safeHref(url) {
+    // only allow http(s) links; escapeHtml() already neutralized quotes, but a
+    // javascript:/data: URL would still execute without this scheme check.
+    return /^https?:\/\//i.test(url) ? url : "#";
   }
   function inline(s) {
     return s
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, text, url) {
+        return '<a href="' + safeHref(url) + '" target="_blank" rel="noopener">' + text + "</a>";
+      });
   }
   function renderMarkdown(text) {
     var lines = escapeHtml(text).split("\n");
@@ -100,30 +115,23 @@
   }
   function scrollDown() { chatEl.scrollTop = chatEl.scrollHeight; window.scrollTo(0, document.body.scrollHeight); }
   function wait(ms) {
+    // playNode() already re-checks playToken after every wait(), and the click
+    // handler flips `skip` synchronously — so a single short poll loop is enough
+    // to fast-forward mid-wait without a second timer.
     return new Promise(function (res) {
-      var t = setTimeout(res, skip ? 0 : ms);
-      // if skip flips on mid-wait, resolve soon
-      if (!skip) {
-        var iv = setInterval(function () { if (skip) { clearTimeout(t); clearInterval(iv); res(); } }, 40);
-        setTimeout(function () { clearInterval(iv); }, ms + 60);
-      }
+      var elapsed = 0;
+      var step = 40;
+      var iv = setInterval(function () {
+        elapsed += step;
+        if (skip || elapsed >= ms) { clearInterval(iv); res(); }
+      }, step);
     });
   }
 
   /* ----------------------------------------------------------- renderers */
-  function addUserBubble(text) {
-    var row = el("div", "row user");
-    row.appendChild(el("div", "avatar user", "you"));
-    var b = el("div", "bubble");
-    b.appendChild(el("div", "prose", renderMarkdown(text)));
-    row.appendChild(b);
-    chatEl.appendChild(row);
-    scrollDown();
-  }
-
-  function addClaudeProse(text) {
-    var row = el("div", "row claude");
-    row.appendChild(el("div", "avatar claude", "✳"));
+  function addBubble(role, text) {
+    var row = el("div", "row " + role);
+    row.appendChild(el("div", "avatar " + role, role === "user" ? "you" : "✳"));
     var b = el("div", "bubble");
     b.appendChild(el("div", "prose", renderMarkdown(text)));
     row.appendChild(b);
@@ -206,6 +214,40 @@
     scrollDown();
   }
 
+  function addMedia(ev) {
+    var card = el("div", "media-card");
+    if (ev.illustrative) {
+      card.appendChild(
+        el("div", "media-disclosure", "🎬 Illustrative reconstruction — AI-generated, not a live MCP capture")
+      );
+    }
+    // Default to the fallback: a <video> with a missing/bad source doesn't reliably fire
+    // an "error" event (no-source resource selection often just leaves networkState at
+    // NETWORK_NO_SOURCE), so fail toward the safe state and only swap in the video once
+    // it actually has data.
+    var fallback = el(
+      "div",
+      "media-fallback show",
+      escapeHtml(ev.fallbackText || "Clip not found — see media/README.md to generate and drop it in.")
+    );
+    var vid = document.createElement("video");
+    vid.className = "media-video hidden";
+    vid.controls = true;
+    vid.preload = "metadata";
+    if (ev.poster) vid.poster = ev.poster;
+    vid.src = ev.src;
+    vid.addEventListener("loadeddata", function () {
+      vid.classList.remove("hidden");
+      fallback.classList.remove("show");
+    });
+
+    card.appendChild(vid);
+    card.appendChild(fallback);
+    if (ev.caption) card.appendChild(el("div", "media-caption", escapeHtml(ev.caption)));
+    chatEl.appendChild(card);
+    scrollDown();
+  }
+
   function showTyping() {
     var row = el("div", "row claude typing-row");
     row.appendChild(el("div", "avatar claude", "✳"));
@@ -247,7 +289,7 @@
         await wait(T.type);
         typer.remove();
         if (myToken !== playToken) return;
-        addClaudeProse(ev.text);
+        addBubble("claude", ev.text);
       } else if (ev.type === "system") {
         await wait(T.system);
         if (myToken !== playToken) return;
@@ -260,6 +302,10 @@
         await wait(T.gap);
         if (myToken !== playToken) return;
         addEndcard(ev.lines || []);
+      } else if (ev.type === "media") {
+        await wait(T.tool);
+        if (myToken !== playToken) return;
+        addMedia(ev);
       }
       await wait(T.gap);
     }
@@ -285,7 +331,7 @@
   function onChoice(c) {
     if (c.action === "restart") { restart(); return; }
     if (c.action === "map") { openMap(); return; }
-    if (c.say || c.label) addUserBubble(c.say || c.label);
+    if (c.say || c.label) addBubble("user", c.say || c.label);
     if (c.next) playNode(c.next);
   }
 
@@ -337,6 +383,10 @@
   }
   function closeMap() { mapOverlay.classList.add("hidden"); }
 
+  function closeLanding() { landingOverlay.classList.add("hidden"); }
+  function openTryReal() { closeLanding(); tryRealOverlay.classList.remove("hidden"); }
+  function closeTryReal() { tryRealOverlay.classList.add("hidden"); }
+
   /* ------------------------------------------------------------- controls */
   function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
   function restart() { playToken++; clearChat(); playNode(GRAPH.start); }
@@ -346,7 +396,17 @@
   mapBtn.addEventListener("click", openMap);
   mapClose.addEventListener("click", closeMap);
   mapOverlay.addEventListener("click", function (e) { if (e.target === mapOverlay) closeMap(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMap(); });
+  startSimBtn.addEventListener("click", closeLanding);
+  tryRealBtn.addEventListener("click", openTryReal);
+  tryRealBtnLanding.addEventListener("click", openTryReal);
+  tryRealClose.addEventListener("click", closeTryReal);
+  tryRealOverlay.addEventListener("click", function (e) { if (e.target === tryRealOverlay) closeTryReal(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    closeMap();
+    closeTryReal();
+    closeLanding();
+  });
   // click the transcript while it's playing to fast-forward
   chatEl.addEventListener("click", function (e) {
     if (e.target.closest(".tool-head")) return; // let card toggles work

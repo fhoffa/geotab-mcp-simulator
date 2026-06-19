@@ -25,6 +25,7 @@
       </div>
       <div class="header-actions">
         <span id="connStatus" class="conn-pill conn-off">Not connected</span>
+        <button id="tryRealBtn" class="ghost-btn" type="button">🔌 Connect real account</button>
         <button id="mapBtn" class="ghost-btn" type="button">🗺️ Story map</button>
         <button id="restartBtn" class="ghost-btn" type="button">↻ Restart</button>
       </div>
@@ -59,6 +60,92 @@
           Click any node to jump to it.
         </p>
         <div id="mapBody" class="map-body"></div>
+      </div>
+    </div>
+
+    <!-- Landing / value-prop overlay — shown first, dismissible -->
+    <div id="landingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Welcome">
+      <div class="overlay-panel landing-panel">
+        <p class="hero-eyebrow">GEOTAB MCP CONNECTOR</p>
+        <h1 class="hero-title">You already run Geotab. Now ask it questions instead of building reports.</h1>
+        <p class="hero-sub">
+          This is what it looks like when an AI assistant connects to your live MyGeotab data through
+          Geotab's <strong>official MCP server</strong> — read fleet state, get diagnoses, and trigger
+          real actions, all in plain English.
+        </p>
+        <ul class="hero-bullets">
+          <li>
+            <strong>🗣️ Plain-English fleet questions.</strong> Weekly reviews, fault triage, "who's
+            closest and free right now" — answered from live data, not a static export.
+          </li>
+          <li>
+            <strong>🤖 Not locked to one assistant.</strong> The connector is an open MCP server —
+            Claude, Microsoft Copilot, ChatGPT, and other MCP-capable clients can all speak to it. Pick
+            whichever your team already uses.
+          </li>
+          <li>
+            <strong>🧪 Try this version risk-free.</strong> Everything below runs against an anonymized
+            Geotab demo fleet — no real account, no setup, no risk to production data.
+          </li>
+        </ul>
+        <div class="hero-cta">
+          <button id="startSimBtn" class="cta-btn cta-primary" type="button">▶ Try the simulator</button>
+          <button id="tryRealBtnLanding" class="cta-btn cta-secondary" type="button">
+            🔌 Ready to connect your real account?
+          </button>
+        </div>
+        <p class="hero-foot">Already comfortable with MCP? Jump straight in below.</p>
+      </div>
+    </div>
+
+    <!-- "Connect your real account" overlay -->
+    <div id="tryRealOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Connect your real Geotab account">
+      <div class="overlay-panel">
+        <div class="overlay-head">
+          <h2>Connect your real Geotab account</h2>
+          <button id="tryRealClose" class="ghost-btn" type="button">✕ Close</button>
+        </div>
+        <p class="overlay-note">Three things to do before an AI assistant touches your real fleet data.</p>
+
+        <ol class="steps-list">
+          <li>
+            <strong>Get access to a MyGeotab database.</strong> If you don't have one yet, ask your
+            Geotab account rep or fleet admin — or request a demo database to practice on anonymized
+            data first (same shape as this simulator, no real drivers or vehicles).
+          </li>
+          <li>
+            <strong>Connect the Geotab MCP connector to your assistant of choice.</strong> Geotab
+            publishes an official MCP server. This simulator uses Claude, but that's one option among
+            several — Microsoft Copilot, ChatGPT, and other MCP-capable clients can connect to the same
+            server. Set it up once in your assistant's connector/integrations settings using your
+            MyGeotab credentials, then ask it anything you tried here.
+          </li>
+          <li>
+            <strong>Know what you're exposing.</strong>
+            <div class="pii-box">
+              <p>
+                <strong>Before connecting a production database:</strong> the connector inherits your
+                MyGeotab permissions, so the assistant can see anything you can see — including personal
+                data (driver names, employee numbers, emails, precise location history).
+              </p>
+              <ul>
+                <li>Review your AI provider's DPA and your GDPR / data-minimization obligations.</li>
+                <li>
+                  Instruct the assistant to work at the vehicle/asset level — ask it to avoid driver
+                  names, emails, and phone numbers in its answers.
+                </li>
+                <li>
+                  Demo databases (like the one above) are anonymized — "Demo - 01", no real driver data
+                  — so they're safe to explore freely.
+                </li>
+              </ul>
+              <p class="pii-foot">
+                Not legal advice — check with your own counsel/compliance team before connecting
+                production data.
+              </p>
+            </div>
+          </li>
+        </ol>
       </div>
     </div>
 
