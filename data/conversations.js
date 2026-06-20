@@ -1400,12 +1400,11 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "Vegas is a field-service fleet: 35 Ford Transit 250 cargo vans doing the bulk of the downtown dispatch " +
-            "work, and 15 Ford F-150 pickups for the heavier callouts. Short urban hops all day, back to a depot at night " +
-            "— that's actually a stronger EV-conversion profile than Spain's, even though the speeding numbers say this " +
-            "fleet's real problem right now is behavioral, not the hardware.",
+            "work, and 15 Ford F-150 pickups for the heavier callouts.",
         },
       ],
       choices: [
+        { label: "🔋 Is this fleet a good EV-conversion case?", say: "Short urban hops, back to a depot at night — is Vegas a good EV-conversion case?", next: "ep9-ev-vegas" },
         { label: "🚦 Drill into Vegas speeding", say: "Drill into Vegas — why is speeding up there?", next: "ep2-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
@@ -1458,9 +1457,7 @@ window.CONVERSATIONS = {
             "Okay, decoded. This is a passenger-transport operation, not a delivery fleet — 30 intercity coaches " +
             "(25 MAN Lion's Intercity plus 5 Mercedes-Benz Intouro), 15 heavy goods units (10 Mercedes Actros and 5 " +
             "Renault T tractors, Euro 6), and just 5 light vans — Mercedes-Benz Sprinters, Demo - 06 through 10, " +
-            "which includes your fault hot-spot Demo - 08.\n\n" +
-            "That mix actually matters for the EV question you might be heading toward: the 5 Sprinters are realistic " +
-            "conversion candidates — light, urban, predictable routes. The coaches and 40-tonne tractors aren't close to viable yet.",
+            "which includes your fault hot-spot Demo - 08.",
         },
         {
           type: "endcard",
@@ -1533,6 +1530,38 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🌍 Check them against the Valencia zone", say: "Do these same Sprinters drive through Valencia's low-emission zone?", next: "ep3-answer" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep9-ev-vegas": {
+      id: "ep9-ev-vegas",
+      title: "Ep9 · EV-conversion case (Vegas)",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Trip", search: { deviceSearch: { ids: ["Demo - 01", "Demo - 02", "Demo - 03"] }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Transit/F-150 sample averages ~58 mi/day, max single trip ~95 mi",
+          result: '{ "avgDailyMiles": 58, "maxSingleTrip_mi": 95, "longestGapBetweenTrips_h": 11 }',
+        },
+        {
+          type: "claude",
+          text:
+            "This fleet's short urban hops average around 58 miles a day with an ~11-hour overnight gap back at the " +
+            "depot — that's a stronger EV-conversion profile on paper than Spain's coaches and tractors. The thing " +
+            "actually holding this conversation back isn't the hardware, it's the speeding: fix the behavioral side " +
+            "first, then the EV case gets easier to make to the board.\n\n" +
+            "(Worth flagging: the daily-mileage figures here are illustrative for the demo, directionally consistent " +
+            "with how Transit/F-150 routes get used, but not a live total I'd quote to a vendor.)",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "It knows what you actually drive — not just how many."] },
+      ],
+      choices: [
+        { label: "🚦 Drill into Vegas speeding", say: "Drill into Vegas — why is speeding up there?", next: "ep2-answer" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
