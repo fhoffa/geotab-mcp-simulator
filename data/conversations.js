@@ -1426,7 +1426,7 @@ window.CONVERSATIONS = {
           server: "geotab",
           name: "Get",
           args: { database: "demo_fh4", typeName: "Device", propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
-          summary: "50 vehicles, 50 distinct VINs",
+          summary: "50 vehicles, 5 distinct WMI+VDS prefixes",
           result:
             '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "WMAR62ZZ5LT034475" },\n' +
             '  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588" },\n' +
@@ -1436,7 +1436,7 @@ window.CONVERSATIONS = {
         },
         {
           type: "claude",
-          text: "Every vehicle has its own VIN, like a real fleet — but the first 11 characters (manufacturer + model code) repeat across groups, only the serial differs. So decoding one VIN per group tells me the model for all 50.",
+          text: "Good news for decoding: the first 11 characters (manufacturer + model code) only repeat in 5 patterns across all 50, so I just need to decode one VIN per pattern to get the model for the whole fleet — not all 50.",
         },
         {
           type: "tool",
