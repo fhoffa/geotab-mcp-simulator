@@ -1,0 +1,11 @@
+{
+  "name": "geotab-mcp-simulator",
+  "version": "1.0.0",
+  "description": "Static, zero-build simulator for the Geotab MCP connector experience.",
+  "private": true,
+  "scripts": {
+    "test": "node scripts/check-graph.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "license": "MIT"
+}

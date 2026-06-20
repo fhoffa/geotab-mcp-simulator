@@ -20,6 +20,29 @@ Key files:
 - When editing conversation flows, keep node ids, `next`, and `choices[].next` references valid.
 - Treat the simulator’s demo fleet data as public demo data only; do not add real customer data, private notes, secrets, tokens, or credentials.
 
+### Design principle — enriching incomplete demo data
+
+This is a **demo of what a real fleet manager would experience**, not a literal
+mirror of the demo databases. The demo DBs are sometimes thin or unrealistic
+(e.g. `demo_fh_vegas4`'s VINs are all the same placeholder; `demo_fh4` has only a
+handful of distinct VINs). When that thinness would *break the illusion* of a
+real fleet, it is **acceptable — and intended — to enrich the data toward a more
+realistic experience** (e.g. presenting 50 distinct VINs for a 50-vehicle fleet
+instead of the literal repeated placeholders).
+
+Guardrails so enrichment stays honest:
+- Keep **tool names, arguments, and response shapes real** — enrich the *values*,
+  not the API surface.
+- Don't contradict a *finding the simulator teaches* (e.g. the fleet-wide
+  speeding result, the Demo-08 fault outlier). Enrichment fills realism gaps; it
+  must not undercut a teaching beat.
+- For a capability the demo genuinely can't produce a real result for (no camera
+  media, no map tiles), label it **illustrative** the way `media`/`map` events
+  already do, rather than passing it off as a live capture.
+
+In short: enrich for realism, disclose when something is illustrative, and never
+fabricate the *mechanics* (tools/args) — only the *texture* (plausible values).
+
 ## Verification
 
 Before finishing changes, run:
