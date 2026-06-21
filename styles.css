@@ -344,6 +344,37 @@ body {
 .endcard .ec-1 { font-weight: 700; color: var(--accent-ink); }
 .endcard .ec-2 { font-size: 1.05em; margin-top: 2px; }
 .endcard .ec-foot { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+.ec-cta {
+  margin-top: 12px;
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent-ink);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ec-cta:hover { background: var(--accent-ink); }
+.ec-cta:active { transform: translateY(1px); }
+
+.noscript-note {
+  max-width: 680px;
+  margin: 24px auto;
+  padding: 16px 18px;
+  border: 1px solid var(--tool-line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+/* visible focus ring for keyboard users (mouse clicks stay clean via :focus-visible) */
+:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 /* ------------------------------------------------------------------ chart */
 .chart-card {

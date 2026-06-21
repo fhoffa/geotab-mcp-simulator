@@ -14,6 +14,7 @@
   var trayEl = document.getElementById("tray");
   var connEl = document.getElementById("connStatus");
   var restartBtn = document.getElementById("restartBtn");
+  var shareBtn = document.getElementById("shareBtn");
   var mapBtn = document.getElementById("mapBtn");
   var mapOverlay = document.getElementById("mapOverlay");
   var mapBody = document.getElementById("mapBody");
@@ -180,16 +181,20 @@
   // mid-reveal (for the user "typing"); without it the chunk is re-parsed as
   // markdown each tick (for Claude's streamed replies).
   async function revealText(prose, text, myToken, opts) {
+    // hold screen-reader announcements until the message settles — otherwise the
+    // per-tick innerHTML rewrites spam the #chat aria-live region with fragments.
+    chatEl.setAttribute("aria-busy", "true");
     for (var i = opts.chunk; i < text.length; i += opts.chunk) {
-      if (myToken !== playToken) return false;
+      if (myToken !== playToken) { chatEl.setAttribute("aria-busy", "false"); return false; }
       if (skip) break;
       var shown = text.slice(0, i);
       prose.innerHTML = opts.caret ? escapeHtml(shown) + '<span class="caret"></span>' : renderMarkdown(shown);
       scrollDown();
       await wait(opts.jitterTick ? jitter(opts.tick) : opts.tick);
     }
-    if (myToken !== playToken) return false;
+    if (myToken !== playToken) { chatEl.setAttribute("aria-busy", "false"); return false; }
     prose.innerHTML = renderMarkdown(text);
+    chatEl.setAttribute("aria-busy", "false"); // settled — now it's announced once
     scrollDown();
     return true;
   }
@@ -249,6 +254,8 @@
 
     var head = el("button", "tool-head");
     head.type = "button";
+    head.setAttribute("aria-expanded", ev.openByDefault ? "true" : "false");
+    head.setAttribute("aria-label", "Tool call " + (ev.server || "geotab") + "." + ev.name + " — show request and response");
     head.appendChild(el("span", "tool-dot"));
     head.appendChild(el("span", "tool-server", ev.server || "geotab"));
     head.appendChild(el("span", "tool-name", ev.name));
@@ -265,7 +272,10 @@
       body.appendChild(el("pre", null, escapeHtml(ev.result)));
     }
 
-    head.addEventListener("click", function () { card.classList.toggle("open"); });
+    head.addEventListener("click", function () {
+      var open = card.classList.toggle("open");
+      head.setAttribute("aria-expanded", open ? "true" : "false");
+    });
     card.appendChild(head);
     card.appendChild(body);
     if (ev.openByDefault) card.classList.add("open");
@@ -278,6 +288,11 @@
     c.appendChild(el("div", "ec-1", escapeHtml(lines[0] || "")));
     if (lines[1]) c.appendChild(el("div", "ec-2", escapeHtml(lines[1])));
     c.appendChild(el("div", "ec-foot", "Same connector also works in Microsoft Copilot, ChatGPT, Block Goose, Cursor & Windsurf · geotab.com"));
+    // turn the moment of impact into a next step: jump to the "connect for real" guide
+    var cta = el("button", "ec-cta", "🔌 Try this with your own fleet");
+    cta.type = "button";
+    cta.addEventListener("click", openTryReal);
+    c.appendChild(cta);
     chatEl.appendChild(c);
     scrollDown();
   }
@@ -285,6 +300,11 @@
   function addChart(ev) {
     var max = (ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
     var card = el("div", "chart-card");
+    // text alternative so the bar chart isn't invisible to screen readers
+    card.setAttribute("role", "img");
+    card.setAttribute("aria-label",
+      (ev.title ? ev.title + ": " : "Chart: ") +
+      (ev.bars || []).map(function (b) { return b.label + " " + b.value; }).join(", "));
     if (ev.title) card.appendChild(el("div", "chart-title", escapeHtml(ev.title)));
     (ev.bars || []).forEach(function (b) {
       var row = el("div", "chart-row");
@@ -303,6 +323,12 @@
 
   function addMap(ev) {
     var card = el("div", "map-card");
+    // text alternative — the SVG zone + pins convey data screen readers can't see
+    card.setAttribute("role", "img");
+    card.setAttribute("aria-label",
+      (ev.title ? ev.title + ". " : "Map. ") +
+      (ev.zone && ev.zone.label ? "Zone: " + ev.zone.label + ". " : "") +
+      ((ev.pins || []).length ? "Vehicles: " + ev.pins.map(function (p) { return p.label; }).join(", ") + "." : ""));
     if (ev.title) card.appendChild(el("div", "map-title", escapeHtml(ev.title)));
     var canvas = el("div", "map-canvas");
     if (ev.zone && ev.zone.points && ev.zone.points.length) {
@@ -522,22 +548,73 @@
       }
       mapBody.appendChild(wrap);
     });
-    mapOverlay.classList.remove("hidden");
+    openOverlay(mapOverlay);
   }
-  function closeMap() { mapOverlay.classList.add("hidden"); }
+  // --- modal focus management: move focus in on open, trap Tab inside the
+  // panel, and restore focus to the trigger on close (a11y for the dialogs).
+  var lastFocused = null;
+  function focusables(overlay) {
+    return Array.prototype.slice.call(
+      overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter(function (e) { return !e.disabled && e.offsetParent !== null; });
+  }
+  function openOverlay(overlay, trigger) {
+    lastFocused = trigger || document.activeElement;
+    overlay.classList.remove("hidden");
+    var f = focusables(overlay);
+    (f[0] || overlay).focus();
+  }
+  function closeOverlay(overlay) {
+    if (overlay.classList.contains("hidden")) return;
+    overlay.classList.add("hidden");
+    var target =
+      lastFocused && typeof lastFocused.focus === "function" && lastFocused.offsetParent !== null
+        ? lastFocused
+        : tryRealBtn; // visible fallback if the original trigger is now hidden (e.g. landing CTA)
+    target.focus();
+  }
+  // the visible (non-hidden) overlay, if any — for Escape + tab-trap targeting
+  function activeOverlay() {
+    var all = [landingOverlay, tryRealOverlay, aboutOverlay, mapOverlay];
+    for (var i = 0; i < all.length; i++) if (!all[i].classList.contains("hidden")) return all[i];
+    return null;
+  }
 
-  function closeLanding() { landingOverlay.classList.add("hidden"); }
-  function openTryReal() { closeLanding(); tryRealOverlay.classList.remove("hidden"); }
-  function closeTryReal() { tryRealOverlay.classList.add("hidden"); }
-  function openAbout() { aboutOverlay.classList.remove("hidden"); }
-  function closeAbout() { aboutOverlay.classList.add("hidden"); }
+  function closeMap() { closeOverlay(mapOverlay); }
+
+  function closeLanding() { closeOverlay(landingOverlay); }
+  function openTryReal() {
+    var trigger = document.activeElement;
+    closeLanding();
+    openOverlay(tryRealOverlay, trigger);
+  }
+  function closeTryReal() { closeOverlay(tryRealOverlay); }
+  function openAbout() { openOverlay(aboutOverlay); }
+  function closeAbout() { closeOverlay(aboutOverlay); }
 
   /* ------------------------------------------------------------- controls */
+  // copy a deep link to the current node (the hash already tracks playback in
+  // playNode via replaceState) so people can share "look at *this* answer".
+  function shareLink() {
+    var url = location.href;
+    var done = function () {
+      var prev = shareBtn.textContent;
+      shareBtn.textContent = "✓ Link copied";
+      setTimeout(function () { shareBtn.textContent = prev; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, function () { window.prompt("Copy this link:", url); });
+    } else {
+      window.prompt("Copy this link:", url);
+    }
+  }
+
   function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
   function restart() { playToken++; clearChat(); playNode(GRAPH.start); }
   function restartTo(id) { playToken++; clearChat(); playNode(id); }
 
   restartBtn.addEventListener("click", restart);
+  shareBtn.addEventListener("click", shareLink);
   mapBtn.addEventListener("click", openMap);
   mapClose.addEventListener("click", closeMap);
   mapOverlay.addEventListener("click", function (e) { if (e.target === mapOverlay) closeMap(); });
@@ -550,11 +627,17 @@
   aboutClose.addEventListener("click", closeAbout);
   aboutOverlay.addEventListener("click", function (e) { if (e.target === aboutOverlay) closeAbout(); });
   document.addEventListener("keydown", function (e) {
-    if (e.key !== "Escape") return;
-    closeMap();
-    closeTryReal();
-    closeAbout();
-    closeLanding();
+    var open = activeOverlay();
+    if (!open) return;
+    if (e.key === "Escape") { closeOverlay(open); return; }
+    if (e.key === "Tab") {
+      // keep focus inside the open dialog
+      var f = focusables(open);
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
   });
   // click the transcript while it's playing to fast-forward
   chatEl.addEventListener("click", function (e) {

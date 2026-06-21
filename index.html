@@ -61,11 +61,20 @@
       <div class="header-actions">
         <span id="connStatus" class="conn-pill conn-off">Not connected</span>
         <button id="tryRealBtn" class="ghost-btn" type="button">🔌 Connect real account</button>
+        <button id="shareBtn" class="ghost-btn" type="button" title="Copy a link to this point in the simulator">🔗 Share</button>
         <button id="mapBtn" class="ghost-btn" type="button">🗺️ Story map</button>
         <button id="aboutBtn" class="ghost-btn" type="button">ℹ️ About</button>
         <button id="restartBtn" class="ghost-btn" type="button">↻ Restart</button>
       </div>
     </header>
+
+    <noscript>
+      <div class="noscript-note">
+        This simulator needs JavaScript to play the guided conversation. Enable it,
+        or read what it does in the
+        <a href="https://github.com/fhoffa/geotab-mcp-simulator#readme">project README</a>.
+      </div>
+    </noscript>
 
     <main class="chat" id="chat" aria-live="polite">
       <!-- messages injected here -->
@@ -172,9 +181,11 @@
 
         <ol class="steps-list">
           <li>
-            <strong>Get access to a MyGeotab database.</strong> If you don't have one yet, ask your
-            Geotab account rep or fleet admin — or request a demo database to practice on anonymized
-            data first (same shape as this simulator, no real drivers or vehicles).
+            <strong>Get access to a MyGeotab database.</strong> The fastest way to start is a free
+            demo database — register at
+            <a href="https://my.geotab.com/registration.html" target="_blank" rel="noopener">my.geotab.com/registration.html</a>
+            to practice on anonymized data first (same shape as this simulator, no real drivers or
+            vehicles). For production access, ask your Geotab account rep or fleet admin.
           </li>
           <li>
             <strong>Connect the Geotab MCP connector to your assistant of choice.</strong> Geotab
