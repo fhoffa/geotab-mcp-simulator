@@ -558,8 +558,8 @@
       overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
     ).filter(function (e) { return !e.disabled && e.offsetParent !== null; });
   }
-  function openOverlay(overlay) {
-    lastFocused = document.activeElement;
+  function openOverlay(overlay, trigger) {
+    lastFocused = trigger || document.activeElement;
     overlay.classList.remove("hidden");
     var f = focusables(overlay);
     (f[0] || overlay).focus();
@@ -567,7 +567,11 @@
   function closeOverlay(overlay) {
     if (overlay.classList.contains("hidden")) return;
     overlay.classList.add("hidden");
-    if (lastFocused && typeof lastFocused.focus === "function") lastFocused.focus();
+    var target =
+      lastFocused && typeof lastFocused.focus === "function" && lastFocused.offsetParent !== null
+        ? lastFocused
+        : tryRealBtn; // visible fallback if the original trigger is now hidden (e.g. landing CTA)
+    target.focus();
   }
   // the visible (non-hidden) overlay, if any — for Escape + tab-trap targeting
   function activeOverlay() {
@@ -579,7 +583,11 @@
   function closeMap() { closeOverlay(mapOverlay); }
 
   function closeLanding() { closeOverlay(landingOverlay); }
-  function openTryReal() { closeLanding(); openOverlay(tryRealOverlay); }
+  function openTryReal() {
+    var trigger = document.activeElement;
+    closeLanding();
+    openOverlay(tryRealOverlay, trigger);
+  }
   function closeTryReal() { closeOverlay(tryRealOverlay); }
   function openAbout() { openOverlay(aboutOverlay); }
   function closeAbout() { closeOverlay(aboutOverlay); }
