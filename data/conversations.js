@@ -164,7 +164,7 @@ window.CONVERSATIONS = {
           say:
             "What makes and models am I actually running on the Spain fleet, " +
             "and which are realistic EV-conversion candidates?",
-          next: "ep9-fleet",
+          next: "ep9-fleet-hub",
         },
         {
           label: "🛣️ Was that road really that fast?",
@@ -1412,6 +1412,69 @@ window.CONVERSATIONS = {
     },
 
     /* -------------------------------------------------- ep9 · fleet composition */
+    "ep9-fleet-hub": {
+      id: "ep9-fleet-hub",
+      title: "Ep9 · Fleet mix + EV candidates",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text: "Let me pull the VINs across the fleet first.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", propertySelector: { fields: ["name", "vehicleIdentificationNumber"] } },
+          summary: "50 vehicles, 5 distinct WMI+VDS prefixes",
+          result:
+            '[\n  { "name": "Demo - 01", "vehicleIdentificationNumber": "WMAR62ZZ5LT034475" },\n' +
+            '  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588" },\n' +
+            '  { "name": "Demo - 08", "vehicleIdentificationNumber": "WDB9076571P106590" },\n' +
+            '  { "name": "Demo - 21", "vehicleIdentificationNumber": "VF611A364JD011741" },\n' +
+            '  … (50 distinct VINs, but only 5 distinct WMI+VDS prefixes — same manufacturer/model codes repeat, serials don\'t)\n]',
+        },
+        {
+          type: "claude",
+          text: "Good news for decoding: the first 11 characters (manufacturer + model code) only repeat in 5 patterns across all 50, so I just need to decode one VIN per pattern to get the model for the whole fleet — not all 50.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "DecodeVins",
+          args: { database: "demo_fh4", vins: ["WMAR62ZZ5LT034475", "WDB9076571P106590", "WDF9634031C001659", "VF611A364JD011741", "WEB63372313280840"] },
+          summary: "MAN coach · Mercedes Sprinter · Actros · Renault T · Mercedes Intouro",
+          result:
+            '[\n  { "make": "MAN", "model": "Lion\'s Intercity C", "year": "2020" },\n' +
+            '  { "make": "Mercedes-Benz", "model": "Sprinter 907" },\n' +
+            '  { "make": "Mercedes-Benz", "model": "New Actros" },\n' +
+            '  { "make": "Renault", "model": "T", "year": "2018", "engine": "Euro 6", "body": "Tractor" },\n' +
+            '  { "make": "Mercedes-Benz", "model": "Intouro", "plant": "Istanbul" }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "Okay, decoded. This is a passenger-transport operation, not a delivery fleet — 30 intercity coaches " +
+            "(25 MAN Lion's Intercity plus 5 Mercedes-Benz Intouro), 15 heavy goods units (10 Mercedes Actros and 5 " +
+            "Renault T tractors, Euro 6), and just 5 light vans — Mercedes-Benz Sprinters, Demo - 06 through 10, " +
+            "which includes your fault hot-spot Demo - 08.\n\n" +
+            "On the EV question: the 5 Sprinters are the realistic near-term candidates — light, urban, predictable " +
+            "routes. The coaches and 40-tonne tractors aren't close to viable yet.",
+        },
+        {
+          type: "endcard",
+          lines: ["Geotab MCP Connector", "It knows what you actually drive — not just how many."],
+        },
+      ],
+      choices: [
+        { label: "📊 Show that as a chart", say: "Show me the fleet composition as a chart.", next: "ep9-fleet-chart" },
+        { label: "🌍 Which of these hit the Valencia zone?", say: "Which of these vehicles drive through Valencia's low-emission zone?", next: "ep3-answer" },
+        { label: "🔋 Make the detailed EV case", say: "Make the detailed case for converting the Sprinters to EV — what would it take?", next: "ep9-ev" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
     "ep9-fleet": {
       id: "ep9-fleet",
       title: "Ep9 · What's in the fleet",
@@ -1544,17 +1607,18 @@ window.CONVERSATIONS = {
           type: "tool",
           server: "geotab",
           name: "Get",
-          args: { database: "demo_fh_vegas4", typeName: "Trip", search: { deviceSearch: { ids: ["Demo - 01", "Demo - 02", "Demo - 03"] }, fromDate: "…30 days ago", toDate: "now" } },
-          summary: "Transit/F-150 sample averages ~58 mi/day, max single trip ~95 mi",
-          result: '{ "avgDailyMiles": 58, "maxSingleTrip_mi": 95, "longestGapBetweenTrips_h": 11 }',
+          args: { database: "demo_fh_vegas4", typeName: "Trip", search: { deviceSearch: { ids: ["Demo - 01", "Demo - 02", "Demo - 03", "Demo - 45"] }, fromDate: "…30 days ago", toDate: "now" } },
+          summary: "Transit sample ~58 mi/day; F-150 sample (Demo - 45) ~71 mi/day",
+          result: '{ "transit": { "avgDailyMiles": 58, "maxSingleTrip_mi": 95, "longestGapBetweenTrips_h": 11 }, "f150": { "avgDailyMiles": 71, "maxSingleTrip_mi": 130, "longestGapBetweenTrips_h": 9 } }',
         },
         {
           type: "claude",
           text:
-            "This fleet's short urban hops average around 58 miles a day with an ~11-hour overnight gap back at the " +
-            "depot — that's a stronger EV-conversion profile on paper than Spain's coaches and tractors. The thing " +
-            "actually holding this conversation back isn't the hardware, it's the speeding: fix the behavioral side " +
-            "first, then the EV case gets easier to make to the board.\n\n" +
+            "Splitting it by vehicle type: the Transit vans average ~58 miles a day with an ~11-hour overnight gap — " +
+            "comfortably within a mid-size EV van's range. The F-150s (sampled via Demo - 45) run longer and heavier " +
+            "callouts, ~71 miles a day with a 130-mile single trip — still plausible for an EV pickup, but a tighter " +
+            "case than the vans. Either way, the bigger blocker for this fleet's EV conversation isn't the hardware, " +
+            "it's the speeding: fix the behavioral side first, then the EV case gets easier to make to the board.\n\n" +
             "(Worth flagging: the daily-mileage figures here are illustrative for the demo, directionally consistent " +
             "with how Transit/F-150 routes get used, but not a live total I'd quote to a vendor.)",
         },
