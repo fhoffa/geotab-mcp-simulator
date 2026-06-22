@@ -116,8 +116,9 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        /* ⭐ Start here — the flagship flows lead, so the main ones aren't lost in the list */
         {
-          group: "📋 Productivity",
+          group: "⭐ Start here",
           recommended: true,
           label: "📋 The Monday morning review",
           say:
@@ -126,29 +127,18 @@ window.CONVERSATIONS = {
           next: "ep1-answer",
         },
         {
-          group: "📋 Productivity",
-          label: "⚡ Get 5 fleet chores done",
-          say:
-            "I've got a few fleet chores to knock out — set up a depot geofence, an idling alert, " +
-            "clear a serviced van's faults, group my Valencia vehicles, and route the alerts to a manager.",
-          next: "ep4-answer",
+          group: "⭐ Start here",
+          label: "🛡️ Assess my top 3 safety risks + fixes",
+          say: "Assess my fleet for the top three safety risks and suggest corrective actions.",
+          next: "ep-agentic-safety",
         },
         {
-          group: "🛟 Safety",
-          label: "❓ Why are speeding alerts up?",
-          say:
-            "Our speeding alerts are up this week. Why — is it the whole fleet, or a few vehicles? " +
-            "Break it down for me.",
-          next: "ep2-answer",
+          group: "⭐ Start here",
+          label: "💰 Where is my fleet leaking money?",
+          say: "Where is my fleet leaking money — total the recoverable savings and build me the ROI case.",
+          next: "ep-roi",
         },
-        {
-          group: "🛟 Safety",
-          label: "🛣️ Was that road really that fast?",
-          say:
-            "A driver is disputing a speeding flag on Demo - 01. Pull the posted road speed along its actual " +
-            "route so we can coach on facts, not memory.",
-          next: "ep10-postedspeed",
-        },
+
         {
           group: "🛟 Safety",
           label: "🚦 Who are my riskiest drivers?",
@@ -169,26 +159,27 @@ window.CONVERSATIONS = {
         },
         {
           group: "🛟 Safety",
+          label: "❓ Why are speeding alerts up?",
+          say:
+            "Our speeding alerts are up this week. Why — is it the whole fleet, or a few vehicles? " +
+            "Break it down for me.",
+          next: "ep2-answer",
+        },
+        {
+          group: "🛟 Safety",
+          label: "🛣️ Was that road really that fast?",
+          say:
+            "A driver is disputing a speeding flag on Demo - 01. Pull the posted road speed along its actual " +
+            "route so we can coach on facts, not memory.",
+          next: "ep10-postedspeed",
+        },
+        {
+          group: "🛟 Safety",
           label: "🤖 Ask Geotab Ace a question",
           say: "Using Geotab Ace — which 5 vehicles had the most speeding events in the last 7 days, and how many each?",
           next: "ep7-ace",
         },
-        {
-          group: "📜 Compliance",
-          label: "🌍 React to a low-emission zone",
-          say:
-            "Valencia's low-emission zone is tightening in 2026. Check the current rules, and tell me " +
-            "whether my fleet drives through that zone and what a non-compliant entry would cost us.",
-          next: "ep3-answer",
-        },
-        {
-          group: "🌱 Sustainability",
-          label: "🚐 What's actually in my fleet?",
-          say:
-            "What makes and models am I actually running on the Spain fleet, " +
-            "and which are realistic EV-conversion candidates?",
-          next: "ep9-fleet-hub",
-        },
+
         {
           group: "🔧 Maintenance",
           label: "🔧 Triage the maintenance worklist",
@@ -230,6 +221,7 @@ window.CONVERSATIONS = {
             "them to take a look, and put a tentative service slot on my calendar for tomorrow morning.",
           next: "ep5-answer",
         },
+
         {
           group: "🚀 Operations",
           label: "⛽ Fuel economy by vehicle type",
@@ -249,25 +241,47 @@ window.CONVERSATIONS = {
           next: "ep9-ev-vegas",
         },
         {
-          group: "🧠 Agentic",
-          label: "🛡️ Assess top 3 safety risks + fixes",
-          say: "Assess my fleet for the top three safety risks and suggest corrective actions.",
-          next: "ep-agentic-safety",
+          group: "🚀 Operations",
+          label: "🚐 What's actually in my fleet?",
+          say:
+            "What makes and models am I actually running on the Spain fleet, " +
+            "and which are realistic EV-conversion candidates?",
+          next: "ep9-fleet-hub",
         },
         {
-          group: "🧠 Agentic",
+          group: "🚀 Operations",
+          label: "🌍 React to a low-emission zone",
+          say:
+            "Valencia's low-emission zone is tightening in 2026. Check the current rules, and tell me " +
+            "whether my fleet drives through that zone and what a non-compliant entry would cost us.",
+          next: "ep3-answer",
+        },
+
+        {
+          group: "🧠 Automate & share",
+          label: "🛠️ Turn my weekly review into a team skill",
+          say:
+            "Package my weekly fleet review into a reusable skill so I — and anyone on my team — " +
+            "can run the identical review just by asking for it.",
+          next: "ep1-skill",
+        },
+        {
+          group: "🧠 Automate & share",
+          label: "⚡ Get 5 fleet chores done in one ask",
+          say:
+            "I've got a few fleet chores to knock out — set up a depot geofence, an idling alert, " +
+            "clear a serviced van's faults, group my Valencia vehicles, and route the alerts to a manager.",
+          next: "ep4-answer",
+        },
+        {
+          group: "🧠 Automate & share",
           label: "🧑‍🏫 Draft coaching notes for a manager",
           say: "Identify drivers who need coaching and draft a summary I can send to their manager.",
           next: "ep-agentic-coaching",
         },
+
         {
-          group: "💰 Business case",
-          label: "💰 Where is my fleet leaking money?",
-          say: "Where is my fleet leaking money — total the recoverable savings and build me the ROI case.",
-          next: "ep-roi",
-        },
-        {
-          group: "🚚 Dispatch & cross-tool",
+          group: "🚚 Cross-tool & exec",
           label: "🚐 Who's closest and free right now?",
           say:
             "A job just came in near downtown Las Vegas — which vehicle is closest and actually " +
@@ -275,7 +289,7 @@ window.CONVERSATIONS = {
           next: "ep-dispatch",
         },
         {
-          group: "🚚 Dispatch & cross-tool",
+          group: "🚚 Cross-tool & exec",
           label: "💼 Settle a late-delivery dispute (Salesforce)",
           say:
             "A customer is disputing a late delivery yesterday and it's logged as an open Salesforce case. " +
@@ -283,7 +297,7 @@ window.CONVERSATIONS = {
           next: "ep13-salesforce",
         },
         {
-          group: "🚚 Dispatch & cross-tool",
+          group: "🚚 Cross-tool & exec",
           label: "📊 Give me a board snapshot, both fleets",
           say:
             "Give me a board-level snapshot across both fleets — utilization, safety, maintenance and " +
@@ -447,6 +461,199 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🚐 What's actually in this fleet?", say: "While we're at it — what make and model are these vehicles, actually?", next: "ep9-fleet" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* --------------------------------------------- skill · weekly safety scorecard */
+    "ep-safety-skill": {
+      id: "ep-safety-skill",
+      title: "Skill · Package the safety scorecard",
+      events: [
+        {
+          type: "tool",
+          server: "claude",
+          name: "Create skill",
+          args: { name: "fleet-safety-scorecard" },
+          summary: "SKILL.md written — weighted scoring, systemic-vs-individual read, no-PII default",
+          write: true,
+          openByDefault: true,
+          result:
+            "---\n" +
+            "name: fleet-safety-scorecard\n" +
+            "description: >-\n" +
+            "  Rank a fleet's drivers by a weighted safety score from a Geotab MCP connection,\n" +
+            "  separate systemic (policy) risk from individual (coaching) risk, and end with who\n" +
+            "  needs a conversation this week. Encodes the scoring rules and a no-PII default.\n" +
+            "---\n\n" +
+            "# Fleet Safety Scorecard\n\n" +
+            "## When to use\n" +
+            "When the user asks for their riskiest drivers, a safety scorecard, or \"who needs " +
+            "coaching this week.\" Default window: last 7 days.\n\n" +
+            "## What to produce\n" +
+            "1. Fleet safety score vs benchmark + week-over-week trend\n" +
+            "2. Top 10 drivers: weighted score, total events, breakdown by event type\n" +
+            "3. The read underneath: which risk is systemic vs individual\n" +
+            "End with the 2-3 drivers who need a 1:1 this week and why.\n\n" +
+            "## Grounding rules (avoid these traps)\n" +
+            "- Score is weighted, not a raw tally — severity outweighs volume (a driver with fewer but severe events can outrank a high-count one). Say so.\n" +
+            "- A tight cluster within a few points = a systemic problem (shared routes/limits), not bad actors → policy + live alert, not 10 chats.\n" +
+            "- Don't infer outliers from a capped ExceptionEvent page — aggregate the whole window (e.g. via Ace).\n" +
+            "- Map severe events before blaming a driver — a single-corner cluster is a route problem.\n" +
+            "- A clean week is a finding, not a gap.\n\n" +
+            "## No-PII default\n" +
+            "- Attribute to the driver only where Driver ID is on AND the viewer has permission; otherwise use device names.\n" +
+            "- Never return emails, phone numbers, employee numbers, or per-person location histories.\n\n" +
+            "## Suggested tool flow\n" +
+            "Get DriverChange (who's driving) → GetAceResults to rank by weighted score → " +
+            "Get ExceptionEvent for the per-type breakdown → map severe events for any single-driver spike.\n\n" +
+            "## Output style\n" +
+            "Plain language, manager-ready. Lead with the read, not the table. No jargon, no raw JSON, no PII.\n\n" +
+            "(94 lines total — trimmed preview.)",
+        },
+        {
+          type: "claude",
+          text:
+            "Packaged it as fleet-safety-scorecard — open the card to see what's in it. It's not just a faster " +
+            "leaderboard: it encodes the judgment, that the score is weighted so severity beats volume, that a tight " +
+            "cluster means a policy fix not ten chats, and that a single-corner spike is a route problem. Plus the no-PII " +
+            "default, so whoever runs it gets the careful version.\n\n" +
+            "Drop it in your team's shared skills and anyone can say \"run the safety scorecard\" and get this same read.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Ask once. Automate it. Share it with your whole team."] },
+      ],
+      choices: [
+        { label: "🚦 Run the scorecard now", say: "Who are my ten riskiest drivers this week, and what were their top events?", next: "ep-safety-risk" },
+        { label: "🧑‍🏫 Draft this week's coaching notes", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* --------------------------------------------- skill · maintenance triage */
+    "ep-maint-skill": {
+      id: "ep-maint-skill",
+      title: "Skill · Package the maintenance triage",
+      events: [
+        {
+          type: "tool",
+          server: "claude",
+          name: "Create skill",
+          args: { name: "maintenance-triage" },
+          summary: "SKILL.md written — severity-by-lamp triage, legal-first, noise-vs-engine, no-PII default",
+          write: true,
+          openByDefault: true,
+          result:
+            "---\n" +
+            "name: maintenance-triage\n" +
+            "description: >-\n" +
+            "  Turn a pile of Geotab faults and maintenance reminders into a prioritized shop\n" +
+            "  worklist — ranked by consequence, not count — separating red/amber warning lamps\n" +
+            "  from device-connectivity noise, and flagging legal items first.\n" +
+            "---\n\n" +
+            "# Maintenance Triage\n\n" +
+            "## When to use\n" +
+            "When the user asks what's wrong with the fleet, what's overdue, or for a shop worklist. " +
+            "Default fault window: last 7 days; reminders: read against live odometer/engine hours.\n\n" +
+            "## What to produce\n" +
+            "1. Total faults, then split: red-stop / amber-warning / informational-device\n" +
+            "2. The same-day list (red lamp + legal/roadworthiness items)\n" +
+            "3. This-week list (amber) and the batch-it noise (device/connectivity)\n" +
+            "End with a prioritized worklist, not a raw dump.\n\n" +
+            "## Grounding rules (avoid these traps)\n" +
+            "- Rank by consequence, not by how overdue/how many: a legal roadworthiness (ITV) item jumps the queue over a bigger-distance oil change.\n" +
+            "- Severity lives in the J1939 warning lamp (red/amber), not the raw code count.\n" +
+            "- A huge fault count is often ONE wiring job — device-unplugged/GPS faults cluster on a few units; report it as one fix, not N problems.\n" +
+            "- Geotab Add is one entity per call — batch real writes with ExecuteMultiCall.\n" +
+            "- Confirm against the shop's own records before sign-off; never invent a fault.\n\n" +
+            "## No-PII default\n" +
+            "- Device names and plates are fine; attribute to a driver only with permission.\n" +
+            "- Never return emails, phone numbers, or employee numbers.\n\n" +
+            "## Suggested tool flow\n" +
+            "GetCountOf FaultData → Get FaultData (redStopLamp, amberWarningLamp) → group by device → " +
+            "GetAceResults for overdue reminders vs odometer → ExecuteMultiCall to book the criticals.\n\n" +
+            "## Output style\n" +
+            "Plain language, shop-ready. Lead with what comes off the road today. No raw JSON, no PII.\n\n" +
+            "(96 lines total — trimmed preview.)",
+        },
+        {
+          type: "claude",
+          text:
+            "Packaged it as maintenance-triage — open the card to read it. It carries the judgment that makes this useful: " +
+            "rank by consequence so a legal ITV beats a bigger oil change, read severity off the warning lamp not the raw " +
+            "count, and recognize that 580 device faults are usually one wiring job, not 580 problems.\n\n" +
+            "Drop it in your shared skills and anyone can say \"triage the fleet\" and get the same prioritized worklist.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Ask once. Automate it. Share it with your whole team."] },
+      ],
+      choices: [
+        { label: "🔧 Run the triage now", say: "I've got a pile of faults on the Spain fleet. Is it everywhere, or a few vehicles? Give me a prioritized worklist for the shop.", next: "ep8-maintenance" },
+        { label: "📅 What's overdue right now?", say: "Which vehicles are overdue for scheduled maintenance right now?", next: "ep-maint-overdue" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* --------------------------------------------- skill · quarterly ROI case */
+    "ep-roi-skill": {
+      id: "ep-roi-skill",
+      title: "Skill · Package the quarterly ROI case",
+      events: [
+        {
+          type: "tool",
+          server: "claude",
+          name: "Create skill",
+          args: { name: "quarterly-roi-case" },
+          summary: "SKILL.md written — conservative lever model, honest caveats, no double-count",
+          write: true,
+          openByDefault: true,
+          result:
+            "---\n" +
+            "name: quarterly-roi-case\n" +
+            "description: >-\n" +
+            "  Build a defensible, conservative fleet ROI case from a Geotab MCP connection —\n" +
+            "  total recoverable cost by lever (fuel, collision, maintenance, idling) with the\n" +
+            "  fix for each — and state the caveats so it survives the room.\n" +
+            "---\n\n" +
+            "# Quarterly ROI Case\n\n" +
+            "## When to use\n" +
+            "When the user asks where the fleet is leaking money, for an ROI/business case, or a " +
+            "one-pager for their boss. Scope to ONE fleet's actual fuel spend.\n\n" +
+            "## What to produce\n" +
+            "1. Total annual recoverable + per-vehicle figure\n" +
+            "2. The levers: speeding→fuel, collision & insurance, maintenance & downtime, idling — each with its fix\n" +
+            "3. The recommendation: which one initiative captures most of it\n" +
+            "End with the caveats, stated up front, so it reads as pressure-tested.\n\n" +
+            "## Grounding rules (avoid these traps)\n" +
+            "- Use the LOW end of every range — an ROI that oversells gets torn apart.\n" +
+            "- The collision line is an expected value, not a banked saving — label it.\n" +
+            "- Don't double-count the fuel/idling overlap (the speeding line already absorbs the driving-style fuel gain).\n" +
+            "- Hardware/subscription is sunk — this is operating-cost recovery on top, not a hardware pitch.\n" +
+            "- Tie every number to a real source figure (actual fuel spend, measured idle hours), never a round guess.\n\n" +
+            "## No-PII default\n" +
+            "- Aggregate figures only; name drivers only with permission, and never in a doc headed upstairs.\n\n" +
+            "## Suggested tool flow\n" +
+            "GetAceResults fuel by type → safety scorecard (collision risk) → maintenance/downtime → " +
+            "idling hours → sum conservatively, then draft the one-pager.\n\n" +
+            "## Output style\n" +
+            "Board-ready: headline number, four levers, one recommendation, caveats. No jargon, no PII.\n\n" +
+            "(92 lines total — trimmed preview.)",
+        },
+        {
+          type: "claude",
+          text:
+            "Packaged it as quarterly-roi-case — open the card to see it. The value isn't the arithmetic, it's the " +
+            "discipline baked in: low end of every range, the collision line flagged as expected value not cash, no " +
+            "double-counting fuel and idling, and every number tied to a real source figure. That's the version that " +
+            "gets a yes.\n\n" +
+            "Run it each quarter and you get the same defensible case from fresh data, without rebuilding the model.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Ask once. Automate it. Share it with your whole team."] },
+      ],
+      choices: [
+        { label: "📄 Draft this quarter's one-pager", say: "Turn this into a one-page business case I can forward to my boss.", next: "ep-roi-onepager" },
+        { label: "💰 Re-run the full ROI breakdown", say: "Where is my fleet leaking money — total the recoverable savings and build me the ROI case.", next: "ep-roi" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -1291,6 +1498,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🛠️ Turn this triage into a reusable skill", say: "Turn this maintenance triage into a reusable skill my whole shop can run every week.", next: "ep-maint-skill" },
         { label: "🚐 What is Demo - 08, exactly?", say: "What make and model is Demo - 08?", next: "ep9-fleet-08" },
         { label: "🔎 Why does it keep faulting? Dig deeper", say: "Don't stop there — why does Demo - 08 keep faulting? Dig into it.", next: "ep12-investigate" },
         { label: "📧 Book it into the garage now", say: "Pull Demo - 08's fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
@@ -2253,6 +2461,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🛠️ Make this a weekly safety-scorecard skill", say: "Turn this into a reusable weekly safety-scorecard skill anyone on my team can run.", next: "ep-safety-skill" },
         { label: "🧑‍🏫 Draft coaching notes for their manager", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
         { label: "🛑 Dig into the harsh-braking cases", say: "Show me a breakdown of harsh braking events by driver over the last 30 days.", next: "ep-safety-harsh" },
         { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
@@ -3327,6 +3536,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "📄 Draft the one-pager for my boss", say: "Turn this into a one-page business case I can forward to my boss.", next: "ep-roi-onepager" },
+        { label: "🛠️ Package this as a quarterly ROI skill", say: "Package this into a reusable skill that rebuilds the ROI case from live data every quarter.", next: "ep-roi-skill" },
         { label: "🔔 Start the biggest lever — speed alert", say: "Start with the biggest lever — set up the fleet-wide posted-speed alert.", next: "ep2-action" },
         { label: "🧑‍🏫 Coach the high-risk drivers", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },

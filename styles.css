@@ -569,6 +569,12 @@ body {
   flex-wrap: wrap;
   gap: 8px;
   background: linear-gradient(180deg, transparent, var(--bg) 28%);
+  /* When a node offers many choices (e.g. the hub), the chip list can exceed the
+     viewport. Without a cap, sticky pins the tray bottom and clips the top chips
+     with no way to reach them — so cap the height and scroll within the tray. */
+  max-height: min(58vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .chip {
   font: inherit;
