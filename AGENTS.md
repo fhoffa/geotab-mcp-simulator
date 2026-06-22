@@ -8,8 +8,9 @@ Key files:
 - `index.html` — app shell
 - `styles.css` — visual styling
 - `app.js` — simulator runtime and conversation engine
-- `data/conversations.js` — source of truth for scripted conversation nodes
-- `scripts/check-graph.js` — graph integrity checker
+- `data/sample-data.js` — explicit sample-data store (`window.SAMPLE_DATA`); source of truth for the safety/maintenance/ops/agentic numbers & drivers. Must load before `conversations.js`.
+- `data/conversations.js` — source of truth for scripted conversation nodes; grounds charts/results on the sample-data store via `bars()` / `D`
+- `scripts/check-graph.js` — graph integrity checker (loads both data files)
 - `docs/CONVERSATION-MAP.md` — human-readable graph map
 
 ## Development expectations
@@ -42,6 +43,13 @@ Guardrails so enrichment stays honest:
 
 In short: enrich for realism, disclose when something is illustrative, and never
 fabricate the *mechanics* (tools/args) — only the *texture* (plausible values).
+
+**Where enriched values live:** keep them in `data/sample-data.js`
+(`window.SAMPLE_DATA`), not hardcoded inline, so a number changes in one place
+and every node that quotes it stays consistent. Build a node's chart `bars`
+(and, where practical, its tool `result`) from `D` / `bars()` in
+`conversations.js`. The `facts` block in the store is real demo data; everything
+else is realistic and fictional — **driver names are fictional, no real PII**.
 
 ## Verification
 

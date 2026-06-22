@@ -64,10 +64,19 @@ index.html      app shell (header, chat, choice tray, footer)
 styles.css      Claude-like theme
 app.js          the conversation engine (no dependencies)
 data/
-  conversations.js   the conversation graph — THE source of truth
+  sample-data.js     the explicit sample-data store — THE source of truth for
+                     the safety/maintenance/ops/agentic numbers (window.SAMPLE_DATA)
+  conversations.js   the conversation graph; charts & results ground on the store
 docs/
   CONVERSATION-MAP.md  a Mermaid diagram of the same graph, for reading on GitHub
 ```
+
+`data/sample-data.js` holds the dataset the newer scenarios are grounded on —
+the driver roster, safety scorecard, fault triage, fuel/idle/downtime figures,
+etc. — so a number changes in one place and every conversation that quotes it
+follows. `conversations.js` builds those nodes' charts (and some tool results)
+from `window.SAMPLE_DATA` via a small `bars()` helper. Load order matters:
+`sample-data.js` must come before `conversations.js` in `index.html`.
 
 The whole experience is **data-driven**. `data/conversations.js` defines a graph
 of *nodes*; `app.js` just walks it — playing each node's `events` (Claude prose,
@@ -129,6 +138,17 @@ are baked in faithfully: trip activity is summarized rather than counted (the ra
 counter is an all-time total), HOS is treated as a per-driver spot-check, and a
 "clean week" with zero faults is presented as a finding, not padded out.
 
-No secrets, tokens, or real personal data are included — demo fleets use generic
-"Demo - NN" names. Internal production notes are intentionally **not** part of
-this repo.
+The newer **Safety / Maintenance / Operations / Agentic** scenarios go a step
+further. Their structure is anchored to the real demo data (fleet sizes, vehicle
+mix, the fleet-wide speeding pattern, the Sprinter fault cluster), but the demo
+databases are sparse — no assigned drivers, only speeding exceptions, only
+GO-device faults. To show what a **fully-instrumented customer** actually sees,
+those scenarios are filled out with **realistic, fictional data grounded in
+genuine Geotab capabilities** (Driver ID, Safety Center scorecards, maintenance
+reminders, fault-lamp severity, fuel/idle reports) — all kept in
+`data/sample-data.js`. **Driver names are fictional**, and write-actions point at
+test mailboxes / sandbox records.
+
+No secrets, tokens, or real personal data are included — vehicles use generic
+"Demo - NN" names and any driver names are invented. Internal production notes
+are intentionally **not** part of this repo.

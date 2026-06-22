@@ -32,6 +32,17 @@
  *               - action: "restart" | "map" (engine-handled, no node needed)
  *   next    : auto-advance to this node id (used when there are no choices)
  */
+/* ------------------------------------------- Grounding on the sample-data store
+ * The Safety / Maintenance / Operations / Agentic scenarios draw their charts
+ * (and some tool results) from data/sample-data.js — the single source of truth
+ * (window.SAMPLE_DATA). Change a number there and every node that quotes it
+ * follows. `D` is that store; `bars()` turns a list of objects into chart bars.
+ */
+var D = (typeof window !== "undefined" && window.SAMPLE_DATA) ? window.SAMPLE_DATA : {};
+function bars(list, labelKey, valueKey) {
+  return (list || []).map(function (o) { return { label: o[labelKey], value: o[valueKey] }; });
+}
+
 window.CONVERSATIONS = {
   meta: {
     title: "Geotab MCP — Experience Simulator",
@@ -140,6 +151,24 @@ window.CONVERSATIONS = {
         },
         {
           group: "🛟 Safety",
+          label: "🚦 Who are my riskiest drivers?",
+          say: "Who are my ten riskiest drivers this week, and what were their top events?",
+          next: "ep-safety-risk",
+        },
+        {
+          group: "🛟 Safety",
+          label: "🛑 Harsh braking by driver (30 days)",
+          say: "Show me a breakdown of harsh braking events by driver over the last 30 days.",
+          next: "ep-safety-harsh",
+        },
+        {
+          group: "🛟 Safety",
+          label: "🏫 Speeding in school zones this month?",
+          say: "Which drivers have had speeding violations in school zones this month?",
+          next: "ep-safety-schoolzone",
+        },
+        {
+          group: "🛟 Safety",
           label: "🤖 Ask Geotab Ace a question",
           say: "Using Geotab Ace — which 5 vehicles had the most speeding events in the last 7 days, and how many each?",
           next: "ep7-ace",
@@ -170,6 +199,24 @@ window.CONVERSATIONS = {
         },
         {
           group: "🔧 Maintenance",
+          label: "📅 What's overdue for service right now?",
+          say: "Which vehicles are overdue for scheduled maintenance right now?",
+          next: "ep-maint-overdue",
+        },
+        {
+          group: "🔧 Maintenance",
+          label: "⚠️ Fault codes + severity (last 7 days)",
+          say: "Show me any fault codes flagged in the last seven days and their severity.",
+          next: "ep-maint-severity",
+        },
+        {
+          group: "🔧 Maintenance",
+          label: "⏱️ Most unplanned downtime this quarter",
+          say: "Which assets have had the most unplanned downtime this quarter?",
+          next: "ep-maint-downtime",
+        },
+        {
+          group: "🔧 Maintenance",
           label: "❓ Why does Demo - 08 keep faulting?",
           say:
             "Demo - 08 keeps showing up in the fault list. Why — dig into it and don't stop at the first explanation.",
@@ -182,6 +229,36 @@ window.CONVERSATIONS = {
             "One of our vans just logged a fault. Pull the details, draft an email to the garage asking " +
             "them to take a look, and put a tentative service slot on my calendar for tomorrow morning.",
           next: "ep5-answer",
+        },
+        {
+          group: "🚀 Operations",
+          label: "⛽ Fuel economy by vehicle type",
+          say: "What is my average fuel economy by vehicle type this month?",
+          next: "ep-ops-fuel",
+        },
+        {
+          group: "🚀 Operations",
+          label: "💤 Longest idle times last week",
+          say: "Show me which routes had the longest idle times last week.",
+          next: "ep-ops-idle",
+        },
+        {
+          group: "🚀 Operations",
+          label: "🔋 EV-replacement candidates",
+          say: "Which vehicles are candidates for EV replacement based on daily mileage patterns?",
+          next: "ep9-ev-vegas",
+        },
+        {
+          group: "🧠 Agentic",
+          label: "🛡️ Assess top 3 safety risks + fixes",
+          say: "Assess my fleet for the top three safety risks and suggest corrective actions.",
+          next: "ep-agentic-safety",
+        },
+        {
+          group: "🧠 Agentic",
+          label: "🧑‍🏫 Draft coaching notes for a manager",
+          say: "Identify drivers who need coaching and draft a summary I can send to their manager.",
+          next: "ep-agentic-coaching",
         },
         {
           group: "🚚 Dispatch & cross-tool",
@@ -2072,6 +2149,915 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🔔 Set the speed alert anyway", say: "Set up that posted-speed alert across the fleet regardless.", next: "ep2-action" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ===================================================================== */
+    /* ===== Sample-prompt scenarios (Safety / Maintenance / Ops / Agentic) = */
+    /* ===================================================================== */
+
+    /* ----------------------------------------- safety · riskiest "drivers" */
+    "ep-safety-risk": {
+      id: "ep-safety-risk",
+      title: "Safety · Riskiest drivers this week",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Let me build you a proper Driver Safety Scorecard for the week — first confirming who's actually behind the " +
+            "wheel of each vehicle.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "DriverChange", search: { fromDate: "…7 days ago", toDate: "now" }, propertySelector: { fields: ["driver", "device", "dateTime"] }, resultsLimit: 100 },
+          summary: "49 of 50 vehicles have an assigned driver on shift this week",
+          result:
+            '[\n  { "driver": "Marcus Bell", "device": "Demo - 08" },\n' +
+            '  { "driver": "Priya Nair", "device": "Demo - 01" },\n' +
+            '  { "driver": "Tina Alvarez", "device": "Demo - 22" },\n' +
+            '  { "driver": "Sam Whitfield", "device": "Demo - 33" },\n' +
+            '  … (49 drivers assigned via Driver ID key fobs)\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "Good — Driver ID is on, so I can attribute risk to the person, not just the vehicle. Now scoring each " +
+            "driver: Ace blends their speeding, harsh braking/acceleration/cornering, seatbelt and any collision " +
+            "events into one weighted safety score, the same way the Geotab Safety Center does.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "Rank drivers by weighted safety score for the last 7 days. For each, give the score (0-100, higher is safer), total risk events, and the breakdown by event type.", new_chat: true },
+          summary: "10 riskiest drivers · scores 47–68 vs fleet avg 78",
+          result:
+            '{ "answer": [\n' +
+            '  { "rank": 1,  "driver": "Marcus Bell (Demo - 08)",   "score": 47, "events": 131, "mix": "Speeding 109 · Harsh brake 14 · Seatbelt 8" },\n' +
+            '  { "rank": 2,  "driver": "Tina Alvarez (Demo - 22)",  "score": 52, "events": 119, "mix": "Harsh accel 31 · Speeding 74 · Cornering 14" },\n' +
+            '  { "rank": 3,  "driver": "Sam Whitfield (Demo - 33)", "score": 55, "events": 102, "mix": "Harsh brake 41 · Speeding 56 · Cornering 5" },\n' +
+            '  { "rank": 4,  "driver": "Devon Carter (Demo - 15)",  "score": 58, "events": 118, "mix": "Speeding 107 · Harsh brake 9 · Seatbelt 2" },\n' +
+            '  { "rank": 5,  "driver": "Priya Nair (Demo - 01)",    "score": 61, "events": 121, "mix": "Speeding 111 · Cornering 7 · Harsh brake 3" },\n' +
+            '  { "rank": 6,  "driver": "Luis Romero (Demo - 04)",   "score": 63, "events": 117, "mix": "Speeding 110 · Harsh accel 5 · Seatbelt 2" },\n' +
+            '  { "rank": 7,  "driver": "Grace Kim (Demo - 10)",     "score": 65, "events": 116, "mix": "Speeding 110 · Harsh brake 4 · Accel 2" },\n' +
+            '  { "rank": 8,  "driver": "Andre Foster (Demo - 25)",  "score": 66, "events": 110, "mix": "Speeding 107 · Seatbelt 3" },\n' +
+            '  { "rank": 9,  "driver": "Ben Ortiz (Demo - 16)",     "score": 67, "events": 113, "mix": "Speeding 107 · Harsh accel 6" },\n' +
+            '  { "rank": 10, "driver": "Chloe Tran (Demo - 20)",    "score": 68, "events": 109, "mix": "Speeding 107 · Harsh brake 2" } ] }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's your week. Fleet average safety score is **78** (the Geotab community benchmark for similar fleets " +
+            "is ~82), and it slipped **6% week-over-week** — so the trend's the wrong way, mostly on speed.\n\n" +
+            "**Your ten riskiest drivers:**\n\n" +
+            "1. **Marcus Bell** (Demo - 08) — score 47 · 131 events — *Speeding 109, harsh braking 14, seatbelt 8*\n" +
+            "2. **Tina Alvarez** (Demo - 22) — 52 · 119 — *Harsh accel 31, speeding 74, cornering 14*\n" +
+            "3. **Sam Whitfield** (Demo - 33) — 55 · 102 — *Harsh braking 41, speeding 56*\n" +
+            "4. **Devon Carter** (Demo - 15) — 58 · 118 — *Speeding 107, harsh braking 9*\n" +
+            "5. **Priya Nair** (Demo - 01) — 61 · 121 — *Speeding 111*\n" +
+            "6. **Luis Romero** (Demo - 04) — 63 · 117 — *Speeding 110*\n" +
+            "7. **Grace Kim** (Demo - 10) — 65 · 116 — *Speeding 110*\n" +
+            "8. **Andre Foster** (Demo - 25) — 66 · 110 — *Speeding 107*\n" +
+            "9. **Ben Ortiz** (Demo - 16) — 67 · 113 — *Speeding 107*\n" +
+            "10. **Chloe Tran** (Demo - 20) — 68 · 109 — *Speeding 107*\n\n" +
+            "The read underneath the list matters more than the list. **Seven of the ten are pure speeders**, clustered " +
+            "within a few points of each other — that's a systemic problem (shared routes and limits), and the fix is a " +
+            "policy plus a live alert, not ten separate chats.\n\n" +
+            "But **three break that pattern and deserve a real conversation this week**: Marcus Bell is the only " +
+            "multi-factor risk (speed *and* braking *and* seatbelt — the combination insurers weight most heavily for " +
+            "collision likelihood); Tina Alvarez is your aggression case (31 harsh accelerations); and Sam Whitfield " +
+            "has the fewest events but the most *severe* ones — 41 hard brakes. Note he ranks third on score despite " +
+            "the lowest event count: severity outweighs volume, which is exactly why the score beats a raw tally.\n\n" +
+            "If you want the dollars: harsh-braking and speeding events are the two strongest telematics predictors of " +
+            "at-fault collisions, and a single at-fault collision in a fleet like this averages well into five figures " +
+            "once you load in downtime and premium impact. Coaching the three multi-factor drivers is the cheapest risk " +
+            "you'll buy down all quarter.\n\n" +
+            "*(Driver names in this demo are fictional — but this is exactly the view a manager sees once Driver ID is " +
+            "enabled and they have the permission to see it.)*",
+        },
+        {
+          type: "chart",
+          title: "Driver safety score · 10 riskiest this week (lower = higher risk · fleet avg 78)",
+          bars: bars(D.vegas && D.vegas.safetyScorecard, "driver", "score"),
+        },
+      ],
+      choices: [
+        { label: "🧑‍🏫 Draft coaching notes for their manager", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "🛑 Dig into the harsh-braking cases", say: "Show me a breakdown of harsh braking events by driver over the last 30 days.", next: "ep-safety-harsh" },
+        { label: "🔔 Set a fleet-wide speed alert", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------- safety · harsh braking by driver */
+    "ep-safety-harsh": {
+      id: "ep-safety-harsh",
+      title: "Safety · Harsh braking by driver",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Let me pull harsh-braking events for the last 30 days, broken out by driver — and graded by severity, " +
+            "because a gentle tap and a near-collision both log as \"harsh brake\" but they're not the same problem.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "Harsh braking events in the last 30 days by driver. For the top drivers give total events split into severe / moderate / mild by deceleration g-force, plus their change vs the previous 30 days.", new_chat: true },
+          summary: "412 events fleet-wide · top 5 drivers own 196 (48%)",
+          result:
+            '{ "fleetTotal": 412, "fleetTrendVsPrev30d": "-12%", "byDriver": [\n' +
+            '  { "driver": "Sam Whitfield (Demo - 33)",  "total": 58, "severe": 9, "moderate": 21, "mild": 28, "trend": "+22%" },\n' +
+            '  { "driver": "Tina Alvarez (Demo - 22)",   "total": 47, "severe": 6, "moderate": 18, "mild": 23, "trend": "+4%" },\n' +
+            '  { "driver": "Marcus Bell (Demo - 08)",    "total": 39, "severe": 5, "moderate": 14, "mild": 20, "trend": "-8%" },\n' +
+            '  { "driver": "Grace Kim (Demo - 10)",      "total": 28, "severe": 2, "moderate": 9,  "mild": 17, "trend": "-15%" },\n' +
+            '  { "driver": "Devon Carter (Demo - 15)",   "total": 24, "severe": 1, "moderate": 8,  "mild": 15, "trend": "-3%" } ] }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's the 30-day picture. Fleet-wide harsh braking is actually **down 12%** — so the program's working " +
+            "overall. But the average hides the one driver you need to look at.\n\n" +
+            "**Harsh braking by driver (severe / moderate / mild):**\n\n" +
+            "- **Sam Whitfield** (Demo - 33) — **58** events (9 severe, 21 moderate, 28 mild) · **▲ +22%**\n" +
+            "- **Tina Alvarez** (Demo - 22) — 47 (6 / 18 / 23) · ▲ +4%\n" +
+            "- **Marcus Bell** (Demo - 08) — 39 (5 / 14 / 20) · ▼ -8%\n" +
+            "- **Grace Kim** (Demo - 10) — 28 (2 / 9 / 17) · ▼ -15%\n" +
+            "- **Devon Carter** (Demo - 15) — 24 (1 / 8 / 15) · ▼ -3%\n\n" +
+            "Sam Whitfield is the outlier on every axis that matters: most events, the most **severe** ones (9 hard " +
+            "decelerations over 0.45 g — that's near-collision braking, not traffic), and the only driver trending the " +
+            "wrong way at **+22%** while the fleet improves. Everyone else on this list is either flat or coming down.\n\n" +
+            "So this isn't a fleet talk — it's one targeted coaching conversation with Sam this week, before a severe " +
+            "brake becomes a rear-end claim. Want me to look at *where* his severe events happen? If they cluster, it " +
+            "might be a route problem as much as a driving one.",
+        },
+        {
+          type: "chart",
+          title: "Severe harsh-braking events (>0.45 g) by driver · last 30 days",
+          bars: bars(D.vegas && D.vegas.harshBraking && D.vegas.harshBraking.byDriver, "driver", "severe"),
+        },
+      ],
+      choices: [
+        { label: "📍 Where do Sam's severe brakes happen?", say: "Map where Sam Whitfield's severe braking events happen — is it a route problem?", next: "ep-safety-harsh-spain" },
+        { label: "🧑‍🏫 Draft a coaching note for Sam", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "🚦 Back to the full risk scorecard", say: "Show me the ten riskiest drivers this week and their top events.", next: "ep-safety-risk" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep-safety-harsh-spain": {
+      id: "ep-safety-harsh-spain",
+      title: "Safety · Harsh-braking hotspot",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Good instinct — before we put it all on Sam, let me pull the GPS location of each of his harsh-braking " +
+            "events and see if they cluster anywhere.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "ExceptionEvent", search: { ruleSearch: { id: "RuleHarshBrakingId" }, deviceSearch: { id: "b21 (Demo - 33)" }, fromDate: "…30 days ago", toDate: "now" }, propertySelector: { fields: ["activeFrom", "latitude", "longitude"] }, resultsLimit: 100 },
+          summary: "58 events geocoded · 23 cluster at one intersection, mostly 16:00–18:00",
+          result:
+            '// reverse-geocoded + bucketed by location and hour\n' +
+            '{ "topCluster": { "location": "W Charleston Blvd & S Rancho Dr", "events": 23, "of": 58, "peakHours": "16:00–18:00", "severeHere": 7 },\n' +
+            '  "elsewhere": "35 events scattered, no second cluster" }',
+        },
+        {
+          type: "map",
+          title: "Sam Whitfield · harsh-braking locations (30 days)",
+          pins: [
+            { label: "Charleston & Rancho — 23 events", x: 50, y: 46, status: "busy", value: 23 },
+            { label: "scattered", x: 30, y: 64, status: "free" },
+            { label: "scattered", x: 70, y: 34, status: "free" },
+            { label: "scattered", x: 64, y: 68, status: "free" },
+            { label: "scattered", x: 36, y: 30, status: "free" },
+          ],
+        },
+        {
+          type: "claude",
+          text:
+            "That reframes it. **40% of Sam's harsh braking — 23 of 58, including 7 of his 9 severe events — happens at " +
+            "one intersection**: West Charleston & South Rancho, and almost all of it between 4 and 6pm.\n\n" +
+            "A single driver braking hard all over town is a driving-habit problem. A single driver braking hard at the " +
+            "*same corner at the same time every day* is a **route problem** — a badly-timed light, a blind merge, or a " +
+            "schedule that puts him through that junction at peak. The fix is probably two-pronged: a quick word with " +
+            "Sam about the approach, *and* re-sequencing his afternoon runs to avoid that intersection at rush hour.\n\n" +
+            "This is the kind of thing that never shows up in a per-driver leaderboard — you only see it when you put " +
+            "the events on a map. Worth checking whether any *other* drivers spike at that same corner; if so, it's " +
+            "infrastructure, and fully on the route, not the people.",
+        },
+      ],
+      choices: [
+        { label: "🧑‍🏫 Draft Sam's coaching note", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "🚦 Back to the risk scorecard", say: "Show me the ten riskiest drivers this week and their top events.", next: "ep-safety-risk" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ----------------------------------------- safety · school-zone speeding */
+    "ep-safety-schoolzone": {
+      id: "ep-safety-schoolzone",
+      title: "Safety · Speeding in school zones",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "I can answer this two ways, and I'll do both. Quick framing first: Geotab doesn't tag an event \"school " +
+            "zone\" on its own — that comes from a geofence. Let me check what's configured, then cross-reference the " +
+            "posted-speed data for this month regardless.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Zone", search: { name: "%school%" }, propertySelector: { fields: ["id", "name"] } },
+          summary: "no dedicated school-zone geofences yet — falling back to posted-speed proxy",
+          result: '{ "result": [] }',
+        },
+        {
+          type: "claude",
+          text:
+            "No school-zone geofences are set up yet, so I can't give you a precise, geofenced count. But I don't have " +
+            "to leave you empty-handed: the posted-speed data already knows the limit on every segment, so I'll match " +
+            "this month's speeding events against the low-limit (≤20 mph) segments that sit next to Clark County " +
+            "schools.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "This month, speeding events on ≤20 mph posted segments within 150 m of a school, by driver — with the school and the worst speed.", new_chat: true },
+          summary: "7 violations · 3 drivers · all during school hours",
+          result:
+            '{ "answer": [\n' +
+            '  { "driver": "Marcus Bell (Demo - 08)",  "violations": 4, "near": "Walter Bracken STEAM",  "worst": "34 in a 15 mph zone", "when": "07:50, school in" },\n' +
+            '  { "driver": "Devon Carter (Demo - 15)", "violations": 2, "near": "John S. Park Elementary", "worst": "29 in a 15 mph zone", "when": "15:10, school out" },\n' +
+            '  { "driver": "Chloe Tran (Demo - 20)",   "violations": 1, "near": "Las Vegas Academy",       "worst": "26 in a 20 mph zone", "when": "08:05, school in" } ],\n' +
+            '  "note": "proxy match — confirm with dedicated geofences for enforcement-grade numbers" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's what this month looks like, even without the geofences: **7 speeding events on school-zone-grade " +
+            "segments, across 3 drivers, every one of them during school arrival or dismissal hours** — which is " +
+            "exactly when it matters most.\n\n" +
+            "- **Marcus Bell** (Demo - 08) — 4 events near Walter Bracken STEAM, worst was **34 mph in a posted 15** at " +
+            "07:50, right at morning drop-off. (He's already your #1 risk driver this week — this is the same person.)\n" +
+            "- **Devon Carter** (Demo - 15) — 2 near John S. Park Elementary, 29 in a 15, at afternoon dismissal.\n" +
+            "- **Chloe Tran** (Demo - 20) — 1 near Las Vegas Academy, 26 in a 20.\n\n" +
+            "Two things follow. **Now:** Marcus needs a direct conversation today — doing 34 past an elementary at " +
+            "drop-off is the kind of thing that ends up on local news. **Going forward:** let me turn these from a " +
+            "best-effort proxy into hard, enforceable numbers by dropping actual school-zone geofences with their own " +
+            "15/20 mph rules — then this question answers itself every month and alerts you live, not in arrears.",
+        },
+        {
+          type: "chart",
+          title: "School-zone speeding events this month · by driver (posted-speed proxy)",
+          bars: bars(D.vegas && D.vegas.schoolZone && D.vegas.schoolZone.byDriver, "driver", "violations"),
+        },
+      ],
+      choices: [
+        { label: "🏫 Make it enforceable — create the geofences", say: "Create the school-zone geofences with 15/20 mph speeding alerts so this is exact going forward.", next: "ep-safety-schoolzone-create" },
+        { label: "🧑‍🏫 Coach Marcus on the drop-off speeding", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "🛣️ Verify the posted limits on his route", say: "Pull the posted road speed along Demo - 08's actual route so we can coach on facts.", next: "ep10-postedspeed" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep-safety-schoolzone-create": {
+      id: "ep-safety-schoolzone-create",
+      title: "Safety · Create school-zone alert",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "I'll geofence the three schools that already flagged this month — Walter Bracken STEAM, John S. Park " +
+            "Elementary and Las Vegas Academy — at 150 m each, with their posted limits. Drawing the zones first.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Zone", entity: { names: ["School Zone — Walter Bracken STEAM", "School Zone — John S. Park Elementary", "School Zone — Las Vegas Academy"], radius_m: 150 } },
+          summary: "3 school-zone geofences created (150 m each)",
+          write: true,
+          result: '{ "result": ["Zoneb…bracken", "Zoneb…park", "Zoneb…lva"] }',
+        },
+        {
+          type: "claude",
+          text: "Zones are in. Now a speeding rule on each at its real posted limit (15 mph for the two elementaries, 20 for the Academy), separate from your fleet-wide limit.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", entity: { name: "Speeding in school zone", scopedTo: "the 3 school zones", thresholds: "15 / 15 / 20 mph" } },
+          summary: "School-zone speeding rules live (active during posted hours)",
+          write: true,
+          result: '{ "result": ["Ruleb…sz-bracken", "Ruleb…sz-park", "Ruleb…sz-lva"] }',
+        },
+        {
+          type: "claude",
+          text: "And routing the alert to one fleet manager so a school-zone breach pings someone in the moment.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Notification", entity: { recipient: "one fleet manager (by name)" } },
+          summary: "Alert routed to 1 manager",
+          write: true,
+          result: '{ "result": "Notificationb…" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Done — three school-zone geofences, a speeding rule on each at its real posted limit, and live alerts to a " +
+            "manager. From now on, anything over the limit inside one of these is flagged the moment it happens, " +
+            "tagged to the driver.\n\n" +
+            "Two things you've gained: this month's question (\"who sped in a school zone?\") is now an *exact, " +
+            "enforcement-grade* query instead of a proxy — and you'll never have to ask it retroactively again, because " +
+            "Marcus or anyone else doing 30 past Bracken at drop-off now triggers an alert that day. Send me the rest " +
+            "of your school list and I'll clone these across all of them in one pass.",
+        },
+        {
+          type: "confirm",
+          changes: [
+            "3 school-zone geofences created (150 m) on demo_fh_vegas4",
+            "Speeding rules scoped to each zone at its posted limit (15 / 15 / 20 mph)",
+            "Live alert routed to 1 fleet manager",
+          ],
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "From a best-effort proxy to live enforcement, in one ask."] },
+      ],
+      choices: [
+        { label: "🧑‍🏫 Now coach the drivers who triggered it", say: "Now identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "🚦 Show my riskiest drivers", say: "Now show me my ten riskiest drivers this week.", next: "ep-safety-risk" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ----------------------------------------- maintenance · overdue service */
+    "ep-maint-overdue": {
+      id: "ep-maint-overdue",
+      title: "Maintenance · Overdue for service",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Let me read your maintenance reminders against each vehicle's live odometer and engine hours, and pull " +
+            "everything that's past due right now.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh4", prompt: "Which vehicles are past due on any maintenance reminder right now? Give the service type, how far overdue (km or days), and the assigned driver.", new_chat: true },
+          summary: "5 vehicles overdue · 1 is a legal roadworthiness inspection",
+          result:
+            '{ "answer": [\n' +
+            '  { "vehicle": "Demo - 25 (MAN coach)",   "driver": "Núria Pons",  "service": "Annual roadworthiness (ITV)", "overdue": "19 days", "priority": "CRITICAL — legal" },\n' +
+            '  { "vehicle": "Demo - 02 (MAN coach)",   "driver": "Iker Sáez",   "service": "Brake inspection",           "overdue": "6,100 km", "priority": "HIGH — passenger safety" },\n' +
+            '  { "vehicle": "Demo - 14 (Actros truck)","driver": "Marta Ferrer","service": "Engine oil & filter",        "overdue": "8,400 km", "priority": "HIGH" },\n' +
+            '  { "vehicle": "Demo - 19 (Actros truck)","driver": "Bruno Gil",   "service": "Engine oil & filter",        "overdue": "4,700 km", "priority": "MEDIUM" },\n' +
+            '  { "vehicle": "Demo - 41 (Renault T)",   "driver": "Aitor Vidal", "service": "DPF service / tyre rotation", "overdue": "3,900 km", "priority": "MEDIUM" } ] }',
+        },
+        {
+          type: "claude",
+          text:
+            "Five vehicles are past due — and the order to work them isn't by how overdue they are, it's by what " +
+            "happens if you keep driving them:\n\n" +
+            "1. **Demo - 25** (MAN coach, Núria Pons) — **annual roadworthiness inspection, 19 days overdue.** This one " +
+            "jumps the queue: it's not a wear item, it's a *legal* one. A coach carrying passengers on an expired ITV " +
+            "is an uninsured-in-an-incident problem and a fine waiting to happen. Book it today.\n" +
+            "2. **Demo - 02** (MAN coach, Iker Sáez) — **brake inspection, 6,100 km over.** Passenger vehicle, braking " +
+            "system, well past due — high priority on safety alone.\n" +
+            "3. **Demo - 14** (Actros, Marta Ferrer) — engine oil & filter, 8,400 km over. Most overdue by distance; " +
+            "deferring oil on a truck this far is how a €200 service becomes a €6–8k engine.\n" +
+            "4–5. **Demo - 19** and **Demo - 41** — routine, medium priority, can batch into next week's shop slots.\n\n" +
+            "Net: two must-do-now (one legal, one brakes), one high, two routine. Your five Sprinter vans, for contrast, " +
+            "are all comfortably within interval. Want me to book the top one into the garage and hold a slot?\n\n" +
+            "*(Confirm against the shop's own records before sign-off — but these are read straight from the configured " +
+            "reminders, not guessed.)*",
+        },
+        {
+          type: "chart",
+          title: "Maintenance overdue · by distance/time past due",
+          bars: bars(D.spain && D.spain.overdue, "chartLabel", "chartValue"),
+        },
+      ],
+      choices: [
+        { label: "📧 Book the critical one into the garage", say: "Pull the fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
+        { label: "⚠️ What faults are flagged this week?", say: "Show me any fault codes flagged in the last seven days and their severity.", next: "ep-maint-severity" },
+        { label: "⏱️ Which assets had the most downtime?", say: "Which assets have had the most unplanned downtime this quarter?", next: "ep-maint-downtime" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------- maintenance · fault severity */
+    "ep-maint-severity": {
+      id: "ep-maint-severity",
+      title: "Maintenance · Fault codes + severity",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Let me pull this week's faults and triage them by the warning-lamp status that rides with each one — " +
+            "red-stop, amber-warning, or informational. That J1939 lamp is where real severity lives, and it's what " +
+            "separates \"pull over now\" from \"noise.\"",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh4", typeName: "FaultData", search: { fromDate: "…7 days ago", toDate: "now" } },
+          summary: "597 fault records this week",
+          result: '{ "result": 597 }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "FaultData", search: { fromDate: "…7 days ago", toDate: "now" }, propertySelector: { fields: ["diagnostic", "device", "redStopLamp", "amberWarningLamp"] }, resultsLimit: 700 },
+          summary: "3 CRITICAL (red) · 14 WARNING (amber) · 580 informational device faults",
+          result:
+            '{ "critical_redLamp": [\n' +
+            '    { "vehicle": "Demo - 12 (Actros)",  "driver": "Pau Serra",    "fault": "Brake system air pressure low" },\n' +
+            '    { "vehicle": "Demo - 28 (MAN coach)","driver": "Lucía Mena",  "fault": "Engine coolant temperature high" },\n' +
+            '    { "vehicle": "Demo - 31 (MAN coach)","driver": "Roberto Vila","fault": "SCR aftertreatment — derate imminent" } ],\n' +
+            '  "warning_amberLamp": { "DPF regeneration required": 5, "AdBlue/DEF low": 4, "Battery voltage low": 3, "Tyre pressure low": 2 },\n' +
+            '  "informational_device": 580  // GO unplugged / power / GPS, concentrated on the 5 Sprinters\n}',
+        },
+        {
+          type: "claude",
+          text:
+            "597 looks like the wheels are coming off. They're not — but **3 of them genuinely need action today**, and " +
+            "the value here is that severity triage pulls those 3 out of the noise instead of burying them.\n\n" +
+            "**🔴 Critical — red stop lamp, same-day (3):**\n" +
+            "- **Demo - 12** (Actros, Pau Serra) — *brake system air pressure low.* A loaded truck with failing air " +
+            "brakes — stop and inspect before its next run, no exceptions.\n" +
+            "- **Demo - 28** (MAN coach, Lucía Mena) — *coolant temperature high.* Overheating; risk of a cracked head " +
+            "if it keeps running. Pull it.\n" +
+            "- **Demo - 31** (MAN coach, Roberto Vila) — *SCR aftertreatment, engine derate imminent.* Will limp-mode " +
+            "mid-route and strand passengers if ignored.\n\n" +
+            "**🟡 Warning — amber, schedule this week (14):** 5× DPF regeneration, 4× AdBlue low, 3× low battery, 2× " +
+            "low tyre pressure. None strand a vehicle today, but the DPF and AdBlue ones become derates if left.\n\n" +
+            "**⚪ Informational (580):** the rest are GO-device connectivity faults — the unit unplugged or lost power — " +
+            "almost all of them on your five Sprinter vans (Demo - 06–10). Zero engine lamps. That's not 580 problems, " +
+            "it's one wiring job; batch it.\n\n" +
+            "So the worklist writes itself: **3 vehicles off the road now**, 14 booked this week, and one harness fix " +
+            "for the Sprinters that'll make 95% of this number disappear.",
+        },
+        {
+          type: "chart",
+          title: "Actionable faults by type · last 7 days (informational device faults excluded)",
+          bars: (D.spain && D.spain.faults && D.spain.faults.actionableChart) || [],
+        },
+      ],
+      choices: [
+        { label: "📧 Book the 3 critical units in now", say: "Pull the critical fault details, draft an email to the garage, and put tentative service slots on my calendar for tomorrow morning.", next: "ep5-answer" },
+        { label: "🔎 Why does one van fault so much? Dig in", say: "Demo - 08 keeps showing up in the device faults — why? Dig into it and don't stop at the first explanation.", next: "ep12-investigate" },
+        { label: "⏱️ Which assets had the most downtime?", say: "Which assets have had the most unplanned downtime this quarter?", next: "ep-maint-downtime" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------- maintenance · unplanned downtime */
+    "ep-maint-downtime": {
+      id: "ep-maint-downtime",
+      title: "Maintenance · Unplanned downtime",
+      db: "demo_fh4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "I'll measure unplanned downtime the way it actually hurts you — days a vehicle sat out of service while its " +
+            "peer group was working — and tie each spell to the fault that caused it and what the lost availability " +
+            "cost. Pulling the quarter.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh4", prompt: "This quarter, rank vehicles by unplanned downtime days (out of service while peers were active). For each give the likely cause and estimated cost of lost availability.", new_chat: true },
+          summary: "≈38 down-days fleet-wide · top 5 = 27.8 (73%) · est. €23k lost",
+          result:
+            '{ "fleetDownDays": 38, "estLostAvailabilityEUR": 23400, "byVehicle": [\n' +
+            '  { "vehicle": "Demo - 08 (Sprinter)", "downDays": 9.2, "cause": "recurring power/connector fault",      "estCostEUR": 3700 },\n' +
+            '  { "vehicle": "Demo - 06 (Sprinter)", "downDays": 6.1, "cause": "connector fault + awaiting parts",     "estCostEUR": 2450 },\n' +
+            '  { "vehicle": "Demo - 28 (MAN coach)","downDays": 4.2, "cause": "coolant/overheat repair",             "estCostEUR": 3360 },\n' +
+            '  { "vehicle": "Demo - 12 (Actros)",   "downDays": 3.5, "cause": "brake system repair",                 "estCostEUR": 2800 },\n' +
+            '  { "vehicle": "Demo - 07 (Sprinter)", "downDays": 4.8, "cause": "connector fault",                     "estCostEUR": 1920 } ] }',
+        },
+        {
+          type: "claude",
+          text:
+            "About **38 vehicle-days lost this quarter — roughly €23k in unavailability** — and it's concentrated: the " +
+            "top five assets account for ~28 of those days (73%). Two clusters explain almost all of it:\n\n" +
+            "**Cluster 1 — the Sprinter vans (Demo - 06, 07, 08):** ~20 down-days between them, all the same root cause " +
+            "— the recurring power/connector fault we've been tracking. **Demo - 08 alone is 9.2 days down** this " +
+            "quarter, which is exactly why its mileage runs a third of the fleet: it's parked, not lightly scheduled. " +
+            "This is the cheapest win on the board — one harness fix across the three vans claws back most of those 20 " +
+            "days and ~€8k.\n\n" +
+            "**Cluster 2 — the heavy assets (Demo - 28 coach, Demo - 12 truck):** ~8 down-days, and these are your " +
+            "*expensive* days — a coach or truck off the road bleeds €800–900/day in lost work, versus ~€400 for a van. " +
+            "Both trace to faults already flagged as critical this week (overheat, brakes), so catching those earlier " +
+            "is what shortens these spells next quarter.\n\n" +
+            "Bottom line: downtime here isn't bad luck spread thin — it's two fixable causes on seven vehicles. Close " +
+            "those and you take a visible bite out of both the day count and the €23k.",
+        },
+        {
+          type: "chart",
+          title: "Unplanned down-days this quarter · top 5 vehicles",
+          bars: bars(D.spain && D.spain.downtime && D.spain.downtime.byVehicle, "label", "downDays"),
+        },
+      ],
+      choices: [
+        { label: "🔎 Why does Demo - 08 keep faulting?", say: "Demo - 08 keeps showing up — why? Dig into it and don't stop at the first explanation.", next: "ep12-investigate" },
+        { label: "⚠️ Fault codes + severity this week", say: "Show me any fault codes flagged in the last seven days and their severity.", next: "ep-maint-severity" },
+        { label: "📅 What's overdue for service?", say: "Which vehicles are overdue for scheduled maintenance right now?", next: "ep-maint-overdue" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------- operations · fuel economy by type */
+    "ep-ops-fuel": {
+      id: "ep-ops-fuel",
+      title: "Operations · Fuel economy by type",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Fuel economy reads from each vehicle's engine data. This fleet is two body types — 35 Ford Transit 250 " +
+            "cargo vans and 15 F-150 pickups — so let me split consumption and distance that way, and put a dollar " +
+            "figure on it.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "This month, average fuel economy (mpg) by vehicle type, total fuel spend, and the 3 vehicles dragging their type's average down with their drivers.", new_chat: true },
+          summary: "Vans 18.2 mpg · pickups 15.1 · $41.5k spend · 3 outliers identified",
+          result:
+            '{ "byType": [ { "type": "Ford Transit 250 (van)", "count": 35, "mpg": 18.2, "ratedMpg": 19.5 },\n' +
+            '              { "type": "Ford F-150 (pickup)",   "count": 15, "mpg": 15.1, "ratedMpg": 16.0 } ],\n' +
+            '  "fleetMonthlyFuelUSD": 41500, "fleetBlendedMpg": 17.3,\n' +
+            '  "worstVsTypeAvg": [\n' +
+            '    { "driver": "Marcus Bell (Demo - 08)",  "mpg": 14.9, "vsType": "-18%" },\n' +
+            '    { "driver": "Devon Carter (Demo - 15)", "mpg": 15.6, "vsType": "-14%" },\n' +
+            '    { "driver": "Priya Nair (Demo - 01)",   "mpg": 16.0, "vsType": "-12%" } ] }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's the month. The 35 Transit vans average **18.2 mpg** (rated 19.5), the 15 F-150 pickups **15.1** " +
+            "(rated 16), and the fleet blends to **17.3**. Total fuel spend is about **$41.5k**.\n\n" +
+            "But the average is the boring part. Look at *who's* below it: the three vans dragging the van fleet down — " +
+            "**Marcus Bell at 14.9 mpg (-18%)**, Devon Carter at 15.6, Priya Nair at 16.0 — are the **exact same names " +
+            "at the top of your speeding and risk lists.** That's not a coincidence: hard speed and harsh events burn " +
+            "fuel. Your worst safety drivers are also your worst fuel drivers.\n\n" +
+            "Which means one intervention pays three ways. The posted-speed policy you'd run for safety also recovers " +
+            "fuel: closing the gap between your fleet (17.3) and its rated economy is worth roughly **6–8%, on the order " +
+            "of $2.5–3k a month** — and it lands hardest on the same handful of drivers. Safety, fuel, and emissions, " +
+            "one lever.\n\n" +
+            "(And the vans' tight, short urban duty cycle is exactly the profile that makes them your EV-conversion " +
+            "candidates — happy to make that case next.)",
+        },
+        {
+          type: "chart",
+          title: "Average fuel economy by vehicle type · this month (mpg, vs rated)",
+          bars: (((D.vegas && D.vegas.fuel && D.vegas.fuel.byType) || []).reduce(function (acc, t) {
+            acc.push({ label: t.shortType + " — actual", value: t.mpg });
+            acc.push({ label: t.shortType + " — rated", value: t.ratedMpg });
+            return acc;
+          }, [])),
+        },
+      ],
+      choices: [
+        { label: "🔋 Are these EV-replacement candidates?", say: "Which of these vehicles are candidates for EV replacement based on daily mileage patterns?", next: "ep9-ev-vegas" },
+        { label: "💤 Where are we losing fuel to idling?", say: "Show me which routes had the longest idle times last week.", next: "ep-ops-idle" },
+        { label: "🔔 Run the speed policy that recovers it", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------- operations · longest idle times */
+    "ep-ops-idle": {
+      id: "ep-ops-idle",
+      title: "Operations · Longest idle times",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Let me rank last week's idling by driver, and convert the hours into the thing that actually lands in a " +
+            "budget meeting — fuel burned and dollars, for zero miles moved.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "Last 7 days: total engine idle hours fleet-wide and by driver (top 5), with estimated fuel wasted in gallons, dollars, and CO2.", new_chat: true },
+          summary: "118 idle-hours fleet · ≈59 gal · ≈$210/wk ($10.9k/yr) · top 5 = 40%",
+          result:
+            '{ "fleetIdleHours7d": 118, "gallons": 59, "costUSD": 210, "annualizedUSD": 10920, "co2_kg": 525,\n' +
+            '  "topByDriver": [\n' +
+            '    { "driver": "Hannah Brooks (Demo - 17)", "idleHours": 6.1, "costUSD": 10.9 },\n' +
+            '    { "driver": "Eddie Vance (Demo - 29)",   "idleHours": 5.4, "costUSD": 9.6 },\n' +
+            '    { "driver": "Sam Whitfield (Demo - 33)", "idleHours": 4.8, "costUSD": 8.5 },\n' +
+            '    { "driver": "Rosa Mendez (Demo - 41)",   "idleHours": 4.3, "costUSD": 7.6 },\n' +
+            '    { "driver": "Will Dawson (Demo - 05)",   "idleHours": 3.9, "costUSD": 6.9 } ] }',
+        },
+        {
+          type: "claude",
+          text:
+            "Last week the fleet idled **118 hours** — about **59 gallons, ~$210, and half a tonne of CO₂ — burned " +
+            "going nowhere.** Annualized that's roughly **$10.9k a year** straight out the tailpipe at a standstill.\n\n" +
+            "Top idlers (these five are ~40% of it):\n" +
+            "- **Hannah Brooks** (Demo - 17) — 6.1 h\n" +
+            "- **Eddie Vance** (Demo - 29) — 5.4 h\n" +
+            "- **Sam Whitfield** (Demo - 33) — 4.8 h\n" +
+            "- **Rosa Mendez** (Demo - 41) — 4.3 h\n" +
+            "- **Will Dawson** (Demo - 05) — 3.9 h\n\n" +
+            "In Las Vegas heat most of this is AC-on-while-parked — understandable, but it's invisible today because " +
+            "nothing flags it in the moment; it only ever surfaces in a report like this one, after the fuel's gone.\n\n" +
+            "The fix is one rule: flag any idle past 10 minutes and nudge the driver live. Fleets that do this typically " +
+            "cut idle 20–30% in the first month — call it **$2–3k/year recovered** here, plus the emissions win, for a " +
+            "rule that takes me ten seconds to create. Want it on?",
+        },
+        {
+          type: "chart",
+          title: "Idle hours by driver · last 7 days (top 5)",
+          bars: bars(D.vegas && D.vegas.idle && D.vegas.idle.byDriver, "driver", "idleHours"),
+        },
+      ],
+      choices: [
+        { label: "🔔 Create an idling alert (>10 min)", say: "Set up an idling alert for anything over 10 minutes and route it to a manager.", next: "ep-ops-idle-alert" },
+        { label: "⛽ How's my fuel economy overall?", say: "What is my average fuel economy by vehicle type this month?", next: "ep-ops-fuel" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep-ops-idle-alert": {
+      id: "ep-ops-idle-alert",
+      title: "Operations · Create idling alert",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text: "Creating the idling rule first — threshold at 10 minutes.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", entity: { name: "Idling > 10 min" } },
+          summary: "Idling rule created",
+          write: true,
+          result: '{ "result": "Ruleb…idling-10" }',
+        },
+        {
+          type: "claude",
+          text: "Live. Now routing the alert to one fleet manager.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: { database: "demo_fh_vegas4", typeName: "Notification", entity: { recipient: "one fleet manager (by name)" } },
+          summary: "Idling alerts routed to 1 manager",
+          write: true,
+          result: '{ "result": "Notificationb…" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Done — anything idling past 10 minutes is flagged live now and goes to a manager. Next week's idle list " +
+            "should already be shorter, because people get nudged in the moment instead of in a report nobody reads.",
+        },
+        {
+          type: "confirm",
+          changes: [
+            "Rule \"Idling > 10 min\" created and active on demo_fh_vegas4",
+            "Notification routed to 1 fleet manager",
+          ],
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Catch it in the moment, not in the monthly."] },
+      ],
+      choices: [
+        { label: "⛽ Now check fuel economy", say: "What is my average fuel economy by vehicle type this month?", next: "ep-ops-fuel" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ----------------------------------------- agentic · assess top 3 safety risks */
+    "ep-agentic-safety": {
+      id: "ep-agentic-safety",
+      title: "Agentic · Top 3 safety risks + fixes",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "This is an assessment, not a single lookup — so let me gather every safety signal across the fleet, score " +
+            "the drivers, check exposure around sensitive areas, then rank the top three risks and pair each with a " +
+            "concrete fix and a number.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "ExceptionEvent", search: { fromDate: "…7 days ago", toDate: "now" } },
+          summary: "4,811 exception events this week (≈20,600 / 30 days)",
+          result: '{ "result": 4811 }',
+        },
+        {
+          type: "claude",
+          text: "Nearly 5,000 this week. Now the shape of it — scoring drivers and checking where the severe events land.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "Summarize fleet safety this week: event mix, fleet safety score vs benchmark and trend, the multi-factor high-risk drivers, and any speeding near schools.", new_chat: true },
+          summary: "score 78 (▼6%) · 90% speeding · 3 multi-factor drivers · 7 school-zone events",
+          result:
+            '{ "fleetSafetyScore": 78, "benchmark": 82, "trendWoW": "-6%",\n' +
+            '  "eventMix": { "speeding": "90%", "harshBrake": "6%", "harshAccel": "3%", "seatbelt": "1%" },\n' +
+            '  "multiFactorDrivers": ["Marcus Bell (Demo - 08)", "Tina Alvarez (Demo - 22)", "Sam Whitfield (Demo - 33)"],\n' +
+            '  "schoolZoneEvents": 7, "schoolZoneDrivers": ["Marcus Bell", "Devon Carter", "Chloe Tran"] }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's the assessment — top three safety risks, ranked by what they'll actually cost you, each with the " +
+            "corrective action I'd take:\n\n" +
+            "**1. Systemic speeding — the dominant, fleet-wide risk.** 90% of ~4,800 weekly events, and the top ten " +
+            "drivers sit within 5% of each other — a tight cluster with no outlier is the signature of a *system* " +
+            "(shared routes, limits, expectations), not a few bad actors. It's dragging your fleet safety score to 78, " +
+            "below the 82 benchmark and down 6% this week.\n" +
+            "→ *Fix:* a fleet-wide posted-speed rule + live alert + a written speed policy. This is also your biggest " +
+            "*fuel* lever (~$2.5–3k/mo) — one move, two budgets.\n\n" +
+            "**2. Three multi-factor drivers who need a conversation this week.** Most of the fleet is speeding-only, " +
+            "but **Marcus Bell** (speed + braking + seatbelt — the combination most predictive of an at-fault crash), " +
+            "**Tina Alvarez** (31 harsh accelerations) and **Sam Whitfield** (9 severe brakes, 40% at one intersection) " +
+            "stand apart.\n" +
+            "→ *Fix:* targeted 1:1 coaching for these three — the cheapest risk you'll buy down all quarter, given an " +
+            "at-fault collision runs well into five figures loaded.\n\n" +
+            "**3. School-zone exposure at drop-off/dismissal.** 7 speeding events this month on school-grade segments, " +
+            "across Marcus Bell, Devon Carter and Chloe Tran — every one during school hours. Low count, very high " +
+            "consequence (and reputational).\n" +
+            "→ *Fix:* drop school-zone geofences with their posted limits so these are flagged live, and coach the three " +
+            "named drivers now.\n\n" +
+            "If you do just #1 and #2 this week, you move the fleet score, the fuel bill and your single worst " +
+            "collision exposure at the same time. Want me to start — the live speed alert, or the coaching notes?",
+        },
+        {
+          type: "chart",
+          title: "This week's exception mix · where the risk actually is",
+          bars: (function () {
+            var m = (D.vegas && D.vegas.eventMixPct) || {};
+            return [
+              { label: "Speeding", value: m.speeding },
+              { label: "Harsh braking", value: m.harshBrake },
+              { label: "Harsh accel", value: m.harshAccel },
+              { label: "Seatbelt", value: m.seatbelt },
+            ];
+          })(),
+        },
+      ],
+      choices: [
+        { label: "✅ Do #1 — create the speed alert now", say: "Do #1 — set up the fleet-wide posted-speed alert and send it to one fleet manager.", next: "ep2-action" },
+        { label: "🧑‍🏫 Do #2 — draft the coaching notes", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "🏫 Do #3 — geofence the school zones", say: "Create the school-zone geofences with speeding alerts so we catch drop-off speeding live.", next: "ep-safety-schoolzone-create" },
+        { label: "🚦 Show the full driver scorecard", say: "Who are my ten riskiest drivers this week, and their top events?", next: "ep-safety-risk" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------- agentic · coaching summary draft */
+    "ep-agentic-coaching": {
+      id: "ep-agentic-coaching",
+      title: "Agentic · Draft coaching summary",
+      db: "demo_fh_vegas4",
+      events: [
+        { type: "system", text: "This flow spans two connectors: Geotab + Gmail." },
+        {
+          type: "claude",
+          text:
+            "The useful coaching list isn't \"everyone who sped\" — that's a policy problem, not a coaching one. It's the " +
+            "handful whose risk is *individual* and specific. Let me pull those drivers with the one concrete thing " +
+            "each should hear.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "Which drivers need 1:1 safety coaching this week (individual, non-systemic risk), and what is the single most specific, fact-based talking point for each?", new_chat: true },
+          summary: "3 drivers flagged for 1:1 coaching, each with a specific data point",
+          result:
+            '{ "answer": [\n' +
+            '  { "driver": "Marcus Bell (Demo - 08)",   "why": "multi-factor: speed + harsh braking + 8 seatbelt + 4 school-zone events", "score": 47 },\n' +
+            '  { "driver": "Tina Alvarez (Demo - 22)",  "why": "31 harsh accelerations — aggressive launches, up 4%", "score": 52 },\n' +
+            '  { "driver": "Sam Whitfield (Demo - 33)", "why": "9 severe brakes, 40% at Charleston & Rancho 16:00-18:00", "score": 55 } ] }',
+        },
+        {
+          type: "claude",
+          text:
+            "Three drivers, three different conversations — drafting a note your line manager can act on directly, one " +
+            "specific and fair paragraph each. Leaving it in Drafts, not sending it.",
+        },
+        {
+          type: "tool",
+          server: "gmail",
+          name: "create_draft",
+          args: { to: "ops-manager@test-mailbox.example", subject: "1:1 safety coaching — 3 drivers this week (with specifics)" },
+          summary: "Draft saved (NOT sent)",
+          write: true,
+          openByDefault: true,
+          result:
+            "To: ops-manager@test-mailbox.example\n" +
+            "Subject: 1:1 safety coaching — 3 drivers this week (with specifics)\n\n" +
+            "Hi,\n\n" +
+            "Three drivers stand out this week for *individual* coaching (the broader speeding is a fleet-wide policy " +
+            "issue I'm handling separately with a live alert — please don't single people out for that one).\n\n" +
+            "1) Marcus Bell (Demo - 08) — highest-risk driver this week, safety score 47. It's not one habit, it's the " +
+            "stack: speeding, harsh braking, 8 unbelted starts, and 4 speeding events in school zones at drop-off " +
+            "(34 mph in a posted 15 near Walter Bracken). Lead with the seatbelt and the school zones — those are " +
+            "non-negotiable and easiest to fix immediately.\n\n" +
+            "2) Tina Alvarez (Demo - 22) — 31 harsh accelerations, trending up. Aggressive launches; hard on fuel and " +
+            "the drivetrain as well as risk. Talking point: smooth starts, and it'll show up in her economy too.\n\n" +
+            "3) Sam Whitfield (Demo - 33) — 9 severe braking events, and 40% of them are at the same corner (W " +
+            "Charleston & S Rancho, 4–6pm). Worth coaching the approach AND looking at re-sequencing his afternoon run " +
+            "— this is partly a route problem, so please don't frame it as all on him.\n\n" +
+            "Happy to attach the per-event detail for any of these if useful in the conversation.\n\n" +
+            "Thanks",
+        },
+        {
+          type: "claude",
+          text:
+            "Draft's saved, not sent — open the card above to read it. Each driver gets a specific, evidence-backed " +
+            "paragraph and a fair framing: Marcus's seatbelt and school-zone events lead because they're the " +
+            "non-negotiables; Tina's note connects her habit to fuel so it's not just a telling-off; and Sam's " +
+            "explicitly flags that his issue is partly the route, not just him.\n\n" +
+            "That's the difference between a coaching note a manager can use tomorrow and a leaderboard that just names " +
+            "and shames. (This demo points at a test mailbox, and the driver names are fictional — never a real " +
+            "recipient or record.)",
+        },
+      ],
+      choices: [
+        { label: "📤 Send it to the manager now", say: "It looks right — send the coaching summary now.", next: "ep-coaching-send" },
+        { label: "🛡️ Assess the top 3 risks behind this", say: "Assess my fleet for the top three safety risks and suggest corrective actions.", next: "ep-agentic-safety" },
+        { label: "🔔 Set the live speed alert instead", say: "Skip the email — just set up the fleet-wide posted-speed alert.", next: "ep2-action" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep-coaching-send": {
+      id: "ep-coaching-send",
+      title: "Agentic · Send coaching summary",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "gmail",
+          name: "send_message",
+          args: { draftId: "r-…coaching" },
+          summary: "Sent to ops-manager@test-mailbox.example",
+          write: true,
+          result: '{ "messageId": "r-…", "status": "sent" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Sent. The manager now has Marcus, Tina and Sam each with a specific, fair talking point — and the framing " +
+            "that the wider speeding is a policy fix, not three scapegoats. The conversations start in the right place. " +
+            "The live speed alert is the natural companion to this if you haven't set it yet.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "From fleet data to a manager's inbox, in one ask."] },
+      ],
+      choices: [
+        { label: "🔔 Now set the live speed alert", say: "Now set up the fleet-wide posted-speed alert and route it to a manager.", next: "ep2-action" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
     },

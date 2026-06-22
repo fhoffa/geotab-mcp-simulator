@@ -13,6 +13,9 @@
 var path = require("path");
 
 global.window = {};
+// sample-data.js must load first (browser loads it before conversations.js):
+// conversation charts/results ground on window.SAMPLE_DATA.
+require(path.join(__dirname, "..", "data", "sample-data.js"));
 require(path.join(__dirname, "..", "data", "conversations.js"));
 
 var GRAPH = global.window.CONVERSATIONS;
