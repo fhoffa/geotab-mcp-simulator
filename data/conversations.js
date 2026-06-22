@@ -64,10 +64,10 @@ window.CONVERSATIONS = {
         {
           type: "claude",
           text:
-            "Hi, I'm Claude. Once you connect the Geotab MCP connector, I can read live data from your fleet " +
+            "Hi, I'm an assistant. Once you connect the Geotab MCP connector, I can read live data from your fleet " +
             "and take actions on it, right here in chat — no separate dashboard.\n\n" +
-            "(Worth knowing: the connector itself is just an open MCP server. Copilot, ChatGPT, anything that " +
-            "speaks MCP can plug into the same one — I'm not special here.)\n\n" +
+            "(Worth knowing: the connector itself is just an open MCP server. Claude, Copilot, ChatGPT — anything " +
+            "that speaks MCP can plug into the same one. No single assistant is special here.)\n\n" +
             "This particular page is a simulator, so you'll click suggested questions instead of typing and " +
             "the replies are pre-recorded — but the numbers underneath all came from a real Geotab demo fleet. " +
             "Connect it and I'll show you.",
