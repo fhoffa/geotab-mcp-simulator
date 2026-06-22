@@ -31,6 +31,8 @@
   var BASE = { tool: 360, think: 380, system: 300, gap: 200 };
   var skip = false;
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
+  var currentNodeId = null; // last id pushed to location.hash by playNode
+  var REAL_ACCOUNT_HASH = "connect-real"; // shareable deep link straight to the "connect real account" overlay
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
@@ -428,6 +430,7 @@
     skip = false;
     trayEl.innerHTML = "";
     setConn(id !== "connect");
+    currentNodeId = id;
     if (history.replaceState) history.replaceState(null, "", "#" + id);
 
     var toolContainer = null;
@@ -557,7 +560,13 @@
     closeLanding();
     openOverlay(tryRealOverlay, trigger);
   }
-  function closeTryReal() { closeOverlay(tryRealOverlay); }
+  function closeTryReal() {
+    closeOverlay(tryRealOverlay);
+    // a deep link (#connect-real) shouldn't stick around in the address bar once dismissed
+    if (location.hash.replace(/^#/, "") === REAL_ACCOUNT_HASH && history.replaceState && currentNodeId) {
+      history.replaceState(null, "", "#" + currentNodeId);
+    }
+  }
   function openAbout() { openOverlay(aboutOverlay); }
   function closeAbout() { closeOverlay(aboutOverlay); }
 
@@ -614,4 +623,5 @@
   checkGraph();
   var hash = (location.hash || "").replace(/^#/, "");
   playNode(NODES[hash] ? hash : GRAPH.start);
+  if (hash === REAL_ACCOUNT_HASH) openTryReal();
 })();
