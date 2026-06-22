@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Geotab MCP — Experience Simulator</title>
+    <script>
+      // Mobile browsers often restore a stale snapshot from the back/forward cache when you
+      // reopen the tab — there's no "hard refresh" gesture there, so force a real reload.
+      window.addEventListener("pageshow", function (e) {
+        if (e.persisted) location.reload();
+      });
+    </script>
     <meta
       name="description"
       content="Try the Claude + Geotab MCP connector experience — a guided, pre-recorded simulator grounded in real Geotab demo-fleet data. No setup required."
