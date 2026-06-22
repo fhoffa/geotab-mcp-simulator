@@ -2453,29 +2453,39 @@ window.CONVERSATIONS = {
           type: "claude",
           text:
             "I'll geofence the three schools that already flagged this month — Walter Bracken STEAM, John S. Park " +
-            "Elementary and Las Vegas Academy — at 150 m each, with their posted limits. Drawing the zones first.",
+            "Elementary and Las Vegas Academy — at 150 m each, with their posted limits. Geotab's Add creates one " +
+            "entity per call, so I'll batch the three zones into a single ExecuteMultiCall — one round-trip, three " +
+            "Adds — and get the new zone IDs back in order.",
         },
         {
           type: "tool",
           server: "geotab",
-          name: "Add",
-          args: { database: "demo_fh_vegas4", typeName: "Zone", entity: { names: ["School Zone — Walter Bracken STEAM", "School Zone — John S. Park Elementary", "School Zone — Las Vegas Academy"], radius_m: 150 } },
-          summary: "3 school-zone geofences created (150 m each)",
+          name: "ExecuteMultiCall",
+          args: { database: "demo_fh_vegas4", calls: [
+            { method: "Add", params: { typeName: "Zone", entity: { name: "School Zone — Walter Bracken STEAM", radius_m: 150 } } },
+            { method: "Add", params: { typeName: "Zone", entity: { name: "School Zone — John S. Park Elementary", radius_m: 150 } } },
+            { method: "Add", params: { typeName: "Zone", entity: { name: "School Zone — Las Vegas Academy", radius_m: 150 } } },
+          ] },
+          summary: "MultiCall · 3× Add(Zone) — geofences created (150 m each)",
           write: true,
-          result: '{ "result": ["Zoneb…bracken", "Zoneb…park", "Zoneb…lva"] }',
+          result: '[ "Zoneb…bracken", "Zoneb…park", "Zoneb…lva" ]',
         },
         {
           type: "claude",
-          text: "Zones are in. Now a speeding rule on each at its real posted limit (15 mph for the two elementaries, 20 for the Academy), separate from your fleet-wide limit.",
+          text: "Zones are in. Now a speeding rule on each at its real posted limit (15 mph for the two elementaries, 20 for the Academy), separate from your fleet-wide limit — again batched, one Add per zone, scoped to the IDs I just got back.",
         },
         {
           type: "tool",
           server: "geotab",
-          name: "Add",
-          args: { database: "demo_fh_vegas4", typeName: "Rule", entity: { name: "Speeding in school zone", scopedTo: "the 3 school zones", thresholds: "15 / 15 / 20 mph" } },
-          summary: "School-zone speeding rules live (active during posted hours)",
+          name: "ExecuteMultiCall",
+          args: { database: "demo_fh_vegas4", calls: [
+            { method: "Add", params: { typeName: "Rule", entity: { name: "Speeding — Walter Bracken STEAM", zone: "Zoneb…bracken", thresholdMph: 15 } } },
+            { method: "Add", params: { typeName: "Rule", entity: { name: "Speeding — John S. Park Elementary", zone: "Zoneb…park", thresholdMph: 15 } } },
+            { method: "Add", params: { typeName: "Rule", entity: { name: "Speeding — Las Vegas Academy", zone: "Zoneb…lva", thresholdMph: 20 } } },
+          ] },
+          summary: "MultiCall · 3× Add(Rule) — one rule per zone at its posted limit",
           write: true,
-          result: '{ "result": ["Ruleb…sz-bracken", "Ruleb…sz-park", "Ruleb…sz-lva"] }',
+          result: '[ "Ruleb…sz-bracken", "Ruleb…sz-park", "Ruleb…sz-lva" ]',
         },
         {
           type: "claude",
