@@ -15,10 +15,6 @@
   var connEl = document.getElementById("connStatus");
   var restartBtn = document.getElementById("restartBtn");
   var shareBtn = document.getElementById("shareBtn");
-  var mapBtn = document.getElementById("mapBtn");
-  var mapOverlay = document.getElementById("mapOverlay");
-  var mapBody = document.getElementById("mapBody");
-  var mapClose = document.getElementById("mapClose");
   var landingOverlay = document.getElementById("landingOverlay");
   var startSimBtn = document.getElementById("startSimBtn");
   var tryRealOverlay = document.getElementById("tryRealOverlay");
@@ -515,7 +511,6 @@
 
   async function onChoice(c) {
     if (c.action === "restart") { restart(); return; }
-    if (c.action === "map") { openMap(); return; }
     var myToken = playToken; // still the node whose choices are showing
     trayEl.innerHTML = ""; // one shot — no double-clicking another chip mid-type
     if (c.say || c.label) {
@@ -526,52 +521,6 @@
     if (c.next) playNode(c.next);
   }
 
-  /* ----------------------------------------------------------- story map */
-  function buildMapOrder() {
-    // BFS from start for a readable order + depth
-    var order = [], depth = {}, seen = {}, q = [GRAPH.start];
-    depth[GRAPH.start] = 0;
-    while (q.length) {
-      var id = q.shift();
-      if (seen[id] || !NODES[id]) continue;
-      seen[id] = true; order.push(id);
-      var n = NODES[id];
-      var outs = [];
-      (n.choices || []).forEach(function (c) { if (c.next) outs.push(c.next); });
-      if (n.next) outs.push(n.next);
-      outs.forEach(function (t) { if (depth[t] == null) depth[t] = depth[id] + 1; if (!seen[t]) q.push(t); });
-    }
-    // include any orphan nodes too
-    Object.keys(NODES).forEach(function (id) { if (!seen[id]) { order.push(id); depth[id] = 0; } });
-    return { order: order, depth: depth };
-  }
-
-  function openMap() {
-    var info = buildMapOrder();
-    mapBody.innerHTML = "";
-    info.order.forEach(function (id) {
-      var n = NODES[id];
-      var d = Math.min(info.depth[id] || 0, 2);
-      var wrap = el("div", d ? "map-depth-" + d : "");
-      var btn = el("button", "map-node");
-      btn.type = "button";
-      btn.innerHTML = '<div class="mn-title">' + escapeHtml(n.title || id) + '</div><div class="mn-id">' + escapeHtml(id) + "</div>";
-      btn.addEventListener("click", function () { closeMap(); restartTo(id); });
-      wrap.appendChild(btn);
-
-      var edges = [];
-      (n.choices || []).forEach(function (c) {
-        if (c.next && NODES[c.next]) edges.push((NODES[c.next].title || c.next));
-        else if (c.action) edges.push("(" + c.action + ")");
-      });
-      if (n.next && NODES[n.next]) edges.push((NODES[n.next].title || n.next) + " · auto");
-      if (edges.length) {
-        wrap.appendChild(el("div", "map-edges", '<span class="arrow">→</span> ' + edges.map(escapeHtml).join(' &nbsp;·&nbsp; ')));
-      }
-      mapBody.appendChild(wrap);
-    });
-    openOverlay(mapOverlay);
-  }
   // --- modal focus management: move focus in on open, trap Tab inside the
   // panel, and restore focus to the trigger on close (a11y for the dialogs).
   var lastFocused = null;
@@ -597,12 +546,10 @@
   }
   // the visible (non-hidden) overlay, if any — for Escape + tab-trap targeting
   function activeOverlay() {
-    var all = [landingOverlay, tryRealOverlay, aboutOverlay, mapOverlay];
+    var all = [landingOverlay, tryRealOverlay, aboutOverlay];
     for (var i = 0; i < all.length; i++) if (!all[i].classList.contains("hidden")) return all[i];
     return null;
   }
-
-  function closeMap() { closeOverlay(mapOverlay); }
 
   function closeLanding() { closeOverlay(landingOverlay); }
   function openTryReal() {
@@ -633,13 +580,9 @@
 
   function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
   function restart() { playToken++; clearChat(); playNode(GRAPH.start); }
-  function restartTo(id) { playToken++; clearChat(); playNode(id); }
 
   restartBtn.addEventListener("click", restart);
   shareBtn.addEventListener("click", shareLink);
-  mapBtn.addEventListener("click", openMap);
-  mapClose.addEventListener("click", closeMap);
-  mapOverlay.addEventListener("click", function (e) { if (e.target === mapOverlay) closeMap(); });
   startSimBtn.addEventListener("click", closeLanding);
   tryRealBtn.addEventListener("click", openTryReal);
   tryRealBtnLanding.addEventListener("click", openTryReal);

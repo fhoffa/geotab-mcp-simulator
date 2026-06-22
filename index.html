@@ -47,7 +47,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=9a05896" />
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23d97757'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif'%3EG%3C/text%3E%3C/svg%3E"
@@ -66,7 +66,6 @@
         <span id="connStatus" class="conn-pill conn-off">Not connected</span>
         <button id="tryRealBtn" class="ghost-btn" type="button">🔌 Connect real account</button>
         <button id="shareBtn" class="ghost-btn" type="button" title="Copy a link to this point in the simulator">🔗 Share</button>
-        <button id="mapBtn" class="ghost-btn" type="button">🗺️ Story map</button>
         <button id="aboutBtn" class="ghost-btn" type="button">ℹ️ About</button>
         <button id="restartBtn" class="ghost-btn" type="button">↻ Restart</button>
       </div>
@@ -96,21 +95,6 @@
         Not affiliated with Anthropic; the chat styling is a stylistic homage.
       </p>
     </footer>
-
-    <!-- Story-map overlay -->
-    <div id="mapOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Conversation map">
-      <div class="overlay-panel">
-        <div class="overlay-head">
-          <h2>Conversation map</h2>
-          <button id="mapClose" class="ghost-btn" type="button">✕ Close</button>
-        </div>
-        <p class="overlay-note">
-          Every branch in the simulator, generated live from <code>data/conversations.js</code>.
-          Click any node to jump to it.
-        </p>
-        <div id="mapBody" class="map-body"></div>
-      </div>
-    </div>
 
     <!-- Landing / value-prop overlay — shown first, dismissible -->
     <div id="landingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Welcome">
@@ -227,7 +211,7 @@
       </div>
     </div>
 
-    <script src="data/conversations.js"></script>
-    <script src="app.js"></script>
+    <script src="data/conversations.js?v=9a05896"></script>
+    <script src="app.js?v=9a05896"></script>
   </body>
 </html>

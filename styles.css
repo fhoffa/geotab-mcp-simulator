@@ -651,30 +651,6 @@ body {
 .overlay-head h2 { margin: 0; font-size: 18px; }
 .overlay-note { font-size: 13px; color: var(--ink-soft); margin: 6px 0 14px; }
 
-.map-body { display: flex; flex-direction: column; gap: 4px; }
-.map-node {
-  display: block;
-  width: 100%;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  border-radius: 9px;
-  padding: 8px 12px;
-}
-.map-node:hover { border-color: var(--accent); }
-.map-node .mn-id {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11px;
-  color: var(--ink-soft);
-}
-.map-node .mn-title { font-size: 14px; font-weight: 600; }
-.map-edges { font-size: 12px; color: var(--ink-soft); margin: 2px 0 8px 14px; }
-.map-edges .arrow { color: var(--accent-ink); }
-.map-depth-1 { margin-left: 16px; }
-.map-depth-2 { margin-left: 32px; }
-
 /* ------------------------------------------------------------------- hero */
 .landing-panel { width: min(640px, 100%); }
 .hero-eyebrow {
