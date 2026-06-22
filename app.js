@@ -623,5 +623,10 @@
   checkGraph();
   var hash = (location.hash || "").replace(/^#/, "");
   playNode(NODES[hash] ? hash : GRAPH.start);
-  if (hash === REAL_ACCOUNT_HASH) openTryReal();
+  if (hash === REAL_ACCOUNT_HASH) {
+    openTryReal();
+    // playNode already rewrote the hash to the underlying node; put the deep link back
+    // so refreshing or copying the URL while the overlay is open returns here, not to the start.
+    if (history.replaceState) history.replaceState(null, "", "#" + REAL_ACCOUNT_HASH);
+  }
 })();
