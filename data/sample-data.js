@@ -165,6 +165,25 @@ window.SAMPLE_DATA = {
       { driver: "Tina Alvarez",  vehicle: "Demo - 22", score: 52, why: "31 harsh accelerations — aggressive launches, up 4%" },
       { driver: "Sam Whitfield", vehicle: "Demo - 33", score: 55, why: "9 severe brakes, 40% at Charleston & Rancho 16:00-18:00" },
     ],
+
+    /* Annual recoverable-savings model (the ROI / business-case scenario).
+     * Each lever's annualUSD is the CONSERVATIVE (low-end) capturable figure;
+     * low/high give the range. Levers cross-link to the scenario that fixes them.
+     * Numbers reconcile with fuel.monthlyUSD ($41.5k → ~$498k/yr) and
+     * idle.annualizedUSD ($10.9k) elsewhere in this store. */
+    savings: {
+      currency: "USD",
+      annualFuelSpendUSD: 498000,
+      fleetVehicles: 50,
+      totalAnnualUSD: 75500,
+      perVehicleUSD: 1510,
+      levers: [
+        { lever: "Speeding → fuel",            annualUSD: 33000, low: 30000, high: 36000, basis: "close the 6–8% gap between 17.3 mpg fleet avg and rated economy", fixesNode: "ep2-action" },
+        { lever: "Collision & insurance",      annualUSD: 28000, low: 18000, high: 40000, basis: "coach the 3 multi-factor drivers + telematics premium credit & claims avoidance (risk-weighted)", fixesNode: "ep-agentic-coaching" },
+        { lever: "Maintenance & downtime",     annualUSD: 12000, low: 9000,  high: 16000, basis: "preventive-vs-reactive servicing; fewer unplanned out-of-service days", fixesNode: "ep-maint-overdue" },
+        { lever: "Idling",                     annualUSD: 2500,  low: 2200,  high: 3300,  basis: "20–30% cut on the $10.9k/yr currently burned parked", fixesNode: "ep-ops-idle" },
+      ],
+    },
   },
 
   /* ============================================== SPAIN · maintenance ===== */

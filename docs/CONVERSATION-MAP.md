@@ -48,6 +48,14 @@ flowchart TD
     hub -->|"🧑‍🏫 Draft coaching notes"| epAC["Agentic · Coaching draft"]
     epAC -->|"send"| epACs["Agentic · Send summary (write)"]
 
+    %% --- Business case (ROI) — the convergence point ---
+    hub -->|"💰 Where's the money leaking?"| epROI["ROI · Recoverable savings"]
+    epROI -->|"draft one-pager"| epROIp["ROI · Business case (Gmail)"]
+    epROIp -->|"send"| epROIs["ROI · Send (write)"]
+    epX -->|"💰 put dollars on it"| epROI
+    epAS -->|"💰 what's it worth"| epROI
+    epOF -->|"💰 roll into ROI"| epROI
+
     %% --- Dispatch & cross-tool ---
     hub -->|"🚐 Closest vehicle?"| epD["Ep-Dispatch · Closest available"]
     hub -->|"💼 Salesforce dispute"| ep13["Ep13 · Geotab + Salesforce"]
@@ -63,7 +71,7 @@ flowchart TD
     epOF --> epEVv
 ```
 
-## Nodes (57)
+## Nodes (60)
 
 | id | title | database | leads to |
 |---|---|---|---|
@@ -107,7 +115,7 @@ flowchart TD
 | `ep-dispatch-send-50` | Ep-Dispatch · Dispatch Demo - 50 | demo_fh_vegas4 | `hub`, restart |
 | `ep-dispatch-map` | Ep-Dispatch · Live positions map | — | `ep-dispatch-send-45`, `hub`, restart |
 | `ep-dispatch-chart` | Ep-Dispatch · Distance chart | — | `ep-dispatch-send-50`, `hub`, restart |
-| `ep-exec` | Ep-Exec · Board snapshot, both fleets | cross-DB | `ep-exec-chart`, `ep2-answer`, `ep8-maintenance`, `hub`, restart |
+| `ep-exec` | Ep-Exec · Board snapshot, both fleets | cross-DB | `ep-roi`, `ep-exec-chart`, `ep2-answer`, `ep8-maintenance`, `hub`, restart |
 | `ep-exec-chart` | Ep-Exec · Utilization & exceptions charts | — | `ep2-answer`, `ep8-maintenance`, `hub`, restart |
 | `ep-dashcam` | Ep-Dashcam · Pull the clip (illustrative) | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
 | `ep-safety-risk` | Safety · Driver safety scorecard | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-harsh`, `ep2-action`, `hub` |
@@ -118,12 +126,15 @@ flowchart TD
 | `ep-maint-overdue` | Maintenance · Overdue for service | demo_fh4 | `ep5-answer`, `ep-maint-severity`, `hub` |
 | `ep-maint-severity` | Maintenance · Fault codes + severity | demo_fh4 | `ep12-investigate`, `ep-maint-downtime`, `ep-maint-overdue`, `hub` |
 | `ep-maint-downtime` | Maintenance · Unplanned downtime | demo_fh4 | `ep12-investigate`, `ep-maint-severity`, `hub` |
-| `ep-ops-fuel` | Operations · Fuel economy by type | demo_fh_vegas4 | `ep9-ev-vegas`, `ep-ops-idle`, `hub` |
+| `ep-ops-fuel` | Operations · Fuel economy by type | demo_fh_vegas4 | `ep9-ev-vegas`, `ep-ops-idle`, `ep2-action`, `ep-roi`, `hub` |
 | `ep-ops-idle` | Operations · Longest idle times | demo_fh_vegas4 | `ep-ops-idle-alert`, `ep-ops-fuel`, `hub` |
 | `ep-ops-idle-alert` | Operations · Create idling alert | demo_fh_vegas4 | `ep-ops-fuel`, `hub`, restart |
-| `ep-agentic-safety` | Agentic · Top 3 safety risks + fixes | demo_fh_vegas4 | `ep2-action`, `ep-agentic-coaching`, `ep-safety-risk`, `hub` |
+| `ep-agentic-safety` | Agentic · Top 3 safety risks + fixes | demo_fh_vegas4 | `ep2-action`, `ep-agentic-coaching`, `ep-safety-schoolzone-create`, `ep-roi`, `ep-safety-risk`, `hub` |
 | `ep-agentic-coaching` | Agentic · Draft coaching summary | demo_fh_vegas4 | `ep-coaching-send`, `ep-agentic-safety`, `ep2-action`, `hub` |
 | `ep-coaching-send` | Agentic · Send coaching summary | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
+| `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep2-action`, `ep-agentic-coaching`, `ep-maint-overdue`, `hub` |
+| `ep-roi-onepager` | ROI · Draft the business case | demo_fh_vegas4 | `ep-roi-send`, `ep2-action`, `hub` |
+| `ep-roi-send` | ROI · Send the business case | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
 
 Episodes **cross-link** as well as branch to their own action node — e.g.
 maintenance → fleet composition → Valencia exposure, or speeding → posted-speed

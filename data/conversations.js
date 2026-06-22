@@ -261,6 +261,12 @@ window.CONVERSATIONS = {
           next: "ep-agentic-coaching",
         },
         {
+          group: "💰 Business case",
+          label: "💰 Where is my fleet leaking money?",
+          say: "Where is my fleet leaking money — total the recoverable savings and build me the ROI case.",
+          next: "ep-roi",
+        },
+        {
           group: "🚚 Dispatch & cross-tool",
           label: "🚐 Who's closest and free right now?",
           say:
@@ -2059,6 +2065,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "💰 Put dollars on it (ROI case)", say: "Put dollars on this — where is the fleet leaking money and what's recoverable?", next: "ep-roi" },
         { label: "📊 Break that down in charts", say: "Break that down in charts.", next: "ep-exec-chart" },
         { label: "🚦 Drill into Vegas — the behavioral risk", say: "Drill into Vegas first — why is speeding up there?", next: "ep2-answer" },
         { label: "🔧 Drill into Spain — the mechanical risk", say: "Drill into Spain first — what's going on with all those faults?", next: "ep8-maintenance" },
@@ -2755,6 +2762,7 @@ window.CONVERSATIONS = {
         { label: "🔋 Are these EV-replacement candidates?", say: "Which of these vehicles are candidates for EV replacement based on daily mileage patterns?", next: "ep9-ev-vegas" },
         { label: "💤 Where are we losing fuel to idling?", say: "Show me which routes had the longest idle times last week.", next: "ep-ops-idle" },
         { label: "🔔 Run the speed policy that recovers it", say: "Set up a posted-speed alert across the fleet and send it to one fleet manager.", next: "ep2-action" },
+        { label: "💰 Roll it into the full ROI case", say: "Roll this into the full picture — where is the fleet leaking money overall?", next: "ep-roi" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -2949,6 +2957,7 @@ window.CONVERSATIONS = {
         { label: "✅ Do #1 — create the speed alert now", say: "Do #1 — set up the fleet-wide posted-speed alert and send it to one fleet manager.", next: "ep2-action" },
         { label: "🧑‍🏫 Do #2 — draft the coaching notes", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
         { label: "🏫 Do #3 — geofence the school zones", say: "Create the school-zone geofences with speeding alerts so we catch drop-off speeding live.", next: "ep-safety-schoolzone-create" },
+        { label: "💰 What's all this worth? (ROI case)", say: "What's all this worth — total the recoverable savings and build me the ROI case.", next: "ep-roi" },
         { label: "🚦 Show the full driver scorecard", say: "Who are my ten riskiest drivers this week, and their top events?", next: "ep-safety-risk" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
@@ -3057,6 +3066,162 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔔 Now set the live speed alert", say: "Now set up the fleet-wide posted-speed alert and route it to a manager.", next: "ep2-action" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ----------------------------------------- roi · where is the money leaking */
+    "ep-roi": {
+      id: "ep-roi",
+      title: "ROI · Where the fleet leaks money",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "system",
+          text: "Pulling across safety, fuel, idling and maintenance to total the recoverable opportunity…",
+        },
+        {
+          type: "claude",
+          text:
+            "You asked where the money's going — let me total the *recoverable* opportunity across everything we've " +
+            "looked at, and keep each number conservative. An ROI case that oversells gets torn apart in the room, so " +
+            "I'm using the low end of every range.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "Estimate annual recoverable savings for this fleet by lever (fuel from speeding, collision/insurance, maintenance/downtime, idling), conservative figures, with the fix for each.", new_chat: true },
+          summary: "≈ $75,500 / yr capturable (~$1,510 per vehicle) across 4 levers",
+          result:
+            '{ "currency": "USD", "annualFuelSpend": 498000, "vehicles": 50, "totalAnnual": 75500, "perVehicle": 1510,\n' +
+            '  "levers": [\n' +
+            '    { "lever": "Speeding → fuel",       "annual": 33000, "range": "30k–36k", "fix": "fleet posted-speed rule + alert + policy" },\n' +
+            '    { "lever": "Collision & insurance", "annual": 28000, "range": "18k–40k", "fix": "coach 3 multi-factor drivers + scorecard program (risk-weighted)" },\n' +
+            '    { "lever": "Maintenance & downtime","annual": 12000, "range": "9k–16k",  "fix": "maintenance reminders + fault severity triage" },\n' +
+            '    { "lever": "Idling",                "annual": 2500,  "range": "2.2k–3.3k","fix": "idling rule (>10 min) + live nudge" } ] }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's the money, totalled for the Vegas fleet — about **$75,500 a year recoverable, roughly $1,510 per " +
+            "vehicle**:\n\n" +
+            "- **Speeding → fuel: ~$33,000.** 6–8% of a ~$498k/yr fuel bill, closing the gap between your 17.3 mpg and " +
+            "rated economy. *Fix: the fleet posted-speed rule + alert.*\n" +
+            "- **Collision & insurance: ~$28,000** (risk-weighted). Coaching the three multi-factor drivers, plus the " +
+            "telematics premium credit insurers give for a scorecard program. *Fix: driver coaching + scorecard.*\n" +
+            "- **Maintenance & downtime: ~$12,000.** Preventive-vs-reactive servicing and fewer unplanned out-of-service " +
+            "days. *Fix: maintenance reminders + severity triage.*\n" +
+            "- **Idling: ~$2,500.** A 20–30% cut on the $10.9k/yr you currently burn parked. *Fix: an idling rule.*\n\n" +
+            "Two honest flags so this survives scrutiny: the **collision line is an expected value, not a banked " +
+            "saving** — treat it as the prize, not the invoice — and I've **not double-counted** the overlap between " +
+            "the fuel and idling lines (a calmer right foot helps both; the speeding line already absorbs the " +
+            "driving-style fuel gain).\n\n" +
+            "The pattern worth taking upstairs: the two biggest levers — fuel and collision — are the *same behaviour*, " +
+            "speed and aggression. So this isn't four projects competing for budget; it's **one safety program** (speed " +
+            "policy + coaching) that pays down ~80% of the total, and the maintenance and idling pieces follow. Want me " +
+            "to put it on one page you can forward to your boss?",
+        },
+        {
+          type: "chart",
+          title: "Annual recoverable savings by lever · Vegas fleet (USD, conservative)",
+          bars: bars(D.vegas && D.vegas.savings && D.vegas.savings.levers, "lever", "annualUSD"),
+        },
+      ],
+      choices: [
+        { label: "📄 Draft the one-pager for my boss", say: "Turn this into a one-page business case I can forward to my boss.", next: "ep-roi-onepager" },
+        { label: "🔔 Start the biggest lever — speed alert", say: "Start with the biggest lever — set up the fleet-wide posted-speed alert.", next: "ep2-action" },
+        { label: "🧑‍🏫 Coach the high-risk drivers", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "🔧 Tackle the maintenance side", say: "Which vehicles are overdue for scheduled maintenance right now?", next: "ep-maint-overdue" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep-roi-onepager": {
+      id: "ep-roi-onepager",
+      title: "ROI · Draft the business case",
+      db: "demo_fh_vegas4",
+      events: [
+        { type: "system", text: "This flow spans two connectors: Geotab + Gmail." },
+        {
+          type: "claude",
+          text:
+            "Drafting a one-page business case from the numbers we just pulled — exec summary, the four levers with " +
+            "conservative figures, the recommended first move, and the honest caveats so it holds up in the room. " +
+            "Leaving it in Drafts, not sending it.",
+        },
+        {
+          type: "tool",
+          server: "gmail",
+          name: "create_draft",
+          args: { to: "ops-director@test-mailbox.example", subject: "Fleet telematics — FY business case (~$75k/yr recoverable)" },
+          summary: "One-pager saved to Drafts (NOT sent)",
+          write: true,
+          openByDefault: true,
+          result:
+            "To: ops-director@test-mailbox.example\n" +
+            "Subject: Fleet telematics — FY business case (~$75k/yr recoverable)\n\n" +
+            "Summary\n" +
+            "Telematics on the 50-vehicle Vegas fleet points to ~$75,500/yr in recoverable cost (~$1,510/vehicle), " +
+            "concentrated in driver behaviour. Figures below are deliberately conservative (low end of range).\n\n" +
+            "The opportunity (annual, capturable)\n" +
+            "  • Speeding → fuel ............ $33,000   (6–8% of ~$498k fuel spend)\n" +
+            "  • Collision & insurance ...... $28,000   (risk-weighted; coaching + premium credit)\n" +
+            "  • Maintenance & downtime ..... $12,000   (preventive vs reactive)\n" +
+            "  • Idling ..................... $2,500    (20–30% cut on $10.9k burned parked)\n" +
+            "  • TOTAL ...................... ~$75,500\n\n" +
+            "Recommendation\n" +
+            "One initiative captures ~80% of this: a fleet-wide posted-speed policy + live alert + driver coaching for " +
+            "the 3 highest-risk drivers. The fuel and collision levers are the same behaviour, so we fund one program, " +
+            "not four. Maintenance reminders and an idling rule are quick add-ons.\n\n" +
+            "Caveats (so we don't oversell)\n" +
+            "  • The collision figure is an expected value, not a guaranteed saving.\n" +
+            "  • Fuel and idling overlap is not double-counted.\n" +
+            "  • Hardware/subscription is already sunk; this is operating-cost recovery on top.\n\n" +
+            "Ask: approval to roll out the speed policy + coaching program this quarter.",
+        },
+        {
+          type: "claude",
+          text:
+            "Done — the one-pager's in Drafts (open the card to read it). It leads with the headline number, breaks out " +
+            "the four levers, makes a single clear recommendation, and — importantly — states the caveats itself, so " +
+            "your director sees you've already pressure-tested it. That's the version that gets a yes.\n\n" +
+            "(Demo points at a test mailbox, never a real recipient.)",
+        },
+      ],
+      choices: [
+        { label: "📤 Send it to the director", say: "It looks right — send the business case now.", next: "ep-roi-send" },
+        { label: "🔔 Kick off lever #1 in Geotab now", say: "Set up the fleet-wide posted-speed alert and route it to a manager.", next: "ep2-action" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep-roi-send": {
+      id: "ep-roi-send",
+      title: "ROI · Send the business case",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "tool",
+          server: "gmail",
+          name: "send_message",
+          args: { draftId: "r-…roi" },
+          summary: "Sent to ops-director@test-mailbox.example",
+          write: true,
+          result: '{ "messageId": "r-…", "status": "sent" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Sent. Your director now has a costed, caveated business case — built from live fleet data, not a vendor " +
+            "slide — with one clear ask. Whenever you're ready to act on the approval, I can stand up the speed rule, " +
+            "the coaching list and the maintenance reminders in a few minutes.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "From telemetry to the boardroom, in one conversation."] },
+      ],
+      choices: [
+        { label: "🔔 Start lever #1 — the speed alert", say: "Now set up the fleet-wide posted-speed alert and route it to a manager.", next: "ep2-action" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
