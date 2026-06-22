@@ -1,12 +1,13 @@
 name: version-assets
 
-# Keeps index.html's cache-busting query strings in sync automatically: any
-# push to main touching app.js, styles.css, or data/conversations.js gets
-# stamped with that file's own commit hash, so GitHub Pages visitors never
-# see a stale cached copy after a deploy.
+# Keeps index.html's cache-busting query strings in sync automatically. Runs
+# on PRs that touch app.js, styles.css, or data/conversations.js and pushes
+# the stamped index.html back to the PR branch *before* it merges to main —
+# a bot commit straight to main wouldn't trigger a Pages rebuild (pushes
+# made with the default GITHUB_TOKEN don't fire downstream events), so the
+# stamp has to land before the merge, not after it.
 on:
-  push:
-    branches: [main]
+  pull_request:
     paths:
       - app.js
       - styles.css
@@ -17,10 +18,12 @@ permissions:
 
 jobs:
   version-assets:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -35,4 +38,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
           git commit -m "chore: bump cache-busting asset versions"
-          git push
+          git push origin HEAD:${{ github.head_ref }}
