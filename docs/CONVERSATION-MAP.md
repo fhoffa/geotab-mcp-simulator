@@ -1,8 +1,8 @@
 # Conversation map
 
-Every branch the simulator can take. This mirrors `data/conversations.js` — the
-**live in-app 🗺️ Story map is the source of truth** (generated from the graph at
-runtime), and this diagram is the readable version for GitHub.
+Every branch the simulator can take. This mirrors `data/conversations.js` —
+**that file is the source of truth**, and this diagram is the readable version
+for GitHub.
 
 ```mermaid
 flowchart TD
@@ -20,7 +20,6 @@ flowchart TD
     hub -->|"🛣️ Was that road that fast?"| ep10["Ep10 · Posted-speed check<br/>demo_fh_vegas4"]
     hub -->|"🚐 Closest vehicle?"| epD["Ep-Dispatch · Closest available<br/>demo_fh_vegas4"]
     hub -->|"📊 Board snapshot"| epX["Ep-Exec · Both fleets snapshot<br/>cross-DB"]
-    hub -.->|"🗺️ Story map"| MAP(("open map overlay"))
 
     ep1 -->|"🛠️ Make it a skill"| ep1s["Ep1 · Package as a skill"]
     ep1 -->|"🤖 Double-check w/ Ace"| ep7
@@ -63,7 +62,7 @@ flowchart TD
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question | — | the nine episodes + map |
+| `hub` | Pick a question | — | the episodes |
 | `ep1-answer` | Weekly review | demo_fh_vegas4 | `ep1-skill`, `ep7-ace`, `hub` |
 | `ep1-skill` | Package as a skill | — | `hub`, restart |
 | `ep2-answer` | Ask why | demo_fh_vegas4 | `ep2-action`, `ep10-postedspeed`, `hub` |
