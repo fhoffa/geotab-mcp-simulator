@@ -2439,7 +2439,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🏫 Make it enforceable — create the geofences", say: "Create the school-zone geofences with 15/20 mph speeding alerts so this is exact going forward.", next: "ep-safety-schoolzone-create" },
         { label: "🧑‍🏫 Coach Marcus on the drop-off speeding", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
-        { label: "🛣️ Verify the posted limits on his route", say: "Pull the posted road speed along Demo - 08's actual route so we can coach on facts.", next: "ep10-postedspeed" },
+        { label: "🛣️ Verify the posted limits on his route", say: "Pull the posted road speed along Demo - 08's actual route so we can coach on facts.", next: "ep-safety-postedspeed-08" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -2519,6 +2519,52 @@ window.CONVERSATIONS = {
       ],
     },
 
+    /* ----------------------------------------- safety · posted-speed truth-check (Demo - 08, school zone) */
+    "ep-safety-postedspeed-08": {
+      id: "ep-safety-postedspeed-08",
+      title: "Safety · Posted-speed truth-check (Demo - 08)",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "claude",
+          text:
+            "Before anyone coaches Marcus, let's make sure the numbers hold up. I'll pull the posted road speed along " +
+            "Demo - 08's actual route on the morning of the worst event, segment by segment — so the conversation is " +
+            "\"on this 15 mph stretch past Bracken at 07:50 you were at 34,\" not \"you were speeding somewhere.\"",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetPostedRoadSpeedsForDevice",
+          args: { database: "demo_fh_vegas4", deviceId: "b8 (Demo - 08)", fromDate: "07:30", toDate: "08:10" },
+          summary: "per-segment posted limits past Walter Bracken STEAM · 15–35 mph",
+          result:
+            '[\n  { "date": "…07:48", "maxSpeed_kmh": 56.33, "isEstimate": false },  // 35 mph (arterial approach)\n' +
+            '  { "date": "…07:50", "maxSpeed_kmh": 24.14, "isEstimate": false },  // 15 mph (school zone, posted)\n' +
+            '  { "date": "…07:51", "maxSpeed_kmh": 24.14, "isEstimate": false },  // 15 mph (school zone, posted)\n' +
+            '  { "date": "…07:53", "maxSpeed_kmh": 48.28, "isEstimate": false }   // 30 mph (residential)\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "It holds up — and it's not ambiguous. At **07:50 and 07:51 the posted limit is a confirmed 15 mph** " +
+            "(24 km/h, not an estimate) on the segment that runs right past Walter Bracken STEAM. Demo - 08's GPS speed " +
+            "on those same two segments was **34 mph** — more than double the posted school-zone limit, at morning " +
+            "drop-off.\n\n" +
+            "The approach segment a minute earlier is a 35 mph arterial, so this isn't a case of a driver carrying " +
+            "honest highway speed into a badly-signed zone — the limit drops to 15 exactly where the school is, and the " +
+            "speed didn't. That's a clean, defensible coaching fact: same driver, real road, posted limit on file, no " +
+            "estimate to argue with.",
+        },
+      ],
+      choices: [
+        { label: "🧑‍🏫 Coach Marcus on the drop-off speeding", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
+        { label: "🏫 Make it enforceable — create the geofences", say: "Create the school-zone geofences with 15/20 mph speeding alerts so this is exact going forward.", next: "ep-safety-schoolzone-create" },
+        { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
     /* ----------------------------------------- maintenance · overdue service */
     "ep-maint-overdue": {
       id: "ep-maint-overdue",
@@ -2570,7 +2616,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "📧 Book the critical one into the garage", say: "Pull the fault details, draft an email to the garage, and put a tentative service slot on my calendar for tomorrow morning.", next: "ep5-answer" },
+        { label: "📧 Book the critical one into the garage", say: "Book Demo - 25's overdue roadworthiness inspection — draft an email to the garage and put a tentative service slot on my calendar for tomorrow morning.", next: "ep-maint-overdue-book" },
         { label: "⚠️ What faults are flagged this week?", say: "Show me any fault codes flagged in the last seven days and their severity.", next: "ep-maint-severity" },
         { label: "⏱️ Which assets had the most downtime?", say: "Which assets have had the most unplanned downtime this quarter?", next: "ep-maint-downtime" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
@@ -2639,10 +2685,151 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "📧 Book the 3 critical units in now", say: "Pull the critical fault details, draft an email to the garage, and put tentative service slots on my calendar for tomorrow morning.", next: "ep5-answer" },
+        { label: "📧 Book the 3 critical units in now", say: "Pull the critical fault details for the 3 red-lamp units, draft an email to the garage, and put tentative service slots on my calendar for tomorrow morning.", next: "ep-maint-severity-book" },
         { label: "🔎 Why does one van fault so much? Dig in", say: "Demo - 08 keeps showing up in the device faults — why? Dig into it and don't stop at the first explanation.", next: "ep12-investigate" },
         { label: "⏱️ Which assets had the most downtime?", say: "Which assets have had the most unplanned downtime this quarter?", next: "ep-maint-downtime" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* ----------------------------------------- maintenance · book the overdue legal item (Demo - 25, ITV) */
+    "ep-maint-overdue-book": {
+      id: "ep-maint-overdue-book",
+      title: "Maintenance · Book the overdue ITV (Demo - 25)",
+      db: "demo_fh4",
+      events: [
+        { type: "system", text: "This flow spans three connectors: Geotab + Gmail + Google Calendar." },
+        {
+          type: "claude",
+          text:
+            "Starting with the one that can't wait — Demo - 25, the MAN coach whose annual roadworthiness inspection " +
+            "(ITV) is 19 days overdue. Let me pull its details so the garage knows exactly what's coming in.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { id: "b25" }, propertySelector: { fields: ["name", "vehicleIdentificationNumber", "licensePlate"] } },
+          summary: "Demo - 25 — MAN Lion's Coach, plate 4471-MAN",
+          result: '[\n  { "name": "Demo - 25", "vehicleIdentificationNumber": "WMA12XZZ9NP012345", "licensePlate": "4471-MAN" }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "MAN Lion's Coach, plate 4471-MAN, driver Núria Pons. Drafting the email to the garage now — flagging it as a " +
+            "legal ITV, not a routine service — and leaving it in Drafts, not sending without you looking first.",
+        },
+        {
+          type: "tool",
+          server: "gmail",
+          name: "create_draft",
+          args: { to: "garage@test-mailbox.example", subject: "URGENT — Demo - 25 (MAN Lion's Coach, plate 4471-MAN) — ITV roadworthiness 19 days overdue" },
+          summary: "Draft saved (NOT sent)",
+          write: true,
+          result: '{ "draftId": "r-…", "status": "in Drafts, awaiting your review" }',
+        },
+        {
+          type: "claude",
+          text: "Saved, not sent. Now holding a tentative slot for tomorrow morning so the coach is off the road and legal again as fast as possible.",
+        },
+        {
+          type: "tool",
+          server: "google-calendar",
+          name: "create_event",
+          args: { title: "ITV inspection — Demo - 25 (legal, overdue)", when: "tomorrow 09:00", status: "tentative" },
+          summary: "Tentative ITV slot — tomorrow 09:00",
+          write: true,
+          result: '{ "eventId": "…", "status": "tentative" }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's where that landed across three tools. **Demo - 25** (MAN Lion's Coach, plate 4471-MAN, Núria Pons) is " +
+            "**19 days past its legal roadworthiness inspection** — a passenger coach running on an expired ITV is the " +
+            "one item on the list that's a fine-and-insurance problem, not just a wear item. I drafted the garage email " +
+            "marked urgent and left it in Drafts, and put a tentative 09:00 slot on the calendar so you don't lose " +
+            "tomorrow's window.\n\n" +
+            "The other four overdue vehicles (brakes on Demo - 02, then the oil/DPF items) can batch behind this one.\n\n" +
+            "(This demo points at a test mailbox and calendar, never a real recipient.)",
+        },
+      ],
+      choices: [
+        { label: "⚠️ What faults are flagged this week?", say: "Show me any fault codes flagged in the last seven days and their severity.", next: "ep-maint-severity" },
+        { label: "⏱️ Which assets had the most downtime?", say: "Which assets have had the most unplanned downtime this quarter?", next: "ep-maint-downtime" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ----------------------------------------- maintenance · book the 3 critical red-lamp units */
+    "ep-maint-severity-book": {
+      id: "ep-maint-severity-book",
+      title: "Maintenance · Book the 3 red-lamp units",
+      db: "demo_fh4",
+      events: [
+        { type: "system", text: "This flow spans three connectors: Geotab + Gmail + Google Calendar." },
+        {
+          type: "claude",
+          text:
+            "These are the three red-stop-lamp faults from the triage — the ones that should come off the road today. " +
+            "Pulling each vehicle's details so the garage knows the fault and the asset before it arrives.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Device", search: { ids: ["b12", "b28", "b31"] }, propertySelector: { fields: ["name", "licensePlate"] } },
+          summary: "Demo - 12 (Actros) · Demo - 28 (MAN coach) · Demo - 31 (MAN coach)",
+          result:
+            '[\n  { "name": "Demo - 12", "licensePlate": "2210-ACT", "fault": "Brake system air pressure low" },\n' +
+            '  { "name": "Demo - 28", "licensePlate": "3380-MAN", "fault": "Engine coolant temperature high" },\n' +
+            '  { "name": "Demo - 31", "licensePlate": "3410-MAN", "fault": "SCR aftertreatment — derate imminent" }\n]',
+        },
+        {
+          type: "claude",
+          text:
+            "Got all three. Drafting one email to the garage covering the trio — Demo - 12 (brake air pressure), Demo - 28 " +
+            "(coolant temp), Demo - 31 (SCR derate) — and leaving it in Drafts for your review.",
+        },
+        {
+          type: "tool",
+          server: "gmail",
+          name: "create_draft",
+          args: { to: "garage@test-mailbox.example", subject: "URGENT — 3 red-lamp units off the road: Demo - 12 (brakes), Demo - 28 (coolant), Demo - 31 (SCR derate)" },
+          summary: "Draft saved (NOT sent)",
+          write: true,
+          result: '{ "draftId": "r-…", "status": "in Drafts, awaiting your review" }',
+        },
+        {
+          type: "claude",
+          text: "Saved, not sent. Now holding three tentative slots for tomorrow morning so all three are booked the moment you send.",
+        },
+        {
+          type: "tool",
+          server: "google-calendar",
+          name: "create_event",
+          args: { title: "Critical service — Demo - 12 / 28 / 31 (red-lamp)", when: "tomorrow 08:00–10:00", status: "tentative" },
+          summary: "3 tentative service slots — tomorrow AM",
+          write: true,
+          result: '{ "eventId": "…", "status": "tentative", "count": 3 }',
+        },
+        {
+          type: "claude",
+          text:
+            "Here's the result across three tools. The **3 red-stop-lamp units** — **Demo - 12** (Actros, brake air " +
+            "pressure low, Pau Serra), **Demo - 28** (MAN coach, coolant high, Lucía Mena), **Demo - 31** (MAN coach, SCR " +
+            "derate imminent, Roberto Vila) — each have a real reason to stop before their next run. I drafted one garage " +
+            "email covering all three (in Drafts, marked urgent) and held three tentative slots for tomorrow morning.\n\n" +
+            "The 14 amber-lamp items can wait for this week's scheduled shop time, and the 580 informational device faults " +
+            "are the Sprinter harness job — not part of this booking.\n\n" +
+            "(This demo points at a test mailbox and calendar, never a real recipient.)",
+        },
+      ],
+      choices: [
+        { label: "🔎 Why does one van fault so much? Dig in", say: "Demo - 08 keeps showing up in the device faults — why? Dig into it and don't stop at the first explanation.", next: "ep12-investigate" },
+        { label: "📋 Which vehicles are overdue for service?", say: "Which vehicles are overdue for scheduled maintenance right now?", next: "ep-maint-overdue" },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
       ],
     },
 

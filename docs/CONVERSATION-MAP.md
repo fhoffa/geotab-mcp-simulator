@@ -121,10 +121,13 @@ flowchart TD
 | `ep-safety-risk` | Safety · Driver safety scorecard | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-harsh`, `ep2-action`, `hub` |
 | `ep-safety-harsh` | Safety · Harsh braking by driver | demo_fh_vegas4 | `ep-safety-harsh-spain`, `ep-agentic-coaching`, `ep-safety-risk`, `hub` |
 | `ep-safety-harsh-spain` | Safety · Harsh-braking hotspot | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-risk`, `hub`, restart |
-| `ep-safety-schoolzone` | Safety · Speeding in school zones | demo_fh_vegas4 | `ep-safety-schoolzone-create`, `ep10-postedspeed`, `hub` |
-| `ep-safety-schoolzone-create` | Safety · Create school-zone alert | demo_fh_vegas4 | `ep-safety-risk`, `hub`, restart |
-| `ep-maint-overdue` | Maintenance · Overdue for service | demo_fh4 | `ep5-answer`, `ep-maint-severity`, `hub` |
-| `ep-maint-severity` | Maintenance · Fault codes + severity | demo_fh4 | `ep12-investigate`, `ep-maint-downtime`, `ep-maint-overdue`, `hub` |
+| `ep-safety-schoolzone` | Safety · Speeding in school zones | demo_fh_vegas4 | `ep-safety-schoolzone-create`, `ep-agentic-coaching`, `ep-safety-postedspeed-08`, `hub` |
+| `ep-safety-schoolzone-create` | Safety · Create school-zone alert | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-risk`, `hub`, restart |
+| `ep-safety-postedspeed-08` | Safety · Posted-speed truth-check (Demo - 08) | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-schoolzone-create`, `ep-dashcam`, `hub` |
+| `ep-maint-overdue` | Maintenance · Overdue for service | demo_fh4 | `ep-maint-overdue-book`, `ep-maint-severity`, `ep-maint-downtime`, `hub` |
+| `ep-maint-overdue-book` | Maintenance · Book the overdue ITV (Demo - 25) | demo_fh4 | `ep-maint-severity`, `ep-maint-downtime`, `hub`, restart |
+| `ep-maint-severity` | Maintenance · Fault codes + severity | demo_fh4 | `ep-maint-severity-book`, `ep12-investigate`, `ep-maint-downtime`, `hub` |
+| `ep-maint-severity-book` | Maintenance · Book the 3 red-lamp units | demo_fh4 | `ep12-investigate`, `ep-maint-overdue`, `hub`, restart |
 | `ep-maint-downtime` | Maintenance · Unplanned downtime | demo_fh4 | `ep12-investigate`, `ep-maint-severity`, `hub` |
 | `ep-ops-fuel` | Operations · Fuel economy by type | demo_fh_vegas4 | `ep9-ev-vegas`, `ep-ops-idle`, `ep2-action`, `ep-roi`, `hub` |
 | `ep-ops-idle` | Operations · Longest idle times | demo_fh_vegas4 | `ep-ops-idle-alert`, `ep-ops-fuel`, `hub` |
