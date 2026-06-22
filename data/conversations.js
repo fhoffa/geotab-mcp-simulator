@@ -2560,7 +2560,6 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🧑‍🏫 Coach Marcus on the drop-off speeding", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
         { label: "🏫 Make it enforceable — create the geofences", say: "Create the school-zone geofences with 15/20 mph speeding alerts so this is exact going forward.", next: "ep-safety-schoolzone-create" },
-        { label: "📹 Pull the dashcam from that moment", say: "Now pull the dashcam clip for that segment so I can see what actually happened.", next: "ep-dashcam" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
@@ -3320,7 +3319,6 @@ window.CONVERSATIONS = {
         { label: "📄 Draft the one-pager for my boss", say: "Turn this into a one-page business case I can forward to my boss.", next: "ep-roi-onepager" },
         { label: "🔔 Start the biggest lever — speed alert", say: "Start with the biggest lever — set up the fleet-wide posted-speed alert.", next: "ep2-action" },
         { label: "🧑‍🏫 Coach the high-risk drivers", say: "Identify the drivers who need coaching and draft a summary I can send to their manager.", next: "ep-agentic-coaching" },
-        { label: "🔧 Tackle the maintenance side", say: "Which vehicles are overdue for scheduled maintenance right now?", next: "ep-maint-overdue" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
     },
