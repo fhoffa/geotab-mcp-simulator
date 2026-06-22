@@ -47,7 +47,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=0ed5ac8" />
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23d97757'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif'%3EG%3C/text%3E%3C/svg%3E"
@@ -66,7 +66,6 @@
         <span id="connStatus" class="conn-pill conn-off">Not connected</span>
         <button id="tryRealBtn" class="ghost-btn" type="button">🔌 Connect real account</button>
         <button id="shareBtn" class="ghost-btn" type="button" title="Copy a link to this point in the simulator">🔗 Share</button>
-        <button id="mapBtn" class="ghost-btn" type="button">🗺️ Story map</button>
         <button id="aboutBtn" class="ghost-btn" type="button">ℹ️ About</button>
         <button id="restartBtn" class="ghost-btn" type="button">↻ Restart</button>
       </div>
@@ -96,21 +95,6 @@
         Not affiliated with Anthropic; the chat styling is a stylistic homage.
       </p>
     </footer>
-
-    <!-- Story-map overlay -->
-    <div id="mapOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Conversation map">
-      <div class="overlay-panel">
-        <div class="overlay-head">
-          <h2>Conversation map</h2>
-          <button id="mapClose" class="ghost-btn" type="button">✕ Close</button>
-        </div>
-        <p class="overlay-note">
-          Every branch in the simulator, generated live from <code>data/conversations.js</code>.
-          Click any node to jump to it.
-        </p>
-        <div id="mapBody" class="map-body"></div>
-      </div>
-    </div>
 
     <!-- Landing / value-prop overlay — shown first, dismissible -->
     <div id="landingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Welcome">
@@ -195,8 +179,40 @@
             <strong>Connect the Geotab MCP connector to your assistant of choice.</strong> Geotab
             publishes an official MCP server. This simulator uses Claude, but that's one option among
             several — Microsoft Copilot, ChatGPT, and other MCP-capable clients can connect to the same
-            server. Set it up once in your assistant's connector/integrations settings using your
-            MyGeotab credentials, then ask it anything you tried here.
+            server using the same URL below; only the menu names differ.
+            <div class="setup-box">
+              <p class="setup-heading">In Claude:</p>
+              <ol class="setup-steps">
+                <li>Go to <strong>claude.ai → Settings → Connectors</strong>, then click
+                  <strong>Add custom connector</strong>.</li>
+                <li>
+                  Fill in a <strong>name</strong> (e.g. "Geotab") and the <strong>remote MCP server
+                  URL</strong>: <code>https://mcp.geotab.com/mygeotab</code>. Leave the OAuth fields
+                  blank — Geotab's server handles that for you.
+                </li>
+                <li>
+                  <img
+                    src="assets/mcp-claude-add-connector.png"
+                    alt="Claude's &quot;Add custom connector&quot; dialog, pre-filled with the name Geotab and the URL https://mcp.geotab.com/mygeotab"
+                    class="setup-shot"
+                    loading="lazy"
+                  />
+                </li>
+                <li>Click <strong>Add</strong> — Claude redirects you to a MyGeotab sign-in screen.
+                  Log in with your MyGeotab username and password and approve the connection.</li>
+                <li>
+                  Back in Claude, the connector now shows as <strong>Connected</strong>. Turn it on for
+                  a chat from the tools/connectors picker (the <strong>🔌</strong> icon below the
+                  message box), then ask it anything you tried in this simulator.
+                </li>
+              </ol>
+              <p class="setup-foot">
+                Microsoft Copilot, ChatGPT, and other MCP-capable clients follow the same pattern —
+                add a custom/remote MCP connector, point it at
+                <code>https://mcp.geotab.com/mygeotab</code>, and sign in with your MyGeotab
+                credentials when prompted.
+              </p>
+            </div>
           </li>
           <li>
             <strong>Know what you're exposing.</strong>
@@ -227,7 +243,7 @@
       </div>
     </div>
 
-    <script src="data/conversations.js"></script>
-    <script src="app.js"></script>
+    <script src="data/conversations.js?v=9a05896"></script>
+    <script src="app.js?v=190fe64"></script>
   </body>
 </html>
