@@ -1,93 +1,171 @@
 # Conversation map
 
 Every branch the simulator can take. This mirrors `data/conversations.js` —
-**that file is the source of truth**, and this diagram is the readable version
-for GitHub.
+**that file is the source of truth for the graph** — and this diagram is the
+readable version for GitHub. The numbers/drivers the newer scenarios quote live
+in `data/sample-data.js` (the sample-data store); conversation nodes ground
+their charts and results on it.
 
 ```mermaid
 flowchart TD
     connect["🔌 Connect the connector"] --> authorize["Authorize"]
     authorize -->|auto| hub{{"Pick a question (hub)"}}
 
-    hub -->|"📋 Weekly review"| ep1["Ep1 · Weekly review<br/>demo_fh_vegas4"]
-    hub -->|"❓ Why speeding up?"| ep2["Ep2 · Ask why<br/>demo_fh_vegas4"]
-    hub -->|"🌍 Low-emission zone"| ep3["Ep3 · Zone from the news<br/>demo_fh4"]
-    hub -->|"⚡ 5 fleet chores"| ep4["Ep4 · Five actions<br/>demo_fh4"]
-    hub -->|"📧 Fault → email → book"| ep5["Ep5 · Geotab + Gmail + Calendar<br/>demo_fh4"]
-    hub -->|"🤖 Ask Geotab Ace"| ep7["Ep7 · Ask Geotab Ace<br/>demo_fh_vegas4"]
-    hub -->|"🔧 Triage maintenance"| ep8["Ep8 · Triage the worklist<br/>demo_fh4"]
-    hub -->|"🚐 What's in my fleet?"| ep9["Ep9 · Fleet composition<br/>demo_fh4"]
-    hub -->|"🛣️ Was that road that fast?"| ep10["Ep10 · Posted-speed check<br/>demo_fh_vegas4"]
-    hub -->|"🚐 Closest vehicle?"| epD["Ep-Dispatch · Closest available<br/>demo_fh_vegas4"]
-    hub -->|"📊 Board snapshot"| epX["Ep-Exec · Both fleets snapshot<br/>cross-DB"]
+    %% --- Productivity ---
+    hub -->|"📋 Weekly review"| ep1["Ep1 · Weekly review"]
+    hub -->|"⚡ 5 fleet chores"| ep4["Ep4 · Five actions"]
 
-    ep1 -->|"🛠️ Make it a skill"| ep1s["Ep1 · Package as a skill"]
-    ep1 -->|"🤖 Double-check w/ Ace"| ep7
-    ep1 -->|"↩︎ Ask something else"| hub
-    ep1s -->|"⚡ Try another"| hub
+    %% --- Safety ---
+    hub -->|"❓ Why speeding up?"| ep2["Ep2 · Ask why"]
+    hub -->|"🛣️ Was that road that fast?"| ep10["Ep10 · Posted-speed check"]
+    hub -->|"🚦 Riskiest drivers?"| epSR["Safety · Driver safety scorecard"]
+    hub -->|"🛑 Harsh braking by driver"| epSH["Safety · Harsh braking by driver"]
+    hub -->|"🏫 School-zone speeding?"| epSS["Safety · School zones"]
+    hub -->|"🤖 Ask Geotab Ace"| ep7["Ep7 · Ask Geotab Ace"]
+    epSH -->|"map the worst driver"| epSHs["Safety · Harsh-braking hotspot"]
+    epSS -->|"make it enforceable"| epSSc["Safety · School-zone alert (write)"]
 
+    %% --- Compliance / Sustainability ---
+    hub -->|"🌍 Low-emission zone"| ep3["Ep3 · Zone from the news"]
+    hub -->|"🚐 What's in my fleet?"| ep9h["Ep9 · Fleet mix + EV"]
+
+    %% --- Maintenance ---
+    hub -->|"🔧 Triage maintenance"| ep8["Ep8 · Triage the worklist"]
+    hub -->|"📅 Overdue for service?"| epMO["Maint · Overdue service"]
+    hub -->|"⚠️ Fault codes + severity"| epMS["Maint · Fault severity"]
+    hub -->|"⏱️ Most downtime?"| epMD["Maint · Unplanned downtime"]
+    hub -->|"❓ Why does Demo-08 fault?"| ep12["Ep12 · Investigation loop"]
+    hub -->|"📧 Fault → email → book"| ep5["Ep5 · Geotab + Gmail + Calendar"]
+
+    %% --- Operations ---
+    hub -->|"⛽ Fuel economy by type"| epOF["Ops · Fuel economy"]
+    hub -->|"💤 Longest idle times"| epOI["Ops · Idle times"]
+    hub -->|"🔋 EV-replacement candidates"| epEVv["Ep9 · EV case (Vegas)"]
+    epOI -->|"create rule"| epOIa["Ops · Idling alert (write)"]
+
+    %% --- Agentic ---
+    hub -->|"🛡️ Top 3 safety risks + fixes"| epAS["Agentic · Assess risks"]
+    hub -->|"🧑‍🏫 Draft coaching notes"| epAC["Agentic · Coaching draft"]
+    epAC -->|"send"| epACs["Agentic · Send summary (write)"]
+
+    %% --- Business case (ROI) — the convergence point ---
+    hub -->|"💰 Where's the money leaking?"| epROI["ROI · Recoverable savings"]
+    epROI -->|"draft one-pager"| epROIp["ROI · Business case (Gmail)"]
+    epROIp -->|"send"| epROIs["ROI · Send (write)"]
+    epX -->|"💰 put dollars on it"| epROI
+    epAS -->|"💰 what's it worth"| epROI
+    epOF -->|"💰 roll into ROI"| epROI
+
+    %% --- Dispatch & cross-tool ---
+    hub -->|"🚐 Closest vehicle?"| epD["Ep-Dispatch · Closest available"]
+    hub -->|"💼 Salesforce dispute"| ep13["Ep13 · Geotab + Salesforce"]
+    hub -->|"📊 Board snapshot"| epX["Ep-Exec · Both fleets snapshot"]
+
+    %% A few representative cross-links (full set in conversations.js)
     ep2 -->|"🔔 Flag it live"| ep2a["Ep2 · Create alert"]
-    ep2 -->|"🛣️ Were roads that fast?"| ep10
-    ep2 -->|"↩︎ Ask something else"| hub
-    ep2a -->|"⚡ Try another"| hub
-
-    ep3 -->|"🗺️ Create zone + rule"| ep3a["Ep3 · Create zone + rule"]
-    ep3 -->|"🚐 What are the vehicles?"| ep9
-    ep3 -->|"↩︎ Ask something else"| hub
-    ep3a -->|"⚡ Try another"| hub
-
-    ep4 -->|"🔧 Triage the faults"| ep8
-    ep4 -->|"↩︎ Ask something else"| hub
-
-    ep5 -->|"🚐 What is Demo-06?"| ep9
-    ep5 -->|"↩︎ Ask something else"| hub
-
-    ep7 -->|"🧠 Show Ace's reasoning"| ep7r["Ep7 · Ace reasoning"]
-    ep7 -->|"↩︎ Ask something else"| hub
-    ep7r -->|"🔧 Ask Ace about faults"| ep8
-    ep7r -->|"⚡ Try another"| hub
-
-    ep8 -->|"🚐 What is Demo-08?"| ep9
-    ep8 -->|"↩︎ Ask something else"| hub
-    ep9 -->|"🌍 Valencia exposure?"| ep3
-    ep9 -->|"↩︎ Ask something else"| hub
-    ep10 -->|"🔔 Set a speed alert"| ep2a
-    ep10 -->|"📹 Pull the dashcam"| epDC["Ep-Dashcam · Illustrative clip<br/>demo_fh_vegas4"]
-    ep10 -->|"↩︎ Ask something else"| hub
+    epSR -->|"🧑‍🏫 Coach"| epAC
+    epSR -->|"🔔 Alert"| ep2a
+    epAS -->|"✅ Do #1"| ep2a
+    epMS --> ep12
+    epMD --> ep12
+    epOF --> epEVv
 ```
 
-## Nodes (19)
+## Nodes (60)
 
 | id | title | database | leads to |
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question | — | the episodes |
-| `ep1-answer` | Weekly review | demo_fh_vegas4 | `ep1-skill`, `ep7-ace`, `hub` |
-| `ep1-skill` | Package as a skill | — | `hub`, restart |
-| `ep2-answer` | Ask why | demo_fh_vegas4 | `ep2-action`, `ep10-postedspeed`, `hub` |
-| `ep2-action` | Create alert | demo_fh_vegas4 | `hub`, restart |
-| `ep3-answer` | Zone from the news | demo_fh4 | `ep3-action`, `ep9-fleet`, `hub` |
-| `ep3-action` | Create zone + rule | demo_fh4 | `hub`, restart |
-| `ep4-answer` | Five actions | demo_fh4 | `ep8-maintenance`, `hub`, restart |
-| `ep5-answer` | Geotab + Gmail + Calendar | demo_fh4 | `ep9-fleet`, `hub`, restart |
-| `ep7-ace` | Ask Geotab Ace | demo_fh_vegas4 | `ep7-reasoning`, `hub` |
-| `ep7-reasoning` | Ace reasoning | demo_fh_vegas4 | `ep8-maintenance`, `hub`, restart |
-| `ep8-maintenance` | Triage the worklist | demo_fh4 | `ep9-fleet`, `hub` |
-| `ep9-fleet` | Fleet composition | demo_fh4 | `ep3-answer`, `hub`, restart |
-| `ep10-postedspeed` | Posted-speed check | demo_fh_vegas4 | `ep2-action`, `ep-dashcam`, `hub` |
-| `ep-dispatch` | Closest available vehicle | demo_fh_vegas4 | `hub`, restart |
-| `ep-exec` | Board snapshot, both fleets | demo_fh_vegas4 + demo_fh4 | `hub`, restart |
-| `ep-dashcam` | Pull the clip (illustrative) | demo_fh_vegas4 | `hub`, restart |
+| `hub` | Pick a question (hub) | — | every scenario entry point |
+| `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-skill`, `ep7-ace`, `hub` |
+| `ep1-skill` | Ep1 · Package as a skill | — | `ep9-fleet`, `hub`, restart |
+| `ep2-answer` | Ep2 · Ask why | demo_fh_vegas4 | `ep2-action`, `ep10-postedspeed`, `hub` |
+| `ep2-action` | Ep2 · Create alert | demo_fh_vegas4 | `ep8-maintenance`, `hub`, restart |
+| `ep3-answer` | Ep3 · Zone from the news | demo_fh4 | `ep3-prefs`, `ep9-fleet-23-31`, `hub` |
+| `ep3-prefs` | Ep3 · Alert preferences | demo_fh4 | `ep3-action`, `ep3-action-wide` |
+| `ep3-action` | Ep3 · Create zone + rule | demo_fh4 | `ep3-map`, `hub`, restart |
+| `ep3-action-wide` | Ep3 · Create zone + rule (entry+exit, group) | demo_fh4 | `ep3-map`, `hub`, restart |
+| `ep3-map` | Ep3 · ZBE zone on a map | — | `ep9-fleet-23-31`, `hub`, restart |
+| `ep4-answer` | Ep4 · Five actions | demo_fh4 | `ep8-maintenance`, `ep9-fleet-23-31`, `hub`, restart |
+| `ep5-answer` | Ep5 · Geotab + Gmail + Calendar | demo_fh4 | `ep5-send`, `ep5-hold` |
+| `ep5-send` | Ep5 · Send the draft | demo_fh4 | `ep9-fleet-06`, `hub`, restart |
+| `ep5-hold` | Ep5 · Hold the email, keep the slot | demo_fh4 | `ep9-fleet-06`, `hub`, restart |
+| `ep13-salesforce` | Ep13 · Geotab + Salesforce | demo_fh4 | `ep13-close`, `ep13-leaveopen` |
+| `ep13-close` | Ep13 · Close the case | demo_fh4 | `ep9-fleet-12`, `hub`, restart |
+| `ep13-leaveopen` | Ep13 · Leave the case open | demo_fh4 | `ep9-fleet-12`, `hub`, restart |
+| `ep7-ace` | Ep7 · Ask Geotab Ace | demo_fh_vegas4 | `ep7-reasoning`, `ep2-action`, `hub` |
+| `ep7-reasoning` | Ep7 · Ace reasoning | demo_fh_vegas4 | `ep8-maintenance`, `ep1-answer`, `hub`, restart |
+| `ep8-maintenance` | Ep8 · Triage the worklist | demo_fh4 | `ep9-fleet-08`, `ep12-investigate`, `ep5-answer`, `hub` |
+| `ep9-fleet-08` | Ep9 · What is Demo - 08 | demo_fh4 | `ep12-investigate`, `ep5-answer`, `ep9-fleet`, `hub` |
+| `ep9-fleet-06` | Ep9 · What is Demo - 06 | demo_fh4 | `ep9-fleet`, `hub`, restart |
+| `ep9-fleet-12` | Ep9 · What is Demo - 12 | demo_fh4 | `ep9-fleet`, `hub`, restart |
+| `ep9-fleet-23-31` | Ep9 · What are Demo - 23 & Demo - 31 | demo_fh4 | `ep9-fleet`, `hub`, restart |
+| `ep9-fleet-01-vegas` | Ep9 · What is Demo - 01 (Vegas) | demo_fh_vegas4 | `ep9-fleet-vegas`, `hub`, restart |
+| `ep9-fleet-vegas` | Ep9 · What's in the Vegas fleet | demo_fh_vegas4 | `ep9-ev-vegas`, `ep2-answer`, `hub`, restart |
+| `ep9-fleet-hub` | Ep9 · Fleet mix + EV candidates | demo_fh4 | `ep9-fleet-chart`, `ep3-answer`, `ep9-ev`, `hub`, restart |
+| `ep9-fleet` | Ep9 · What's in the fleet | demo_fh4 | `ep9-fleet-chart`, `ep3-answer`, `ep9-ev`, `hub`, restart |
+| `ep9-fleet-chart` | Ep9 · Fleet composition chart | — | `ep3-answer`, `ep9-ev`, `hub`, restart |
+| `ep9-ev` | Ep9 · EV-conversion case (Sprinters) | demo_fh4 | `ep3-answer`, `hub`, restart |
+| `ep9-ev-vegas` | Ep9 · EV-conversion case (Vegas) | demo_fh_vegas4 | `ep2-answer`, `hub`, restart |
+| `ep10-postedspeed` | Ep10 · Posted-speed truth-check | demo_fh_vegas4 | `ep2-action`, `ep-dashcam`, `ep9-fleet-01-vegas`, `hub` |
+| `ep12-investigate` | Ep12 · Investigation loop | demo_fh4 | `ep5-answer`, `ep8-maintenance`, `hub`, restart |
+| `ep-dispatch` | Ep-Dispatch · Closest available vehicle | demo_fh_vegas4 | `ep-dispatch-chart`, `ep-dispatch-map`, `ep-dispatch-send-45`, `ep-dispatch-send-50`, `hub`, restart |
+| `ep-dispatch-send-45` | Ep-Dispatch · Dispatch Demo - 45 | demo_fh_vegas4 | `hub`, restart |
+| `ep-dispatch-send-50` | Ep-Dispatch · Dispatch Demo - 50 | demo_fh_vegas4 | `hub`, restart |
+| `ep-dispatch-map` | Ep-Dispatch · Live positions map | — | `ep-dispatch-send-45`, `hub`, restart |
+| `ep-dispatch-chart` | Ep-Dispatch · Distance chart | — | `ep-dispatch-send-50`, `hub`, restart |
+| `ep-exec` | Ep-Exec · Board snapshot, both fleets | cross-DB | `ep-roi`, `ep-exec-chart`, `ep2-answer`, `ep8-maintenance`, `hub`, restart |
+| `ep-exec-chart` | Ep-Exec · Utilization & exceptions charts | — | `ep2-answer`, `ep8-maintenance`, `hub`, restart |
+| `ep-dashcam` | Ep-Dashcam · Pull the clip (illustrative) | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
+| `ep-safety-risk` | Safety · Driver safety scorecard | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-harsh`, `ep2-action`, `hub` |
+| `ep-safety-harsh` | Safety · Harsh braking by driver | demo_fh_vegas4 | `ep-safety-harsh-spain`, `ep-agentic-coaching`, `ep-safety-risk`, `hub` |
+| `ep-safety-harsh-spain` | Safety · Harsh-braking hotspot | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-risk`, `hub`, restart |
+| `ep-safety-schoolzone` | Safety · Speeding in school zones | demo_fh_vegas4 | `ep-safety-schoolzone-create`, `ep-agentic-coaching`, `ep-safety-postedspeed-08`, `hub` |
+| `ep-safety-schoolzone-create` | Safety · Create school-zone alert | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-risk`, `hub`, restart |
+| `ep-safety-postedspeed-08` | Safety · Posted-speed truth-check (Demo - 08) | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-schoolzone-create`, `hub` |
+| `ep-maint-overdue` | Maintenance · Overdue for service | demo_fh4 | `ep-maint-overdue-book`, `ep-maint-severity`, `ep-maint-downtime`, `hub` |
+| `ep-maint-overdue-book` | Maintenance · Book the overdue ITV (Demo - 25) | demo_fh4 | `ep-maint-severity`, `ep-maint-downtime`, `hub`, restart |
+| `ep-maint-severity` | Maintenance · Fault codes + severity | demo_fh4 | `ep-maint-severity-book`, `ep12-investigate`, `ep-maint-downtime`, `hub` |
+| `ep-maint-severity-book` | Maintenance · Book the 3 red-lamp units | demo_fh4 | `ep12-investigate`, `ep-maint-overdue`, `hub`, restart |
+| `ep-maint-downtime` | Maintenance · Unplanned downtime | demo_fh4 | `ep12-investigate`, `ep-maint-severity`, `hub` |
+| `ep-ops-fuel` | Operations · Fuel economy by type | demo_fh_vegas4 | `ep9-ev-vegas`, `ep-ops-idle`, `ep2-action`, `ep-roi`, `hub` |
+| `ep-ops-idle` | Operations · Longest idle times | demo_fh_vegas4 | `ep-ops-idle-alert`, `ep-ops-fuel`, `hub` |
+| `ep-ops-idle-alert` | Operations · Create idling alert | demo_fh_vegas4 | `ep-ops-fuel`, `hub`, restart |
+| `ep-agentic-safety` | Agentic · Top 3 safety risks + fixes | demo_fh_vegas4 | `ep2-action`, `ep-agentic-coaching`, `ep-safety-schoolzone-create`, `ep-roi`, `ep-safety-risk`, `hub` |
+| `ep-agentic-coaching` | Agentic · Draft coaching summary | demo_fh_vegas4 | `ep-coaching-send`, `ep-agentic-safety`, `ep2-action`, `hub` |
+| `ep-coaching-send` | Agentic · Send coaching summary | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
+| `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep2-action`, `ep-agentic-coaching`, `hub` |
+| `ep-roi-onepager` | ROI · Draft the business case | demo_fh_vegas4 | `ep-roi-send`, `ep2-action`, `hub` |
+| `ep-roi-send` | ROI · Send the business case | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
 
-Episodes now **cross-link** as well as branch to their own action node — e.g.
+Episodes **cross-link** as well as branch to their own action node — e.g.
 maintenance → fleet composition → Valencia exposure, or speeding → posted-speed
-→ live alert → dashcam — so the same eleven entry points open many distinct
-paths. `ep-dispatch` and `ep-exec` are grounded entirely from live MCP calls
-(positions, exception/fault counts across both databases). `ep-dashcam` is the
-one episode with a non-real beat: `SearchMedia` genuinely returns nothing on
-either demo DB, so the node shows that real (empty) result honestly, then
-plays a clearly-disclosed **illustrative** clip — see `media/README.md` for
-the generation prompt and disclosure convention (mirrors `app.js`'s
-`media-disclosure` banner). New bifurcations slot in by adding a node and a
-choice — see the README's "Extending the graph" section.
+→ live alert → dashcam — so the same entry points open many distinct paths.
+`ep-dispatch` and `ep-exec` are grounded entirely from live MCP calls.
+
+The **Safety / Maintenance / Operations / Agentic** scenarios are anchored to
+the live demo accounts (API + Ace) — fleet sizes, vehicle mix, the fleet-wide
+speeding pattern, and the Sprinter fault cluster are all real — but the demo
+databases are sparse (no driver assignments, only speeding exceptions, only
+GO-device faults). Since these scenarios are meant to show what a **real,
+fully-instrumented customer** sees, the analytics in them are built out with
+**realistic, fictional data grounded in genuine Geotab capabilities**:
+
+- Drivers are **named and assigned** (Driver ID), as a real fleet runs — so
+  "riskiest drivers" returns a proper **Driver Safety Scorecard** (weighted
+  score, event mix, trend vs benchmark), not a vehicle list.
+- **Harsh braking by driver** grades events by severity (g-force) and maps the
+  worst driver's events to a single intersection — a route problem, not just a
+  driver one.
+- **Fault severity** triages into red / amber / informational, pulling 3
+  genuinely critical faults out of the 597-record noise.
+- **School zones**, **overdue service**, **downtime**, **fuel economy** and
+  **idling** all return confident, quantified answers (with $ / CO₂ impact and
+  named drivers) — the experience a customer with reminders, rules and Driver ID
+  configured would actually get.
+- Driver names are **fictional demo data** (noted inline and in the README),
+  and write-actions point at test mailboxes / sandbox records — no real PII.
+
+New bifurcations slot in by adding a node and a choice — see the README's
+"Extending the graph" section.

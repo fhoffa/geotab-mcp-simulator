@@ -57,9 +57,7 @@ body {
   place-items: center;
   width: 30px; height: 30px;
   border-radius: 8px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 17px;
+  background: url("assets/geotab-mark.png") center/cover no-repeat;
 }
 .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
 .brand-text strong { font-size: 15px; }
@@ -119,7 +117,7 @@ body {
   color: #fff;
   margin-top: 2px;
 }
-.avatar.claude { background: var(--accent); }
+.avatar.claude { background: url("assets/geotab-mark.png") center/cover no-repeat; }
 .avatar.user { background: #8a8178; }
 .avatar.system { background: #b9b2a7; border-radius: 999px; }
 

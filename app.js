@@ -158,7 +158,7 @@
   /* ----------------------------------------------------------- renderers */
   function addBubbleShell(role) {
     var row = el("div", "row " + role);
-    row.appendChild(el("div", "avatar " + role, role === "user" ? "you" : "✳"));
+    row.appendChild(el("div", "avatar " + role, role === "user" ? "you" : ""));
     var b = el("div", "bubble");
     var prose = el("div", "prose");
     b.appendChild(prose);
@@ -227,7 +227,7 @@
 
   function addDbBadge(db) {
     var wrap = el("div", "row claude");
-    wrap.appendChild(el("div", "avatar claude", "✳"));
+    wrap.appendChild(el("div", "avatar claude", ""));
     var b = el("div", "bubble");
     b.appendChild(el("span", "db-badge", "database · " + db));
     wrap.appendChild(b);
@@ -408,7 +408,7 @@
 
   function showTyping() {
     var row = el("div", "row claude typing-row");
-    row.appendChild(el("div", "avatar claude", "✳"));
+    row.appendChild(el("div", "avatar claude", ""));
     var b = el("div", "bubble");
     b.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
     row.appendChild(b);
