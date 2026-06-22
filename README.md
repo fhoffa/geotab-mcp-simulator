@@ -1,5 +1,7 @@
 # Geotab MCP — Experience Simulator
 
+**🔗 [Try it live](https://fhoffa.github.io/geotab-mcp-simulator/)**
+
 A guided, **zero-setup** way to experience what it's like to use the **Geotab MCP
 connector** from an AI chat (à la Claude) — *without* installing anything,
 connecting a real fleet, or authenticating.
@@ -58,11 +60,11 @@ loaded as a plain script — but a tiny server is the cleaner path.)
 ## How it works
 
 ```
-index.html      app shell (header, chat, choice tray, footer, map overlay)
+index.html      app shell (header, chat, choice tray, footer)
 styles.css      Claude-like theme
 app.js          the conversation engine (no dependencies)
 data/
-  conversations.js   the conversation graph — THE source of truth (the "map")
+  conversations.js   the conversation graph — THE source of truth
 docs/
   CONVERSATION-MAP.md  a Mermaid diagram of the same graph, for reading on GitHub
 ```
@@ -70,8 +72,7 @@ docs/
 The whole experience is **data-driven**. `data/conversations.js` defines a graph
 of *nodes*; `app.js` just walks it — playing each node's `events` (Claude prose,
 system lines, tool-call cards, end cards) with typing delays, then offering the
-node's `choices`. The in-app **🗺️ Story map** is generated live from that graph,
-so it never goes out of date.
+node's `choices`.
 
 ## Extending the graph (adding a bifurcation)
 
@@ -104,20 +105,20 @@ All content lives in `data/conversations.js`. To add a new branch:
    { label: "📝 Draft a coaching note", say: "Draft a coaching note for that driver.", next: "ep2-coach" }
    ```
 
-That's it — reload and the new branch (and its place on the Story map) appears.
-On load, `app.js` logs a graph-integrity check to the console and flags any choice
-or `next` that points at a missing node.
+That's it — reload and the new branch appears. On load, `app.js` logs a
+graph-integrity check to the console and flags any choice or `next` that
+points at a missing node.
 
 ### Node reference (quick)
 
 | field | meaning |
 |---|---|
 | `id` | unique node id |
-| `title` | label shown in the Story map |
+| `title` | node label |
 | `db` | optional database badge for the node |
 | `events[]` | ordered: `claude` (markdown), `system`, `endcard` (`lines[]`), or `tool` |
 | `tool` event | `server`, `name`, `args`, `summary`, `result`, optional `write: true` |
-| `choices[]` | `{ label, say?, next?, action? }` — `action` is `"restart"` or `"map"` |
+| `choices[]` | `{ label, say?, next?, action? }` — `action` is `"restart"` |
 | `next` | auto-advance to a node when there are no `choices` |
 
 ## Grounding & data notes

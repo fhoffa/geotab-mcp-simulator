@@ -255,7 +255,7 @@ window.CONVERSATIONS = {
             '[\n  { "rule": "RulePostedSpeedingId", "device": "b1", "activeFrom": "…" },\n' +
             '  { "rule": "RulePostedSpeedingId", "device": "b2", "activeFrom": "…" },\n' +
             '  …\n]\n' +
-            '// the whole-fleet aggregate (via Ace) shows ~99–100 events across many vehicles',
+            '// the whole-fleet aggregate (via Ace) shows the top vehicles clustered 118–142 — no runaway outlier',
         },
         {
           type: "claude",
@@ -277,9 +277,9 @@ window.CONVERSATIONS = {
             "Okay, here's your week on demo_fh_vegas4.\n\n" +
             "Good news first: 50 vehicles, all reporting, zero active faults. Genuinely clean week on the maintenance side.\n\n" +
             "The thing that needs a look is speeding — and it's not one driver, it's the whole fleet. Posted-speed " +
-            "events are spread across a lot of vehicles, with the top offenders within a handful of events of each " +
-            "other. That changes the fix: this isn't a conversation with one person, it's a policy thing, plus a live " +
-            "alert so it gets caught in the moment instead of next Monday.\n\n" +
+            "events are spread across a lot of vehicles, with the top offenders close together and no single van " +
+            "running away with it. That changes the fix: this isn't a conversation with one person, it's a policy " +
+            "thing, plus a live alert so it gets caught in the moment instead of next Monday.\n\n" +
             "Two caveats so you don't over-read this: HOS is per-driver only — the API won't return violations " +
             "without naming someone — so what I checked was a spot-check, not a fleet-wide all-clear. And DVIR has " +
             "nothing logged this week, which I'm reading as \"nothing to report,\" not \"nobody's filing them,\" but " +
@@ -402,9 +402,9 @@ window.CONVERSATIONS = {
           server: "geotab",
           name: "GetAceResults",
           args: { database: "demo_fh_vegas4", prompt: "Top 5 vehicles by speeding events, last 7 days?", new_chat: true },
-          summary: "whole-fleet aggregate → top 5 within 1 event (~99–100 each)",
+          summary: "whole-fleet aggregate → top 5 cluster 118–142, no van running away with it",
           result:
-            '{ "answer": "1. Demo-01: 100  2. Demo-15: 99  3. Demo-16: 99  4. Demo-08: 99  5. Demo-04: 99" }',
+            '{ "answer": "1. Demo-16: 142  2. Demo-01: 134  3. Demo-08: 129  4. Demo-15: 121  5. Demo-04: 118" }',
         },
         {
           type: "claude",
@@ -412,8 +412,9 @@ window.CONVERSATIONS = {
             "So here's what actually happened. A quick raw pull only returns the newest ~200 events, and those " +
             "happen to cluster on a couple of vans, which makes it look like Demo - 01 is the problem.\n\n" +
             "It isn't — that's a paging artifact, not an answer. Those 200 rows are about 3.5% of the 5,645 events " +
-            "this week. Once Ace aggregates the whole week across every vehicle, the top five come back within a " +
-            "single event of each other, around 99–100 speeding events each.\n\n" +
+            "this week. Once Ace aggregates the whole week across every vehicle, Demo - 01 isn't even in first place: " +
+            "it's Demo - 16 at 142, then Demo - 01 at 134, then 129, 121, and 118. That's real variance, not a tie — " +
+            "but nobody's running away with it the way an actual outlier would (think 2–3x the next vehicle, not 1.2x).\n\n" +
             "So it's not one van, it's fleet-wide. The \"why\" isn't a person, it's systemic — shared routes, shared " +
             "limits, shared expectations. That's a different fix: not a conversation with one driver, a policy change " +
             "plus a live guardrail.\n\n" +
@@ -424,11 +425,11 @@ window.CONVERSATIONS = {
           type: "chart",
           title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
           bars: [
-            { label: "Demo - 01", value: 100 },
-            { label: "Demo - 15", value: 99 },
-            { label: "Demo - 16", value: 99 },
-            { label: "Demo - 08", value: 99 },
-            { label: "Demo - 04", value: 99 },
+            { label: "Demo - 16", value: 142 },
+            { label: "Demo - 01", value: 134 },
+            { label: "Demo - 08", value: 129 },
+            { label: "Demo - 15", value: 121 },
+            { label: "Demo - 04", value: 118 },
           ],
         },
       ],
