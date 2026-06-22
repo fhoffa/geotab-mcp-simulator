@@ -283,8 +283,19 @@
     scrollDown();
   }
 
+  function addConfirmCard(ev) {
+    var c = el("div", "confirm-card");
+    c.appendChild(el("div", "cf-head", "✅ Done — here's what changed in MyGeotab" + (ev.simulated !== false ? " (simulated)" : "")));
+    var list = el("ul", "cf-list");
+    (ev.changes || []).forEach(function (line) { list.appendChild(el("li", null, escapeHtml(line))); });
+    c.appendChild(list);
+    chatEl.appendChild(c);
+    scrollDown();
+  }
+
   function addEndcard(lines) {
     var c = el("div", "endcard");
+    c.appendChild(el("div", "ec-badge", "Simulator note — not part of the reply"));
     c.appendChild(el("div", "ec-1", escapeHtml(lines[0] || "")));
     if (lines[1]) c.appendChild(el("div", "ec-2", escapeHtml(lines[1])));
     c.appendChild(el("div", "ec-foot", "Same connector also works in Microsoft Copilot, ChatGPT, Block Goose, Cursor & Windsurf · geotab.com"));
@@ -459,6 +470,11 @@
         await wait(jitter(BASE.tool));
         if (myToken !== playToken) return;
         addMap(ev);
+      } else if (ev.type === "confirm") {
+        toolContainer = null;
+        await wait(jitter(BASE.tool));
+        if (myToken !== playToken) return;
+        addConfirmCard(ev);
       } else if (ev.type === "endcard") {
         toolContainer = null;
         await wait(jitter(BASE.gap));
@@ -481,10 +497,16 @@
   function renderChoices(choices) {
     trayEl.innerHTML = "";
     trayEl.appendChild(el("div", "tray-hint", "Pick a reply — this is a simulator, so we suggest the questions:"));
+    var lastGroup = null;
     choices.forEach(function (c, idx) {
-      var btn = el("button", "chip" + (idx === 0 && c.next ? " primary" : "") + (c.action ? " subtle" : ""));
+      if (c.group && c.group !== lastGroup) {
+        trayEl.appendChild(el("div", "tray-group", escapeHtml(c.group)));
+        lastGroup = c.group;
+      }
+      var primary = c.recommended || (idx === 0 && c.next);
+      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action ? " subtle" : ""));
       btn.type = "button";
-      btn.textContent = c.label;
+      btn.innerHTML = (c.recommended ? '<span class="chip-badge">Start here</span>' : "") + escapeHtml(c.label);
       btn.addEventListener("click", function () { onChoice(c); });
       trayEl.appendChild(btn);
     });

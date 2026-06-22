@@ -106,6 +106,8 @@ window.CONVERSATIONS = {
       ],
       choices: [
         {
+          group: "📋 Productivity",
+          recommended: true,
           label: "📋 The Monday morning review",
           say:
             "Give me my weekly fleet review for the last 7 days — faults, idling and harsh driving, " +
@@ -113,20 +115,7 @@ window.CONVERSATIONS = {
           next: "ep1-answer",
         },
         {
-          label: "❓ Why are speeding alerts up?",
-          say:
-            "Our speeding alerts are up this week. Why — is it the whole fleet, or a few vehicles? " +
-            "Break it down for me.",
-          next: "ep2-answer",
-        },
-        {
-          label: "🌍 React to a low-emission zone",
-          say:
-            "Valencia's low-emission zone is tightening in 2026. Check the current rules, and tell me " +
-            "whether my fleet drives through that zone and what a non-compliant entry would cost us.",
-          next: "ep3-answer",
-        },
-        {
+          group: "📋 Productivity",
           label: "⚡ Get 5 fleet chores done",
           say:
             "I've got a few fleet chores to knock out — set up a depot geofence, an idling alert, " +
@@ -134,39 +123,15 @@ window.CONVERSATIONS = {
           next: "ep4-answer",
         },
         {
-          label: "📧 Fault → email garage → book service",
+          group: "🛟 Safety",
+          label: "❓ Why are speeding alerts up?",
           say:
-            "One of our vans just logged a fault. Pull the details, draft an email to the garage asking " +
-            "them to take a look, and put a tentative service slot on my calendar for tomorrow morning.",
-          next: "ep5-answer",
+            "Our speeding alerts are up this week. Why — is it the whole fleet, or a few vehicles? " +
+            "Break it down for me.",
+          next: "ep2-answer",
         },
         {
-          label: "💼 Settle a late-delivery dispute (Salesforce)",
-          say:
-            "A customer is disputing a late delivery yesterday and it's logged as an open Salesforce case. " +
-            "Check Demo - 12's actual arrival time at the customer site against the case, and log the proof on the case.",
-          next: "ep13-salesforce",
-        },
-        {
-          label: "🤖 Ask Geotab Ace a question",
-          say: "Using Geotab Ace — which 5 vehicles had the most speeding events in the last 7 days, and how many each?",
-          next: "ep7-ace",
-        },
-        {
-          label: "🔧 Triage the maintenance worklist",
-          say:
-            "I've got a pile of faults on the Spain fleet. Is it everywhere, or a few vehicles? " +
-            "Give me a prioritized worklist for the shop.",
-          next: "ep8-maintenance",
-        },
-        {
-          label: "🚐 What's actually in my fleet?",
-          say:
-            "What makes and models am I actually running on the Spain fleet, " +
-            "and which are realistic EV-conversion candidates?",
-          next: "ep9-fleet-hub",
-        },
-        {
+          group: "🛟 Safety",
           label: "🛣️ Was that road really that fast?",
           say:
             "A driver is disputing a speeding flag on Demo - 01. Pull the posted road speed along its actual " +
@@ -174,6 +139,52 @@ window.CONVERSATIONS = {
           next: "ep10-postedspeed",
         },
         {
+          group: "🛟 Safety",
+          label: "🤖 Ask Geotab Ace a question",
+          say: "Using Geotab Ace — which 5 vehicles had the most speeding events in the last 7 days, and how many each?",
+          next: "ep7-ace",
+        },
+        {
+          group: "📜 Compliance",
+          label: "🌍 React to a low-emission zone",
+          say:
+            "Valencia's low-emission zone is tightening in 2026. Check the current rules, and tell me " +
+            "whether my fleet drives through that zone and what a non-compliant entry would cost us.",
+          next: "ep3-answer",
+        },
+        {
+          group: "🌱 Sustainability",
+          label: "🚐 What's actually in my fleet?",
+          say:
+            "What makes and models am I actually running on the Spain fleet, " +
+            "and which are realistic EV-conversion candidates?",
+          next: "ep9-fleet-hub",
+        },
+        {
+          group: "🔧 Maintenance",
+          label: "🔧 Triage the maintenance worklist",
+          say:
+            "I've got a pile of faults on the Spain fleet. Is it everywhere, or a few vehicles? " +
+            "Give me a prioritized worklist for the shop.",
+          next: "ep8-maintenance",
+        },
+        {
+          group: "🔧 Maintenance",
+          label: "❓ Why does Demo - 08 keep faulting?",
+          say:
+            "Demo - 08 keeps showing up in the fault list. Why — dig into it and don't stop at the first explanation.",
+          next: "ep12-investigate",
+        },
+        {
+          group: "🔧 Maintenance",
+          label: "📧 Fault → email garage → book service",
+          say:
+            "One of our vans just logged a fault. Pull the details, draft an email to the garage asking " +
+            "them to take a look, and put a tentative service slot on my calendar for tomorrow morning.",
+          next: "ep5-answer",
+        },
+        {
+          group: "🚚 Dispatch & cross-tool",
           label: "🚐 Who's closest and free right now?",
           say:
             "A job just came in near downtown Las Vegas — which vehicle is closest and actually " +
@@ -181,17 +192,20 @@ window.CONVERSATIONS = {
           next: "ep-dispatch",
         },
         {
+          group: "🚚 Dispatch & cross-tool",
+          label: "💼 Settle a late-delivery dispute (Salesforce)",
+          say:
+            "A customer is disputing a late delivery yesterday and it's logged as an open Salesforce case. " +
+            "Check Demo - 12's actual arrival time at the customer site against the case, and log the proof on the case.",
+          next: "ep13-salesforce",
+        },
+        {
+          group: "🚚 Dispatch & cross-tool",
           label: "📊 Give me a board snapshot, both fleets",
           say:
             "Give me a board-level snapshot across both fleets — utilization, safety, maintenance and " +
             "sustainability — in five numbers.",
           next: "ep-exec",
-        },
-        {
-          label: "❓ Why does Demo - 08 keep faulting?",
-          say:
-            "Demo - 08 keeps showing up in the fault list. Why — dig into it and don't stop at the first explanation.",
-          next: "ep12-investigate",
         },
       ],
     },
@@ -270,7 +284,9 @@ window.CONVERSATIONS = {
             "without naming someone — so what I checked was a spot-check, not a fleet-wide all-clear. And DVIR has " +
             "nothing logged this week, which I'm reading as \"nothing to report,\" not \"nobody's filing them,\" but " +
             "worth a sanity check on your end.\n\n" +
-            "(Didn't put trip count in here — the raw all-time counter isn't a meaningful weekly number, so I left it out rather than report something misleading.)",
+            "(Didn't put trip count in here — the raw all-time counter isn't a meaningful weekly number, so I left it out rather than report something misleading.)\n\n" +
+            "That's the version of this brief that used to mean pulling four reports and cross-checking them by hand — " +
+            "probably 30–45 minutes on a Monday. This was one ask.",
         },
       ],
       choices: [
@@ -466,6 +482,13 @@ window.CONVERSATIONS = {
             "Done — fleet-wide posted-speed rule is live, and the alert's routed to one fleet manager (by name, no " +
             "email shown). Any vehicle over the posted limit gets flagged in the moment now, not when you run next " +
             "week's review.",
+        },
+        {
+          type: "confirm",
+          changes: [
+            "Rule \"Posted Speed — fleet-wide\" created and active on demo_fh_vegas4",
+            "Notification routed to 1 fleet manager",
+          ],
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Stop guessing why. Ask."] },
       ],
