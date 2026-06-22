@@ -2333,7 +2333,7 @@ window.CONVERSATIONS = {
           type: "tool",
           server: "geotab",
           name: "Get",
-          args: { database: "demo_fh_vegas4", typeName: "ExceptionEvent", search: { ruleSearch: { id: "RuleHarshBrakingId" }, deviceSearch: { id: "b21 (Demo - 33)" }, fromDate: "…30 days ago", toDate: "now" }, propertySelector: { fields: ["activeFrom", "latitude", "longitude"] }, resultsLimit: 100 },
+          args: { database: "demo_fh_vegas4", typeName: "ExceptionEvent", search: { ruleSearch: { id: "RuleHarshBrakingId" }, deviceSearch: { id: "b33 (Demo - 33)" }, fromDate: "…30 days ago", toDate: "now" }, propertySelector: { fields: ["activeFrom", "latitude", "longitude"] }, resultsLimit: 100 },
           summary: "58 events geocoded · 23 cluster at one intersection, mostly 16:00–18:00",
           result:
             '// reverse-geocoded + bucketed by location and hour\n' +
