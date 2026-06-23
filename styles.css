@@ -494,42 +494,89 @@ body {
 .map-title { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); margin-bottom: 10px; }
 .map-canvas {
   position: relative;
-  height: 200px;
-  border-radius: 8px;
-  background-color: #eef1ea;
-  background-image:
-    linear-gradient(0deg, transparent 24%, color-mix(in srgb, var(--ink) 6%, transparent) 25%, color-mix(in srgb, var(--ink) 6%, transparent) 26%, transparent 27%, transparent 74%, color-mix(in srgb, var(--ink) 6%, transparent) 75%, color-mix(in srgb, var(--ink) 6%, transparent) 76%, transparent 77%, transparent),
-    linear-gradient(90deg, transparent 24%, color-mix(in srgb, var(--ink) 6%, transparent) 25%, color-mix(in srgb, var(--ink) 6%, transparent) 26%, transparent 27%, transparent 74%, color-mix(in srgb, var(--ink) 6%, transparent) 75%, color-mix(in srgb, var(--ink) 6%, transparent) 76%, transparent 77%, transparent);
+  height: 214px;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.72), transparent 22%),
+    radial-gradient(circle at 82% 72%, rgba(10, 125, 60, 0.08), transparent 28%),
+    linear-gradient(135deg, #edf4ee 0%, #e7eff3 48%, #edf3ec 100%);
+  border: 1px solid color-mix(in srgb, var(--tool-line) 82%, white);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
   overflow: hidden;
 }
-.map-zone-svg {
+.map-canvas::before,
+.map-canvas::after {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  pointer-events: none;
+}
+.map-canvas::before {
+  background:
+    radial-gradient(circle at 22% 76%, rgba(14, 116, 144, 0.06), transparent 20%),
+    radial-gradient(circle at 70% 22%, rgba(20, 32, 51, 0.035), transparent 18%);
+}
+.map-canvas::after {
+  border: 1px solid rgba(20, 32, 51, 0.035);
+  border-radius: 26px;
+  transform: rotate(-8deg) scale(1.08);
+}
+.map-zone-svg,
+.map-road-svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: visible;
 }
+.map-zone-svg { z-index: 1; }
+.map-road-svg { z-index: 2; }
 .map-zone-shape {
-  fill: color-mix(in srgb, var(--accent-ink) 18%, transparent);
-  stroke: var(--accent-ink);
+  fill: color-mix(in srgb, var(--accent-ink) 16%, transparent);
+  stroke: color-mix(in srgb, var(--accent-ink) 72%, white);
   stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.map-road {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.96);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  paint-order: stroke;
+}
+.map-road-local { stroke-width: 5.5; stroke: rgba(255, 255, 255, 0.9); }
+.map-road-arterial { stroke-width: 8; stroke: rgba(255, 255, 255, 0.96); }
+.map-road-highway { stroke-width: 11; stroke: color-mix(in srgb, var(--accent) 20%, white); }
+.map-road-label {
+  fill: color-mix(in srgb, var(--ink-soft) 70%, white);
+  font-size: 3.6px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.82);
+  stroke-width: 2.2px;
   vector-effect: non-scaling-stroke;
 }
 .map-zone-label {
   position: absolute;
+  z-index: 4;
   transform: translate(-50%, -50%);
   font-size: 11.5px;
   font-weight: 600;
   color: var(--ink);
-  background: color-mix(in srgb, var(--bg) 85%, white);
+  background: color-mix(in srgb, var(--panel) 88%, var(--bg));
   border: 1px solid var(--tool-line);
-  border-radius: 5px;
-  padding: 2px 6px;
+  border-radius: 999px;
+  padding: 3px 8px;
   white-space: nowrap;
   pointer-events: none;
+  box-shadow: 0 2px 8px rgba(20, 32, 51, 0.08);
 }
 .map-pin {
   position: absolute;
+  z-index: 5;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
@@ -541,23 +588,54 @@ body {
   height: 12px;
   border-radius: 50%;
   border: 2px solid #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 7px rgba(20, 32, 51, 0.26);
   flex: 0 0 auto;
 }
 .map-pin-free .map-dot { background: var(--geotab); }
 .map-pin-busy .map-dot { background: var(--accent-ink); }
 .map-pin-target .map-dot { background: var(--ink); width: 14px; height: 14px; }
+.map-pin-compact .map-dot {
+  width: 7px;
+  height: 7px;
+  border-width: 1.5px;
+  opacity: 0.82;
+}
+.map-pin-busy:not(.map-pin-compact)::before {
+  content: "";
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  left: -10px;
+  top: -10px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-ink) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-ink) 22%, transparent);
+  z-index: -1;
+}
 .map-tag {
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--ink);
-  background: color-mix(in srgb, var(--bg) 85%, white);
-  border: 1px solid var(--tool-line);
-  border-radius: 5px;
-  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid color-mix(in srgb, var(--tool-line) 88%, white);
+  border-radius: 999px;
+  padding: 3px 8px;
+  box-shadow: 0 2px 9px rgba(20, 32, 51, 0.09);
+  backdrop-filter: blur(6px);
 }
 .map-tag-val { font-weight: 400; color: var(--ink-soft); }
-.map-disclosure { font-size: 11px; color: var(--ink-soft); margin-top: 8px; }
+.map-summary {
+  display: inline-block;
+  margin-top: 9px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--tool-line));
+  background: color-mix(in srgb, var(--accent-soft) 52%, var(--panel));
+  color: var(--accent-ink);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+.map-disclosure { font-size: 11px; color: var(--ink-soft); margin-top: 7px; }
 
 /* ------------------------------------------------------------------- media */
 .media-card {

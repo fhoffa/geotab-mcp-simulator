@@ -1020,6 +1020,12 @@ window.CONVERSATIONS = {
               [28, 36], [34, 28],
             ],
           },
+          roads: [
+            { kind: "arterial", d: "M8 58 C24 54, 36 50, 50 48 S78 46, 94 40", label: "Av. del Port", labelX: 20, labelY: 54, labelRotate: -9 },
+            { kind: "local", d: "M42 8 C45 24, 46 36, 44 52 S42 78, 44 94" },
+            { kind: "local", d: "M68 10 C64 28, 61 40, 60 52 S58 72, 54 94" },
+            { kind: "local", d: "M20 24 C36 30, 48 34, 72 30" },
+          ],
           pins: [
             { label: "Demo - 23", x: 44, y: 40, status: "busy" },
             { label: "Demo - 31", x: 60, y: 52, status: "busy" },
@@ -2162,6 +2168,12 @@ window.CONVERSATIONS = {
         {
           type: "map",
           title: "Live positions vs. the job · downtown Las Vegas",
+          roads: [
+            { kind: "arterial", d: "M10 72 C26 66, 36 60, 50 48 S74 30, 92 24" },
+            { kind: "local", d: "M22 22 C36 34, 44 42, 50 48 S62 62, 76 78" },
+            { kind: "local", d: "M74 8 C72 28, 72 48, 74 68 S76 86, 78 96" },
+            { kind: "local", d: "M8 40 C28 42, 40 44, 64 38 S82 30, 96 34" },
+          ],
           pins: [
             { label: "Job site", x: 50, y: 48, status: "target" },
             { label: "Demo - 45 (free)", x: 36, y: 60, status: "free", value: 1.0 },
@@ -2551,13 +2563,21 @@ window.CONVERSATIONS = {
         },
         {
           type: "map",
-          title: "Sam Whitfield · harsh-braking locations (30 days)",
+          title: "Sam Whitfield · harsh-braking hotspot (30 days)",
+          summary: "23 of 58 events cluster at Charleston & Rancho; 35 are dispersed",
+          roads: [
+            { kind: "arterial", d: "M6 47 C24 43, 38 44, 50 46 S76 52, 94 47", label: "W Charleston Blvd", labelX: 13, labelY: 42, labelRotate: -5 },
+            { kind: "arterial", d: "M48 6 C47 24, 49 36, 50 46 S52 70, 56 94", label: "S Rancho Dr", labelX: 53, labelY: 18, labelRotate: 82 },
+            { kind: "local", d: "M20 70 C32 64, 42 58, 50 46 S62 30, 74 22" },
+            { kind: "local", d: "M18 24 C34 30, 42 38, 50 46 S66 60, 80 70" },
+          ],
           pins: [
-            { label: "Charleston & Rancho — 23 events", x: 50, y: 46, status: "busy" },
-            { label: "scattered", x: 30, y: 64, status: "free" },
-            { label: "scattered", x: 70, y: 34, status: "free" },
-            { label: "scattered", x: 64, y: 68, status: "free" },
-            { label: "scattered", x: 36, y: 30, status: "free" },
+            { label: "Charleston & Rancho · 23 events", x: 50, y: 46, status: "busy" },
+            { x: 30, y: 64, status: "free", compact: true, title: "Other harsh-braking event" },
+            { x: 70, y: 34, status: "free", compact: true, title: "Other harsh-braking event" },
+            { x: 64, y: 68, status: "free", compact: true, title: "Other harsh-braking event" },
+            { x: 36, y: 30, status: "free", compact: true, title: "Other harsh-braking event" },
+            { x: 58, y: 82, status: "free", compact: true, title: "Other harsh-braking event" },
           ],
         },
         {
