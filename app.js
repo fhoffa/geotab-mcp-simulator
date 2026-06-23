@@ -331,6 +331,39 @@
     scrollDown();
   }
 
+  function svgPathFromPoints(points) {
+    return "M" + points.map(function (pt) { return pt[0] + " " + pt[1]; }).join(" L");
+  }
+
+  function drawMapAreas(canvas, areas) {
+    if (!areas || !areas.length) return;
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "map-area-svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("preserveAspectRatio", "none");
+    areas.forEach(function (a) {
+      var shape;
+      if (a.d) {
+        shape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        shape.setAttribute("d", a.d);
+      } else if (a.points && a.points.length) {
+        shape = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        shape.setAttribute("points", a.points.map(function (pt) { return pt[0] + "," + pt[1]; }).join(" "));
+      } else {
+        shape = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        shape.setAttribute("x", a.x || 0);
+        shape.setAttribute("y", a.y || 0);
+        shape.setAttribute("width", a.w || 8);
+        shape.setAttribute("height", a.h || 6);
+        if (a.rx != null) shape.setAttribute("rx", a.rx);
+      }
+      shape.setAttribute("class", "map-area map-area-" + (a.kind || "block"));
+      if (a.rotate) shape.setAttribute("transform", "rotate(" + a.rotate + " " + ((a.x || 0) + (a.w || 0) / 2) + " " + ((a.y || 0) + (a.h || 0) / 2) + ")");
+      svg.appendChild(shape);
+    });
+    canvas.appendChild(svg);
+  }
+
   function drawMapRoads(canvas, roads) {
     if (!roads || !roads.length) return;
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -338,13 +371,19 @@
     svg.setAttribute("viewBox", "0 0 100 100");
     svg.setAttribute("preserveAspectRatio", "none");
     roads.forEach(function (r) {
+      var d = r.d || (r.points && r.points.length ? svgPathFromPoints(r.points) : null);
+      if (!d) return;
+      var kind = r.kind || "local";
+      var casing = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      casing.setAttribute("class", "map-road-casing map-road-casing-" + kind);
+      casing.setAttribute("d", d);
+      svg.appendChild(casing);
+
       var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("class", "map-road map-road-" + (r.kind || "local"));
-      if (r.d) path.setAttribute("d", r.d);
-      else if (r.points && r.points.length) {
-        path.setAttribute("d", "M" + r.points.map(function (pt) { return pt[0] + " " + pt[1]; }).join(" L"));
-      }
+      path.setAttribute("class", "map-road map-road-" + kind);
+      path.setAttribute("d", d);
       svg.appendChild(path);
+
       if (r.label) {
         var txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
         var x = r.labelX != null ? r.labelX : 50;
@@ -360,6 +399,23 @@
     canvas.appendChild(svg);
   }
 
+  function drawMapIntersections(canvas, intersections) {
+    if (!intersections || !intersections.length) return;
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "map-intersection-svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("preserveAspectRatio", "none");
+    intersections.forEach(function (i) {
+      var c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      c.setAttribute("class", "map-intersection map-intersection-" + (i.kind || "major"));
+      c.setAttribute("cx", i.x || 0);
+      c.setAttribute("cy", i.y || 0);
+      c.setAttribute("r", i.r || 1.1);
+      svg.appendChild(c);
+    });
+    canvas.appendChild(svg);
+  }
+
   function addMap(ev) {
     var card = el("div", "map-card");
     var labeledPins = (ev.pins || []).filter(function (p) { return p.label; });
@@ -371,7 +427,11 @@
       (ev.summary ? ev.summary + ". " : "") +
       (labeledPins.length ? "Markers: " + labeledPins.map(function (p) { return p.label; }).join(", ") + "." : ""));
     if (ev.title) card.appendChild(el("div", "map-title", escapeHtml(ev.title)));
-    var canvas = el("div", "map-canvas");
+    var canvas = el("div", "map-canvas" + (ev.mapStyle ? " map-canvas-" + ev.mapStyle : ""));
+    var chrome = el("div", "map-chrome", '<span>Street map</span><span class="map-zoom">＋ −</span>');
+    chrome.setAttribute("aria-hidden", "true");
+    canvas.appendChild(chrome);
+    drawMapAreas(canvas, ev.areas || []);
     if (ev.zone && ev.zone.points && ev.zone.points.length) {
       var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("class", "map-zone-svg");
@@ -384,6 +444,7 @@
       canvas.appendChild(svg);
     }
     drawMapRoads(canvas, ev.roads || []);
+    drawMapIntersections(canvas, ev.intersections || []);
     if (ev.zone && ev.zone.label) {
       var zoneTag = el("div", "map-zone-label", escapeHtml(ev.zone.label));
       zoneTag.style.left = (ev.zone.labelX != null ? ev.zone.labelX : 50) + "%";
@@ -403,8 +464,11 @@
       canvas.appendChild(pin);
     });
     card.appendChild(canvas);
+    var scale = el("div", "map-scale", "200 m");
+    scale.setAttribute("aria-hidden", "true");
+    canvas.appendChild(scale);
     if (ev.summary) card.appendChild(el("div", "map-summary", escapeHtml(ev.summary)));
-    card.appendChild(el("div", "map-disclosure", ev.disclosure ? escapeHtml(ev.disclosure) : "Illustrative roadway sketch · relative positions, not to scale"));
+    card.appendChild(el("div", "map-disclosure", ev.disclosure ? escapeHtml(ev.disclosure) : "Illustrative overlay on © OpenStreetMap contributors, © CARTO basemap · not live tracking"));
     chatEl.appendChild(card);
     scrollDown();
   }
