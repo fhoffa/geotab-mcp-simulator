@@ -185,9 +185,9 @@ body {
 .prose > *:last-child { margin-bottom: 0; }
 .prose p { margin: 0.5em 0; }
 .prose h1, .prose h2, .prose h3 { margin: 0.8em 0 0.35em; line-height: 1.25; }
-.prose h1 { font-size: 1.3em; }
-.prose h2 { font-size: 1.15em; }
-.prose h3 { font-size: 1.02em; }
+.prose h1 { font-size: 1.55em; font-weight: 700; }
+.prose h2 { font-size: 1.22em; font-weight: 650; }
+.prose h3 { font-size: 1.04em; font-weight: 600; }
 .prose ul, .prose ol { margin: 0.4em 0; padding-left: 1.4em; }
 .prose li { margin: 0.18em 0; }
 .prose code {
@@ -282,8 +282,18 @@ body {
   color: #fff;
   background: var(--write);
 }
-.tool-caret { color: var(--ink-soft); font-size: 11px; transition: transform 0.15s; }
-.tool-card.open .tool-caret { transform: rotate(90deg); }
+.tool-caret {
+  flex: 0 0 auto;
+  width: 16px; height: 16px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--tool-line);
+  border-radius: 4px;
+  line-height: 1;
+}
 
 .tool-body {
   display: none;

@@ -261,7 +261,7 @@
     if (ev.write) head.appendChild(el("span", "tool-badge", "action"));
     var sum = el("span", "tool-summary", "→ " + escapeHtml(ev.summary || "done"));
     head.appendChild(sum);
-    head.appendChild(el("span", "tool-caret", "▶"));
+    head.appendChild(el("span", "tool-caret", "+"));
 
     var body = el("div", "tool-body");
     body.appendChild(el("div", "lbl", "Request"));
@@ -271,13 +271,15 @@
       body.appendChild(el("pre", null, escapeHtml(ev.result)));
     }
 
+    var caret = head.querySelector(".tool-caret");
     head.addEventListener("click", function () {
       var open = card.classList.toggle("open");
       head.setAttribute("aria-expanded", open ? "true" : "false");
+      caret.textContent = open ? "−" : "+";
     });
     card.appendChild(head);
     card.appendChild(body);
-    if (ev.openByDefault) card.classList.add("open");
+    if (ev.openByDefault) { card.classList.add("open"); caret.textContent = "−"; }
     (container || chatEl).appendChild(card);
     scrollDown();
   }
@@ -533,7 +535,7 @@
 
   function renderChoices(choices) {
     trayEl.innerHTML = "";
-    trayEl.appendChild(el("div", "tray-hint", "Choose a suggested prompt to continue the simulator:"));
+    trayEl.appendChild(el("div", "tray-hint", "No typing here — tap one of these to continue the demo:"));
     var lastGroup = null;
     choices.forEach(function (c, idx) {
       if (c.group && c.group !== lastGroup) {
