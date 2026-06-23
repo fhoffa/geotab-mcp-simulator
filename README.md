@@ -14,13 +14,12 @@ experience is grounded in real data.
 > **This is a demo, not the real connector.** In real use the Geotab MCP
 > connector follows your MyGeotab permissions and can surface personal data
 > (driver names, locations). Review your privacy obligations before connecting a
-> production fleet. The interface intentionally uses its own palette, icon
-> language, type scale, and empty-state copy to avoid confusion with any AI provider.
+> production fleet.
 
 On load you'll see a **landing overlay** that frames the value prop for a fleet
 manager who already knows Geotab: plain-English fleet questions, a note that the
-connector is an open MCP server (Microsoft Copilot, ChatGPT, Claude, and other
-MCP clients can all speak to it), and two CTAs
+connector is an open MCP server (Claude is the clearest starting point, while
+Microsoft Copilot, ChatGPT, and other MCP clients can speak to it too), and two CTAs
 — jump into the simulator, or open the **"Connect your real account"** overlay
 (reachable anytime from the header), which walks through getting MyGeotab
 access, connecting the connector to your assistant of choice, and a prominent

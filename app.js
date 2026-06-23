@@ -511,6 +511,7 @@
       btn.addEventListener("click", function () { onChoice(c); });
       trayEl.appendChild(btn);
     });
+    trayEl.scrollTop = 0;
     scrollDown();
   }
 

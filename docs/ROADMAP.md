@@ -34,8 +34,9 @@ answers are correct and repeatable. Ace is a headline capability to show off.
 
 ## UI / brand guidance
 
-- Keep the simulator provider-neutral: clients can be mentioned as interoperable
-  MCP options, but the app itself should not imply a default AI provider.
+- Keep the simulator provider-neutral: Claude can be recommended as the clearest
+  starting MCP client, with Microsoft Copilot, ChatGPT, and other clients still
+  visible as interoperable options. The app itself should not claim to be any AI provider.
 - Avoid brand-confusion language, role names, iconography, palettes, type scales,
   and empty states that make the UI look like, sound like, or claim to be a
   specific chatbot brand.
@@ -90,11 +91,12 @@ content must be reconciled. See **WS6**.
 
 ### WS1 — Landing page  🟡 (shipped as an overlay, not a dedicated page)
 - **Goal:** explain the connector in 1 screen; two CTAs ("Try the simulator" /
-  "Try it for real"); a strip of the six use cases; client-agnostic message.
+  "Try it for real"); a strip of the six use cases; Claude-as-starting-point message
+  with visible alternatives.
 - **Shipped (19 Jun):** a `#landingOverlay` modal in `index.html`, shown on load,
   framed for the target persona (a fleet manager who already knows Geotab and
   may have used ChatGPT): 3 value-prop bullets (plain-English questions,
-  client-agnostic — Copilot/ChatGPT/Claude/etc. all speak to the same open MCP
+  Claude as a clear starting point plus Copilot/ChatGPT/etc. as alternatives on the same open MCP
   server, try-risk-free), two CTAs (`▶ Try the simulator` / `🔌 Ready to connect
   your real account?`). Verified via Playwright on desktop + mobile (390×844):
   loads with no JS errors, both CTAs route correctly, panel scrolls on short
@@ -115,8 +117,8 @@ content must be reconciled. See **WS6**.
     a signup URL — points to "your Geotab account rep or fleet admin" instead,
     per this doc's own caution above. Still TODO if/when a verified public
     signup link exists.)*
-  - Step 2 — Connect the connector to your assistant of choice — names Claude,
-    Microsoft Copilot, and ChatGPT explicitly as interchangeable MCP clients
+  - Step 2 — Connect the connector to your assistant of choice — recommends Claude
+    as the clearest starting point while naming Microsoft Copilot and ChatGPT as MCP clients
     (the "Copilot is a choice too" point folded in here, not deferred to WS5).
   - Step 3 — **PII warning**, styled as a prominent dashed amber box
     (`.pii-box`, mirrors the `media-disclosure` convention): DPA/GDPR review,
@@ -167,8 +169,8 @@ content must be reconciled. See **WS6**.
   "if Ace isn't enabled on your DB, ask your admin."
 
 ### WS5 — MCP clients page (+ GitHub issue template)  🟡 (WS5b done; WS5a page ⬜)
-- **Goal:** present MCP clients as peers: **Microsoft Copilot, ChatGPT, Claude,
-  Block Goose, Cursor, Windsurf, or any MCP client.** Instructions "coming soon"; let
+- **Goal:** recommend Claude as the clearest starting point while showing **Microsoft Copilot,
+  ChatGPT, Block Goose, Cursor, Windsurf, or any MCP client** as alternatives. Instructions "coming soon"; let
   people **request a client via GitHub issue.**
 - **Content:** a grid of clients (status: "guide coming soon" / "supported"), one
   generic "how MCP connection works" blurb, and a CTA button → prefilled GitHub
