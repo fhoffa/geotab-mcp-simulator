@@ -41,6 +41,11 @@ Guardrails so enrichment stays honest:
 - For a capability the demo genuinely can't produce a real result for (no camera
   media, no map tiles), label it **illustrative** the way `media`/`map` events
   already do, rather than passing it off as a live capture.
+- Illustrative maps should still feel like fleet software: use a layered basemap
+  (blocks/parks/water or lots), dual-stroke roads, sparse real street labels,
+  anchored markers, and a scale/control chrome. When static basemap imagery is
+  used, keep map data attribution visible. Avoid empty pastel sketches, square
+  grids, or floating pins that make the map feel fake.
 
 In short: enrich for realism, disclose when something is illustrative, and never
 fabricate the *mechanics* (tools/args) — only the *texture* (plausible values).
