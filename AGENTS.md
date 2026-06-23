@@ -20,6 +20,7 @@ Key files:
 - Prefer data-driven scenario changes in `data/conversations.js`; avoid hardcoding scenario content in `app.js`.
 - When editing conversation flows, keep node ids, `next`, and `choices[].next` references valid.
 - Treat the simulator’s demo fleet data as public demo data only; do not add real customer data, private notes, secrets, tokens, or credentials.
+- Keep the UI provider-neutral: use Geotab/simulator language, a distinct palette/icon/type system, and copy that avoids confusion with any chatbot or AI-provider brand.
 
 ### Design principle — enriching incomplete demo data
 
@@ -73,6 +74,7 @@ When reviewing pull requests for this repo, focus on P0/P1 issues:
 - Privacy/data leakage: real PII, customer fleet data, credentials, tokens, internal notes, or non-demo identifiers committed into the repo.
 - Static deployment regressions: changes that require a build step, server runtime, or dependencies without updating the deployment model.
 - Accessibility/usability regressions in the landing overlay, choice tray, conversation controls, or “Connect your real account” flow.
+- Brand-confusion regressions: copy, styling, role names, or empty states that make the simulator look like, sound like, or claim to be a specific AI provider instead of a neutral chatbot simulator.
 - Content grounding issues where the simulator claims live/demo data support that is not represented in `data/conversations.js` or docs.
 
 Minor copy edits, stylistic preferences, and low-risk refactors should generally be suggestions, not blocking review findings.

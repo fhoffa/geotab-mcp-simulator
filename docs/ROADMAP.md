@@ -13,8 +13,8 @@ Status legend: ✅ done · 🟡 in progress · ⬜ not started · 🔬 needs gro
 
 Two front doors, one connector:
 
-1. **Try the experience now** — the zero-setup simulator (built). Default client
-   is Claude; we explicitly invite other MCP clients.
+1. **Try the experience now** — the zero-setup simulator (built). It should feel
+   like a Geotab chatbot simulator without borrowing any one AI provider's brand.
 2. **Try it for real** — get a free Geotab demo database, connect the Geotab MCP
    connector to your own AI client, with clear PII guidance.
 
@@ -31,6 +31,14 @@ answers are correct and repeatable. Ace is a headline capability to show off.
 - ✅ In-app Story Map + Mermaid map (`docs/CONVERSATION-MAP.md`)
 - ✅ README, disclaimer, `.gitignore` hygiene (`.scripts/` stays private)
 - ✅ Verified live in-browser; grounded on demo_fh_vegas4 / demo_fh4 (18–19 Jun 2026)
+
+## UI / brand guidance
+
+- Keep the simulator provider-neutral: clients can be mentioned as interoperable
+  MCP options, but the app itself should not imply a default AI provider.
+- Avoid brand-confusion language, role names, iconography, palettes, type scales,
+  and empty states that make the UI look like, sound like, or claim to be a
+  specific chatbot brand.
 
 ---
 
@@ -86,7 +94,7 @@ content must be reconciled. See **WS6**.
 - **Shipped (19 Jun):** a `#landingOverlay` modal in `index.html`, shown on load,
   framed for the target persona (a fleet manager who already knows Geotab and
   may have used ChatGPT): 3 value-prop bullets (plain-English questions,
-  client-agnostic — Claude/Copilot/ChatGPT/etc. all speak to the same open MCP
+  client-agnostic — Copilot/ChatGPT/Claude/etc. all speak to the same open MCP
   server, try-risk-free), two CTAs (`▶ Try the simulator` / `🔌 Ready to connect
   your real account?`). Verified via Playwright on desktop + mobile (390×844):
   loads with no JS errors, both CTAs route correctly, panel scrolls on short
@@ -150,7 +158,7 @@ content must be reconciled. See **WS6**.
   the accurate fleet-wide picture* (ties into WS6). Optionally a short Ace
   explainer block on the landing/simulator.
 - **Files:** add node(s) to `data/conversations.js`; optional `ace` mention on pages.
-- **Depends on:** nothing (simulator already supports tool+claude events). A chart
+- **Depends on:** nothing (simulator already supports tool+assistant events). A chart
   visual is a nice-to-have (render a tiny inline bar chart in a new event type).
 - **Parallel:** **yes — fully independent of WS0–WS3.**
 - **Acceptance:** Ace episode plays; numbers match the live capture; story is
@@ -159,8 +167,8 @@ content must be reconciled. See **WS6**.
   "if Ace isn't enabled on your DB, ask your admin."
 
 ### WS5 — MCP clients page (+ GitHub issue template)  🟡 (WS5b done; WS5a page ⬜)
-- **Goal:** Claude is our default; encourage **Microsoft Copilot, ChatGPT, Block
-  Goose, Cursor, Windsurf, or any MCP client.** Instructions "coming soon"; let
+- **Goal:** present MCP clients as peers: **Microsoft Copilot, ChatGPT, Claude,
+  Block Goose, Cursor, Windsurf, or any MCP client.** Instructions "coming soon"; let
   people **request a client via GitHub issue.**
 - **Content:** a grid of clients (status: "guide coming soon" / "supported"), one
   generic "how MCP connection works" blurb, and a CTA button → prefilled GitHub
@@ -182,8 +190,8 @@ content must be reconciled. See **WS6**.
 - **Acceptance:** no claim in the simulator contradicts the live Ace aggregate.
 
 ### WS8 — "Create a dashboard" capability  ⬜ (grounding ✅)
-- **Goal:** feature a **Claude artifact** capability — Claude builds an interactive
-  dashboard from data it pulled via the connector. *(This is a Claude/artifact
+- **Goal:** feature an **assistant artifact/canvas** capability — the assistant builds an interactive
+  dashboard from data it pulled via the connector. *(This is a client-side assistant
   feature, not a Geotab MCP feature — say so.)*
 - **Build:** new simulator episode `ep8-dashboard` (hub: "📊 Build a fleet
   dashboard"): Geotab read tool cards → a rendered **dashboard artifact** inline
@@ -191,11 +199,11 @@ content must be reconciled. See **WS6**.
   (tiles) — reuses the chart renderer from WS4.
 - **Files:** `data/conversations.js` (+ small `dashboard` renderer in `app.js`/CSS).
 - **Depends on:** nothing. **Parallel:** yes. **Effort:** low (chart already exists).
-- **Acceptance:** dashboard artifact renders; copy makes clear it's Claude-built,
+- **Acceptance:** dashboard artifact renders; copy makes clear it's assistant-built,
   grounded in connector data; no live embeds.
 
 ### WS9 — "Create a map" capability  ⬜ (grounding ✅: positions captured)
-- **Goal:** feature Claude rendering a **map artifact** from live device positions
+- **Goal:** feature an assistant rendering a **map artifact** from live device positions
   (e.g. "map my fleet" / "show Valencia exposure"). Per brand guidance: a
   **prepared/stylized** map (SVG points over a simple backdrop), **no live tiles**.
 - **Build:** new episode `ep9-map`: `Get DeviceStatusInfo` (have real lat/long for
@@ -205,7 +213,7 @@ content must be reconciled. See **WS6**.
 - **Files:** `data/conversations.js` (+ `map` SVG renderer in `app.js`/CSS).
 - **Depends on:** nothing. **Parallel:** yes. **Effort:** medium (SVG projection).
 - **Acceptance:** map artifact plots the real positions; Valencia vehicles stand
-  out; labeled "illustrative — Claude-rendered, not a live map".
+  out; labeled "illustrative — assistant-rendered, not a live map".
 
 ### WS7 — Polish (later)  ⬜
 - Responsive/a11y pass across new pages; meta/OG tags for sharing; optional
@@ -236,10 +244,10 @@ content must be reconciled. See **WS6**.
     reachability check wasn't part of `app.js`'s `checkGraph()` at all, so
     this is strictly more coverage than existed before, with no new test
     framework (keeps the zero-dependency philosophy).
-  - [x] **Cleanup — duplicate bubble renderers.** `addUserBubble`/
-    `addClaudeProse` collapsed into one `addBubble(role, text)`; both call
-    sites (`playNode()`'s `"claude"` branch, `onChoice()`) updated. Verified
-    via Playwright: `.row.claude` and `.row.user` both render with correct
+  - [x] **Cleanup — duplicate bubble renderers.** user/assistant prose renderers
+    collapsed into one `addBubble(role, text)`; both call
+    sites (`playNode()`'s assistant branch, `onChoice()`) updated. Verified
+    via Playwright: assistant and user rows both render with correct
     classes/avatars.
   - [x] **Cleanup — overcomplicated `wait()`.** Simplified to a single
     `setInterval` poll loop (dropped the redundant `setTimeout`). Verified
@@ -444,8 +452,8 @@ To make the "real" path and the connect beat authentic, these would help:
    MyGeotab map/zone screen we can use as a *static* graphic (WS9, WS3-zone).
 3. **Geotab Ace** — a screenshot of an Ace answer with its chart + reasoning, to
    anchor the Ace page/episode (WS4) visually.
-4. **Branding** — logo/wordmark + approved color, and confirmation of how far the
-   "Claude-style homage" can go vs. needing a more neutral skin (legal/brand).
+4. **Branding** — logo/wordmark + approved color, and confirmation that the
+   simulator skin remains provider-neutral enough for legal/brand review.
 
 Drop them in `assets/` (or share and I'll place them). PNG/SVG; please scrub any
 real PII before sending.

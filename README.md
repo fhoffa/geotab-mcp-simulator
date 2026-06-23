@@ -2,9 +2,8 @@
 
 **🔗 [Try it live](https://fhoffa.github.io/geotab-mcp-simulator/)**
 
-A guided, **zero-setup** way to experience what it's like to use the **Geotab MCP
-connector** from an AI chat (à la Claude) — *without* installing anything,
-connecting a real fleet, or authenticating.
+A guided, **zero-setup** chatbot simulator for the **Geotab MCP connector** —
+*without* installing anything, connecting a real fleet, or authenticating.
 
 It's a **simulator**: you don't type freely. At each step it offers a few
 realistic questions, then plays back a pre-recorded answer — including the **MCP
@@ -15,13 +14,13 @@ experience is grounded in real data.
 > **This is a demo, not the real connector.** In real use the Geotab MCP
 > connector follows your MyGeotab permissions and can surface personal data
 > (driver names, locations). Review your privacy obligations before connecting a
-> production fleet. Not affiliated with Anthropic — the chat styling is a
-> stylistic homage.
+> production fleet. The interface intentionally uses its own palette, icon
+> language, type scale, and empty-state copy to avoid confusion with any AI provider.
 
 On load you'll see a **landing overlay** that frames the value prop for a fleet
 manager who already knows Geotab: plain-English fleet questions, a note that the
-connector is an open MCP server (Claude, Microsoft Copilot, ChatGPT, and other
-MCP clients can all speak to it — Claude is just today's example), and two CTAs
+connector is an open MCP server (Microsoft Copilot, ChatGPT, Claude, and other
+MCP clients can all speak to it), and two CTAs
 — jump into the simulator, or open the **"Connect your real account"** overlay
 (reachable anytime from the header), which walks through getting MyGeotab
 access, connecting the connector to your assistant of choice, and a prominent
@@ -61,7 +60,7 @@ loaded as a plain script — but a tiny server is the cleaner path.)
 
 ```
 index.html      app shell (header, chat, choice tray, footer)
-styles.css      Claude-like theme
+styles.css      neutral chatbot theme
 app.js          the conversation engine (no dependencies)
 data/
   sample-data.js     the explicit sample-data store — THE source of truth for
@@ -79,7 +78,7 @@ from `window.SAMPLE_DATA` via a small `bars()` helper. Load order matters:
 `sample-data.js` must come before `conversations.js` in `index.html`.
 
 The whole experience is **data-driven**. `data/conversations.js` defines a graph
-of *nodes*; `app.js` just walks it — playing each node's `events` (Claude prose,
+of *nodes*; `app.js` just walks it — playing each node's `events` (assistant prose,
 system lines, tool-call cards, end cards) with typing delays, then offering the
 node's `choices`.
 
@@ -98,7 +97,7 @@ All content lives in `data/conversations.js`. To add a new branch:
        { type: "tool", server: "geotab", name: "Get",
          args: { database: "demo_fh_vegas4", typeName: "Device", search: { id: "b1" } },
          summary: "Demo - 01", result: '{ "name": "Demo - 01" }' },
-       { type: "claude", text: "Here's a short, fact-based coaching note for **Demo - 01**…" },
+       { type: "assistant", text: "Here's a short, fact-based coaching note for **Demo - 01**…" },
        { type: "endcard", lines: ["Geotab MCP Connector", "From insight to action."] }
      ],
      choices: [
@@ -125,7 +124,7 @@ points at a missing node.
 | `id` | unique node id |
 | `title` | node label |
 | `db` | optional database badge for the node |
-| `events[]` | ordered: `claude` (markdown), `system`, `endcard` (`lines[]`), or `tool` |
+| `events[]` | ordered: `assistant` (markdown), `system`, `endcard` (`lines[]`), or `tool` |
 | `tool` event | `server`, `name`, `args`, `summary`, `result`, optional `write: true` |
 | `choices[]` | `{ label, say?, next?, action? }` — `action` is `"restart"` |
 | `next` | auto-advance to a node when there are no `choices` |

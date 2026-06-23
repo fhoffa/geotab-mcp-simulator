@@ -14,7 +14,7 @@
  *   title   : short label shown in the Story Map
  *   db      : optional database badge for the whole node
  *   events  : ordered list of things that "happen" when you reach the node
- *               { type:"claude",  text }                      Claude prose (markdown)
+ *               { type:"assistant", text }                     assistant prose (markdown)
  *               { type:"system",  text }                      status / connector line
  *               { type:"endcard", lines:[...] }               styled end card
  *               { type:"tool", server, name, args, summary,   a tool call firing
@@ -62,11 +62,11 @@ window.CONVERSATIONS = {
       title: "Connect the connector",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Hi, I'm an assistant. Once you connect the Geotab MCP connector, I can read live data from your fleet " +
             "and take actions on it, right here in chat — no separate dashboard.\n\n" +
-            "(Worth knowing: the connector itself is just an open MCP server. Claude, Copilot, ChatGPT — anything " +
+            "(Worth knowing: the connector itself is just an open MCP server. Copilot, ChatGPT, Claude — anything " +
             "that speaks MCP can plug into the same one. No single assistant is special here.)\n\n" +
             "This particular page is a simulator, so you'll click suggested questions instead of typing and " +
             "the replies are pre-recorded — but the numbers underneath all came from a real Geotab demo fleet. " +
@@ -109,7 +109,7 @@ window.CONVERSATIONS = {
       title: "Pick a question (hub)",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "You're connected. What do you want to look at?\n\n" +
             "(In the real connector you'd just type this — here, pick one of the options below.)",
@@ -314,7 +314,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Let me pull this together — starting with how many vehicles are actually reporting.",
         },
         {
@@ -326,7 +326,7 @@ window.CONVERSATIONS = {
           result: '{ "result": 50 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "50, all reporting. Now the question that actually matters: any active faults this week?",
         },
         {
@@ -338,7 +338,7 @@ window.CONVERSATIONS = {
           result: '{ "result": 0 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Zero. So whatever's going on this week, it's behavior, not breakdowns. Let me look at driving exceptions.",
         },
         {
@@ -355,7 +355,7 @@ window.CONVERSATIONS = {
             '// the whole-fleet aggregate (via Ace) shows the top vehicles clustered 118–142 — no runaway outlier',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Every exception this week is posted-speed speeding, and it's spread across a lot of vehicles, not concentrated on one. " +
             "Last thing before I write this up — let me spot-check HOS rulesets so I know what's actually in play.",
@@ -369,7 +369,7 @@ window.CONVERSATIONS = {
           result: '[ { "id": "America7Day", "name": "USA Property 60-hour/7-day" }, … ]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Okay, here's your week on demo_fh_vegas4.\n\n" +
             "Good news first: 50 vehicles, all reporting, zero active faults. Genuinely clean week on the maintenance side.\n\n" +
@@ -405,7 +405,7 @@ window.CONVERSATIONS = {
       events: [
         {
           type: "tool",
-          server: "claude",
+          server: "assistant",
           name: "Create skill",
           args: { name: "geotab-weekly-review" },
           summary: "SKILL.md written — 90 lines, grounding rules + no-PII default included",
@@ -445,7 +445,7 @@ window.CONVERSATIONS = {
             "(90 lines total — this is the trimmed preview.)",
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Packaged it as geotab-weekly-review — open the card above if you want to see what's actually in it. " +
             "It's not just a shortcut that replays these same steps; I wrote in the gotchas too (the ExceptionEvent " +
@@ -473,7 +473,7 @@ window.CONVERSATIONS = {
       events: [
         {
           type: "tool",
-          server: "claude",
+          server: "assistant",
           name: "Create skill",
           args: { name: "fleet-safety-scorecard" },
           summary: "SKILL.md written — weighted scoring, systemic-vs-individual read, no-PII default",
@@ -513,7 +513,7 @@ window.CONVERSATIONS = {
             "(94 lines total — trimmed preview.)",
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Packaged it as fleet-safety-scorecard — open the card to see what's in it. It's not just a faster " +
             "leaderboard: it encodes the judgment, that the score is weighted so severity beats volume, that a tight " +
@@ -538,7 +538,7 @@ window.CONVERSATIONS = {
       events: [
         {
           type: "tool",
-          server: "claude",
+          server: "assistant",
           name: "Create skill",
           args: { name: "maintenance-triage" },
           summary: "SKILL.md written — severity-by-lamp triage, legal-first, noise-vs-engine, no-PII default",
@@ -578,7 +578,7 @@ window.CONVERSATIONS = {
             "(96 lines total — trimmed preview.)",
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Packaged it as maintenance-triage — open the card to read it. It carries the judgment that makes this useful: " +
             "rank by consequence so a legal ITV beats a bigger oil change, read severity off the warning lamp not the raw " +
@@ -602,7 +602,7 @@ window.CONVERSATIONS = {
       events: [
         {
           type: "tool",
-          server: "claude",
+          server: "assistant",
           name: "Create skill",
           args: { name: "quarterly-roi-case" },
           summary: "SKILL.md written — conservative lever model, honest caveats, no double-count",
@@ -641,7 +641,7 @@ window.CONVERSATIONS = {
             "(92 lines total — trimmed preview.)",
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Packaged it as quarterly-roi-case — open the card to see it. The value isn't the arithmetic, it's the " +
             "discipline baked in: low end of every range, the collision line flagged as expected value not cash, no " +
@@ -666,7 +666,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Let me pull the raw exception events first and see who's leading.",
         },
         {
@@ -681,7 +681,7 @@ window.CONVERSATIONS = {
             '// ⚠ chronological artifact — NOT a whole-fleet ranking',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "On the raw pull, Demo - 01 and Demo - 02 are way out in front. But that's only the newest 200 of about " +
             "5,645 events this week — roughly 3.5% of the data. Before I point a finger at a van, let me have Ace " +
@@ -697,7 +697,7 @@ window.CONVERSATIONS = {
             '{ "answer": "1. Demo-16: 142  2. Demo-01: 134  3. Demo-08: 129  4. Demo-15: 121  5. Demo-04: 118" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "So here's what actually happened. A quick raw pull only returns the newest ~200 events, and those " +
             "happen to cluster on a couple of vans, which makes it look like Demo - 01 is the problem.\n\n" +
@@ -742,7 +742,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "On it — creating a fleet-wide posted-speed rule first.",
         },
         {
@@ -755,7 +755,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "RuleaXX…posted-speed-fleet" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Rule's live. Now routing the alert to your fleet manager.",
         },
         {
@@ -768,7 +768,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Notificationb…" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Done — fleet-wide posted-speed rule is live, and the alert's routed to one fleet manager (by name, no " +
             "email shown). Any vehicle over the posted limit gets flagged in the moment now, not when you run next " +
@@ -797,7 +797,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Let me check today's news rather than rely on what I already know about Valencia's low-emission zone.",
         },
         {
@@ -812,7 +812,7 @@ window.CONVERSATIONS = {
             'cameras monitoring, not fining; restrictions phased 2026 → 2028; cleaner labels favoured"',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "It's actually messier than I expected — 278 cameras already live, a €200 statutory fine on paper, but " +
             "the ordinance got rejected in December, so right now it's monitoring, not fining. Let me check if any " +
@@ -830,7 +830,7 @@ window.CONVERSATIONS = {
             '  … (rest of fleet up in Galicia, ~42°N)\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Good thing I checked today's news instead of going off what I already knew — Valencia's low-emission " +
             "zone is genuinely in flux right now. It covers about 27.8 km², most of the city, and 278 ANPR cameras " +
@@ -861,7 +861,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Before I wire this up, two quick questions so it actually fits how you work:\n\n" +
             "First, what should trigger it — just entries, or entries and exits too (handy if you want confirmation a vehicle cleared the zone again)?\n\n" +
@@ -888,7 +888,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Starting with the zone itself — drawing the ZBE polygon in Geotab.",
         },
         {
@@ -901,7 +901,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Zoneb…zbe-valencia" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Zone's in. Now the entry rule, since that's what you asked for.",
         },
         {
@@ -914,7 +914,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Ruleb…zbe-entry" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "And routing the alert to your fleet manager.",
         },
         {
@@ -927,7 +927,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Notificationb…" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Done — the ZBE València zone is created, entry alert's live, routed to one manager. You'll find out the " +
             "moment enforcement actually switches on, instead of from a fine in the mail.\n\n" +
@@ -949,7 +949,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Starting with the zone itself — drawing the ZBE polygon in Geotab.",
         },
         {
@@ -962,7 +962,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Zoneb…zbe-valencia" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Zone's in. Now the rule — you wanted both entry and exit covered.",
         },
         {
@@ -975,7 +975,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Ruleb…zbe-entry-exit" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "And routing the alert to the whole Valencia ops group, not just one manager.",
         },
         {
@@ -988,7 +988,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Notificationb…" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Done — ZBE València zone created, alerts cover both entry and exit, and it's going to the whole Valencia " +
             "ops group, not just one person. Anyone on that team will see a vehicle cross the line either direction.\n\n" +
@@ -1026,7 +1026,7 @@ window.CONVERSATIONS = {
           ],
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Both Demo - 23 and Demo - 31 are sitting right inside the zone boundary right now — exactly the two the new alert's going to be watching.",
         },
       ],
@@ -1044,7 +1044,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Five things, one thread — let's just go in order. Starting with the depot geofence.",
         },
         {
@@ -1057,7 +1057,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Zoneb…depot" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "That's in. Next, the idling alert.",
         },
         {
@@ -1070,7 +1070,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Ruleb…idling" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Live — anything idling past 15 minutes gets flagged. Now clearing Demo - 06's acknowledged faults from its service.",
         },
         {
@@ -1083,7 +1083,7 @@ window.CONVERSATIONS = {
           result: '{ "dismissed": ["b1397", "b1398", "b1399"] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Cleared. Now the Valencia region group.",
         },
         {
@@ -1096,7 +1096,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Groupb…valencia" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Created. Last one — routing the idling alerts to a manager.",
         },
         {
@@ -1109,7 +1109,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Notificationb…" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "All five done. To recap so you've got it for the record: a 300 m geofence around the main depot, an " +
             "idling alert past 15 minutes, Demo - 06's acknowledged faults cleared post-service, your Valencia " +
@@ -1134,7 +1134,7 @@ window.CONVERSATIONS = {
       events: [
         { type: "system", text: "This flow spans three connectors: Geotab + Gmail + Google Calendar." },
         {
-          type: "claude",
+          type: "assistant",
           text: "Let me pull Demo - 06's fault first so I know what we're actually dealing with.",
         },
         {
@@ -1148,7 +1148,7 @@ window.CONVERSATIONS = {
             '  { "device": "b6", "diagnostic": "GpsAntennaShortCircuitId", "dateTime": "2026-06-18T07:10Z" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Device unplugged plus a GPS antenna fault — it'll stop reporting position until someone checks it. Let me grab the make, model, and plate so the garage knows what's actually coming in.",
         },
         {
@@ -1160,7 +1160,7 @@ window.CONVERSATIONS = {
           result: '[\n  { "name": "Demo - 06", "vehicleIdentificationNumber": "WDB9076571P106588", "licensePlate": "VAL-4471-B" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Mercedes-Benz Sprinter, plate VAL-4471-B. Drafting the email to the garage now — leaving it in Drafts, not sending it without you looking first.",
         },
         {
@@ -1173,7 +1173,7 @@ window.CONVERSATIONS = {
           result: '{ "draftId": "r-…", "status": "in Drafts, awaiting your review" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Saved, not sent. While I'm in here, let me also hold a tentative service slot so you don't lose the booking window waiting to reply.",
         },
         {
@@ -1186,7 +1186,7 @@ window.CONVERSATIONS = {
           result: '{ "eventId": "…", "status": "tentative" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Okay, here's where that ended up across three tools. Demo - 06 logged a device-unplugged / GPS antenna " +
             "fault on the 18th — it's a Mercedes-Benz Sprinter, plate VAL-4471-B, and it'll stop reporting position " +
@@ -1218,7 +1218,7 @@ window.CONVERSATIONS = {
           result: '{ "messageId": "r-…", "status": "sent" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Sent. Garage has the fault details and the plate now, and the 09:00 slot's already on the calendar waiting for them to confirm.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
@@ -1236,7 +1236,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Got it — email stays untouched in Drafts, and I'll leave the 09:00 slot on the calendar so the booking window doesn't slip while you decide. Nothing's gone out.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet, connected to the tools you already use."] },
@@ -1256,7 +1256,7 @@ window.CONVERSATIONS = {
       events: [
         { type: "system", text: "This flow spans two connectors: Geotab + Salesforce." },
         {
-          type: "claude",
+          type: "assistant",
           text: "Let's start with the GPS log — where was Demo - 12 actually yesterday?",
         },
         {
@@ -1269,7 +1269,7 @@ window.CONVERSATIONS = {
             '[\n  { "device": "Demo - 12", "latitude": 41.123, "longitude": 2.456, "dateTime": "2026-06-18T14:32Z", "note": "matches customer site geofence" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Inside the customer's geofence at 14:32, well before 16:00. Now let me find the case this is actually about.",
         },
         {
@@ -1281,7 +1281,7 @@ window.CONVERSATIONS = {
           result: '{ "caseNumber": "00012345", "subject": "Delivery arrived after 16:00", "status": "Open", "account": "Test Account Ltd." }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "That's the one — claiming a late delivery. Logging the GPS timestamp on it as proof.",
         },
         {
@@ -1294,7 +1294,7 @@ window.CONVERSATIONS = {
           result: '{ "commentId": "00a…", "status": "added" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Quick summary across both tools: Demo - 12's GPS log puts it inside the customer's geofence at 14:32 " +
             "yesterday, not after 16:00 like the case claims. I found the open case — 00012345, \"Delivery arrived " +
@@ -1315,7 +1315,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Closing it with the GPS log as the resolution reason.",
         },
         {
@@ -1328,7 +1328,7 @@ window.CONVERSATIONS = {
           result: '{ "caseNumber": "00012345", "status": "Closed" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Closed. Letting the account rep know now so they can follow up with the customer.",
         },
         {
@@ -1341,7 +1341,7 @@ window.CONVERSATIONS = {
           result: '{ "status": "notified" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Case 00012345 is closed, GPS timestamp logged as the reason, and the account rep's been notified to follow up with the customer directly.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
@@ -1359,7 +1359,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Done — the GPS proof's logged as a comment on Case 00012345, but I'm leaving the case itself open so whoever's handling the customer conversation can close it when they're ready.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Your fleet's truth, dropped straight into the CRM."] },
@@ -1393,7 +1393,7 @@ window.CONVERSATIONS = {
             '  "reasoning": "Outcome / Understanding / Process …"\n}',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "That's Geotab Ace doing its thing — I asked in plain English, no SQL, and it wrote the query itself, " +
             "ran it across the whole fleet, and handed back a ranked answer plus a chart and its reasoning.\n\n" +
@@ -1426,7 +1426,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Ace shows its work, not just the answer. Here's what it gave back: it understood you wanted the five " +
             "vehicles with the most speeding events over the last 7 days, with a count for each. To get there, it " +
@@ -1451,7 +1451,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Let me count this week's fault records first.",
         },
         {
@@ -1463,7 +1463,7 @@ window.CONVERSATIONS = {
           result: '{ "result": 599 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "599 sounds like fires everywhere. Before I jump to that, let me have Ace break it down per vehicle — that number on its own doesn't tell you where to actually look.",
         },
         {
@@ -1476,7 +1476,7 @@ window.CONVERSATIONS = {
             '{ "answer": "1. Demo - 08: 112  2. Demo - 22: 7  3. Demo - 26: 7  4. Demo - 21: 7  5. Demo - 27: 4" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "599 fault records this week sounds like a fire to fight everywhere. It isn't, really.\n\n" +
             "Once Ace breaks it down per vehicle, one van owns most of it — Demo - 08 logged 112 faults, about 1 in " +
@@ -1512,7 +1512,7 @@ window.CONVERSATIONS = {
       title: "Ep9 · What is Demo - 08",
       db: "demo_fh4",
       events: [
-        { type: "claude", text: "Let me check Demo - 08's VIN." },
+        { type: "assistant", text: "Let me check Demo - 08's VIN." },
         {
           type: "tool",
           server: "geotab",
@@ -1530,7 +1530,7 @@ window.CONVERSATIONS = {
           result: '[\n  { "make": "Mercedes-Benz", "model": "Sprinter 907" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Demo - 08 is a Mercedes-Benz Sprinter 907 — one of your 5 light vans, Demo - 06 through 10.",
         },
       ],
@@ -1547,7 +1547,7 @@ window.CONVERSATIONS = {
       title: "Ep9 · What is Demo - 06",
       db: "demo_fh4",
       events: [
-        { type: "claude", text: "Let me check Demo - 06's VIN." },
+        { type: "assistant", text: "Let me check Demo - 06's VIN." },
         {
           type: "tool",
           server: "geotab",
@@ -1565,7 +1565,7 @@ window.CONVERSATIONS = {
           result: '[\n  { "make": "Mercedes-Benz", "model": "Sprinter 907" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Demo - 06 is a Mercedes-Benz Sprinter 907 — one of your 5 light vans.",
         },
       ],
@@ -1581,7 +1581,7 @@ window.CONVERSATIONS = {
       title: "Ep9 · What is Demo - 12",
       db: "demo_fh4",
       events: [
-        { type: "claude", text: "Let me check Demo - 12's VIN." },
+        { type: "assistant", text: "Let me check Demo - 12's VIN." },
         {
           type: "tool",
           server: "geotab",
@@ -1599,7 +1599,7 @@ window.CONVERSATIONS = {
           result: '[\n  { "make": "Mercedes-Benz", "model": "New Actros" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Demo - 12 is a Mercedes-Benz New Actros — one of your 10 heavy goods units, which tracks with it running customer deliveries.",
         },
       ],
@@ -1615,7 +1615,7 @@ window.CONVERSATIONS = {
       title: "Ep9 · What are Demo - 23 & Demo - 31",
       db: "demo_fh4",
       events: [
-        { type: "claude", text: "Let me check both VINs." },
+        { type: "assistant", text: "Let me check both VINs." },
         {
           type: "tool",
           server: "geotab",
@@ -1637,7 +1637,7 @@ window.CONVERSATIONS = {
             '  { "make": "MAN", "model": "Lion\'s Intercity C", "year": "2020" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Different vehicle types, same zone: Demo - 23 is a Renault T tractor (Euro 6) and Demo - 31 is a MAN " +
             "Lion's Intercity coach — one hauling freight, one running a passenger route, both inside the ZBE right now.",
@@ -1655,7 +1655,7 @@ window.CONVERSATIONS = {
       title: "Ep9 · What is Demo - 01 (Vegas)",
       db: "demo_fh_vegas4",
       events: [
-        { type: "claude", text: "Let me check Demo - 01's VIN." },
+        { type: "assistant", text: "Let me check Demo - 01's VIN." },
         {
           type: "tool",
           server: "geotab",
@@ -1673,7 +1673,7 @@ window.CONVERSATIONS = {
           result: '[\n  { "make": "Ford", "model": "Transit 250", "body": "Cargo Van" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Demo - 01 is a Ford Transit 250 cargo van — one of 35 in this fleet, the other 15 being F-150 pickups for the heavier callouts.",
         },
       ],
@@ -1712,7 +1712,7 @@ window.CONVERSATIONS = {
             '  { "make": "Ford", "model": "F-150", "body": "Pickup" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Vegas is a field-service fleet: 35 Ford Transit 250 cargo vans doing the bulk of the downtown dispatch " +
             "work, and 15 Ford F-150 pickups for the heavier callouts.",
@@ -1733,7 +1733,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Let me pull the VINs across the fleet first.",
         },
         {
@@ -1750,7 +1750,7 @@ window.CONVERSATIONS = {
             '  … (50 distinct VINs, but only 5 distinct WMI+VDS prefixes — same manufacturer/model codes repeat, serials don\'t)\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Good news for decoding: the first 11 characters (manufacturer + model code) only repeat in 5 patterns across all 50, so I just need to decode one VIN per pattern to get the model for the whole fleet — not all 50.",
         },
         {
@@ -1767,7 +1767,7 @@ window.CONVERSATIONS = {
             '  { "make": "Mercedes-Benz", "model": "Intouro", "plant": "Istanbul" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Okay, decoded. This is a passenger-transport operation, not a delivery fleet — 30 intercity coaches " +
             "(25 MAN Lion's Intercity plus 5 Mercedes-Benz Intouro), 15 heavy goods units (10 Mercedes Actros and 5 " +
@@ -1796,7 +1796,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Let me pull the VINs across the fleet first.",
         },
         {
@@ -1813,7 +1813,7 @@ window.CONVERSATIONS = {
             '  … (50 distinct VINs, but only 5 distinct WMI+VDS prefixes — same manufacturer/model codes repeat, serials don\'t)\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Good news for decoding: the first 11 characters (manufacturer + model code) only repeat in 5 patterns across all 50, so I just need to decode one VIN per pattern to get the model for the whole fleet — not all 50.",
         },
         {
@@ -1830,7 +1830,7 @@ window.CONVERSATIONS = {
             '  { "make": "Mercedes-Benz", "model": "Intouro", "plant": "Istanbul" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Okay, decoded. This is a passenger-transport operation, not a delivery fleet — 30 intercity coaches " +
             "(25 MAN Lion's Intercity plus 5 Mercedes-Benz Intouro), 15 heavy goods units (10 Mercedes Actros and 5 " +
@@ -1867,7 +1867,7 @@ window.CONVERSATIONS = {
           ],
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "30 coaches, 15 heavy goods units, 5 light vans — the Sprinters are really the only segment worth a second look for EV conversion.",
         },
       ],
@@ -1893,7 +1893,7 @@ window.CONVERSATIONS = {
           result: '{ "avgDailyMiles": 62, "maxSingleTrip_mi": 140, "longestGapBetweenTrips_h": 9 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "The five Sprinters average around 62 miles a day, longest single trip about 140 miles, and there's a " +
             "roughly 9-hour gap overnight between routes. That's comfortably inside what mid-size EV vans can do on " +
@@ -1927,7 +1927,7 @@ window.CONVERSATIONS = {
           result: '{ "transit": { "avgDailyMiles": 58, "maxSingleTrip_mi": 95, "longestGapBetweenTrips_h": 11 }, "f150": { "avgDailyMiles": 71, "maxSingleTrip_mi": 130, "longestGapBetweenTrips_h": 9 } }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Splitting it by vehicle type: the Transit vans average ~58 miles a day with an ~11-hour overnight gap — " +
             "comfortably within a mid-size EV van's range. The F-150s (sampled via Demo - 45) run longer and heavier " +
@@ -1966,7 +1966,7 @@ window.CONVERSATIONS = {
             '  { "date": "…",      "maxSpeed_kmh": -1 }                            // no posted limit on file\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "When a driver disputes a speeding flag, you shouldn't have to argue from memory. I pulled the posted " +
             "road speed along Demo - 01's actual route on the 18th, segment by segment.\n\n" +
@@ -2004,7 +2004,7 @@ window.CONVERSATIONS = {
             '  { "diagnostic": "AllPowerRemovedId", "count": 2 }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Before I read anything into that, let me check if it's just exposure — a van on the road more will naturally rack up more faults. Pulling its mileage against the fleet average.",
         },
@@ -2017,7 +2017,7 @@ window.CONVERSATIONS = {
           result: '{ "device": "Demo - 08", "distance_mi": 2140, "fleetAvg_mi": 5800 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Opposite of what I expected — Demo - 08 has driven less than a third of the fleet average this month. Fewer miles but more faults rules exposure out, if anything.\n\n" +
             "Next guess: harsh driving forcing false positives on engine sensors. Let me check its exception events.",
@@ -2031,7 +2031,7 @@ window.CONVERSATIONS = {
           result: '{ "device": "Demo - 08", "harshEvents": 3, "fleetAvg": 2.5 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "That's a wash too — close to fleet average, nothing pointing to rough handling. So it's not driver behavior either.\n\n" +
             "Back to the fault breakdown: 9 of the 14 are the exact same code, device unplugged. Let me pull the dates and see if they cluster.",
@@ -2047,7 +2047,7 @@ window.CONVERSATIONS = {
             '  { "dateTime": "2026-06-02T…" }, "… 5 more, all after 22 May" ]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "There it is — all 9 \"device unplugged\" faults start on May 22nd, none before. That's not random wear, that's one point in time where something changed. Looks like a loose power connector or harness — an intermittent disconnect, not nine separate unrelated incidents.\n\n" +
             "So it took three rounds to get here: not exposure, not the driver, just one connector since one date. Worth having the shop check the harness rather than chasing each fault individually.",
@@ -2085,7 +2085,7 @@ window.CONVERSATIONS = {
             '  … (47 more)\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Pulled live positions for the whole fleet rather than just guessing.\n\n" +
             "Demo - 45 is closest — about 1.0 mile from downtown — and it's parked, so it's actually free. Demo - 50 is a close second at 1.1 miles, also parked. Demo - 01 is nearer than most but already driving at 59 mph, so closest isn't the same as available — it's out.\n\n" +
@@ -2117,7 +2117,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Tripb…dispatch-45" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Demo - 45 is dispatched — the closest free unit, about 1.0 mile out. Demo - 50 stays available as backup.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Dispatch off the live fix, not a cached map."] },
@@ -2143,7 +2143,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Tripb…dispatch-50" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Demo - 50 is dispatched — 1.1 miles out and free. Noted that Demo - 45 was the closer option if you need a faster ETA next time.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Dispatch off the live fix, not a cached map."] },
@@ -2170,7 +2170,7 @@ window.CONVERSATIONS = {
           ],
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Both free units are tucked right around the job site — Demo - 45 a touch closer, Demo - 50 just over a block further. Demo - 01 is out past them and still moving, so it's not in play.",
         },
       ],
@@ -2196,7 +2196,7 @@ window.CONVERSATIONS = {
           ],
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Demo - 45 and Demo - 50 are both under a mile and a half out and free — either works. Demo - 01 is technically closer but already on a job.",
         },
       ],
@@ -2217,7 +2217,7 @@ window.CONVERSATIONS = {
           text: "Querying **both** demo databases — demo_fh_vegas4 (Las Vegas) and demo_fh4 (Spain)…",
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Starting with utilization right now — Vegas first.",
         },
         {
@@ -2229,7 +2229,7 @@ window.CONVERSATIONS = {
           result: "// 50 records → 21 isDriving:true",
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Vegas is at 42%. Now Spain.",
         },
         {
@@ -2241,7 +2241,7 @@ window.CONVERSATIONS = {
           result: "// 50 records → 10 isDriving:true",
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Spain's at 20% — about half Vegas's utilization. Next, safety: exception events this week, Vegas first.",
         },
         {
@@ -2253,7 +2253,7 @@ window.CONVERSATIONS = {
           result: '{ "result": 4933 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "4,933 for Vegas. And Spain's count for the same week.",
         },
         {
@@ -2265,7 +2265,7 @@ window.CONVERSATIONS = {
           result: '{ "result": 1347 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Putting both fleets side by side: utilization right now is Vegas 21/50 driving (42%) vs Spain 10/50 (20%). On safety, Vegas logged 4,933 exceptions this week vs Spain's 1,347 — nearly 4x — which lines up with the fleet-wide speeding pattern already flagged.\n\n" +
             "Maintenance flips the other way: Spain logged 599 faults (one Sprinter van, Demo - 08, owns 112 of them) vs Vegas's zero. And on sustainability, both fleets' VINs decode now — Spain's is 30 coaches, 15 heavy trucks/tractors, 5 EV-candidate Sprinter vans, while Vegas is 35 Transit cargo vans and 15 F-150 pickups doing short urban hops. Vegas is actually the stronger EV case on paper; the thing holding it back from that conversation is the speeding, not the hardware.\n\n" +
@@ -2306,7 +2306,7 @@ window.CONVERSATIONS = {
           ],
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Vegas drives more and breaks the rules more; Spain drives less but breaks down more. Same fleet size, opposite risk profile.",
         },
       ],
@@ -2333,7 +2333,7 @@ window.CONVERSATIONS = {
           result: '{ "result": [] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "SearchMedia is a real, live tool, but this demo database has no dashcam hardware enrolled, so it genuinely " +
             "comes back empty (Spain's demo DB returns a server error for the same call). I'm not going to fake a result " +
@@ -2350,7 +2350,7 @@ window.CONVERSATIONS = {
           fallbackText: "No clip generated yet — see media/README.md for the prompt, then drop the file in media/.",
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Once footage like this is actually wired up, the ask doesn't change much — *\"pull the clip for that " +
             "speeding flag on Demo - 01\"* — but I'd be able to hand you the moment itself, not just the telemetry. " +
@@ -2379,7 +2379,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Let me build you a proper Driver Safety Scorecard for the week — first confirming who's actually behind the " +
             "wheel of each vehicle.",
@@ -2398,7 +2398,7 @@ window.CONVERSATIONS = {
             '  … (49 drivers assigned via Driver ID key fobs)\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Good — Driver ID is on, so I can attribute risk to the person, not just the vehicle. Now scoring each " +
             "driver: Ace blends their speeding, harsh braking/acceleration/cornering, seatbelt and any collision " +
@@ -2424,7 +2424,7 @@ window.CONVERSATIONS = {
             '  { "rank": 10, "driver": "Chloe Tran (Demo - 20)",    "score": 68, "events": 109, "mix": "Speeding 107 · Harsh brake 2" } ] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Here's your week. Fleet average safety score is **78** (the Geotab community benchmark for similar fleets " +
             "is ~82), and it slipped **6% week-over-week** — so the trend's the wrong way, mostly on speed.\n\n" +
@@ -2476,7 +2476,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Let me pull harsh-braking events for the last 30 days, broken out by driver — and graded by severity, " +
             "because a gentle tap and a near-collision both log as \"harsh brake\" but they're not the same problem.",
@@ -2496,7 +2496,7 @@ window.CONVERSATIONS = {
             '  { "driver": "Devon Carter (Demo - 15)",   "total": 24, "severe": 1, "moderate": 8,  "mild": 15, "trend": "-3%" } ] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Here's the 30-day picture. Fleet-wide harsh braking is actually **down 12%** — so the program's working " +
             "overall. But the average hides the one driver you need to look at.\n\n" +
@@ -2533,7 +2533,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Good instinct — before we put it all on Sam, let me pull the GPS location of each of his harsh-braking " +
             "events and see if they cluster anywhere.",
@@ -2561,7 +2561,7 @@ window.CONVERSATIONS = {
           ],
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "That reframes it. **40% of Sam's harsh braking — 23 of 58, including 7 of his 9 severe events — happens at " +
             "one intersection**: West Charleston & South Rancho, and almost all of it between 4 and 6pm.\n\n" +
@@ -2589,7 +2589,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "I can answer this two ways, and I'll do both. Quick framing first: Geotab doesn't tag an event \"school " +
             "zone\" on its own — that comes from a geofence. Let me check what's configured, then cross-reference the " +
@@ -2604,7 +2604,7 @@ window.CONVERSATIONS = {
           result: '{ "result": [] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "No school-zone geofences are set up yet, so I can't give you a precise, geofenced count. But I don't have " +
             "to leave you empty-handed: the posted-speed data already knows the limit on every segment, so I'll match " +
@@ -2625,7 +2625,7 @@ window.CONVERSATIONS = {
             '  "note": "proxy match — confirm with dedicated geofences for enforcement-grade numbers" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Here's what this month looks like, even without the geofences: **7 speeding events on school-zone-grade " +
             "segments, across 3 drivers, every one of them during school arrival or dismissal hours** — which is " +
@@ -2659,7 +2659,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "I'll geofence the three schools that already flagged this month — Walter Bracken STEAM, John S. Park " +
             "Elementary and Las Vegas Academy — at 150 m each, with their posted limits. Geotab's Add creates one " +
@@ -2680,7 +2680,7 @@ window.CONVERSATIONS = {
           result: '[ "Zoneb…bracken", "Zoneb…park", "Zoneb…lva" ]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Zones are in. Now a speeding rule on each at its real posted limit (15 mph for the two elementaries, 20 for the Academy), separate from your fleet-wide limit — again batched, one Add per zone, scoped to the IDs I just got back.",
         },
         {
@@ -2697,7 +2697,7 @@ window.CONVERSATIONS = {
           result: '[ "Ruleb…sz-bracken", "Ruleb…sz-park", "Ruleb…sz-lva" ]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "And routing the alert to one fleet manager so a school-zone breach pings someone in the moment.",
         },
         {
@@ -2710,7 +2710,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Notificationb…" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Done — three school-zone geofences, a speeding rule on each at its real posted limit, and live alerts to a " +
             "manager. From now on, anything over the limit inside one of these is flagged the moment it happens, " +
@@ -2745,7 +2745,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Before anyone coaches Marcus, let's make sure the numbers hold up. I'll pull the posted road speed along " +
             "Demo - 08's actual route on the morning of the worst event, segment by segment — so the conversation is " +
@@ -2764,7 +2764,7 @@ window.CONVERSATIONS = {
             '  { "date": "…07:53", "maxSpeed_kmh": 48.28, "isEstimate": false }   // 30 mph (residential)\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "It holds up — and it's not ambiguous. At **07:50 and 07:51 the posted limit is a confirmed 15 mph** " +
             "(24 km/h, not an estimate) on the segment that runs right past Walter Bracken STEAM. Demo - 08's GPS speed " +
@@ -2790,7 +2790,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Let me read your maintenance reminders against each vehicle's live odometer and engine hours, and pull " +
             "everything that's past due right now.",
@@ -2810,7 +2810,7 @@ window.CONVERSATIONS = {
             '  { "vehicle": "Demo - 41 (Renault T)",   "driver": "Aitor Vidal", "service": "DPF service / tyre rotation", "overdue": "3,900 km", "priority": "MEDIUM" } ] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Five vehicles are past due — and the order to work them isn't by how overdue they are, it's by what " +
             "happens if you keep driving them:\n\n" +
@@ -2848,7 +2848,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Let me pull this week's faults and triage them by the warning-lamp status that rides with each one — " +
             "red-stop, amber-warning, or informational. That J1939 lamp is where real severity lives, and it's what " +
@@ -2877,7 +2877,7 @@ window.CONVERSATIONS = {
             '  "informational_device": 580  // GO unplugged / power / GPS, concentrated on the 5 Sprinters\n}',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "597 looks like the wheels are coming off. They're not — but **3 of them genuinely need action today**, and " +
             "the value here is that severity triage pulls those 3 out of the noise instead of burying them.\n\n" +
@@ -2918,7 +2918,7 @@ window.CONVERSATIONS = {
       events: [
         { type: "system", text: "This flow spans three connectors: Geotab + Gmail + Google Calendar." },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Starting with the one that can't wait — Demo - 25, the MAN coach whose annual roadworthiness inspection " +
             "(ITV) is 19 days overdue. Let me pull its details so the garage knows exactly what's coming in.",
@@ -2932,7 +2932,7 @@ window.CONVERSATIONS = {
           result: '[\n  { "name": "Demo - 25", "vehicleIdentificationNumber": "WMA12XZZ9NP012345", "licensePlate": "4471-MAN" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "MAN Lion's Coach, plate 4471-MAN, driver Núria Pons. Drafting the email to the garage now — flagging it as a " +
             "legal ITV, not a routine service — and leaving it in Drafts, not sending without you looking first.",
@@ -2947,7 +2947,7 @@ window.CONVERSATIONS = {
           result: '{ "draftId": "r-…", "status": "in Drafts, awaiting your review" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Saved, not sent. Now holding a tentative slot for tomorrow morning so the coach is off the road and legal again as fast as possible.",
         },
         {
@@ -2960,7 +2960,7 @@ window.CONVERSATIONS = {
           result: '{ "eventId": "…", "status": "tentative" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Here's where that landed across three tools. **Demo - 25** (MAN Lion's Coach, plate 4471-MAN, Núria Pons) is " +
             "**19 days past its legal roadworthiness inspection** — a passenger coach running on an expired ITV is the " +
@@ -2987,7 +2987,7 @@ window.CONVERSATIONS = {
       events: [
         { type: "system", text: "This flow spans three connectors: Geotab + Gmail + Google Calendar." },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "These are the three red-stop-lamp faults from the triage — the ones that should come off the road today. " +
             "Pulling each vehicle's details so the garage knows the fault and the asset before it arrives.",
@@ -3004,7 +3004,7 @@ window.CONVERSATIONS = {
             '  { "name": "Demo - 31", "licensePlate": "3410-MAN", "fault": "SCR aftertreatment — derate imminent" }\n]',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Got all three. Drafting one email to the garage covering the trio — Demo - 12 (brake air pressure), Demo - 28 " +
             "(coolant temp), Demo - 31 (SCR derate) — and leaving it in Drafts for your review.",
@@ -3019,7 +3019,7 @@ window.CONVERSATIONS = {
           result: '{ "draftId": "r-…", "status": "in Drafts, awaiting your review" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Saved, not sent. Now holding three tentative slots for tomorrow morning so all three are booked the moment you send.",
         },
         {
@@ -3032,7 +3032,7 @@ window.CONVERSATIONS = {
           result: '{ "eventId": "…", "status": "tentative", "count": 3 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Here's the result across three tools. The **3 red-stop-lamp units** — **Demo - 12** (Actros, brake air " +
             "pressure low, Pau Serra), **Demo - 28** (MAN coach, coolant high, Lucía Mena), **Demo - 31** (MAN coach, SCR " +
@@ -3058,7 +3058,7 @@ window.CONVERSATIONS = {
       db: "demo_fh4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "I'll measure unplanned downtime the way it actually hurts you — days a vehicle sat out of service while its " +
             "peer group was working — and tie each spell to the fault that caused it and what the lost availability " +
@@ -3079,7 +3079,7 @@ window.CONVERSATIONS = {
             '  { "vehicle": "Demo - 07 (Sprinter)", "downDays": 4.8, "cause": "connector fault",                     "estCostEUR": 1920 } ] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "About **38 vehicle-days lost this quarter — roughly €23k in unavailability** — and it's concentrated: the " +
             "top five assets account for ~28 of those days (73%). Two clusters explain almost all of it:\n\n" +
@@ -3116,7 +3116,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Fuel economy reads from each vehicle's engine data. This fleet is two body types — 35 Ford Transit 250 " +
             "cargo vans and 15 F-150 pickups — so let me split consumption and distance that way, and put a dollar " +
@@ -3138,7 +3138,7 @@ window.CONVERSATIONS = {
             '    { "driver": "Priya Nair (Demo - 01)",   "mpg": 16.0, "vsType": "-12%" } ] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Here's the month. The 35 Transit vans average **18.2 mpg** (rated 19.5), the 15 F-150 pickups **15.1** " +
             "(rated 16), and the fleet blends to **17.3**. Total fuel spend is about **$41.5k**.\n\n" +
@@ -3179,7 +3179,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Let me rank last week's idling by driver, and convert the hours into the thing that actually lands in a " +
             "budget meeting — fuel burned and dollars, for zero miles moved.",
@@ -3200,7 +3200,7 @@ window.CONVERSATIONS = {
             '    { "driver": "Will Dawson (Demo - 05)",   "idleHours": 3.9, "costUSD": 6.9 } ] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Last week the fleet idled **118 hours** — about **59 gallons, ~$210, and half a tonne of CO₂ — burned " +
             "going nowhere.** Annualized that's roughly **$10.9k a year** straight out the tailpipe at a standstill.\n\n" +
@@ -3235,7 +3235,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text: "Creating the idling rule first — threshold at 10 minutes.",
         },
         {
@@ -3248,7 +3248,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Ruleb…idling-10" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Live. Now routing the alert to one fleet manager.",
         },
         {
@@ -3261,7 +3261,7 @@ window.CONVERSATIONS = {
           result: '{ "result": "Notificationb…" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Done — anything idling past 10 minutes is flagged live now and goes to a manager. Next week's idle list " +
             "should already be shorter, because people get nudged in the moment instead of in a report nobody reads.",
@@ -3289,7 +3289,7 @@ window.CONVERSATIONS = {
       db: "demo_fh_vegas4",
       events: [
         {
-          type: "claude",
+          type: "assistant",
           text:
             "This is an assessment, not a single lookup — so let me gather every safety signal across the fleet, score " +
             "the drivers, check exposure around sensitive areas, then rank the top three risks and pair each with a " +
@@ -3304,7 +3304,7 @@ window.CONVERSATIONS = {
           result: '{ "result": 4811 }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text: "Nearly 5,000 this week. Now the shape of it — scoring drivers and checking where the severe events land.",
         },
         {
@@ -3320,7 +3320,7 @@ window.CONVERSATIONS = {
             '  "schoolZoneEvents": 7, "schoolZoneDrivers": ["Marcus Bell", "Devon Carter", "Chloe Tran"] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Here's the assessment — top three safety risks, ranked by what they'll actually cost you, each with the " +
             "corrective action I'd take:\n\n" +
@@ -3376,7 +3376,7 @@ window.CONVERSATIONS = {
       events: [
         { type: "system", text: "This flow spans two connectors: Geotab + Gmail." },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "The useful coaching list isn't \"everyone who sped\" — that's a policy problem, not a coaching one. It's the " +
             "handful whose risk is *individual* and specific. Let me pull those drivers with the one concrete thing " +
@@ -3395,7 +3395,7 @@ window.CONVERSATIONS = {
             '  { "driver": "Sam Whitfield (Demo - 33)", "why": "9 severe brakes, 40% at Charleston & Rancho 16:00-18:00", "score": 55 } ] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Three drivers, three different conversations — drafting a note your line manager can act on directly, one " +
             "specific and fair paragraph each. Leaving it in Drafts, not sending it.",
@@ -3427,7 +3427,7 @@ window.CONVERSATIONS = {
             "Thanks",
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Draft's saved, not sent — open the card above to read it. Each driver gets a specific, evidence-backed " +
             "paragraph and a fair framing: Marcus's seatbelt and school-zone events lead because they're the " +
@@ -3461,7 +3461,7 @@ window.CONVERSATIONS = {
           result: '{ "messageId": "r-…", "status": "sent" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Sent. The manager now has Marcus, Tina and Sam each with a specific, fair talking point — and the framing " +
             "that the wider speeding is a policy fix, not three scapegoats. The conversations start in the right place. " +
@@ -3487,7 +3487,7 @@ window.CONVERSATIONS = {
           text: "Pulling across safety, fuel, idling and maintenance to total the recoverable opportunity…",
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "You asked where the money's going — let me total the *recoverable* opportunity across everything we've " +
             "looked at, and keep each number conservative. An ROI case that oversells gets torn apart in the room, so " +
@@ -3508,7 +3508,7 @@ window.CONVERSATIONS = {
             '    { "lever": "Idling",                "annual": 2500,  "range": "2.2k–3.3k","fix": "idling rule (>10 min) + live nudge" } ] }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Here's the money, totalled for the Vegas fleet — about **$75,500 a year recoverable, roughly $1,510 per " +
             "vehicle**:\n\n" +
@@ -3550,7 +3550,7 @@ window.CONVERSATIONS = {
       events: [
         { type: "system", text: "This flow spans two connectors: Geotab + Gmail." },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Drafting a one-page business case from the numbers we just pulled — exec summary, the four levers with " +
             "conservative figures, the recommended first move, and the honest caveats so it holds up in the room. " +
@@ -3587,7 +3587,7 @@ window.CONVERSATIONS = {
             "Ask: approval to roll out the speed policy + coaching program this quarter.",
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Done — the one-pager's in Drafts (open the card to read it). It leads with the headline number, breaks out " +
             "the four levers, makes a single clear recommendation, and — importantly — states the caveats itself, so " +
@@ -3617,7 +3617,7 @@ window.CONVERSATIONS = {
           result: '{ "messageId": "r-…", "status": "sent" }',
         },
         {
-          type: "claude",
+          type: "assistant",
           text:
             "Sent. Your director now has a costed, caveated business case — built from live fleet data, not a vendor " +
             "slide — with one clear ask. Whenever you're ready to act on the approval, I can stand up the speed rule, " +
