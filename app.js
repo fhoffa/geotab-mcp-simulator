@@ -11,6 +11,7 @@
   var NODES = GRAPH.nodes;
 
   var chatEl = document.getElementById("chat");
+  var emptyStateEl = document.getElementById("emptyState");
   var trayEl = document.getElementById("tray");
   var connEl = document.getElementById("connStatus");
   var restartBtn = document.getElementById("restartBtn");
@@ -39,7 +40,7 @@
   function jitter(ms) { return Math.round(ms * (0.85 + Math.random() * 0.3)); } // +/-15%, feels less robotic
   function wordCount(text) { return ((text || "").trim().match(/\S+/g) || []).length; }
 
-  // "thinking" pause before Claude starts streaming a reply — longer answers
+  // "thinking" pause before the assistant starts streaming a reply — longer answers
   // get a longer beat, like the model taking more time to plan them.
   function thinkDelay(text) { return jitter(clamp(BASE.think + wordCount(text) * 14, 450, 1700)); }
   // round-trip latency for a tool call — writes and external (web) fetches
@@ -177,7 +178,7 @@
   // reveals text in growing chunks, checking playToken/skip between each so a
   // restart or fast-forward can cut it short. `caret` shows a blinking cursor
   // mid-reveal (for the user "typing"); without it the chunk is re-parsed as
-  // markdown each tick (for Claude's streamed replies).
+  // markdown each tick (for assistant streamed replies).
   async function revealText(prose, text, myToken, opts) {
     // hold screen-reader announcements until the message settles — otherwise the
     // per-tick innerHTML rewrites spam the #chat aria-live region with fragments.
@@ -226,8 +227,8 @@
   }
 
   function addDbBadge(db) {
-    var wrap = el("div", "row claude");
-    wrap.appendChild(el("div", "avatar claude", ""));
+    var wrap = el("div", "row assistant");
+    wrap.appendChild(el("div", "avatar assistant", ""));
     var b = el("div", "bubble");
     b.appendChild(el("span", "db-badge", "database · " + db));
     wrap.appendChild(b);
@@ -296,9 +297,9 @@
     c.appendChild(el("div", "ec-badge", "Simulator note — not part of the reply"));
     c.appendChild(el("div", "ec-1", escapeHtml(lines[0] || "")));
     if (lines[1]) c.appendChild(el("div", "ec-2", escapeHtml(lines[1])));
-    c.appendChild(el("div", "ec-foot", "Same connector also works in Microsoft Copilot, ChatGPT, Block Goose, Cursor & Windsurf · geotab.com"));
+    c.appendChild(el("div", "ec-foot", "Same connector works in Microsoft Copilot, ChatGPT, Cursor, Windsurf, and other MCP clients · geotab.com"));
     // turn the moment of impact into a next step: jump to the "connect for real" guide
-    var cta = el("button", "ec-cta", "🔌 Try this with your own fleet");
+    var cta = el("button", "ec-cta", "Try this with your own fleet →");
     cta.type = "button";
     cta.addEventListener("click", openTryReal);
     c.appendChild(cta);
@@ -367,7 +368,7 @@
       canvas.appendChild(pin);
     });
     card.appendChild(canvas);
-    card.appendChild(el("div", "map-disclosure", "🗺️ Illustrative map — relative positions, not to scale"));
+    card.appendChild(el("div", "map-disclosure", "Illustrative map · relative positions, not to scale"));
     chatEl.appendChild(card);
     scrollDown();
   }
@@ -376,7 +377,7 @@
     var card = el("div", "media-card");
     if (ev.illustrative) {
       card.appendChild(
-        el("div", "media-disclosure", "🎬 Illustrative reconstruction — AI-generated, not a live MCP capture")
+        el("div", "media-disclosure", "Illustrative reconstruction · AI-generated, not a live MCP capture")
       );
     }
     // Default to the fallback: a <video> with a missing/bad source doesn't reliably fire
@@ -407,8 +408,8 @@
   }
 
   function showTyping() {
-    var row = el("div", "row claude typing-row");
-    row.appendChild(el("div", "avatar claude", ""));
+    var row = el("div", "row assistant typing-row");
+    row.appendChild(el("div", "avatar assistant", ""));
     var b = el("div", "bubble");
     b.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
     row.appendChild(b);
@@ -429,6 +430,7 @@
     var myToken = ++playToken;
     skip = false;
     trayEl.innerHTML = "";
+    if (emptyStateEl) { emptyStateEl.remove(); emptyStateEl = null; }
     setConn(id !== "connect");
     currentNodeId = id;
     if (history.replaceState) history.replaceState(null, "", "#" + id);
@@ -439,20 +441,20 @@
       if (myToken !== playToken) return; // superseded
       var ev = node.events[k];
       if (ev.type === "tool") {
-        if (ev.server === "geotab" && !toolContainer) toolContainer = addDbBadge(node.db);
-        var toolTarget = ev.server === "geotab" ? toolContainer : null;
+        if (ev.server === "geotab" && node.db && !toolContainer) toolContainer = addDbBadge(node.db);
+        var toolTarget = ev.server === "geotab" && toolContainer ? toolContainer : null;
         var pending = showToolPending(ev, toolTarget);
         await wait(toolDelay(ev));
         pending.remove();
         if (myToken !== playToken) return;
         addToolCard(ev, toolTarget);
-      } else if (ev.type === "claude") {
+      } else if (ev.type === "assistant") {
         toolContainer = null; // next run of tool calls gets its own badge, in order
         var typer = showTyping();
         await wait(thinkDelay(ev.text));
         typer.remove();
         if (myToken !== playToken) return;
-        var prose = addBubbleShell("claude");
+        var prose = addBubbleShell("assistant");
         if (!(await streamProse(prose, ev.text, myToken))) return;
       } else if (ev.type === "system") {
         toolContainer = null;
@@ -495,7 +497,7 @@
 
   function renderChoices(choices) {
     trayEl.innerHTML = "";
-    trayEl.appendChild(el("div", "tray-hint", "Pick a reply — this is a simulator, so we suggest the questions:"));
+    trayEl.appendChild(el("div", "tray-hint", "Choose a suggested prompt to continue the simulator:"));
     var lastGroup = null;
     choices.forEach(function (c, idx) {
       if (c.group && c.group !== lastGroup) {
@@ -509,6 +511,7 @@
       btn.addEventListener("click", function () { onChoice(c); });
       trayEl.appendChild(btn);
     });
+    trayEl.scrollTop = 0;
     scrollDown();
   }
 

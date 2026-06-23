@@ -13,7 +13,7 @@
     </script>
     <meta
       name="description"
-      content="Try the Claude + Geotab MCP connector experience — a guided, pre-recorded simulator grounded in real Geotab demo-fleet data. No setup required."
+      content="Try the Geotab MCP chatbot simulator — a guided, pre-recorded experience grounded in real Geotab demo-fleet data. No setup required."
     />
     <meta name="author" content="Felipe Hoffa" />
     <meta name="robots" content="index, follow" />
@@ -24,7 +24,7 @@
     <meta property="og:title" content="Geotab MCP — Experience Simulator" />
     <meta
       property="og:description"
-      content="Try the Claude + Geotab MCP connector experience — a guided, pre-recorded simulator grounded in real Geotab demo-fleet data. No setup required."
+      content="Try the Geotab MCP chatbot simulator — a guided, pre-recorded experience grounded in real Geotab demo-fleet data. No setup required."
     />
     <meta property="og:url" content="https://fhoffa.github.io/geotab-mcp-simulator/" />
     <meta property="og:image" content="https://fhoffa.github.io/geotab-mcp-simulator/assets/og-image.png" />
@@ -35,7 +35,7 @@
     <meta name="twitter:title" content="Geotab MCP — Experience Simulator" />
     <meta
       name="twitter:description"
-      content="Try the Claude + Geotab MCP connector experience — a guided, pre-recorded simulator grounded in real Geotab demo-fleet data. No setup required."
+      content="Try the Geotab MCP chatbot simulator — a guided, pre-recorded experience grounded in real Geotab demo-fleet data. No setup required."
     />
     <meta name="twitter:image" content="https://fhoffa.github.io/geotab-mcp-simulator/assets/og-image.png" />
 
@@ -45,7 +45,7 @@
         "@type": "WebSite",
         "name": "Geotab MCP — Experience Simulator",
         "url": "https://fhoffa.github.io/geotab-mcp-simulator/",
-        "description": "Try the Claude + Geotab MCP connector experience — a guided, pre-recorded simulator grounded in real Geotab demo-fleet data.",
+        "description": "Try the Geotab MCP chatbot simulator — a guided, pre-recorded experience grounded in real Geotab demo-fleet data.",
         "author": {
           "@type": "Person",
           "name": "Felipe Hoffa",
@@ -54,7 +54,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=04a8def" />
+    <link rel="stylesheet" href="styles.css?v=1c7d6e0" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png" />
   </head>
   <body>
@@ -68,10 +68,10 @@
       </div>
       <div class="header-actions">
         <span id="connStatus" class="conn-pill conn-off">Not connected</span>
-        <button id="tryRealBtn" class="ghost-btn" type="button">🔌 Connect real account</button>
-        <button id="shareBtn" class="ghost-btn" type="button" title="Copy a link to this point in the simulator">🔗 Share</button>
-        <button id="aboutBtn" class="ghost-btn" type="button">ℹ️ About</button>
-        <button id="restartBtn" class="ghost-btn" type="button">↻ Restart</button>
+        <button id="tryRealBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↔</span>Connect real account</button>
+        <button id="shareBtn" class="ghost-btn" type="button" title="Copy a link to this point in the simulator"><span class="ui-glyph" aria-hidden="true">↗</span>Share</button>
+        <button id="aboutBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">?</span>About</button>
+        <button id="restartBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↻</span>Restart</button>
       </div>
     </header>
 
@@ -84,7 +84,11 @@
     </noscript>
 
     <main class="chat" id="chat" aria-live="polite">
-      <!-- messages injected here -->
+      <div class="empty-state" id="emptyState" aria-hidden="true">
+        <p class="empty-kicker">Demo chat ready</p>
+        <h2>Connect the sample fleet to start the guided simulator.</h2>
+        <p>Pick suggested prompts; the transcript will play back with realistic MCP tool calls and grounded fleet data.</p>
+      </div>
     </main>
 
     <div class="tray" id="tray">
@@ -96,7 +100,6 @@
         <strong>Simulator.</strong> Answers are pre-recorded but grounded in real Geotab demo-fleet
         data (captured 18–19 Jun 2026). In real use the connector follows your MyGeotab permissions and
         can surface personal data — review your privacy obligations before connecting a production fleet.
-        Not affiliated with Anthropic; the chat styling is a stylistic homage.
       </p>
     </footer>
 
@@ -112,23 +115,22 @@
         </p>
         <ul class="hero-bullets">
           <li>
-            <strong>🗣️ Plain-English fleet questions.</strong> Weekly reviews, fault triage, "who's
+            <strong><span class="bullet-glyph" aria-hidden="true">ASK</span>Plain-English fleet questions.</strong> Weekly reviews, fault triage, "who's
             closest and free right now" — answered from live data, not a static export.
           </li>
           <li>
-            <strong>🤖 Not locked to one assistant.</strong> The connector is an open MCP server —
-            Claude, Microsoft Copilot, ChatGPT, and other MCP-capable clients can all speak to it. Pick
-            whichever your team already uses.
+            <strong><span class="bullet-glyph" aria-hidden="true">MCP</span>Start with Claude, or bring your own assistant.</strong> The connector is an open MCP server —
+            Claude, Microsoft Copilot, ChatGPT, and other MCP-capable clients can all speak to it.
           </li>
           <li>
-            <strong>🧪 Try this version risk-free.</strong> Everything below runs against an anonymized
+            <strong><span class="bullet-glyph" aria-hidden="true">DEMO</span>Try this version risk-free.</strong> Everything below runs against an anonymized
             Geotab demo fleet — no real account, no setup, no risk to production data.
           </li>
         </ul>
         <div class="hero-cta">
-          <button id="startSimBtn" class="cta-btn cta-primary" type="button">▶ Try the simulator</button>
+          <button id="startSimBtn" class="cta-btn cta-primary" type="button"><span class="ui-glyph" aria-hidden="true">→</span>Try the simulator</button>
           <button id="tryRealBtnLanding" class="cta-btn cta-secondary" type="button">
-            🔌 Ready to connect your real account?
+            <span class="ui-glyph" aria-hidden="true">↔</span>Ready to connect your real account?
           </button>
         </div>
         <p class="hero-foot">Already comfortable with MCP? Jump straight in below.</p>
@@ -181,11 +183,11 @@
           </li>
           <li>
             <strong>Connect the Geotab MCP connector to your assistant of choice.</strong> Geotab
-            publishes an official MCP server. This simulator uses Claude, but that's one option among
-            several — Microsoft Copilot, ChatGPT, and other MCP-capable clients can connect to the same
-            server using the same URL below; only the menu names differ.
+            publishes an official MCP server. Claude is the clearest starting point today; Microsoft
+            Copilot, ChatGPT, and other MCP-capable clients can connect to the same server using the
+            same URL below; only the menu names differ.
             <div class="setup-box">
-              <p class="setup-heading">In Claude:</p>
+              <p class="setup-heading">Example client setup:</p>
               <ol class="setup-steps">
                 <li>Go to <strong>claude.ai → Settings → Connectors</strong>, then click
                   <strong>Add custom connector</strong>.</li>
@@ -205,8 +207,8 @@
                 <li>Click <strong>Add</strong> — Claude redirects you to a MyGeotab sign-in screen.
                   Log in with your MyGeotab username and password and approve the connection.</li>
                 <li>
-                  Back in Claude, the connector now shows as <strong>Connected</strong>. Turn it on for
-                  a chat from the tools/connectors picker (the <strong>🔌</strong> icon below the
+                  Back in the client, the connector now shows as <strong>Connected</strong>. Turn it on for
+                  a chat from the tools/connectors picker (the connector icon below the
                   message box), then ask it anything you tried in this simulator.
                 </li>
               </ol>
@@ -248,8 +250,8 @@
     </div>
 
     <script src="data/sample-data.js?v=c0e6d08"></script>
-    <script src="data/conversations.js?v=d43bdb3"></script>
-    <script src="app.js?v=c0e6d08"></script>
+    <script src="data/conversations.js?v=bf63e4b"></script>
+    <script src="app.js?v=1c7d6e0"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6"}'></script>
     <!-- End Cloudflare Web Analytics -->

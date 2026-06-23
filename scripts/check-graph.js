@@ -21,6 +21,16 @@ require(path.join(__dirname, "..", "data", "conversations.js"));
 var GRAPH = global.window.CONVERSATIONS;
 var NODES = GRAPH.nodes;
 var problems = [];
+var VALID_EVENT_TYPES = {
+  assistant: true,
+  system: true,
+  endcard: true,
+  tool: true,
+  chart: true,
+  media: true,
+  map: true,
+  confirm: true,
+};
 
 Object.keys(NODES).forEach(function (id) {
   var n = NODES[id];
@@ -43,11 +53,14 @@ Object.keys(NODES).forEach(function (id) {
   (n.events || []).forEach(function (ev, i) {
     var where = id + " event[" + i + "] (" + (ev.type || "?") + ")";
     if (!ev.type) problems.push(where + " → missing 'type'");
+    else if (!VALID_EVENT_TYPES[ev.type]) {
+      problems.push(where + " → unknown event type '" + ev.type + "'");
+    }
     if (ev.type === "tool" && (!ev.name || !ev.server)) {
       problems.push(where + " → tool event needs both 'name' and 'server'");
     }
-    if (ev.type === "claude" && !(ev.text && ev.text.trim())) {
-      problems.push(where + " → claude event needs non-empty 'text'");
+    if (ev.type === "assistant" && !(ev.text && ev.text.trim())) {
+      problems.push(where + " → assistant event needs non-empty 'text'");
     }
     if (ev.type === "endcard" && !(Array.isArray(ev.lines) && ev.lines.length)) {
       problems.push(where + " → endcard needs a non-empty 'lines' array");
