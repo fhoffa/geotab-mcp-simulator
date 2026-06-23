@@ -2344,7 +2344,7 @@ window.CONVERSATIONS = {
           type: "map",
           title: "Sam Whitfield · harsh-braking locations (30 days)",
           pins: [
-            { label: "Charleston & Rancho — 23 events", x: 50, y: 46, status: "busy", value: 23 },
+            { label: "Charleston & Rancho — 23 events", x: 50, y: 46, status: "busy" },
             { label: "scattered", x: 30, y: 64, status: "free" },
             { label: "scattered", x: 70, y: 34, status: "free" },
             { label: "scattered", x: 64, y: 68, status: "free" },
