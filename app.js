@@ -331,14 +331,45 @@
     scrollDown();
   }
 
+  function drawMapRoads(canvas, roads) {
+    if (!roads || !roads.length) return;
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "map-road-svg");
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svg.setAttribute("preserveAspectRatio", "none");
+    roads.forEach(function (r) {
+      var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("class", "map-road map-road-" + (r.kind || "local"));
+      if (r.d) path.setAttribute("d", r.d);
+      else if (r.points && r.points.length) {
+        path.setAttribute("d", "M" + r.points.map(function (pt) { return pt[0] + " " + pt[1]; }).join(" L"));
+      }
+      svg.appendChild(path);
+      if (r.label) {
+        var txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        var x = r.labelX != null ? r.labelX : 50;
+        var y = r.labelY != null ? r.labelY : 50;
+        txt.setAttribute("class", "map-road-label");
+        txt.setAttribute("x", x);
+        txt.setAttribute("y", y);
+        if (r.labelRotate) txt.setAttribute("transform", "rotate(" + r.labelRotate + " " + x + " " + y + ")");
+        txt.textContent = r.label;
+        svg.appendChild(txt);
+      }
+    });
+    canvas.appendChild(svg);
+  }
+
   function addMap(ev) {
     var card = el("div", "map-card");
+    var labeledPins = (ev.pins || []).filter(function (p) { return p.label; });
     // text alternative — the SVG zone + pins convey data screen readers can't see
     card.setAttribute("role", "img");
     card.setAttribute("aria-label",
       (ev.title ? ev.title + ". " : "Map. ") +
       (ev.zone && ev.zone.label ? "Zone: " + ev.zone.label + ". " : "") +
-      ((ev.pins || []).length ? "Vehicles: " + ev.pins.map(function (p) { return p.label; }).join(", ") + "." : ""));
+      (ev.summary ? ev.summary + ". " : "") +
+      (labeledPins.length ? "Markers: " + labeledPins.map(function (p) { return p.label; }).join(", ") + "." : ""));
     if (ev.title) card.appendChild(el("div", "map-title", escapeHtml(ev.title)));
     var canvas = el("div", "map-canvas");
     if (ev.zone && ev.zone.points && ev.zone.points.length) {
@@ -351,24 +382,29 @@
       poly.setAttribute("points", ev.zone.points.map(function (pt) { return pt[0] + "," + pt[1]; }).join(" "));
       svg.appendChild(poly);
       canvas.appendChild(svg);
-      if (ev.zone.label) {
-        var zoneTag = el("div", "map-zone-label", escapeHtml(ev.zone.label));
-        zoneTag.style.left = (ev.zone.labelX != null ? ev.zone.labelX : 50) + "%";
-        zoneTag.style.top = (ev.zone.labelY != null ? ev.zone.labelY : 50) + "%";
-        canvas.appendChild(zoneTag);
-      }
+    }
+    drawMapRoads(canvas, ev.roads || []);
+    if (ev.zone && ev.zone.label) {
+      var zoneTag = el("div", "map-zone-label", escapeHtml(ev.zone.label));
+      zoneTag.style.left = (ev.zone.labelX != null ? ev.zone.labelX : 50) + "%";
+      zoneTag.style.top = (ev.zone.labelY != null ? ev.zone.labelY : 50) + "%";
+      canvas.appendChild(zoneTag);
     }
     (ev.pins || []).forEach(function (p) {
-      var pin = el("div", "map-pin map-pin-" + (p.status || "free"));
+      var pin = el("div", "map-pin map-pin-" + (p.status || "free") + (p.compact ? " map-pin-compact" : ""));
       pin.style.left = (p.x || 0) + "%";
       pin.style.top = (p.y || 0) + "%";
+      if (p.title || p.label) pin.setAttribute("title", p.title || p.label);
       pin.appendChild(el("span", "map-dot"));
-      var tagHtml = escapeHtml(p.label || "") + (p.value != null ? ' <span class="map-tag-val">· ' + escapeHtml(String(p.value)) + "mi</span>" : "");
-      pin.appendChild(el("span", "map-tag", tagHtml));
+      if (p.label) {
+        var tagHtml = escapeHtml(p.label || "") + (p.value != null ? ' <span class="map-tag-val">· ' + escapeHtml(String(p.value)) + "mi</span>" : "");
+        pin.appendChild(el("span", "map-tag", tagHtml));
+      }
       canvas.appendChild(pin);
     });
     card.appendChild(canvas);
-    card.appendChild(el("div", "map-disclosure", "Illustrative map · relative positions, not to scale"));
+    if (ev.summary) card.appendChild(el("div", "map-summary", escapeHtml(ev.summary)));
+    card.appendChild(el("div", "map-disclosure", ev.disclosure ? escapeHtml(ev.disclosure) : "Illustrative roadway sketch · relative positions, not to scale"));
     chatEl.appendChild(card);
     scrollDown();
   }
