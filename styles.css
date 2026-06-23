@@ -63,7 +63,7 @@ body {
   place-items: center;
   width: 32px; height: 32px;
   border-radius: 10px;
-  background: url("assets/geotab-mark.png") center/cover no-repeat;
+  background: url("assets/geotab-mark.png?v=d4e1997") center/cover no-repeat;
   box-shadow: 0 6px 18px rgba(10, 82, 104, 0.18);
 }
 .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
@@ -164,7 +164,7 @@ body {
   color: #fff;
   margin-top: 2px;
 }
-.avatar.assistant { background: url("assets/geotab-mark.png") center/cover no-repeat; }
+.avatar.assistant { background: url("assets/geotab-mark.png?v=d4e1997") center/cover no-repeat; }
 .avatar.user { background: #4b5563; border-radius: 999px; }
 .avatar.system { background: #91a0b2; border-radius: 999px; }
 
