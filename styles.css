@@ -28,10 +28,16 @@
 
 * { box-sizing: border-box; }
 
-html, body { height: 100%; }
+html { height: 100%; }
 
 body {
   margin: 0;
+  /* Grow with the conversation rather than locking to the viewport. A fixed
+     height: 100% let flexbox shrink the sticky tray (flex-shrink defaults to 1)
+     into a tiny overflow:auto strip on long transcripts, hiding the choice
+     chips. min-height keeps short conversations full-bleed while letting long
+     ones scroll the page normally. */
+  min-height: 100%;
   background:
     radial-gradient(circle at top left, rgba(14, 116, 144, 0.09), transparent 34rem),
     linear-gradient(180deg, #f7fbff 0%, var(--bg) 42%);
@@ -784,6 +790,9 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  /* Never let the column flex squeeze the chip zone — it keeps its full height
+     and the chat above it scrolls instead. */
+  flex-shrink: 0;
   background: linear-gradient(180deg, transparent, var(--bg) 28%);
   /* When a node offers many choices (e.g. the hub), the chip list can exceed the
      viewport. Without a cap, sticky pins the tray bottom and clips the top chips
