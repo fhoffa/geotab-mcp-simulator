@@ -409,19 +409,6 @@ body {
   margin: 10px 0 4px;
   animation: rise 0.25s ease both;
 }
-.endcard .ec-badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--ink-soft);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 2px 8px;
-  margin-bottom: 8px;
-}
 .endcard .ec-1 { font-weight: 700; color: var(--accent-ink); }
 .endcard .ec-2 { font-size: 0.95em; color: var(--ink-soft); margin-top: 2px; }
 .endcard .ec-foot { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }

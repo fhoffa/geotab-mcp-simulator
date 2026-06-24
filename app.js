@@ -294,7 +294,6 @@
 
   function addEndcard(lines) {
     var c = el("div", "endcard");
-    c.appendChild(el("div", "ec-badge", "Simulator note — not part of the reply"));
     c.appendChild(el("div", "ec-1", escapeHtml(lines[0] || "")));
     if (lines[1]) c.appendChild(el("div", "ec-2", escapeHtml(lines[1])));
     c.appendChild(el("div", "ec-foot", "Same connector works in Microsoft Copilot, ChatGPT, Cursor, Windsurf, and other MCP clients · geotab.com"));
