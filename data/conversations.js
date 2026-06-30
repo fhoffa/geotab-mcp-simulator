@@ -3667,7 +3667,7 @@ window.CONVERSATIONS = {
         },
         {
           type: "assistant",
-          text: "Got it — Ace returned **157,419 rows** as a signed CSV. Nothing is stored yet; next I'll land it in a MotherDuck table.",
+          text: "Got it — Ace returned **157,419 rows** as a signed CSV (the URL expires in ~24h). Nothing is stored yet. Want me to load it straight into a MotherDuck table?",
         },
         {
           type: "warehouse",
@@ -3737,7 +3737,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🧠 Why isn't one table enough?", say: "This works. Now explain why one raw table is not enough for production.", next: "warehouse-layering" },
+        { label: "🧠 Why isn't one table enough?", say: "This works, but before I schedule it daily, follow this skill and show me why one raw table isn't production-ready: https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/SKILL.md", next: "warehouse-layering" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
@@ -3750,8 +3750,7 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Now the bronze/silver/gold idea has a reason. The one-table load worked, but three problems appear as soon as you run it tomorrow. The assistant does not magically know this workflow, so the user points it at the exact GitHub skill to follow:\n\n" +
-            "**Follow this skill:** [https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse](https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse)\n\n" +
+            "Following the [geotab-motherduck-warehouse skill](https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/SKILL.md) you pointed me at. The one-table load worked, but three problems show up the moment you run it again tomorrow:\n\n" +
             "- The signed CSV URL expires, so you need a durable copy of exactly what Ace returned.\n" +
             "- Ace can overlap boundary seconds and sometimes changes SQL choices, so repeated loads need dedup and provenance.\n" +
             "- Raw CSV columns are strings; analytics need typed timestamps, numbers and stable keys.\n\n" +
@@ -3799,7 +3798,7 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Now we can do the daily version safely. The assistant asks MotherDuck for the silver watermark, gives that timestamp to Ace, lands the new CSV in bronze, then inserts only rows newer than the watermark into silver.\n\n" +
+            "Now I can run the daily version safely: I ask MotherDuck for the silver watermark, hand that timestamp to Ace, land the new CSV in bronze, then insert only rows newer than the watermark into silver.\n\n" +
             "This step is where the earlier layers pay off: **Ace only honors sub-second boundaries to the second**, so overlap is normal, and **read the returned SQL every time** before loading because Ace can inject predicates.",
         },
         {
@@ -3849,7 +3848,7 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "This is the durable refresh loop, not the finish line: watermark → extract → bronze append → silver derive → quality checks → gold refresh.\n\n" +
-            "Next we add the rest of the operational warehouse — trips, faults, status data, exceptions, dimensions, trust checks and cost controls.",
+            "From here you can keep building — want me to add the rest of the operational warehouse (trips, faults, status, exceptions and the dimensions that decode them)?",
         },
       ],
       choices: [
@@ -4108,7 +4107,7 @@ window.CONVERSATIONS = {
             "- **500 vehicles:** can still be $0 on Lite if you keep silver-only; Business is about **$260/mo** if you choose the $250 platform plan.\n" +
             "- **5,000 vehicles:** roughly **$270–300/mo** on Business.\n" +
             "- **50,000 vehicles:** roughly **$370–520/mo** for one year of bronze+silver history.\n\n" +
-            "So the lesson is practical: measure `PRAGMA database_size`, estimate CU-seconds per refresh, then decide retention and refresh frequency before scheduling.",
+            "Bottom line: for a typical fleet this stays free — you only start paying once you keep a lot of history or refresh very often. Pick a retention window and refresh cadence that fit the plan you want.",
         },
         {
           type: "warehouse",
@@ -4157,7 +4156,7 @@ window.CONVERSATIONS = {
         },
         {
           type: "assistant",
-          text: "There it is — a **coaching queue of 14 drivers** and a **shop worklist of 9 vehicles**, both built from history no single live call could assemble. These gold marts are what you'd schedule, chart, or hand to an agent.",
+          text: "There it is — a **coaching queue of 14 drivers** and a **shop worklist of 9 vehicles**, both built from history no single live call could assemble. From here you'd turn these into **internal dashboards** for your team — MotherDuck has notebooks and dashboards built in, so you can chart and share them right where the data lives. Worth exploring their features at [motherduck.com](https://motherduck.com).",
         },
         {
           type: "warehouse",
