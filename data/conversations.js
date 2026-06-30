@@ -3737,7 +3737,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🧠 Why isn't one table enough?", say: "This works, but before I schedule it daily, follow this skill and show me why one raw table isn't production-ready: https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse", next: "warehouse-layering" },
+        { label: "🧠 Why isn't one table enough?", say: "This works, but before I schedule it daily, follow this skill and show me why one raw table isn't production-ready: https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/SKILL.md", next: "warehouse-layering" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
@@ -3750,7 +3750,7 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Following the [geotab-motherduck-warehouse skill](https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse) you pointed me at. The one-table load worked, but three problems show up the moment you run it again tomorrow:\n\n" +
+            "Following the [geotab-motherduck-warehouse skill](https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/SKILL.md) you pointed me at. The one-table load worked, but three problems show up the moment you run it again tomorrow:\n\n" +
             "- The signed CSV URL expires, so you need a durable copy of exactly what Ace returned.\n" +
             "- Ace can overlap boundary seconds and sometimes changes SQL choices, so repeated loads need dedup and provenance.\n" +
             "- Raw CSV columns are strings; analytics need typed timestamps, numbers and stable keys.\n\n" +
