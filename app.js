@@ -560,7 +560,7 @@
     var summary = ev.summary || (tableCount ? tableCount + " tables" : topMetric || "updated");
 
     motherduckPane.classList.remove("hidden");
-    if (motherduckPaneTitle) motherduckPaneTitle.textContent = ev.title || "Warehouse state";
+    if (motherduckPaneTitle) motherduckPaneTitle.textContent = ev.title === "MotherDuck" ? "Warehouse" : (ev.title || "Warehouse");
     if (motherduckPaneSubtitle) motherduckPaneSubtitle.textContent = ev.compactSubtitle || ev.subtitle || "Updated";
     if (motherduckPaneSummary) motherduckPaneSummary.textContent = summary;
     renderWarehouseBody(ev, motherduckPaneBody);
@@ -997,7 +997,9 @@
   updateSpeedUi();
   checkGraph();
   var hash = (location.hash || "").replace(/^#/, "");
-  playNode(NODES[hash] ? hash : GRAPH.start);
+  var hasNodeHash = !!NODES[hash];
+  if (hasNodeHash) closeLanding();
+  playNode(hasNodeHash ? hash : GRAPH.start);
   if (hash === REAL_ACCOUNT_HASH) {
     openTryReal();
     // playNode already rewrote the hash to the underlying node; put the deep link back

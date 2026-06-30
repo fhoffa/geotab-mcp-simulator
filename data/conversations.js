@@ -3587,17 +3587,13 @@ window.CONVERSATIONS = {
       events: [
         {
           type: "system",
-          text: "Opening a separate teaching path: Geotab MCP + MotherDuck MCP. Start simple: ask Ace for many GPS points, then load them into one MotherDuck table.",
+          text: "Geotab MCP connected · MotherDuck Lite account ready.",
         },
         {
           type: "assistant",
           text:
-            "Let's start simple. No medallion architecture yet. No dimensions yet. Just this:\n\n" +
-            "1. Ask **Geotab Ace** for many GPS points.\n" +
-            "2. Ace gives us a **signed CSV URL** automatically.\n" +
-            "3. Ask **MotherDuck** to read that CSV URL into a table.\n" +
-            "4. Query the table.\n\n" +
-            "Once that clicks, we'll explain why a production version adds bronze/silver/gold, watermarks and dedup.",
+            "You said: **I already connected the Geotab MCP and created a free-tier MotherDuck account. Build me a warehouse starting with GPS points.**\n\n" +
+            "I'll start with the smallest useful loop: request raw GPS rows, load the signed CSV into `gps_points`, then query the table. After that, we'll add bronze/silver/gold only when the one-table version shows its limits.",
         },
         {
           type: "warehouse",
@@ -3615,7 +3611,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🦆 Ask Ace for lots of GPS points", say: "Ask Geotab Ace for many GPS points so we can load them into MotherDuck.", next: "warehouse-setup" },
+        { label: "🦆 Start with GPS rows", say: "I already connected the Geotab MCP and created a free-tier MotherDuck account. Build me a warehouse starting with GPS points.", next: "warehouse-setup" },
         { label: "↩︎ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
@@ -3628,7 +3624,7 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "First, ask Ace for rows — not for a dashboard, not for a summary, and not for a download. The MotherDuck skill found an important trick: **don't ask Ace for a URL**. Ask for the data and exact columns; Ace returns a signed CSV URL anyway.",
+            "I'll ask Geotab Ace for raw GPS rows with exact columns. No dashboard, no summary. The response includes a signed CSV URL that MotherDuck can read directly.",
         },
         {
           type: "tool",
@@ -3720,7 +3716,7 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "Now the bronze/silver/gold idea has a reason. The one-table load worked, but three problems appear as soon as you run it tomorrow. The assistant does not magically know this workflow, so the user points it at the exact GitHub skill to follow:\n\n" +
-            "**Follow this skill:** https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse\n\n" +
+            "**Follow this skill:** [https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse](https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse)\n\n" +
             "- The signed CSV URL expires, so you need a durable copy of exactly what Ace returned.\n" +
             "- Ace can overlap boundary seconds and sometimes changes SQL choices, so repeated loads need dedup and provenance.\n" +
             "- Raw CSV columns are strings; analytics need typed timestamps, numbers and stable keys.\n\n" +
@@ -3904,8 +3900,8 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Before scheduling this, check the load. Look at freshness, device coverage, driver-assignment coverage, and the SQL Ace returned.\n\n" +
-            "A missing device in GPS is not automatically a failure: GPS/trips can show only active devices while `dim_device` still has the full fleet. A missing driver is also not automatically a failure — unassigned trips should remain explicit as `UnknownDriverId`.",
+            "Before scheduling this, decide what counts as trustworthy. The checks are not looking for every vehicle and driver in every fact table; they are looking for gaps we cannot explain.\n\n" +
+            "Examples: parked vehicles may have no GPS/trips today even though `dim_device` still lists the full fleet. Trips without an assigned driver should stay explicit as `UnknownDriverId`, not disappear from the report.",
         },
         {
           type: "tool",
@@ -3955,8 +3951,8 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Before scheduling this, price the MotherDuck side using the skill's measured numbers, not a hand-wave. Geotab Ace/MCP calls are included in the Geotab Go plan; the new spend is MotherDuck storage + compute.\n\n" +
-            "Measured anchor from the skill: 679,577 GPS pings plus trips/exceptions/dimensions used **35.2 MiB** in MotherDuck. Bronze+silver GPS is about **54 bytes per ping**, so storage is tiny at $0.04/GB.",
+            "Before choosing a refresh schedule, check whether this fits the MotherDuck free tier and what would make it cost money.\n\n" +
+            "The cost reference is here: [COST_AND_SIZING.md](https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/references/COST_AND_SIZING.md). It measured a demo warehouse at **35.2 MiB** for 679,577 GPS pings plus trips/exceptions/dimensions. Bronze+silver GPS is about **54 bytes per ping**, so storage is usually not the limiting factor.",
         },
         {
           type: "tool",
