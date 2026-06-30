@@ -3587,13 +3587,13 @@ window.CONVERSATIONS = {
       events: [
         {
           type: "system",
-          text: "Geotab MCP connected · MotherDuck Lite account ready.",
+          text: "Starting from an already-connected Geotab MCP server and a MotherDuck Lite account.",
         },
         {
           type: "assistant",
           text:
-            "You said: **I already connected the Geotab MCP and created a free-tier MotherDuck account. Build me a warehouse starting with GPS points.**\n\n" +
-            "I'll start with the smallest useful loop: request raw GPS rows, load the signed CSV into `gps_points`, then query the table. After that, we'll add bronze/silver/gold only when the one-table version shows its limits.",
+            "Goal: create the first useful warehouse table from Geotab data, then make it trustworthy enough to schedule.\n\n" +
+            "We start with one concrete loop: ask for raw GPS rows, load the signed CSV into `gps_points`, and query it. Once that works, the reason for bronze/silver/gold becomes obvious: repeatable loads, typed rows, dedup, provenance, quality checks, and cost controls.",
         },
         {
           type: "warehouse",
