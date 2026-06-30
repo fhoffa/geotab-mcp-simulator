@@ -31,9 +31,11 @@
   var aboutClose = document.getElementById("aboutClose");
 
   // timing profiles (ms). xfast preserves the current demo pace; realistic uses
-  // measured-feeling MCP/model latencies so the simulator can be presented at a
-  // closer-to-real session speed. Tool events can opt into exact recorded timing
-  // later with measuredMs / durationMs / latencyMs.
+  // measured connector timings from live demo_fh4 calls. API read timing comes
+  // from adjusted connector round-trip estimates; Ace timing uses server-side
+  // prompt-received → final-message timestamps captured from GetAceResults.
+  // Tool events can still opt into exact recorded timing with measuredMs /
+  // durationMs / latencyMs.
   var SPEED_KEY = "geotabMcpSimulatorSpeed";
   var SPEEDS = {
     xfast: {
@@ -49,14 +51,17 @@
     },
     realistic: {
       label: "realistic",
-      base: { tool: 1450, think: 950, system: 650, gap: 520 },
-      toolWrite: 900,
-      toolWeb: 1600,
-      thinkWord: 28,
-      thinkMin: 1100,
-      thinkMax: 4600,
-      stream: { chunk: 5, tick: 65 },
-      user: { chunk: 2, tick: 42 },
+      base: { tool: 1200, think: 800, system: 300, gap: 400 },
+      toolApiReadMedium: 2200,
+      toolWrite: 2800,
+      toolAceSimple: 33000,
+      toolAceHeavy: 48000,
+      toolWeb: 2500,
+      thinkWord: 50,
+      thinkMin: 500,
+      thinkMax: 3000,
+      stream: { chunk: 20, tick: 50 },
+      user: { chunk: 15, tick: 40 },
     },
   };
   var speedMode = readSpeedMode();
@@ -85,6 +90,26 @@
     var ms = ev.measuredMs || ev.durationMs || ev.latencyMs;
     return typeof ms === "number" && isFinite(ms) && ms > 0 ? ms : null;
   }
+  function isAceTool(ev) { return ev && ev.name === "GetAceResults"; }
+  function isAceHeavy(ev) {
+    if (ev.aceHeavy === true) return true;
+    if (ev.aceHeavy === false) return false;
+    var prompt = ((ev.args && ev.args.prompt) || "").toLowerCase();
+    return prompt.length > 120 || /rank|score|breakdown|quarter|estimate|summarize|coaching|downtime|fuel|idle|savings|risk/.test(prompt);
+  }
+  function isMediumApiRead(ev) {
+    if (!ev || ev.server !== "geotab" || ev.write || isAceTool(ev)) return false;
+    if (ev.name === "GetCountOf" || ev.name === "GetHosRuleSets" || ev.name === "authenticate") return false;
+    if (ev.name === "Get") {
+      var typeName = ev.args && ev.args.typeName;
+      return typeName !== "Device" && typeName !== "User" && typeName !== "Zone";
+    }
+    return ev.name === "DecodeVins" || ev.name === "GetPostedRoadSpeedsForDevice" ||
+      ev.name === "SearchMedia" || ev.name === "ExecuteMultiCall";
+  }
+  function isExternalIntegration(ev) {
+    return ev && (ev.server === "gmail" || ev.server === "google-calendar" || ev.server === "salesforce");
+  }
   function updateSpeedUi() {
     if (speedModeLabel) speedModeLabel.textContent = timing().label;
     speedOptionBtns.forEach(function (btn) {
@@ -106,12 +131,19 @@
     var t = timing();
     return jitter(clamp(t.base.think + wordCount(text) * t.thinkWord, t.thinkMin, t.thinkMax));
   }
-  // round-trip latency for a tool call — writes and external (web) fetches
-  // run a bit slower than a plain read, like a real MCP call would.
+  // round-trip latency for a tool call. In realistic mode, use measured buckets:
+  // small API reads ≈1.2s, medium reads ≈2.2s, writes ≈2.8s, Ace ≈33–48s.
   function toolDelay(ev) {
     var t = timing();
     var measured = speedMode === "realistic" ? explicitMeasuredDelay(ev) : null;
-    if (measured != null) return jitter(clamp(measured, 450, 12000));
+    if (measured != null) return jitter(clamp(measured, 450, 120000));
+    if (speedMode === "realistic") {
+      if (isAceTool(ev)) return jitter(isAceHeavy(ev) ? t.toolAceHeavy : t.toolAceSimple);
+      if (ev.server === "web") return jitter(t.toolWeb);
+      if (ev.write || isExternalIntegration(ev)) return jitter(t.toolWrite);
+      if (isMediumApiRead(ev)) return jitter(t.toolApiReadMedium);
+      return jitter(t.base.tool);
+    }
     var d = t.base.tool;
     if (ev.write) d += t.toolWrite;
     if (ev.server === "web") d += t.toolWeb;
