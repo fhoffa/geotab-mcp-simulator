@@ -4107,7 +4107,7 @@ window.CONVERSATIONS = {
             "- **500 vehicles:** can still be $0 on Lite if you keep silver-only; Business is about **$260/mo** if you choose the $250 platform plan.\n" +
             "- **5,000 vehicles:** roughly **$270–300/mo** on Business.\n" +
             "- **50,000 vehicles:** roughly **$370–520/mo** for one year of bronze+silver history.\n\n" +
-            "So the lesson is practical: measure `PRAGMA database_size`, estimate CU-seconds per refresh, then decide retention and refresh frequency before scheduling.",
+            "Bottom line: for a typical fleet this stays free — you only start paying once you keep a lot of history or refresh very often. Pick a retention window and refresh cadence that fit the plan you want.",
         },
         {
           type: "warehouse",
@@ -4156,7 +4156,7 @@ window.CONVERSATIONS = {
         },
         {
           type: "assistant",
-          text: "There it is — a **coaching queue of 14 drivers** and a **shop worklist of 9 vehicles**, both built from history no single live call could assemble. These gold marts are what you'd schedule, chart, or hand to an agent.",
+          text: "There it is — a **coaching queue of 14 drivers** and a **shop worklist of 9 vehicles**, both built from history no single live call could assemble. From here you'd turn these into **internal dashboards** for your team — MotherDuck has notebooks and dashboards built in, so you can chart and share them right where the data lives. Worth exploring their features at [motherduck.com](https://motherduck.com).",
         },
         {
           type: "warehouse",

@@ -802,7 +802,13 @@
     trayEl.innerHTML = "";
     if (emptyStateEl) { emptyStateEl.remove(); emptyStateEl = null; }
     setConn(id !== "connect");
-    if (node.mode === "warehouse") connEl.textContent = "Connected · Geotab + MotherDuck";
+    if (node.mode === "warehouse") {
+      connEl.textContent = "Connected · Geotab + MotherDuck";
+    } else if (motherduckPane) {
+      // Left the warehouse path — drop the MotherDuck pane so it's clear we're
+      // back on the live fleet (Geotab only), not still working in MotherDuck.
+      motherduckPane.classList.add("hidden", "collapsed");
+    }
     currentNodeId = id;
     if (history.replaceState) history.replaceState(null, "", "#" + id);
 
