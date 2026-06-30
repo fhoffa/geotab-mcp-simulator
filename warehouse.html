@@ -43,10 +43,10 @@
     <!-- Count this landing in Cloudflare Web Analytics (same beacon as index.html),
          then redirect. The short delay lets the deferred beacon fire before we
          navigate away; meta-refresh is the no-JS fallback. -->
-    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6"}'></script>
-    <meta http-equiv="refresh" content="2; url=index.html#warehouse-intro" />
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6", "spa": true}'></script>
+    <meta http-equiv="refresh" content="2; url=index.html?n=warehouse-intro" />
     <script>
-      setTimeout(function () { location.replace("index.html#warehouse-intro"); }, 700);
+      setTimeout(function () { location.replace("index.html?n=warehouse-intro"); }, 700);
     </script>
     <style>
       body {
@@ -59,6 +59,6 @@
   </head>
   <body>
     <p>Opening the MotherDuck warehouse walkthrough… if it doesn't load,
-      <a href="index.html#warehouse-intro">continue here</a>.</p>
+      <a href="index.html?n=warehouse-intro">continue here</a>.</p>
   </body>
 </html>

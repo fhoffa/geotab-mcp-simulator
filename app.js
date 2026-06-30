@@ -75,7 +75,7 @@
   var skip = false;
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
   var warehousePointerShown = false; // chat pointer to the pane: show once, then update silently
-  var currentNodeId = null; // last id pushed to location.hash by playNode
+  var currentNodeId = null; // last id written to the ?n= URL param by playNode
   var REAL_ACCOUNT_HASH = "connect-real"; // shareable deep link straight to the "connect real account" overlay
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -798,7 +798,24 @@
     else { connEl.textContent = "Not connected"; connEl.className = "conn-pill conn-off"; }
   }
 
-  async function playNode(id) {
+  // Per-node URL for Cloudflare Web Analytics SPA tracking. The beacon hooks
+  // history.pushState + popstate (replaceState and #hash routing are NOT tracked),
+  // so each step needs a distinct History-API URL. We use a ?n= query param, not a
+  // path, so GitHub Pages still serves index.html on reload/back.
+  function idFromUrl() {
+    var n = null;
+    try { n = new URLSearchParams(location.search).get("n"); } catch (e) {}
+    return n || (location.hash || "").replace(/^#/, ""); // legacy #hash deep links
+  }
+  function writeNodeUrl(id, mode) {
+    if (mode === "none" || !history.pushState) return; // "none": URL came from history already
+    var url = location.pathname + "?n=" + encodeURIComponent(id);
+    // push = a counted, user-initiated step; replace = silent (boot / auto-advance)
+    if (mode === "push") history.pushState({ n: id }, "", url);
+    else history.replaceState({ n: id }, "", url);
+  }
+
+  async function playNode(id, navMode) {
     var node = NODES[id];
     if (!node) return;
     var myToken = ++playToken;
@@ -814,7 +831,7 @@
       motherduckPane.classList.add("hidden", "collapsed");
     }
     currentNodeId = id;
-    if (history.replaceState) history.replaceState(null, "", "#" + id);
+    writeNodeUrl(id, navMode || "replace");
 
     var toolContainer = null;
 
@@ -878,7 +895,7 @@
     if (myToken !== playToken) return;
 
     if (node.choices && node.choices.length) renderChoices(node.choices);
-    else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next); }
+    else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next, "replace"); }
   }
 
   function renderChoices(choices) {
@@ -910,7 +927,7 @@
       if (!(await typeUserText(prose, c.say || c.label, myToken))) return;
     }
     if (myToken !== playToken) return;
-    if (c.next) playNode(c.next);
+    if (c.next) playNode(c.next, "push"); // user-initiated step → new history entry + analytics pageview
   }
 
   // --- modal focus management: move focus in on open, trap Tab inside the
@@ -957,9 +974,9 @@
   }
   function closeTryReal() {
     closeOverlay(tryRealOverlay);
-    // a deep link (#connect-real) shouldn't stick around in the address bar once dismissed
-    if (location.hash.replace(/^#/, "") === REAL_ACCOUNT_HASH && history.replaceState && currentNodeId) {
-      history.replaceState(null, "", "#" + currentNodeId);
+    // a deep link (?n=connect-real) shouldn't stick around in the address bar once dismissed
+    if (idFromUrl() === REAL_ACCOUNT_HASH && currentNodeId) {
+      writeNodeUrl(currentNodeId, "replace");
     }
   }
   function openAbout() { openOverlay(aboutOverlay); }
@@ -976,7 +993,7 @@
 
   restartBtn.addEventListener("click", restart);
   startSimBtn.addEventListener("click", closeLanding);
-  if (startWarehouseBtn) startWarehouseBtn.addEventListener("click", function () { closeLanding(); playToken++; clearChat(); playNode("warehouse-intro"); });
+  if (startWarehouseBtn) startWarehouseBtn.addEventListener("click", function () { closeLanding(); playToken++; clearChat(); playNode("warehouse-intro", "push"); });
   if (motherduckPaneToggle) motherduckPaneToggle.addEventListener("click", function () { setMotherduckPaneOpen(motherduckPane.classList.contains("collapsed")); });
   settingsBtn.addEventListener("click", openSettings);
   settingsClose.addEventListener("click", closeSettings);
@@ -1012,17 +1029,27 @@
     skip = true;
   });
 
+  // Back/forward: ?n= URLs are History-API entries (pushed on each user-chosen
+  // step), so a popstate replays that node fresh. "none" mode = don't re-write the
+  // URL (it already reflects where we are).
+  window.addEventListener("popstate", function () {
+    var id = idFromUrl();
+    if (id === REAL_ACCOUNT_HASH) { openTryReal(); return; }
+    closeTryReal();
+    if (NODES[id]) { closeLanding(); playToken++; clearChat(); playNode(id, "none"); }
+  });
+
   /* ---------------------------------------------------------------- boot */
   updateSpeedUi();
   checkGraph();
-  var hash = (location.hash || "").replace(/^#/, "");
-  var hasNodeHash = !!NODES[hash];
-  if (hasNodeHash) closeLanding();
-  playNode(hasNodeHash ? hash : GRAPH.start);
-  if (hash === REAL_ACCOUNT_HASH) {
+  var bootId = idFromUrl();
+  var hasNode = !!NODES[bootId];
+  if (hasNode) closeLanding();
+  playNode(hasNode ? bootId : GRAPH.start, "replace");
+  if (bootId === REAL_ACCOUNT_HASH) {
     openTryReal();
-    // playNode already rewrote the hash to the underlying node; put the deep link back
-    // so refreshing or copying the URL while the overlay is open returns here, not to the start.
-    if (history.replaceState) history.replaceState(null, "", "#" + REAL_ACCOUNT_HASH);
+    // playNode rewrote ?n= to the underlying node; put the deep link back so
+    // refreshing or copying the URL while the overlay is open returns here.
+    writeNodeUrl(REAL_ACCOUNT_HASH, "replace");
   }
 })();
