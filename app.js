@@ -22,14 +22,45 @@
   var tryRealBtn = document.getElementById("tryRealBtn");
   var tryRealBtnLanding = document.getElementById("tryRealBtnLanding");
   var tryRealClose = document.getElementById("tryRealClose");
+  var settingsBtn = document.getElementById("settingsBtn");
+  var settingsOverlay = document.getElementById("settingsOverlay");
+  var settingsClose = document.getElementById("settingsClose");
+  var speedModeLabel = document.getElementById("speedModeLabel");
+  var speedOptionBtns = Array.prototype.slice.call(document.querySelectorAll(".speed-option"));
   var aboutBtn = document.getElementById("aboutBtn");
   var aboutOverlay = document.getElementById("aboutOverlay");
   var aboutClose = document.getElementById("aboutClose");
 
-  // timing (ms) — baselines, scaled per-event below so a long answer or a
-  // slower call (writes, web fetches) takes a believable beat longer than a
-  // quick read; halved-to-zero when the user clicks to skip a node's playback
-  var BASE = { tool: 360, think: 380, system: 300, gap: 200 };
+  // timing profiles (ms). xfast preserves the current demo pace; realistic uses
+  // measured-feeling MCP/model latencies so the simulator can be presented at a
+  // closer-to-real session speed. Tool events can opt into exact recorded timing
+  // later with measuredMs / durationMs / latencyMs.
+  var SPEED_KEY = "geotabMcpSimulatorSpeed";
+  var SPEEDS = {
+    xfast: {
+      label: "xfast",
+      base: { tool: 360, think: 380, system: 300, gap: 200 },
+      toolWrite: 260,
+      toolWeb: 340,
+      thinkWord: 14,
+      thinkMin: 450,
+      thinkMax: 1700,
+      stream: { chunk: 6, tick: 40 },
+      user: { chunk: 2, tick: 24 },
+    },
+    realistic: {
+      label: "realistic",
+      base: { tool: 1450, think: 950, system: 650, gap: 520 },
+      toolWrite: 900,
+      toolWeb: 1600,
+      thinkWord: 28,
+      thinkMin: 1100,
+      thinkMax: 4600,
+      stream: { chunk: 5, tick: 65 },
+      user: { chunk: 2, tick: 42 },
+    },
+  };
+  var speedMode = readSpeedMode();
   var skip = false;
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
   var currentNodeId = null; // last id pushed to location.hash by playNode
@@ -39,18 +70,55 @@
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
   function jitter(ms) { return Math.round(ms * (0.85 + Math.random() * 0.3)); } // +/-15%, feels less robotic
   function wordCount(text) { return ((text || "").trim().match(/\S+/g) || []).length; }
+  function timing() { return SPEEDS[speedMode] || SPEEDS.xfast; }
+  function readSpeedMode() {
+    try {
+      var stored = window.localStorage && window.localStorage.getItem(SPEED_KEY);
+      return SPEEDS[stored] ? stored : "xfast";
+    } catch (_) {
+      return "xfast";
+    }
+  }
+  function writeSpeedMode(mode) {
+    try { if (window.localStorage) window.localStorage.setItem(SPEED_KEY, mode); } catch (_) {}
+  }
+  function explicitMeasuredDelay(ev) {
+    var ms = ev.measuredMs || ev.durationMs || ev.latencyMs;
+    return typeof ms === "number" && isFinite(ms) && ms > 0 ? ms : null;
+  }
+  function updateSpeedUi() {
+    if (speedModeLabel) speedModeLabel.textContent = timing().label;
+    speedOptionBtns.forEach(function (btn) {
+      var active = btn.getAttribute("data-speed") === speedMode;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-checked", active ? "true" : "false");
+    });
+  }
+  function setSpeedMode(mode) {
+    if (!SPEEDS[mode]) mode = "xfast";
+    speedMode = mode;
+    writeSpeedMode(mode);
+    updateSpeedUi();
+  }
 
   // "thinking" pause before the assistant starts streaming a reply — longer answers
   // get a longer beat, like the model taking more time to plan them.
-  function thinkDelay(text) { return jitter(clamp(BASE.think + wordCount(text) * 14, 450, 1700)); }
+  function thinkDelay(text) {
+    var t = timing();
+    return jitter(clamp(t.base.think + wordCount(text) * t.thinkWord, t.thinkMin, t.thinkMax));
+  }
   // round-trip latency for a tool call — writes and external (web) fetches
   // run a bit slower than a plain read, like a real MCP call would.
   function toolDelay(ev) {
-    var d = BASE.tool;
-    if (ev.write) d += 260;
-    if (ev.server === "web") d += 340;
+    var t = timing();
+    var measured = speedMode === "realistic" ? explicitMeasuredDelay(ev) : null;
+    if (measured != null) return jitter(clamp(measured, 450, 12000));
+    var d = t.base.tool;
+    if (ev.write) d += t.toolWrite;
+    if (ev.server === "web") d += t.toolWeb;
     return jitter(d);
   }
+  function timedDelay(kind) { return jitter(timing().base[kind]); }
 
   /* ----------------------------------------------------------- integrity */
   function checkGraph() {
@@ -199,7 +267,8 @@
   }
 
   function streamProse(prose, text, myToken) {
-    return revealText(prose, text, myToken, { chunk: 6, tick: 40 });
+    var t = timing().stream;
+    return revealText(prose, text, myToken, { chunk: t.chunk, tick: t.tick });
   }
 
   // human-ish typing cadence: a couple of characters at a time, irregular
@@ -213,7 +282,8 @@
     var row = bubble.parentElement;
     var maxWidth = row.getBoundingClientRect().width * 0.8; // matches .row.user .bubble's max-width: 80%
     bubble.style.width = Math.floor(maxWidth) + "px";
-    return revealText(prose, text, myToken, { chunk: 2, tick: 24, jitterTick: true, caret: true }).then(function (ok) {
+    var t = timing().user;
+    return revealText(prose, text, myToken, { chunk: t.chunk, tick: t.tick, jitterTick: true, caret: true }).then(function (ok) {
       bubble.style.width = "";
       return ok;
     });
@@ -557,41 +627,41 @@
         if (!(await streamProse(prose, ev.text, myToken))) return;
       } else if (ev.type === "system") {
         toolContainer = null;
-        await wait(jitter(BASE.system));
+        await wait(timedDelay("system"));
         if (myToken !== playToken) return;
         addSystem(ev.text);
       } else if (ev.type === "chart") {
         toolContainer = null;
-        await wait(jitter(BASE.tool));
+        await wait(timedDelay("tool"));
         if (myToken !== playToken) return;
         addChart(ev);
       } else if (ev.type === "map") {
         toolContainer = null;
-        await wait(jitter(BASE.tool));
+        await wait(timedDelay("tool"));
         if (myToken !== playToken) return;
         addMap(ev);
       } else if (ev.type === "confirm") {
         toolContainer = null;
-        await wait(jitter(BASE.tool));
+        await wait(timedDelay("tool"));
         if (myToken !== playToken) return;
         addConfirmCard(ev);
       } else if (ev.type === "endcard") {
         toolContainer = null;
-        await wait(jitter(BASE.gap));
+        await wait(timedDelay("gap"));
         if (myToken !== playToken) return;
         addEndcard(ev.lines || []);
       } else if (ev.type === "media") {
         toolContainer = null;
-        await wait(jitter(BASE.tool));
+        await wait(timedDelay("tool"));
         if (myToken !== playToken) return;
         addMedia(ev);
       }
-      await wait(jitter(BASE.gap));
+      await wait(timedDelay("gap"));
     }
     if (myToken !== playToken) return;
 
     if (node.choices && node.choices.length) renderChoices(node.choices);
-    else if (node.next) { await wait(jitter(BASE.gap)); if (myToken === playToken) playNode(node.next); }
+    else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next); }
   }
 
   function renderChoices(choices) {
@@ -651,12 +721,14 @@
   }
   // the visible (non-hidden) overlay, if any — for Escape + tab-trap targeting
   function activeOverlay() {
-    var all = [landingOverlay, tryRealOverlay, aboutOverlay];
+    var all = [landingOverlay, settingsOverlay, tryRealOverlay, aboutOverlay];
     for (var i = 0; i < all.length; i++) if (!all[i].classList.contains("hidden")) return all[i];
     return null;
   }
 
   function closeLanding() { closeOverlay(landingOverlay); }
+  function openSettings() { openOverlay(settingsOverlay, settingsBtn); }
+  function closeSettings() { closeOverlay(settingsOverlay); }
   function openTryReal() {
     var trigger = document.activeElement;
     closeLanding();
@@ -695,6 +767,12 @@
   restartBtn.addEventListener("click", restart);
   shareBtn.addEventListener("click", shareLink);
   startSimBtn.addEventListener("click", closeLanding);
+  settingsBtn.addEventListener("click", openSettings);
+  settingsClose.addEventListener("click", closeSettings);
+  settingsOverlay.addEventListener("click", function (e) { if (e.target === settingsOverlay) closeSettings(); });
+  speedOptionBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () { setSpeedMode(btn.getAttribute("data-speed")); });
+  });
   tryRealBtn.addEventListener("click", openTryReal);
   tryRealBtnLanding.addEventListener("click", openTryReal);
   tryRealClose.addEventListener("click", closeTryReal);
@@ -722,6 +800,7 @@
   });
 
   /* ---------------------------------------------------------------- boot */
+  updateSpeedUi();
   checkGraph();
   var hash = (location.hash || "").replace(/^#/, "");
   playNode(NODES[hash] ? hash : GRAPH.start);
