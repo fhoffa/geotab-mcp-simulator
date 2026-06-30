@@ -74,11 +74,14 @@
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
   function jitter(ms) { return Math.round(ms * (0.85 + Math.random() * 0.3)); } // +/-15%, feels less robotic
   function wordCount(text) { return ((text || "").trim().match(/\S+/g) || []).length; }
-  function timing() { return SPEEDS[speedMode] || SPEEDS.xfast; }
+  function hasSpeedMode(mode) {
+    return Object.prototype.hasOwnProperty.call(SPEEDS, mode);
+  }
+  function timing() { return hasSpeedMode(speedMode) ? SPEEDS[speedMode] : SPEEDS.xfast; }
   function readSpeedMode() {
     try {
       var stored = window.localStorage && window.localStorage.getItem(SPEED_KEY);
-      return SPEEDS[stored] ? stored : "xfast";
+      return hasSpeedMode(stored) ? stored : "xfast";
     } catch (_) {
       return "xfast";
     }
@@ -119,7 +122,7 @@
     });
   }
   function setSpeedMode(mode) {
-    if (!SPEEDS[mode]) mode = "xfast";
+    if (!hasSpeedMode(mode)) mode = "xfast";
     speedMode = mode;
     writeSpeedMode(mode);
     updateSpeedUi();
