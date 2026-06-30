@@ -3737,7 +3737,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🧠 Why isn't one table enough?", say: "This works, but before I schedule it daily, follow this skill and show me why one raw table isn't production-ready: https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/SKILL.md", next: "warehouse-layering" },
+        { label: "🧠 Why isn't one table enough?", say: "This works, but before I schedule it daily, follow this skill and show me why one raw table isn't production-ready: [https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/SKILL.md](https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/SKILL.md)", next: "warehouse-layering" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
@@ -4015,7 +4015,10 @@ window.CONVERSATIONS = {
           text:
             "One last trap: bronze keeps every version, so it's tempting to just replay bronze → silver — but that would **resurrect the retired ids** (bronze still holds the old `b10FEE52` next to the new `b11011A1`). The skill handles this for you: instead of keying on the trip id, its rebuild keeps **one row per drive, taking the most recently loaded version** — so a retired trip collapses into its replacement instead of doubling up.\n\n" +
             "And driver assignments: the `DriverChange` events themselves *are* append-only, but `Trip.driver` is derived from them — it resolves to a real driver or the sentinel `UnknownDriverId`, so every trips→drivers join must tolerate that sentinel.\n\n" +
-            "**The mental model — three shapes, three strategies:** immutable events (GPS, status, exceptions, faults) → append + dedup on the natural key · the mutable Trip → forward derive, then reconcile (DELETE retired + anti-join), or a drive-key rebuild · dimensions (Device, User/drivers, Zone, Rule, Diagnostic) → `Get`, no bronze, `CREATE OR REPLACE`.",
+            "**The mental model — three shapes, three strategies:**\n\n" +
+            "- **Immutable events** (GPS, status, exceptions, faults) → append + dedup on the natural key.\n" +
+            "- **The mutable Trip** → forward derive, then reconcile (DELETE retired + anti-join), or a drive-key rebuild.\n" +
+            "- **Dimensions** (Device, User/drivers, Zone, Rule, Diagnostic) → `Get`, no bronze, `CREATE OR REPLACE`.",
         },
       ],
       choices: [

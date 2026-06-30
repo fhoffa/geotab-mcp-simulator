@@ -569,10 +569,14 @@
     // we preserve whatever state the user chose — if they opened it, it stays open
     // as the conversation advances instead of snapping shut on every step.
     setMotherduckPaneOpen(!motherduckPane.classList.contains("collapsed"));
-    // Point to the panel once — but only after there's actually something to see,
-    // so we don't say "see your tables" while the warehouse is still empty.
-    if (!warehousePointerShown && tableCount > 0) {
-      addSystem("Open the **MotherDuck** panel at the top to see your tables and schemas.");
+    // Point to the panel once — and save it for when it's actually worth opening:
+    // the first time there are real bronze/silver/gold schemas to explore, not the
+    // naive single-table step.
+    var hasLayers = (ev.stages || []).some(function (s) {
+      return s.kind === "bronze" || s.kind === "silver" || s.kind === "gold";
+    });
+    if (!warehousePointerShown && hasLayers) {
+      addSystem("Open the **MotherDuck** panel at the top to explore your bronze/silver/gold tables and schemas.");
       warehousePointerShown = true;
     }
   }
