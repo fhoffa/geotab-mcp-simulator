@@ -15,21 +15,56 @@
   var trayEl = document.getElementById("tray");
   var connEl = document.getElementById("connStatus");
   var restartBtn = document.getElementById("restartBtn");
-  var shareBtn = document.getElementById("shareBtn");
   var landingOverlay = document.getElementById("landingOverlay");
   var startSimBtn = document.getElementById("startSimBtn");
   var tryRealOverlay = document.getElementById("tryRealOverlay");
   var tryRealBtn = document.getElementById("tryRealBtn");
   var tryRealBtnLanding = document.getElementById("tryRealBtnLanding");
   var tryRealClose = document.getElementById("tryRealClose");
+  var settingsBtn = document.getElementById("settingsBtn");
+  var settingsOverlay = document.getElementById("settingsOverlay");
+  var settingsClose = document.getElementById("settingsClose");
+  var speedModeLabel = document.getElementById("speedModeLabel");
+  var speedOptionBtns = Array.prototype.slice.call(document.querySelectorAll(".speed-option"));
   var aboutBtn = document.getElementById("aboutBtn");
   var aboutOverlay = document.getElementById("aboutOverlay");
   var aboutClose = document.getElementById("aboutClose");
 
-  // timing (ms) — baselines, scaled per-event below so a long answer or a
-  // slower call (writes, web fetches) takes a believable beat longer than a
-  // quick read; halved-to-zero when the user clicks to skip a node's playback
-  var BASE = { tool: 360, think: 380, system: 300, gap: 200 };
+  // timing profiles (ms). xfast preserves the current demo pace; realistic uses
+  // measured connector timings from live demo_fh4 calls. API read timing comes
+  // from adjusted connector round-trip estimates; Ace timing uses server-side
+  // prompt-received → final-message timestamps captured from GetAceResults.
+  // Tool events can still opt into exact recorded timing with measuredMs /
+  // durationMs / latencyMs.
+  var SPEED_KEY = "geotabMcpSimulatorSpeed";
+  var SPEEDS = {
+    xfast: {
+      label: "xfast",
+      base: { tool: 360, think: 380, system: 300, gap: 200 },
+      toolWrite: 260,
+      toolWeb: 340,
+      thinkWord: 14,
+      thinkMin: 450,
+      thinkMax: 1700,
+      stream: { chunk: 6, tick: 40 },
+      user: { chunk: 2, tick: 24 },
+    },
+    realistic: {
+      label: "realistic",
+      base: { tool: 1200, think: 800, system: 300, gap: 400 },
+      toolApiReadMedium: 2200,
+      toolWrite: 2800,
+      toolAceSimple: 33000,
+      toolAceHeavy: 48000,
+      toolWeb: 2500,
+      thinkWord: 50,
+      thinkMin: 500,
+      thinkMax: 3000,
+      stream: { chunk: 20, tick: 50 },
+      user: { chunk: 15, tick: 40 },
+    },
+  };
+  var speedMode = readSpeedMode();
   var skip = false;
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
   var currentNodeId = null; // last id pushed to location.hash by playNode
@@ -39,18 +74,85 @@
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
   function jitter(ms) { return Math.round(ms * (0.85 + Math.random() * 0.3)); } // +/-15%, feels less robotic
   function wordCount(text) { return ((text || "").trim().match(/\S+/g) || []).length; }
+  function hasSpeedMode(mode) {
+    return Object.prototype.hasOwnProperty.call(SPEEDS, mode);
+  }
+  function timing() { return hasSpeedMode(speedMode) ? SPEEDS[speedMode] : SPEEDS.xfast; }
+  function readSpeedMode() {
+    try {
+      var stored = window.localStorage && window.localStorage.getItem(SPEED_KEY);
+      return hasSpeedMode(stored) ? stored : "xfast";
+    } catch (_) {
+      return "xfast";
+    }
+  }
+  function writeSpeedMode(mode) {
+    try { if (window.localStorage) window.localStorage.setItem(SPEED_KEY, mode); } catch (_) {}
+  }
+  function explicitMeasuredDelay(ev) {
+    var ms = ev.measuredMs || ev.durationMs || ev.latencyMs;
+    return typeof ms === "number" && isFinite(ms) && ms > 0 ? ms : null;
+  }
+  function isAceTool(ev) { return ev && ev.name === "GetAceResults"; }
+  function isAceHeavy(ev) {
+    if (ev.aceHeavy === true) return true;
+    if (ev.aceHeavy === false) return false;
+    var prompt = ((ev.args && ev.args.prompt) || "").toLowerCase();
+    return prompt.length > 120 || /rank|score|breakdown|quarter|estimate|summarize|coaching|downtime|fuel|idle|savings|risk/.test(prompt);
+  }
+  function isMediumApiRead(ev) {
+    if (!ev || ev.server !== "geotab" || ev.write || isAceTool(ev)) return false;
+    if (ev.name === "GetCountOf" || ev.name === "GetHosRuleSets" || ev.name === "authenticate") return false;
+    if (ev.name === "Get") {
+      var typeName = ev.args && ev.args.typeName;
+      return typeName !== "Device" && typeName !== "User" && typeName !== "Zone";
+    }
+    return ev.name === "DecodeVins" || ev.name === "GetPostedRoadSpeedsForDevice" ||
+      ev.name === "SearchMedia" || ev.name === "ExecuteMultiCall";
+  }
+  function isExternalIntegration(ev) {
+    return ev && (ev.server === "gmail" || ev.server === "google-calendar" || ev.server === "salesforce");
+  }
+  function updateSpeedUi() {
+    if (speedModeLabel) speedModeLabel.textContent = timing().label;
+    speedOptionBtns.forEach(function (btn) {
+      var active = btn.getAttribute("data-speed") === speedMode;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-checked", active ? "true" : "false");
+    });
+  }
+  function setSpeedMode(mode) {
+    if (!hasSpeedMode(mode)) mode = "xfast";
+    speedMode = mode;
+    writeSpeedMode(mode);
+    updateSpeedUi();
+  }
 
   // "thinking" pause before the assistant starts streaming a reply — longer answers
   // get a longer beat, like the model taking more time to plan them.
-  function thinkDelay(text) { return jitter(clamp(BASE.think + wordCount(text) * 14, 450, 1700)); }
-  // round-trip latency for a tool call — writes and external (web) fetches
-  // run a bit slower than a plain read, like a real MCP call would.
+  function thinkDelay(text) {
+    var t = timing();
+    return jitter(clamp(t.base.think + wordCount(text) * t.thinkWord, t.thinkMin, t.thinkMax));
+  }
+  // round-trip latency for a tool call. In realistic mode, use measured buckets:
+  // small API reads ≈1.2s, medium reads ≈2.2s, writes ≈2.8s, Ace ≈33–48s.
   function toolDelay(ev) {
-    var d = BASE.tool;
-    if (ev.write) d += 260;
-    if (ev.server === "web") d += 340;
+    var t = timing();
+    var measured = speedMode === "realistic" ? explicitMeasuredDelay(ev) : null;
+    if (measured != null) return jitter(clamp(measured, 450, 120000));
+    if (speedMode === "realistic") {
+      if (isAceTool(ev)) return jitter(isAceHeavy(ev) ? t.toolAceHeavy : t.toolAceSimple);
+      if (ev.server === "web") return jitter(t.toolWeb);
+      if (ev.write || isExternalIntegration(ev)) return jitter(t.toolWrite);
+      if (isMediumApiRead(ev)) return jitter(t.toolApiReadMedium);
+      return jitter(t.base.tool);
+    }
+    var d = t.base.tool;
+    if (ev.write) d += t.toolWrite;
+    if (ev.server === "web") d += t.toolWeb;
     return jitter(d);
   }
+  function timedDelay(kind) { return jitter(timing().base[kind]); }
 
   /* ----------------------------------------------------------- integrity */
   function checkGraph() {
@@ -199,7 +301,8 @@
   }
 
   function streamProse(prose, text, myToken) {
-    return revealText(prose, text, myToken, { chunk: 6, tick: 40 });
+    var t = timing().stream;
+    return revealText(prose, text, myToken, { chunk: t.chunk, tick: t.tick });
   }
 
   // human-ish typing cadence: a couple of characters at a time, irregular
@@ -213,7 +316,8 @@
     var row = bubble.parentElement;
     var maxWidth = row.getBoundingClientRect().width * 0.8; // matches .row.user .bubble's max-width: 80%
     bubble.style.width = Math.floor(maxWidth) + "px";
-    return revealText(prose, text, myToken, { chunk: 2, tick: 24, jitterTick: true, caret: true }).then(function (ok) {
+    var t = timing().user;
+    return revealText(prose, text, myToken, { chunk: t.chunk, tick: t.tick, jitterTick: true, caret: true }).then(function (ok) {
       bubble.style.width = "";
       return ok;
     });
@@ -557,41 +661,41 @@
         if (!(await streamProse(prose, ev.text, myToken))) return;
       } else if (ev.type === "system") {
         toolContainer = null;
-        await wait(jitter(BASE.system));
+        await wait(timedDelay("system"));
         if (myToken !== playToken) return;
         addSystem(ev.text);
       } else if (ev.type === "chart") {
         toolContainer = null;
-        await wait(jitter(BASE.tool));
+        await wait(timedDelay("tool"));
         if (myToken !== playToken) return;
         addChart(ev);
       } else if (ev.type === "map") {
         toolContainer = null;
-        await wait(jitter(BASE.tool));
+        await wait(timedDelay("tool"));
         if (myToken !== playToken) return;
         addMap(ev);
       } else if (ev.type === "confirm") {
         toolContainer = null;
-        await wait(jitter(BASE.tool));
+        await wait(timedDelay("tool"));
         if (myToken !== playToken) return;
         addConfirmCard(ev);
       } else if (ev.type === "endcard") {
         toolContainer = null;
-        await wait(jitter(BASE.gap));
+        await wait(timedDelay("gap"));
         if (myToken !== playToken) return;
         addEndcard(ev.lines || []);
       } else if (ev.type === "media") {
         toolContainer = null;
-        await wait(jitter(BASE.tool));
+        await wait(timedDelay("tool"));
         if (myToken !== playToken) return;
         addMedia(ev);
       }
-      await wait(jitter(BASE.gap));
+      await wait(timedDelay("gap"));
     }
     if (myToken !== playToken) return;
 
     if (node.choices && node.choices.length) renderChoices(node.choices);
-    else if (node.next) { await wait(jitter(BASE.gap)); if (myToken === playToken) playNode(node.next); }
+    else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next); }
   }
 
   function renderChoices(choices) {
@@ -643,6 +747,7 @@
   function closeOverlay(overlay) {
     if (overlay.classList.contains("hidden")) return;
     overlay.classList.add("hidden");
+    if (overlay === settingsOverlay && settingsBtn) settingsBtn.setAttribute("aria-expanded", "false");
     var target =
       lastFocused && typeof lastFocused.focus === "function" && lastFocused.offsetParent !== null
         ? lastFocused
@@ -651,12 +756,17 @@
   }
   // the visible (non-hidden) overlay, if any — for Escape + tab-trap targeting
   function activeOverlay() {
-    var all = [landingOverlay, tryRealOverlay, aboutOverlay];
+    var all = [landingOverlay, settingsOverlay, tryRealOverlay, aboutOverlay];
     for (var i = 0; i < all.length; i++) if (!all[i].classList.contains("hidden")) return all[i];
     return null;
   }
 
   function closeLanding() { closeOverlay(landingOverlay); }
+  function openSettings() {
+    if (settingsBtn) settingsBtn.setAttribute("aria-expanded", "true");
+    openOverlay(settingsOverlay, settingsBtn);
+  }
+  function closeSettings() { closeOverlay(settingsOverlay); }
   function openTryReal() {
     var trigger = document.activeElement;
     closeLanding();
@@ -673,28 +783,17 @@
   function closeAbout() { closeOverlay(aboutOverlay); }
 
   /* ------------------------------------------------------------- controls */
-  // copy a deep link to the current node (the hash already tracks playback in
-  // playNode via replaceState) so people can share "look at *this* answer".
-  function shareLink() {
-    var url = location.href;
-    var done = function () {
-      var prev = shareBtn.textContent;
-      shareBtn.textContent = "✓ Link copied";
-      setTimeout(function () { shareBtn.textContent = prev; }, 1600);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(done, function () { window.prompt("Copy this link:", url); });
-    } else {
-      window.prompt("Copy this link:", url);
-    }
-  }
-
   function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
   function restart() { playToken++; clearChat(); playNode(GRAPH.start); }
 
   restartBtn.addEventListener("click", restart);
-  shareBtn.addEventListener("click", shareLink);
   startSimBtn.addEventListener("click", closeLanding);
+  settingsBtn.addEventListener("click", openSettings);
+  settingsClose.addEventListener("click", closeSettings);
+  settingsOverlay.addEventListener("click", function (e) { if (e.target === settingsOverlay) closeSettings(); });
+  speedOptionBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () { setSpeedMode(btn.getAttribute("data-speed")); });
+  });
   tryRealBtn.addEventListener("click", openTryReal);
   tryRealBtnLanding.addEventListener("click", openTryReal);
   tryRealClose.addEventListener("click", closeTryReal);
@@ -722,6 +821,7 @@
   });
 
   /* ---------------------------------------------------------------- boot */
+  updateSpeedUi();
   checkGraph();
   var hash = (location.hash || "").replace(/^#/, "");
   playNode(NODES[hash] ? hash : GRAPH.start);

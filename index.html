@@ -54,7 +54,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=9249c6c" />
+    <link rel="stylesheet" href="styles.css?v=810877f" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png?v=d4e1997" />
   </head>
   <body>
@@ -69,9 +69,11 @@
       <div class="header-actions">
         <span id="connStatus" class="conn-pill conn-off">Not connected</span>
         <button id="tryRealBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↔</span>Connect real account</button>
-        <button id="shareBtn" class="ghost-btn" type="button" title="Copy a link to this point in the simulator"><span class="ui-glyph" aria-hidden="true">↗</span>Share</button>
         <button id="aboutBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">?</span>About</button>
         <button id="restartBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↻</span>Restart</button>
+        <button id="settingsBtn" class="ghost-btn settings-trigger" type="button" title="Simulator settings" aria-haspopup="dialog" aria-expanded="false">
+          <span class="ui-glyph" aria-hidden="true">⚙</span>Settings
+        </button>
       </div>
     </header>
 
@@ -134,6 +136,38 @@
           </button>
         </div>
         <p class="hero-foot">Already comfortable with MCP? Jump straight in below.</p>
+      </div>
+    </div>
+
+    <!-- "Settings" overlay -->
+    <div id="settingsOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Settings">
+      <div class="overlay-panel settings-panel">
+        <div class="overlay-head">
+          <h2>Settings</h2>
+          <button id="settingsClose" class="ghost-btn" type="button">✕ Close</button>
+        </div>
+        <p class="overlay-note">Tune how the simulator behaves. More controls can live here as the demo grows.</p>
+        <div class="settings-stack">
+          <section class="settings-section" aria-labelledby="settingsPlaybackTitle">
+            <div class="settings-row-head">
+              <div>
+                <h3 id="settingsPlaybackTitle">Playback</h3>
+                <p>Choose how fast the pre-recorded MCP transcript plays back.</p>
+              </div>
+              <span class="settings-value">Speed: <strong id="speedModeLabel">xfast</strong></span>
+            </div>
+            <div class="settings-options" role="radiogroup" aria-label="Playback speed">
+              <button class="settings-option speed-option" type="button" role="radio" aria-checked="true" data-speed="xfast">
+                <span class="settings-option-title">xfast</span>
+                <span class="settings-option-copy">Current simulator pace — fast enough for demos and walkthroughs.</span>
+              </button>
+              <button class="settings-option speed-option" type="button" role="radio" aria-checked="false" data-speed="realistic">
+                <span class="settings-option-title">realistic</span>
+                <span class="settings-option-copy">Measured API/Ace timing — API calls take seconds, Ace can take 30–50s. Click the transcript to fast-forward.</span>
+              </button>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
 
@@ -255,8 +289,8 @@
     </div>
 
     <script src="data/sample-data.js?v=59241a3"></script>
-    <script src="data/conversations.js?v=eec586c"></script>
-    <script src="app.js?v=f7339b9"></script>
+    <script src="data/conversations.js?v=98f7ca6"></script>
+    <script src="app.js?v=7e7b75c"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6"}'></script>
     <!-- End Cloudflare Web Analytics -->
