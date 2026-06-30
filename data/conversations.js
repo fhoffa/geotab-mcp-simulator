@@ -137,6 +137,12 @@ window.CONVERSATIONS = {
         },
         {
           group: "⭐ Start here",
+          label: "🦆 Build a MotherDuck warehouse",
+          say: "Teach me how to build a Geotab warehouse in MotherDuck using MCP calls — setup, first load, and incremental refresh.",
+          next: "warehouse-intro",
+        },
+        {
+          group: "⭐ Start here",
           label: "💰 Where is my fleet leaking money?",
           say: "Where is my fleet leaking money — total the recoverable savings and build me the ROI case.",
           next: "ep-roi",
@@ -3570,6 +3576,475 @@ window.CONVERSATIONS = {
         { label: "🔔 Now set the live speed alert", say: "Now set up the fleet-wide posted-speed alert and route it to a manager.", next: "ep2-action" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* --------------------------- warehouse · Geotab → MotherDuck teaching path */
+    "warehouse-intro": {
+      id: "warehouse-intro",
+      title: "Warehouse · simplest path",
+      mode: "warehouse",
+      events: [
+        {
+          type: "system",
+          text: "Starting from an already-connected Geotab MCP server and a MotherDuck Lite account.",
+        },
+        {
+          type: "assistant",
+          text:
+            "Goal: create the first useful warehouse table from Geotab data, then make it trustworthy enough to schedule.\n\n" +
+            "We start with one concrete loop: ask for raw GPS rows, load the signed CSV into `gps_points`, and query it. Once that works, the reason for bronze/silver/gold becomes obvious: repeatable loads, typed rows, dedup, provenance, quality checks, and cost controls.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "No tables yet",
+          subtitle: "The first mental model is just: a CSV result becomes stored warehouse rows.",
+          metrics: [
+            { label: "Source", value: D.warehouse.source },
+            { label: "First table", value: "gps_points" },
+            { label: "Architecture", value: "not yet" },
+            { label: "Goal", value: "see rows land" },
+          ],
+          stages: D.warehouse.stages.empty,
+          note: "Bronze/silver/gold is intentionally not introduced yet; it will make more sense after the direct load works.",
+        },
+      ],
+      choices: [
+        { label: "🦆 Start with GPS rows", say: "I already connected the Geotab MCP and created a free-tier MotherDuck account. Build me a warehouse starting with GPS points.", next: "warehouse-setup" },
+        { label: "↩︎ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-setup": {
+      id: "warehouse-setup",
+      title: "Warehouse · get many points",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll ask Geotab Ace for raw GPS rows with exact columns. No dashboard, no summary. The response includes a signed CSV URL that MotherDuck can read directly.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: {
+            database: "demo_fh4",
+            new_chat: true,
+            prompt: "List every GPS position log recorded after 2026-06-26 01:42:40 UTC, across all devices. Return exact columns: DeviceId, DeviceName, DeviceTimeZoneId, Latitude, Longitude, GpsDateTime, Speed. Use UTC timezone. Do not summarize or aggregate.",
+          },
+          summary: "signed CSV URL returned · 157,419 GPS rows",
+          result: "Ace response includes columns, generated SQL, preview rows and a signed storage.googleapis.com CSV URL that expires in ~24h.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "gps_points ready",
+          subtitle: "We have not modeled anything yet — we just have a large result set ready for MotherDuck.",
+          metrics: [
+            { label: "Rows", value: "157,419" },
+            { label: "Columns", value: "7" },
+            { label: "Format", value: "signed CSV" },
+            { label: "Expires", value: "~24h" },
+          ],
+          stages: D.warehouse.stages.schemas,
+          note: "This is the simplest bridge: a large signed CSV result can be read directly into MotherDuck.",
+        },
+      ],
+      choices: [
+        { label: "📥 Load the CSV into MotherDuck", say: "Now create one MotherDuck table and load that signed CSV URL into it.", next: "warehouse-first-load" },
+        { label: "↩︎ Back to main simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-first-load": {
+      id: "warehouse-first-load",
+      title: "Warehouse · one-table load",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Now create **one table** called `gps_points`, then let MotherDuck read the signed CSV URL directly. No Python download, no local file, no ETL service — just MCP calls.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE DATABASE IF NOT EXISTS geotab_demo_fh4; CREATE OR REPLACE TABLE geotab_demo_fh4.gps_points AS SELECT * FROM read_csv_auto('<signed-ace-csv-url>', all_varchar=true);" },
+          summary: "gps_points created from Ace CSV",
+          result: "157,419 rows loaded into geotab_demo_fh4.gps_points",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query",
+          args: { sql: "SELECT DeviceName, Latitude, Longitude, GpsDateTime, Speed FROM geotab_demo_fh4.gps_points LIMIT 5;" },
+          summary: "table is queryable",
+          result: "5 sample GPS rows returned · columns are still strings because this is the simple first pass",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "gps_points loaded",
+          subtitle: "A beginner can now see the loop: signed CSV → MotherDuck table → SQL query.",
+          metrics: [
+            { label: "Table", value: "gps_points" },
+            { label: "Rows", value: "157,419" },
+            { label: "Load path", value: "read_csv_auto" },
+            { label: "Types", value: "raw strings" },
+          ],
+          stages: D.warehouse.stages.loaded,
+          note: "This direct table is intentionally naive. It is perfect for teaching the connection, but it is not yet safe for repeated daily loads.",
+        },
+      ],
+      choices: [
+        { label: "🧠 Why isn't one table enough?", say: "This works. Now explain why one raw table is not enough for production.", next: "warehouse-layering" },
+        { label: "↩︎ Back to main simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-layering": {
+      id: "warehouse-layering",
+      title: "Warehouse · why layers appear",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Now the bronze/silver/gold idea has a reason. The one-table load worked, but three problems appear as soon as you run it tomorrow. The assistant does not magically know this workflow, so the user points it at the exact GitHub skill to follow:\n\n" +
+            "**Follow this skill:** [https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse](https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse)\n\n" +
+            "- The signed CSV URL expires, so you need a durable copy of exactly what Ace returned.\n" +
+            "- Ace can overlap boundary seconds and sometimes changes SQL choices, so repeated loads need dedup and provenance.\n" +
+            "- Raw CSV columns are strings; analytics need typed timestamps, numbers and stable keys.\n\n" +
+            "So we refactor the simple `gps_points` table into layers: **bronze** keeps the raw/replayable rows, **silver** is typed and deduped, and **gold** is the business-ready table.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE SCHEMA IF NOT EXISTS bronze; CREATE SCHEMA IF NOT EXISTS silver; CREATE SCHEMA IF NOT EXISTS gold; CREATE OR REPLACE TABLE bronze.gps_raw AS SELECT *, now() AS _loaded_at, '<ace-chat-id>' AS _ace_chat_id, '<signed-url>' AS _source_url FROM geotab_demo_fh4.gps_points; CREATE OR REPLACE TABLE silver.planet_gps_pings AS SELECT DISTINCT DeviceId, DeviceName, DeviceTimeZoneId, try_cast(Latitude AS DOUBLE) AS latitude, try_cast(Longitude AS DOUBLE) AS longitude, try_cast(GpsDateTime AS TIMESTAMP) AS gps_datetime_utc, try_cast(Speed AS DOUBLE) AS speed_kmh FROM bronze.gps_raw WHERE DeviceId IS NOT NULL AND GpsDateTime IS NOT NULL;" },
+          summary: "simple table refactored into bronze + silver",
+          result: "bronze.gps_raw keeps 157,419 raw rows · silver.planet_gps_pings keeps typed/deduped rows",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Layered tables",
+          subtitle: "The simulator introduces bronze/silver/gold only after the simple CSV-to-table path works.",
+          metrics: [
+            { label: "Bronze", value: "raw replay" },
+            { label: "Silver", value: "typed rows" },
+            { label: "Gold", value: "later marts" },
+            { label: "Why", value: "repeatable loads" },
+          ],
+          stages: D.warehouse.stages.layered,
+          note: "Bronze/silver/gold is not ceremony — it fixes URL expiry, overlap, type casting, dedup and provenance.",
+        },
+      ],
+      choices: [
+        { label: "🔁 Show the incremental refresh", say: "Now show the daily incremental refresh with watermarks and dedup.", next: "warehouse-incremental" },
+        { label: "↩︎ Back to main simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-incremental": {
+      id: "warehouse-incremental",
+      title: "Warehouse · incremental refresh",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Now we can do the daily version safely. The assistant asks MotherDuck for the silver watermark, gives that timestamp to Ace, lands the new CSV in bronze, then inserts only rows newer than the watermark into silver.\n\n" +
+            "This step is where the earlier layers pay off: **Ace only honors sub-second boundaries to the second**, so overlap is normal, and **read the returned SQL every time** before loading because Ace can inject predicates.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query",
+          args: { sql: "SELECT max(GpsDateTime) AS watermark FROM silver.planet_gps_pings;" },
+          summary: "watermark found",
+          result: "2026-06-29 23:58:12.614 UTC",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: {
+            database: "demo_fh4",
+            new_chat: true,
+            prompt: "List every GPS position log recorded after 2026-06-29 23:58:12 UTC, across all devices. Return exact columns: DeviceId, DeviceName, DeviceTimeZoneId, Latitude, Longitude, GpsDateTime, Speed. Use UTC timezone. Include stationary points. Do not summarize or aggregate.",
+          },
+          summary: "incremental CSV returned",
+          result: "18,742 rows in signed CSV · SQL inspected · boundary second may overlap previous batch",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "BEGIN TRANSACTION; CREATE TEMP TABLE incoming_gps AS SELECT * FROM read_csv_auto('<signed-url>', all_varchar=true); INSERT INTO bronze.gps_raw SELECT *, now() AS _loaded_at, '<ace-chat-id>' AS _ace_chat_id, '<signed-url>' AS _source_url FROM incoming_gps; INSERT INTO silver.planet_gps_pings SELECT DISTINCT DeviceId, DeviceName, DeviceTimeZoneId, try_cast(Latitude AS DOUBLE), try_cast(Longitude AS DOUBLE), try_cast(GpsDateTime AS TIMESTAMP), try_cast(Speed AS DOUBLE) FROM incoming_gps WHERE try_cast(GpsDateTime AS TIMESTAMP) > TIMESTAMP '2026-06-29 23:58:12.614' AND NOT EXISTS (SELECT 1 FROM silver.planet_gps_pings s WHERE s.DeviceId = incoming_gps.DeviceId AND s.gps_datetime_utc = try_cast(incoming_gps.GpsDateTime AS TIMESTAMP)); COMMIT;" },
+          summary: "incremental batch committed",
+          result: "bronze +18,742 · silver +18,731 · 11 overlap/duplicate rows skipped",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Incremental refresh",
+          subtitle: "Bronze keeps the complete append log; silver advances only with normalized, deduped records; gold refreshes from silver.",
+          metrics: [
+            { label: "Watermark", value: "23:58:12" },
+            { label: "Bronze append", value: "+18,742" },
+            { label: "Silver insert", value: "+18,731" },
+            { label: "Duplicates", value: "11 skipped" },
+          ],
+          stages: D.warehouse.stages.incremental,
+          note: "In a real build this becomes a scheduled job: watermark → Ace prompt → bronze append → silver derive → quality checks → gold refresh.",
+        },
+        {
+          type: "assistant",
+          text:
+            "This is the durable refresh loop, not the finish line: watermark → extract → bronze append → silver derive → quality checks → gold refresh.\n\n" +
+            "Next we add the rest of the operational warehouse — trips, faults, status data, exceptions, dimensions, trust checks and cost controls.",
+        },
+      ],
+      choices: [
+        { label: "🧩 Add trips, faults, status and dimensions", say: "This is useful, but GPS points alone are not a warehouse. Add trips, faults, status data, exceptions and the dimensions that make them readable.", next: "warehouse-operational" },
+        { label: "🧱 Replay from setup", say: "Replay the MotherDuck setup from the beginning.", next: "warehouse-intro" },
+        { label: "⚡ Try fleet questions", say: "Take me back to the fleet simulator.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "warehouse-operational": {
+      id: "warehouse-operational",
+      title: "Warehouse · operational mirror",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Exactly — GPS proves the pipe, but an operational warehouse needs the other Geotab surfaces too. The skill's rule of thumb is simple: **timestamped facts via Ace into bronze**, and **lookup lists via Get into dimensions**.\n\n" +
+            "So we add trips, driver assignments, status/engine data, safety exception events, and faults as facts. Then we add users/drivers, rules, diagnostics, groups and zones as dimensions so the fact rows become human-readable. Driver is a Geotab gotcha: there is no `Driver` typeName — drivers are `User` rows where `isDriver=true`.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "ListEntities",
+          args: { database: "demo_fh4" },
+          summary: "52 entity types available",
+          result: "LogRecord, Trip, StatusData, ExceptionEvent, FaultData, Device, User, Zone, Group, Diagnostic, Rule, FuelTransaction, FillUp, ...",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: {
+            database: "demo_fh4",
+            new_chat: true,
+            prompt: "For each fact table — Trip, StatusData, ExceptionEvent, FaultData — return rows after its current watermark with exact columns needed for a warehouse load. Use UTC. Do not summarize or aggregate.",
+          },
+          summary: "4 bulk fact extracts queued",
+          result: "trips CSV · status_data CSV · exception_events CSV · fault_data CSV · each includes returned SQL + signed URL",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "ExecuteMultiCall",
+          args: {
+            database: "demo_fh4",
+            calls: [
+              { method: "Get", params: { typeName: "User", search: { isDriver: true }, propertySelector: { fields: ["id", "name", "firstName", "lastName", "activeFrom", "activeTo", "isDriver"] }, resultsLimit: 1000 } },
+              { method: "Get", params: { typeName: "Rule", propertySelector: { fields: ["id", "name", "activeFrom", "activeTo"] }, resultsLimit: 1000 } },
+              { method: "Get", params: { typeName: "Diagnostic", propertySelector: { fields: ["id", "name", "source", "unitOfMeasure"] }, resultsLimit: 1000 } },
+              { method: "Get", params: { typeName: "Zone", propertySelector: { fields: ["id", "name", "groups"] }, resultsLimit: 1000 } },
+              { method: "Get", params: { typeName: "Group", propertySelector: { fields: ["id", "name", "parent"] }, resultsLimit: 1000 } },
+            ],
+          },
+          summary: "dimension snapshots returned",
+          result: "dim_user includes driver Users · dim_rule · dim_diagnostic · dim_zone · dim_group refreshed via exact Get API",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE OR REPLACE TABLE silver.dim_user AS SELECT * FROM (VALUES ('u_demo_17','Driver 17',true), ('u_demo_31','Driver 31',true)) AS t(id, display_name, is_driver); CREATE OR REPLACE TABLE silver.driver_assignments AS SELECT * FROM (VALUES ('Demo - 08','u_demo_17',TIMESTAMP '2026-06-30 07:06:00'), ('Demo - 14','UnknownDriverId',TIMESTAMP '2026-06-30 08:00:00')) AS t(device_name, driver_id, active_from_utc); CREATE OR REPLACE TABLE gold.driver_safety_score AS SELECT coalesce(u.display_name, a.driver_id) AS driver, count(*) AS assigned_events FROM silver.driver_assignments a LEFT JOIN silver.dim_user u ON u.id = a.driver_id GROUP BY 1;" },
+          summary: "operational mirror loaded",
+          result: "6 fact families + 6 dimensions now queryable; trips can join through driver assignments to dim_user, while UnknownDriverId remains explicit",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Operational mirror",
+          subtitle: "The warehouse now has trips, safety exceptions, status/engine telemetry, faults and the dimensions that decode them.",
+          metrics: [
+            { label: "Fact families", value: "6" },
+            { label: "Driver dim", value: "User.isDriver" },
+            { label: "Largest table", value: "status_data" },
+            { label: "Gold marts", value: "4" },
+          ],
+          stages: D.warehouse.stages.operational,
+          note: "Trips use driver assignments when present and tolerate UnknownDriverId when the vehicle had no assigned driver.",
+        },
+      ],
+      choices: [
+        { label: "✅ Add quality checks and gap detection", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
+        { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
+        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-quality": {
+      id: "warehouse-quality",
+      title: "Warehouse · quality and gaps",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Before scheduling this, decide what counts as trustworthy. The checks are not looking for every vehicle and driver in every fact table; they are looking for gaps we cannot explain.\n\n" +
+            "Examples: parked vehicles may have no GPS/trips today even though `dim_device` still lists the full fleet. Trips without an assigned driver should stay explicit as `UnknownDriverId`, not disappear from the report.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query",
+          args: { sql: "SELECT table_name, max_event_time, lag_minutes, devices_seen, expected_devices FROM silver.fact_freshness JOIN silver.coverage_by_device;" },
+          summary: "freshness + coverage checked",
+          result: "gps: 2 min lag / 26 active devices · trips: event-driven · driver assignments: 88% assigned, UnknownDriverId kept explicit · faults: latest 9h ago but valid · exceptions: 50 devices covered",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "INSERT INTO silver.ingest_anomalies SELECT ... WHERE returned_sql_contains_unrequested_filter OR row_count_deviates_from_expected_window;" },
+          summary: "2 warnings logged for review",
+          result: "warning 1: Ace added Speed != 0 to a status prompt · warning 2: Trip source table changed between two equivalent prompts",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Quality checks",
+          subtitle: "Trust checks sit beside the data, so every refresh can explain what changed and what needs review.",
+          metrics: [
+            { label: "Freshness rows", value: "5" },
+            { label: "Driver coverage", value: "88%" },
+            { label: "Warnings", value: "2" },
+            { label: "Ready marts", value: "3" },
+          ],
+          stages: D.warehouse.stages.quality,
+          note: "This also teaches why the returned Ace SQL is a feature: it lets you catch semantic drift before the data becomes business truth.",
+        },
+      ],
+      choices: [
+        { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
+        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "🧩 Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
+        { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-costs": {
+      id: "warehouse-costs",
+      title: "Warehouse · cost estimate",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Before choosing a refresh schedule, check whether this fits the MotherDuck free tier and what would make it cost money.\n\n" +
+            "The cost reference is here: [COST_AND_SIZING.md](https://github.com/fhoffa/geotab-vibe-guide/blob/main/skills/geotab-motherduck-warehouse/references/COST_AND_SIZING.md). It measured a demo warehouse at **35.2 MiB** for 679,577 GPS pings plus trips/exceptions/dimensions. Bronze+silver GPS is about **54 bytes per ping**, so storage is usually not the limiting factor.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query",
+          args: { sql: "SELECT 'measured_database_size' AS metric, '35.2 MiB' AS value UNION ALL SELECT 'lite_storage_included', '10 GB' UNION ALL SELECT 'lite_compute_included', '10 CU-hours/month' UNION ALL SELECT 'one_4_table_refresh', '~25-30 CU-seconds';" },
+          summary: "measured pricing model applied",
+          result: "small 50-vehicle fleet: $0 on Lite for years · 10 GB holds ~300 vehicle-years with bronze+silver · 10 CU-hours covers ~1,200 full refresh cycles/month (~every 35 min)",
+        },
+        {
+          type: "assistant",
+          text:
+            "Cost estimate from the skill:\n\n" +
+            "- **50 vehicles:** $0/mo on Lite in this model — 10 GB free storage and 10 CU-hours/month cover years of bronze+silver history and frequent refreshes.\n" +
+            "- **500 vehicles:** can still be $0 on Lite if you keep silver-only; Business is about **$260/mo** if you choose the $250 platform plan.\n" +
+            "- **5,000 vehicles:** roughly **$270–300/mo** on Business.\n" +
+            "- **50,000 vehicles:** roughly **$370–520/mo** for one year of bronze+silver history.\n\n" +
+            "So the lesson is practical: measure `PRAGMA database_size`, estimate CU-seconds per refresh, then decide retention and refresh frequency before scheduling.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Pricing + free tier",
+          subtitle: "Uses the skill's measured MotherDuck size/CU data and the Lite free-tier limits.",
+          metrics: [
+            { label: "Measured DB", value: "35.2 MiB" },
+            { label: "Lite storage", value: "10 GB free" },
+            { label: "Lite compute", value: "10 CU-h/mo" },
+            { label: "50 vehicles", value: "$0/mo" },
+          ],
+          stages: D.warehouse.stages.costs,
+          note: "Trust includes cost controls: row counts, bytes scanned, run seconds and alerts when usage jumps.",
+        },
+      ],
+      choices: [
+        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "✅ Review quality checks", say: "Show the warehouse quality checks again.", next: "warehouse-quality" },
+        { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-answers": {
+      id: "warehouse-answers",
+      title: "Warehouse · answer-ready marts",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Once trips, exceptions, faults, status data and dimensions are in the same warehouse, the questions get bigger than any single MCP call. Now the assistant can join across history:\n\n" +
+            "- **Utilization:** Which vehicles are under-used after accounting for trips, GPS and groups?\n" +
+            "- **Safety:** Which drivers are risky because of exceptions per mile, not just raw event counts?\n" +
+            "- **Maintenance:** Which fault clusters correlate with downtime, engine hours and vehicle type?\n" +
+            "- **Cost:** Where do idling, routing and speeding compound into fuel waste?\n\n" +
+            "That's the real story: the Geotab MCP connector is great for live questions, and MotherDuck turns those MCP extracts into durable, queryable institutional memory.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query",
+          args: { sql: "SELECT * FROM gold.fleet_ops_overview; SELECT * FROM gold.driver_coaching_queue ORDER BY risk_score DESC LIMIT 5; SELECT * FROM gold.shop_worklist ORDER BY priority LIMIT 5;" },
+          summary: "3 answer-ready marts queried",
+          result: "fleet_ops_overview: 50 vehicles · driver_coaching_queue: 14 drivers · shop_worklist: 9 vehicles · idling_cost_daily refreshed",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Answer-ready marts",
+          subtitle: "Gold marts turn the operational mirror into repeatable briefs, dashboards and agent skills.",
+          metrics: [
+            { label: "Ops overview", value: "1 row" },
+            { label: "Coaching queue", value: "14 drivers" },
+            { label: "Shop worklist", value: "9 vehicles" },
+            { label: "Refresh path", value: "scheduled" },
+          ],
+          stages: D.warehouse.stages.quality,
+          note: "The final teaching moment: MCP is the access layer; MotherDuck is the memory layer; gold marts are the product surface.",
+        },
+      ],
+      choices: [
+        { label: "✅ Review quality checks again", say: "Show the warehouse quality checks again.", next: "warehouse-quality" },
+        { label: "🧱 Replay from setup", say: "Replay the MotherDuck warehouse story from setup.", next: "warehouse-intro" },
+        { label: "⚡ Try fleet questions", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
     },
 

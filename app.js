@@ -13,10 +13,17 @@
   var chatEl = document.getElementById("chat");
   var emptyStateEl = document.getElementById("emptyState");
   var trayEl = document.getElementById("tray");
+  var motherduckPane = document.getElementById("motherduckPane");
+  var motherduckPaneToggle = document.getElementById("motherduckPaneToggle");
+  var motherduckPaneTitle = document.getElementById("motherduckPaneTitle");
+  var motherduckPaneSubtitle = document.getElementById("motherduckPaneSubtitle");
+  var motherduckPaneSummary = document.getElementById("motherduckPaneSummary");
+  var motherduckPaneBody = document.getElementById("motherduckPaneBody");
   var connEl = document.getElementById("connStatus");
   var restartBtn = document.getElementById("restartBtn");
   var landingOverlay = document.getElementById("landingOverlay");
   var startSimBtn = document.getElementById("startSimBtn");
+  var startWarehouseBtn = document.getElementById("startWarehouseBtn");
   var tryRealOverlay = document.getElementById("tryRealOverlay");
   var tryRealBtn = document.getElementById("tryRealBtn");
   var tryRealBtnLanding = document.getElementById("tryRealBtnLanding");
@@ -150,6 +157,7 @@
     var d = t.base.tool;
     if (ev.write) d += t.toolWrite;
     if (ev.server === "web") d += t.toolWeb;
+    if (ev.server === "motherduck") d += 220;
     return jitter(d);
   }
   function timedDelay(kind) { return jitter(timing().base[kind]); }
@@ -410,6 +418,159 @@
     scrollDown();
   }
 
+  function tableHasRows(t) {
+    var rows = String((t && t.rows) || "").toLowerCase();
+    return !!rows && !/^\s*(0|0\s+rows|empty|none)\s*$/.test(rows);
+  }
+
+  function fallbackWarehouseSample(t) {
+    if (!tableHasRows(t)) return [];
+    var name = String(t.name || "table");
+    var base = { sample_key: "demo", rows: String(t.rows || "") };
+    if (/gps|pings/.test(name)) return [
+      { device: "Demo - 02", event_time: "2026-06-30 08:14:22", speed: "48 km/h", lat: "39.4699", lon: "-0.3763" },
+      { device: "Demo - 14", event_time: "2026-06-30 08:14:25", speed: "0 km/h", lat: "39.4731", lon: "-0.3808" }
+    ];
+    if (/trip/.test(name)) return [
+      { device: "Demo - 08", trip_start: "2026-06-30 07:10", driver_id: "u_demo_17", distance_km: "18.4", duration_min: "31" }
+    ];
+    if (/driver_assignment|driver_assignments|driver_changes/.test(name)) return [
+      { device: "Demo - 08", driver_id: "u_demo_17", active_from: "2026-06-30 07:06", source: "DriverChange" },
+      { device: "Demo - 14", driver_id: "UnknownDriverId", active_from: "2026-06-30 08:00", source: "unassigned" }
+    ];
+    if (/status_data/.test(name)) return [
+      { device: "Demo - 21", diagnostic: "EngineSpeed", event_time: "2026-06-30 08:12", value: "1420" }
+    ];
+    if (/exception/.test(name)) return [
+      { device: "Demo - 31", rule: "Posted speed", event_time: "2026-06-30 08:03", severity: "review" }
+    ];
+    if (/fault/.test(name)) return [
+      { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-29 21:44", fault_state: "active" }
+    ];
+    if (/dim_user/.test(name)) return [
+      { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" }
+    ];
+    if (/dim_rule/.test(name)) return [
+      { rule_id: "r_posted_speed", name: "Posted speed", active: "true" }
+    ];
+    if (/dim_diagnostic/.test(name)) return [
+      { diagnostic_id: "d_engine_speed", name: "EngineSpeed", unit: "rpm" }
+    ];
+    if (/daily_device_km/.test(name)) return [
+      { date: "2026-06-30", device: "Demo - 02", km: "142.8" }
+    ];
+    if (/driver_safety_score|coaching/.test(name)) return [
+      { driver: "Driver 31", score: "72", reason: "speed exceptions per km" }
+    ];
+    if (/maintenance|shop_worklist/.test(name)) return [
+      { device: "Demo - 08", priority: "P2", reason: "fault cluster + downtime" }
+    ];
+    if (/idling/.test(name)) return [
+      { date: "2026-06-30", group: "Valencia", estimated_cost_usd: "38" }
+    ];
+    if (/freshness/.test(name)) return [
+      { table_name: "silver.planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" }
+    ];
+    if (/coverage/.test(name)) return [
+      { device: "Demo - 02", gps_seen: "true", expected_today: "true" }
+    ];
+    if (/anomal/.test(name)) return [
+      { check_name: "returned_sql_filter", severity: "warn", status: "needs review" }
+    ];
+    if (/fleet_ops_overview/.test(name)) return [
+      { vehicles: "50", active_today: "26", open_faults: "9", coaching_queue: "14" }
+    ];
+    if (/storage|compute|refresh|query_cost|load_runs|row_counts|cost/.test(name)) return [
+      { measure: name, value: String(t.rows || ""), source: "measured/estimated" }
+    ];
+    return [base];
+  }
+
+  function renderWarehouseSample(t) {
+    var rows = (t.sample && t.sample.length) ? t.sample : fallbackWarehouseSample(t);
+    if (!rows.length) return null;
+    var details = el("details", "warehouse-sample");
+    details.appendChild(el("summary", "warehouse-sample-toggle", "Sample rows"));
+    var grid = el("div", "warehouse-sample-grid");
+    var cols = Object.keys(rows[0] || {});
+    var header = el("div", "warehouse-sample-row warehouse-sample-head");
+    header.style.setProperty("--warehouse-sample-cols", cols.length);
+    cols.forEach(function (c) { header.appendChild(el("span", null, escapeHtml(c))); });
+    grid.appendChild(header);
+    rows.forEach(function (r) {
+      var sr = el("div", "warehouse-sample-row");
+      sr.style.setProperty("--warehouse-sample-cols", cols.length);
+      cols.forEach(function (c) { sr.appendChild(el("span", null, escapeHtml(String(r[c] == null ? "" : r[c])))); });
+      grid.appendChild(sr);
+    });
+    details.appendChild(grid);
+    return details;
+  }
+
+  function renderWarehouseBody(ev, body) {
+    body.innerHTML = "";
+    if (ev.metrics && ev.metrics.length) {
+      var metrics = el("div", "warehouse-metrics");
+      ev.metrics.forEach(function (m) {
+        var metric = el("div", "warehouse-metric");
+        metric.appendChild(el("span", "warehouse-metric-label", escapeHtml(m.label || "")));
+        metric.appendChild(el("strong", null, escapeHtml(String(m.value || ""))));
+        metrics.appendChild(metric);
+      });
+      body.appendChild(metrics);
+    }
+
+    var stages = el("div", "warehouse-stages");
+    (ev.stages || []).forEach(function (stage) {
+      var stageEl = el("div", "warehouse-stage warehouse-stage-" + (stage.kind || "default") + (stage.active ? " active" : ""));
+      var title = el("div", "warehouse-stage-title");
+      title.appendChild(el("span", "warehouse-stage-dot"));
+      title.appendChild(el("strong", null, escapeHtml(stage.name || "Stage")));
+      if (stage.status) title.appendChild(el("span", "warehouse-stage-status", escapeHtml(stage.status)));
+      stageEl.appendChild(title);
+      var tableList = el("div", "warehouse-tables");
+      (stage.tables || []).forEach(function (t) {
+        var row = el("div", "warehouse-table-row");
+        row.appendChild(el("code", null, escapeHtml(t.name || "table")));
+        row.appendChild(el("span", "warehouse-row-count", escapeHtml(t.rows || "0 rows")));
+        if (t.note) row.appendChild(el("span", "warehouse-table-note", escapeHtml(t.note)));
+        var sample = renderWarehouseSample(t);
+        if (sample) row.appendChild(sample);
+        tableList.appendChild(row);
+      });
+      stageEl.appendChild(tableList);
+      stages.appendChild(stageEl);
+    });
+    body.appendChild(stages);
+
+    if (ev.note) body.appendChild(el("div", "warehouse-note", escapeHtml(ev.note)));
+  }
+
+  function setMotherduckPaneOpen(open) {
+    if (!motherduckPane || !motherduckPaneToggle) return;
+    motherduckPane.classList.toggle("collapsed", !open);
+    motherduckPaneToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    motherduckPaneToggle.setAttribute("aria-label", (open ? "Hide" : "Show") + " MotherDuck warehouse state");
+  }
+
+  function addWarehousePane(ev) {
+    if (!motherduckPane || !motherduckPaneBody) return;
+    var tableCount = (ev.stages || []).reduce(function (n, stage) { return n + ((stage.tables || []).length); }, 0);
+    var topMetric = ev.metrics && ev.metrics.length ? String(ev.metrics[0].value || "") : "";
+    var summary = ev.summary || (tableCount ? tableCount + " tables" : topMetric || "updated");
+
+    motherduckPane.classList.remove("hidden");
+    if (motherduckPaneTitle) motherduckPaneTitle.textContent = ev.title === "MotherDuck" ? "Warehouse" : (ev.title || "Warehouse");
+    if (motherduckPaneSubtitle) motherduckPaneSubtitle.textContent = ev.compactSubtitle || ev.subtitle || "Updated";
+    if (motherduckPaneSummary) motherduckPaneSummary.textContent = summary;
+    renderWarehouseBody(ev, motherduckPaneBody);
+
+    // The pane is persistent and collapsed by default: the transcript stays clean,
+    // but the latest MotherDuck state is always one click away.
+    setMotherduckPaneOpen(false);
+    addSystem("MotherDuck updated.");
+  }
+
   function addChart(ev) {
     var max = (ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
     var card = el("div", "chart-card");
@@ -635,6 +796,7 @@
     trayEl.innerHTML = "";
     if (emptyStateEl) { emptyStateEl.remove(); emptyStateEl = null; }
     setConn(id !== "connect");
+    if (node.mode === "warehouse") connEl.textContent = "Connected · Geotab + MotherDuck";
     currentNodeId = id;
     if (history.replaceState) history.replaceState(null, "", "#" + id);
 
@@ -664,6 +826,11 @@
         await wait(timedDelay("system"));
         if (myToken !== playToken) return;
         addSystem(ev.text);
+      } else if (ev.type === "warehouse") {
+        toolContainer = null;
+        await wait(timedDelay("tool"));
+        if (myToken !== playToken) return;
+        addWarehousePane(ev);
       } else if (ev.type === "chart") {
         toolContainer = null;
         await wait(timedDelay("tool"));
@@ -783,11 +950,17 @@
   function closeAbout() { closeOverlay(aboutOverlay); }
 
   /* ------------------------------------------------------------- controls */
-  function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
+  function clearChat() {
+    chatEl.innerHTML = "";
+    trayEl.innerHTML = "";
+    if (motherduckPane) motherduckPane.classList.add("hidden", "collapsed");
+  }
   function restart() { playToken++; clearChat(); playNode(GRAPH.start); }
 
   restartBtn.addEventListener("click", restart);
   startSimBtn.addEventListener("click", closeLanding);
+  if (startWarehouseBtn) startWarehouseBtn.addEventListener("click", function () { closeLanding(); playToken++; clearChat(); playNode("warehouse-intro"); });
+  if (motherduckPaneToggle) motherduckPaneToggle.addEventListener("click", function () { setMotherduckPaneOpen(motherduckPane.classList.contains("collapsed")); });
   settingsBtn.addEventListener("click", openSettings);
   settingsClose.addEventListener("click", closeSettings);
   settingsOverlay.addEventListener("click", function (e) { if (e.target === settingsOverlay) closeSettings(); });
@@ -824,7 +997,9 @@
   updateSpeedUi();
   checkGraph();
   var hash = (location.hash || "").replace(/^#/, "");
-  playNode(NODES[hash] ? hash : GRAPH.start);
+  var hasNodeHash = !!NODES[hash];
+  if (hasNodeHash) closeLanding();
+  playNode(hasNodeHash ? hash : GRAPH.start);
   if (hash === REAL_ACCOUNT_HASH) {
     openTryReal();
     // playNode already rewrote the hash to the underlying node; put the deep link back

@@ -54,7 +54,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=810877f" />
+    <link rel="stylesheet" href="styles.css?v=a603dc5" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png?v=d4e1997" />
   </head>
   <body>
@@ -76,6 +76,20 @@
         </button>
       </div>
     </header>
+
+    <aside id="motherduckPane" class="motherduck-pane hidden collapsed" aria-label="MotherDuck warehouse state">
+      <button id="motherduckPaneToggle" class="motherduck-pane-toggle" type="button" aria-expanded="false">
+        <span class="warehouse-duck" aria-hidden="true">🦆</span>
+        <span class="motherduck-pane-title">
+          <span class="warehouse-kicker">MotherDuck</span>
+          <strong id="motherduckPaneTitle">Warehouse</strong>
+          <span id="motherduckPaneSubtitle" class="warehouse-subtitle">No warehouse actions yet</span>
+        </span>
+        <span id="motherduckPaneSummary" class="warehouse-summary">hidden</span>
+        <span class="warehouse-caret" aria-hidden="true">▶</span>
+      </button>
+      <div id="motherduckPaneBody" class="motherduck-pane-body"></div>
+    </aside>
 
     <noscript>
       <div class="noscript-note">
@@ -130,7 +144,8 @@
           </li>
         </ul>
         <div class="hero-cta">
-          <button id="startSimBtn" class="cta-btn cta-primary" type="button"><span class="ui-glyph" aria-hidden="true">→</span>Try the simulator</button>
+          <button id="startSimBtn" class="cta-btn cta-primary" type="button"><span class="ui-glyph" aria-hidden="true">→</span>Try the fleet simulator</button>
+          <button id="startWarehouseBtn" class="cta-btn cta-secondary" type="button"><span class="ui-glyph" aria-hidden="true">▦</span>Build a MotherDuck warehouse</button>
           <button id="tryRealBtnLanding" class="cta-btn cta-secondary" type="button">
             <span class="ui-glyph" aria-hidden="true">↔</span>Ready to connect your real account?
           </button>
@@ -288,9 +303,9 @@
       </div>
     </div>
 
-    <script src="data/sample-data.js?v=59241a3"></script>
-    <script src="data/conversations.js?v=98f7ca6"></script>
-    <script src="app.js?v=7e7b75c"></script>
+    <script src="data/sample-data.js?v=6fe616f"></script>
+    <script src="data/conversations.js?v=c72050d"></script>
+    <script src="app.js?v=2479fb0"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6"}'></script>
     <!-- End Cloudflare Web Analytics -->
