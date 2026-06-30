@@ -68,8 +68,10 @@ window.CONVERSATIONS = {
             "and take actions on it, right here in chat — no separate dashboard.\n\n" +
             "(Worth knowing: the connector itself is just an open MCP server. Copilot, ChatGPT, Claude — anything " +
             "that speaks MCP can plug into the same one. No single assistant is special here.)\n\n" +
+            "One practical detail: the MCP server does not automatically know or enumerate every database your " +
+            "account can access. You need to know the database name you want, then ask the assistant to use it.\n\n" +
             "This particular page is a simulator, so you'll click suggested questions instead of typing and " +
-            "the replies are pre-recorded — but the numbers underneath all came from a real Geotab demo fleet. " +
+            "the replies are pre-recorded — but the numbers underneath all came from real Geotab demo fleets. " +
             "Connect it and I'll show you.",
         },
       ],
@@ -90,12 +92,13 @@ window.CONVERSATIONS = {
           name: "authenticate",
           args: { method: "OAuth" },
           summary: "session established",
-          result: '{ "authenticated": true, "databases": ["demo_fh_vegas4", "demo_fh4"] }',
+          result: '{ "authenticated": true }',
         },
         {
           type: "system",
           text:
-            "Connected to Geotab. Two demo fleets are available:\n" +
+            "Connected to Geotab. The connector does not return a master list of every database you can access; " +
+            "the user needs to know which database name to ask for. For this simulator, we use two known demo database names:\n" +
             "- demo_fh_vegas4 — Las Vegas, USA · 50 vehicles\n" +
             "- demo_fh4 — Spain (Galicia + Valencia) · 50 vehicles",
         },
