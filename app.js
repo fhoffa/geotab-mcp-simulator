@@ -74,6 +74,7 @@
   var speedMode = readSpeedMode();
   var skip = false;
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
+  var warehousePointerShown = false; // chat pointer to the pane: show once, then update silently
   var currentNodeId = null; // last id pushed to location.hash by playNode
   var REAL_ACCOUNT_HASH = "connect-real"; // shareable deep link straight to the "connect real account" overlay
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -565,9 +566,13 @@
     renderWarehouseBody(ev, motherduckPaneBody);
 
     // The pane is persistent and collapsed by default: the transcript stays clean,
-    // but the latest MotherDuck state is always one click away.
+    // but the latest MotherDuck state is always one click away. Point the user to
+    // it once, then let it update silently (a per-event "updated" line is noise).
     setMotherduckPaneOpen(false);
-    addSystem("MotherDuck updated.");
+    if (!warehousePointerShown) {
+      addSystem("Open the **MotherDuck** panel at the top to see your tables and schemas.");
+      warehousePointerShown = true;
+    }
   }
 
   function addChart(ev) {
@@ -952,6 +957,7 @@
   function clearChat() {
     chatEl.innerHTML = "";
     trayEl.innerHTML = "";
+    warehousePointerShown = false;
     if (motherduckPane) motherduckPane.classList.add("hidden", "collapsed");
   }
   function restart() { playToken++; clearChat(); playNode(GRAPH.start); }
@@ -986,9 +992,11 @@
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   });
-  // click the transcript while it's playing to fast-forward
-  chatEl.addEventListener("click", function (e) {
-    if (e.target.closest(".tool-head")) return; // let card toggles work
+  // click anywhere while it's playing to fast-forward — not just the chat column,
+  // so a click in the desktop margins during a long paragraph still skips. Ignore
+  // clicks on interactive controls (choices, links, card/pane toggles, settings).
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("button, a, input, textarea, select, label, summary, .tool-head, .motherduck-pane, .overlay")) return;
     skip = true;
   });
 

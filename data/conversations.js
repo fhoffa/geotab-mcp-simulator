@@ -3921,8 +3921,6 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "⚠️ Why trips & drivers can't just append", say: "Wait — trips and driver assignments aren't append-only like GPS. Show me what breaks and how to reconcile it.", next: "warehouse-restated" },
-        { label: "✅ Add quality checks and gap detection", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
-        { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
     },
