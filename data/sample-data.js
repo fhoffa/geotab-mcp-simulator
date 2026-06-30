@@ -231,4 +231,103 @@ window.SAMPLE_DATA = {
       ],
     },
   },
+
+  /* ============================== MotherDuck warehouse teaching experience === */
+  warehouse: {
+    database: "geotab_demo_fh4",
+    source: "demo_fh4",
+    factsWindow: "2026-06-26 01:42:40 UTC → now",
+    bootstrapRows: 522162,
+    incrementalRows: 157419,
+    silverRows: 679577,
+    dimensionRows: 50,
+    stages: {
+      empty: [
+        { kind: "default", name: "Database", status: "empty", tables: [] },
+      ],
+      schemas: [
+        { kind: "default", name: "Database", status: "ready", active: true, tables: [{ name: "gps_points", rows: "0 rows" }] },
+      ],
+      loaded: [
+        { kind: "default", name: "Database", status: "loaded", active: true, tables: [{ name: "gps_points", rows: "157,419 rows", sample: [
+          { DeviceName: "Demo - 02", GpsDateTime: "2026-06-26 01:42:41", Speed: "48", Latitude: "39.4699", Longitude: "-0.3763" },
+          { DeviceName: "Demo - 14", GpsDateTime: "2026-06-26 01:42:42", Speed: "0", Latitude: "39.4731", Longitude: "-0.3808" },
+          { DeviceName: "Demo - 31", GpsDateTime: "2026-06-26 01:42:43", Speed: "67", Latitude: "39.4564", Longitude: "-0.3521" },
+        ] }] },
+      ],
+      layered: [
+        { kind: "bronze", name: "Bronze", status: "append-only", active: true, tables: [{ name: "bronze.gps_raw", rows: "679,581 rows", }] },
+        { kind: "silver", name: "Silver", status: "queryable", active: true, tables: [{ name: "silver.planet_gps_pings", rows: "679,577 rows", }, { name: "silver.dim_device", rows: "50 rows", }] },
+        { kind: "gold", name: "Gold", status: "ready", tables: [{ name: "gold.daily_device_km", rows: "31 days", }] },
+      ],
+      incremental: [
+        { kind: "bronze", name: "Bronze", status: "+ new batch", active: true, tables: [{ name: "bronze.gps_raw", rows: "+18,742 rows", }] },
+        { kind: "silver", name: "Silver", status: "deduped", active: true, tables: [{ name: "silver.planet_gps_pings", rows: "+18,731 rows", }, { name: "silver.dim_device", rows: "50 rows", }] },
+        { kind: "gold", name: "Gold", status: "refreshed", active: true, tables: [{ name: "gold.daily_device_km", rows: "+1 day", }] },
+      ],
+      operational: [
+        { kind: "bronze", name: "Bronze", status: "facts landing", active: true, tables: [
+          { name: "bronze.gps_raw", rows: "698,323 rows", },
+          { name: "bronze.trips_raw", rows: "8,412 rows", },
+          { name: "bronze.driver_changes_raw", rows: "1,126 rows", },
+          { name: "bronze.status_data_raw", rows: "1.9M rows", },
+          { name: "bronze.exception_events_raw", rows: "42,806 rows", },
+          { name: "bronze.fault_data_raw", rows: "4,918 rows", },
+        ] },
+        { kind: "silver", name: "Silver", status: "joined facts", active: true, tables: [
+          { name: "silver.planet_gps_pings", rows: "698,308 rows", },
+          { name: "silver.trips", rows: "8,407 rows", },
+          { name: "silver.driver_assignments", rows: "1,118 rows", },
+          { name: "silver.status_data", rows: "1.9M rows", },
+          { name: "silver.exception_events", rows: "42,781 rows", },
+          { name: "silver.fault_data", rows: "4,912 rows", },
+          { name: "silver.dim_user", rows: "113 rows", note: "drivers are Users with isDriver=true" },
+          { name: "silver.dim_rule", rows: "386 rows", },
+          { name: "silver.dim_diagnostic", rows: "2,184 rows", },
+        ] },
+        { kind: "gold", name: "Gold", status: "ops marts", active: true, tables: [
+          { name: "gold.daily_device_km", rows: "31 days", },
+          { name: "gold.driver_safety_score", rows: "50 drivers", },
+          { name: "gold.maintenance_risk", rows: "50 vehicles", },
+          { name: "gold.idling_cost_daily", rows: "31 days", },
+        ] },
+      ],
+      quality: [
+        { kind: "bronze", name: "Bronze", status: "audited", active: true, tables: [
+          { name: "bronze.gps_raw", rows: "698,323 rows" },
+          { name: "bronze.trips_raw", rows: "8,412 rows" },
+          { name: "bronze.exception_events_raw", rows: "42,806 rows" },
+        ] },
+        { kind: "silver", name: "Silver", status: "checked", active: true, tables: [
+          { name: "silver.fact_freshness", rows: "5 rows" },
+          { name: "silver.coverage_by_device", rows: "50 rows" },
+          { name: "silver.driver_assignment_coverage", rows: "50 rows" },
+          { name: "silver.ingest_anomalies", rows: "2 warnings" },
+        ] },
+        { kind: "gold", name: "Gold", status: "answer-ready", active: true, tables: [
+          { name: "gold.fleet_ops_overview", rows: "1 row" },
+          { name: "gold.driver_coaching_queue", rows: "14 rows" },
+          { name: "gold.shop_worklist", rows: "9 rows" },
+        ] },
+      ],
+      costs: [
+        { kind: "default", name: "Measured anchor", status: "live skill data", active: true, tables: [
+          { name: "cost.measured_database_size", rows: "35.2 MiB" },
+          { name: "cost.gps_storage_rate", rows: "54 B/ping bronze+silver" },
+          { name: "cost.refresh_cycle", rows: "25–30 CU-sec" },
+        ] },
+        { kind: "default", name: "Lite free tier", status: "$0 path", active: true, tables: [
+          { name: "plan.lite_storage", rows: "10 GB included" },
+          { name: "plan.lite_compute", rows: "10 CU-hours/month" },
+          { name: "plan.lite_capacity", rows: "~300 vehicle-years" },
+        ] },
+        { kind: "default", name: "Scale examples", status: "monthly", tables: [
+          { name: "estimate.50_vehicles", rows: "$0/mo" },
+          { name: "estimate.500_vehicles_business", rows: "~$260/mo" },
+          { name: "estimate.5000_vehicles_business", rows: "~$270–300/mo" },
+          { name: "estimate.50000_vehicles_business", rows: "~$370–520/mo" },
+        ] },
+      ],
+    },
+  },
 };

@@ -27,6 +27,7 @@ var VALID_EVENT_TYPES = {
   endcard: true,
   tool: true,
   chart: true,
+  warehouse: true,
   media: true,
   map: true,
   confirm: true,
