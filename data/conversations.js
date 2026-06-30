@@ -3737,7 +3737,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🧠 Why isn't one table enough?", say: "This works — but before I schedule it, follow the **geotab-motherduck-warehouse** skill (https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse) and show me why one raw table isn't production-ready.", next: "warehouse-layering" },
+        { label: "🧠 Why isn't one table enough?", say: "This works, but before I schedule it daily, follow this skill and show me why one raw table isn't production-ready: https://github.com/fhoffa/geotab-vibe-guide/tree/main/skills/geotab-motherduck-warehouse", next: "warehouse-layering" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
