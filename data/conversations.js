@@ -4035,9 +4035,9 @@ window.CONVERSATIONS = {
           server: "motherduck",
           name: "query_rw",
           write: true,
-          args: { sql: "CREATE TABLE IF NOT EXISTS silver.warehouse_quality_checks (run_id UUID, check VARCHAR, value VARCHAR, passed BOOLEAN, checked_at TIMESTAMP); INSERT INTO silver.warehouse_quality_checks SELECT uuid(), check, value, value = '0', now() FROM (SELECT 'gps: dupes on (DeviceId,GpsDateTime)' AS check, (count(*) - count(DISTINCT DeviceId || '|' || gps_datetime_utc::VARCHAR))::VARCHAR AS value FROM silver.planet_gps_pings UNION ALL SELECT 'gps: future rows', count(*) FILTER (WHERE gps_datetime_utc > now())::VARCHAR FROM silver.planet_gps_pings UNION ALL SELECT 'trips: device not in dim_device', count(DISTINCT t.DeviceId) FILTER (WHERE d.id IS NULL)::VARCHAR FROM silver.trips t LEFT JOIN silver.dim_device d ON d.id = t.DeviceId);" },
-          summary: "results appended to a time series for alerting",
-          result: "3 checks recorded with run_id + checked_at · all passed=true this run · regressions now alertable against history",
+          args: { sql: "CREATE OR REPLACE TABLE silver.fact_freshness AS SELECT 'planet_gps_pings' AS table_name, max(gps_datetime_utc) AS max_event_time, date_diff('minute', max(gps_datetime_utc), now()) AS lag_minutes FROM silver.planet_gps_pings UNION ALL SELECT 'trips', max(trip_end_utc), date_diff('minute', max(trip_end_utc), now()) FROM silver.trips UNION ALL SELECT 'status_data', max(status_datetime_utc), date_diff('minute', max(status_datetime_utc), now()) FROM silver.status_data UNION ALL SELECT 'exception_events', max(active_from_utc), date_diff('minute', max(active_from_utc), now()) FROM silver.exception_events UNION ALL SELECT 'fault_data', max(fault_datetime_utc), date_diff('minute', max(fault_datetime_utc), now()) FROM silver.fault_data; CREATE OR REPLACE TABLE silver.coverage_by_device AS SELECT d.id AS device_id, d.name AS device_name, (g.DeviceId IS NOT NULL) AS gps_seen_today FROM silver.dim_device d LEFT JOIN (SELECT DISTINCT DeviceId FROM silver.planet_gps_pings WHERE gps_datetime_utc::DATE = current_date) g ON g.DeviceId = d.id; CREATE OR REPLACE TABLE silver.driver_assignment_coverage AS SELECT count(*) FILTER (WHERE driver_id <> 'UnknownDriverId') AS assigned_trips, count(*) FILTER (WHERE driver_id = 'UnknownDriverId') AS unassigned_trips, round(count(*) FILTER (WHERE driver_id <> 'UnknownDriverId') * 100.0 / count(*), 0) AS pct_assigned FROM silver.trips; CREATE TABLE IF NOT EXISTS silver.ingest_anomalies (detected_at TIMESTAMP, source_table VARCHAR, check_name VARCHAR, severity VARCHAR, detail VARCHAR); INSERT INTO silver.ingest_anomalies VALUES (now(), 'status_data', 'ace_added_unrequested_filter', 'warn', 'Ace injected Speed != 0 into a raw status prompt'), (now(), 'trips', 'ace_source_table_changed', 'warn', 'Two equivalent trip prompts resolved to different FROM tables');" },
+          summary: "trust tables built + the 2 semantic warnings persisted",
+          result: "silver.fact_freshness 5 rows · silver.coverage_by_device 50 devices · silver.driver_assignment_coverage 88% assigned · silver.ingest_anomalies 2 warnings logged",
         },
         {
           type: "warehouse",
@@ -4102,8 +4102,8 @@ window.CONVERSATIONS = {
             { label: "Lite compute", value: "10 CU-h/mo" },
             { label: "50 vehicles", value: "$0/mo" },
           ],
-          stages: D.warehouse.stages.quality,
-          note: "The panel still shows the real warehouse — the cost figures above are measured against exactly these bronze/silver/gold tables. Trust includes cost controls: row counts, bytes scanned, run seconds and alerts when usage jumps.",
+          stages: D.warehouse.stages.operational,
+          note: "The panel still shows the real warehouse (the operational tables every path to here has already built) — the cost figures above are measured against exactly these bronze/silver/gold tables. Trust includes cost controls: row counts, bytes scanned, run seconds and alerts when usage jumps.",
         },
       ],
       choices: [
