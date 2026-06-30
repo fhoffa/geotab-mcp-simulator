@@ -3592,8 +3592,10 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Goal: create the first useful warehouse table from Geotab data, then make it trustworthy enough to schedule.\n\n" +
-            "We start with one concrete loop: ask for raw GPS rows, load the signed CSV into `gps_points`, and query it. Once that works, the reason for bronze/silver/gold becomes obvious: repeatable loads, typed rows, dedup, provenance, quality checks, and cost controls.",
+            "**Is this even a good idea? Short answer: yes, if you ever ask questions about the *past*.**\n\n" +
+            "The live MCP connector is great at \"what's happening right now.\" But it can't answer the questions that need history — utilization trends, exceptions *per mile* instead of raw counts, fault clusters building over weeks. A warehouse turns those same MCP extracts into **durable, queryable memory**: the connector is the access layer, MotherDuck is the memory layer.\n\n" +
+            "And the cool part is how little it takes: Geotab Ace hands back a **signed CSV URL**, and MotherDuck reads it *directly* — no download, no ETL service, just SQL. A 50-vehicle fleet runs at **$0** on the free tier.\n\n" +
+            "So here's the plan: one concrete loop first — ask for raw GPS rows, load the signed CSV into `gps_points`, query it. Once that works, the reason for bronze/silver/gold becomes obvious: repeatable loads, typed rows, dedup, provenance, quality checks, and cost controls.",
         },
         {
           type: "warehouse",
