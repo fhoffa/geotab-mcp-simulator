@@ -713,6 +713,7 @@
   function closeOverlay(overlay) {
     if (overlay.classList.contains("hidden")) return;
     overlay.classList.add("hidden");
+    if (overlay === settingsOverlay && settingsBtn) settingsBtn.setAttribute("aria-expanded", "false");
     var target =
       lastFocused && typeof lastFocused.focus === "function" && lastFocused.offsetParent !== null
         ? lastFocused
@@ -727,7 +728,10 @@
   }
 
   function closeLanding() { closeOverlay(landingOverlay); }
-  function openSettings() { openOverlay(settingsOverlay, settingsBtn); }
+  function openSettings() {
+    if (settingsBtn) settingsBtn.setAttribute("aria-expanded", "true");
+    openOverlay(settingsOverlay, settingsBtn);
+  }
   function closeSettings() { closeOverlay(settingsOverlay); }
   function openTryReal() {
     var trigger = document.activeElement;

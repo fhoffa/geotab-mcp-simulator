@@ -54,7 +54,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=09e492a" />
+    <link rel="stylesheet" href="styles.css?v=810877f" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png?v=d4e1997" />
   </head>
   <body>
@@ -68,8 +68,8 @@
       </div>
       <div class="header-actions">
         <span id="connStatus" class="conn-pill conn-off">Not connected</span>
-        <button id="settingsBtn" class="ghost-btn settings-trigger" type="button" title="Playback settings">
-          <span class="ui-glyph" aria-hidden="true">⚙</span>Speed: <span id="speedModeLabel">xfast</span>
+        <button id="settingsBtn" class="ghost-btn settings-trigger" type="button" title="Simulator settings" aria-haspopup="dialog" aria-expanded="false">
+          <span class="ui-glyph" aria-hidden="true">⚙</span>Settings
         </button>
         <button id="tryRealBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↔</span>Connect real account</button>
         <button id="shareBtn" class="ghost-btn" type="button" title="Copy a link to this point in the simulator"><span class="ui-glyph" aria-hidden="true">↗</span>Share</button>
@@ -147,19 +147,27 @@
           <h2>Settings</h2>
           <button id="settingsClose" class="ghost-btn" type="button">✕ Close</button>
         </div>
-        <p class="overlay-note">Choose how fast the pre-recorded MCP transcript plays back.</p>
-        <div class="settings-section">
-          <h3>Playback speed</h3>
-          <div class="speed-options" role="radiogroup" aria-label="Playback speed">
-            <button class="speed-option" type="button" role="radio" aria-checked="true" data-speed="xfast">
-              <span class="speed-title">xfast</span>
-              <span class="speed-copy">Current simulator pace — fast enough for demos and walkthroughs.</span>
-            </button>
-            <button class="speed-option" type="button" role="radio" aria-checked="false" data-speed="realistic">
-              <span class="speed-title">realistic</span>
-              <span class="speed-copy">Actual measured MCP/model timing — slower and closer to a real assistant session.</span>
-            </button>
-          </div>
+        <p class="overlay-note">Tune how the simulator behaves. More controls can live here as the demo grows.</p>
+        <div class="settings-stack">
+          <section class="settings-section" aria-labelledby="settingsPlaybackTitle">
+            <div class="settings-row-head">
+              <div>
+                <h3 id="settingsPlaybackTitle">Playback</h3>
+                <p>Choose how fast the pre-recorded MCP transcript plays back.</p>
+              </div>
+              <span class="settings-value">Speed: <strong id="speedModeLabel">xfast</strong></span>
+            </div>
+            <div class="settings-options" role="radiogroup" aria-label="Playback speed">
+              <button class="settings-option speed-option" type="button" role="radio" aria-checked="true" data-speed="xfast">
+                <span class="settings-option-title">xfast</span>
+                <span class="settings-option-copy">Current simulator pace — fast enough for demos and walkthroughs.</span>
+              </button>
+              <button class="settings-option speed-option" type="button" role="radio" aria-checked="false" data-speed="realistic">
+                <span class="settings-option-title">realistic</span>
+                <span class="settings-option-copy">Actual measured MCP/model timing — slower and closer to a real assistant session.</span>
+              </button>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -283,7 +291,7 @@
 
     <script src="data/sample-data.js?v=59241a3"></script>
     <script src="data/conversations.js?v=eec586c"></script>
-    <script src="app.js?v=a99c063"></script>
+    <script src="app.js?v=305fc4b"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6"}'></script>
     <!-- End Cloudflare Web Analytics -->
