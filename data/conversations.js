@@ -3665,6 +3665,10 @@ window.CONVERSATIONS = {
           result: "Ace response includes columns, generated SQL, preview rows and a signed storage.googleapis.com CSV URL that expires in ~24h.",
         },
         {
+          type: "assistant",
+          text: "Got it — Ace returned **157,419 rows** as a signed CSV. Nothing is stored yet; next I'll land it in a MotherDuck table.",
+        },
+        {
           type: "warehouse",
           title: "MotherDuck",
           compactSubtitle: "gps_points ready",
@@ -3713,6 +3717,10 @@ window.CONVERSATIONS = {
           result: "5 sample GPS rows returned · columns are still strings because this is the simple first pass",
         },
         {
+          type: "assistant",
+          text: "Done — `gps_points` holds all 157,419 rows and the test query returns them. Notice the columns came back as raw strings; that's the first thing we'll fix.",
+        },
+        {
           type: "warehouse",
           title: "MotherDuck",
           compactSubtitle: "gps_points loaded",
@@ -3756,6 +3764,10 @@ window.CONVERSATIONS = {
           args: { sql: "CREATE SCHEMA IF NOT EXISTS bronze; CREATE SCHEMA IF NOT EXISTS silver; CREATE SCHEMA IF NOT EXISTS gold; CREATE OR REPLACE TABLE bronze.gps_raw AS SELECT *, now() AS _loaded_at, '<ace-chat-id>' AS _ace_chat_id, '<signed-url>' AS _source_url FROM geotab_demo_fh4.gps_points; CREATE OR REPLACE TABLE silver.planet_gps_pings AS SELECT DISTINCT DeviceId, DeviceName, DeviceTimeZoneId, try_cast(Latitude AS DOUBLE) AS latitude, try_cast(Longitude AS DOUBLE) AS longitude, try_cast(GpsDateTime AS TIMESTAMP) AS gps_datetime_utc, try_cast(Speed AS DOUBLE) AS speed_kmh FROM bronze.gps_raw WHERE DeviceId IS NOT NULL AND GpsDateTime IS NOT NULL;" },
           summary: "simple table refactored into bronze + silver",
           result: "bronze.gps_raw keeps 157,419 raw rows · silver.planet_gps_pings keeps typed/deduped rows",
+        },
+        {
+          type: "assistant",
+          text: "Refactored — **bronze** keeps the raw replay copy, **silver** holds the typed, deduped rows. Same data, now safe to reload daily.",
         },
         {
           type: "warehouse",
@@ -3905,6 +3917,10 @@ window.CONVERSATIONS = {
           result: "6 fact families + 6 dimensions now queryable; trips can join through driver assignments to dim_user, while UnknownDriverId remains explicit",
         },
         {
+          type: "assistant",
+          text: "Loaded — the warehouse now has **6 fact families and 6 dimensions**. The panel at the top shows them all; facts can now join to readable names through the dimensions.",
+        },
+        {
           type: "warehouse",
           title: "MotherDuck",
           compactSubtitle: "Operational mirror",
@@ -3997,15 +4013,13 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "One last trap: bronze keeps every version, so it's tempting to just replay bronze → silver. But a `DISTINCT ON (TripId)` replay **resurrects the retired ids** — bronze holds both `b10FEE52` *and* `b11011A1`, and they have different `TripId`s. So `Trip` doesn't replay like an immutable fact. Rebuild on the **stable drive key**, keeping the latest load:\n\n" +
-            "`CREATE OR REPLACE TABLE silver.trips AS SELECT DISTINCT ON (DeviceId, trip_start_utc) … FROM bronze.trips_raw ORDER BY DeviceId, trip_start_utc, _loaded_at DESC;`\n\n" +
-            "And driver assignments: the `DriverChange` events themselves *are* append-only, but `Trip.driver` is derived from them — it resolves to `dim_user.id` or the sentinel `UnknownDriverId`, so every trips→drivers join must tolerate that sentinel.\n\n" +
+            "One last trap: bronze keeps every version, so it's tempting to just replay bronze → silver — but that would **resurrect the retired ids** (bronze still holds the old `b10FEE52` next to the new `b11011A1`). The skill handles this for you: instead of keying on the trip id, its rebuild keeps **one row per drive, taking the most recently loaded version** — so a retired trip collapses into its replacement instead of doubling up.\n\n" +
+            "And driver assignments: the `DriverChange` events themselves *are* append-only, but `Trip.driver` is derived from them — it resolves to a real driver or the sentinel `UnknownDriverId`, so every trips→drivers join must tolerate that sentinel.\n\n" +
             "**The mental model — three shapes, three strategies:** immutable events (GPS, status, exceptions, faults) → append + dedup on the natural key · the mutable Trip → forward derive, then reconcile (DELETE retired + anti-join), or a drive-key rebuild · dimensions (Device, User/drivers, Zone, Rule, Diagnostic) → `Get`, no bronze, `CREATE OR REPLACE`.",
         },
       ],
       choices: [
         { label: "✅ Add quality checks and gap detection", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
-        { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
         { label: "🧩 Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
@@ -4040,6 +4054,10 @@ window.CONVERSATIONS = {
           result: "silver.fact_freshness 5 rows · silver.coverage_by_device 50 devices · silver.driver_assignment_coverage 88% assigned · silver.ingest_anomalies 2 warnings logged",
         },
         {
+          type: "assistant",
+          text: "Checks are in: everything passes except **driver coverage at 88%** (the rest are `UnknownDriverId`, kept explicit), plus the **2 semantic warnings** logged for review. All trust tables now live beside the data.",
+        },
+        {
           type: "warehouse",
           title: "MotherDuck",
           compactSubtitle: "Quality checks",
@@ -4048,7 +4066,7 @@ window.CONVERSATIONS = {
             { label: "Freshness rows", value: "5" },
             { label: "Driver coverage", value: "88%" },
             { label: "Warnings", value: "2" },
-            { label: "Ready marts", value: "3" },
+            { label: "Trust checks", value: "4" },
           ],
           stages: D.warehouse.stages.quality,
           note: "This also teaches why the returned Ace SQL is a feature: it lets you catch semantic drift before the data becomes business truth.",
@@ -4102,8 +4120,8 @@ window.CONVERSATIONS = {
             { label: "Lite compute", value: "10 CU-h/mo" },
             { label: "50 vehicles", value: "$0/mo" },
           ],
-          stages: D.warehouse.stages.operational,
-          note: "The panel still shows the real warehouse (the operational tables every path to here has already built) — the cost figures above are measured against exactly these bronze/silver/gold tables. Trust includes cost controls: row counts, bytes scanned, run seconds and alerts when usage jumps.",
+          stages: D.warehouse.stages.quality,
+          note: "The panel still shows the whole warehouse you've built — the cost figures above are measured against exactly these bronze/silver/gold tables. Trust includes cost controls: row counts, bytes scanned, run seconds and alerts when usage jumps.",
         },
       ],
       choices: [
@@ -4137,6 +4155,10 @@ window.CONVERSATIONS = {
           result: "fleet_ops_overview: 50 vehicles · driver_coaching_queue: 14 drivers · shop_worklist: 9 vehicles · idling_cost_daily refreshed",
         },
         {
+          type: "assistant",
+          text: "There it is — a **coaching queue of 14 drivers** and a **shop worklist of 9 vehicles**, both built from history no single live call could assemble. These gold marts are what you'd schedule, chart, or hand to an agent.",
+        },
+        {
           type: "warehouse",
           title: "MotherDuck",
           compactSubtitle: "Answer-ready marts",
@@ -4147,7 +4169,7 @@ window.CONVERSATIONS = {
             { label: "Shop worklist", value: "9 vehicles" },
             { label: "Refresh path", value: "scheduled" },
           ],
-          stages: D.warehouse.stages.quality,
+          stages: D.warehouse.stages.answers,
           note: "The final teaching moment: MCP is the access layer; MotherDuck is the memory layer; gold marts are the product surface.",
         },
       ],
