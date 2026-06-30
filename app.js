@@ -565,10 +565,10 @@
     if (motherduckPaneSummary) motherduckPaneSummary.textContent = summary;
     renderWarehouseBody(ev, motherduckPaneBody);
 
-    // The pane is persistent and collapsed by default: the transcript stays clean,
-    // but the latest MotherDuck state is always one click away. Point the user to
-    // it once, then let it update silently (a per-event "updated" line is noise).
-    setMotherduckPaneOpen(false);
+    // The pane is persistent and collapsed by default (clearChat sets that), but
+    // we preserve whatever state the user chose — if they opened it, it stays open
+    // as the conversation advances instead of snapping shut on every step.
+    setMotherduckPaneOpen(!motherduckPane.classList.contains("collapsed"));
     // Point to the panel once — but only after there's actually something to see,
     // so we don't say "see your tables" while the warehouse is still empty.
     if (!warehousePointerShown && tableCount > 0) {
