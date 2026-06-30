@@ -569,7 +569,9 @@
     // but the latest MotherDuck state is always one click away. Point the user to
     // it once, then let it update silently (a per-event "updated" line is noise).
     setMotherduckPaneOpen(false);
-    if (!warehousePointerShown) {
+    // Point to the panel once — but only after there's actually something to see,
+    // so we don't say "see your tables" while the warehouse is still empty.
+    if (!warehousePointerShown && tableCount > 0) {
       addSystem("Open the **MotherDuck** panel at the top to see your tables and schemas.");
       warehousePointerShown = true;
     }
