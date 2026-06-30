@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Replicate Geotab into your warehouse — with only MCP calls</title>
+
+    <!-- Deep-link entry for the MotherDuck warehouse path. Humans are redirected
+         into the flow; link unfurlers (Slack, Google Chat, …) read the social
+         card below. OG tags are per-page, so this needs its own URL — a #hash on
+         index.html can't change the card. -->
+    <meta
+      name="description"
+      content="Watch an AI assistant replicate Geotab data into a MotherDuck warehouse using only MCP calls — bronze/silver/gold, incremental refresh, no ETL."
+    />
+    <meta name="author" content="Felipe Hoffa" />
+    <link rel="canonical" href="https://fhoffa.github.io/geotab-mcp-simulator/warehouse.html" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Geotab MCP — Experience Simulator" />
+    <meta property="og:title" content="Replicate Geotab into your warehouse — with only MCP calls" />
+    <meta
+      property="og:description"
+      content="An AI assistant builds the whole Geotab → MotherDuck pipeline with only MCP calls: bronze/silver/gold, incremental refresh, no ETL. Try it on demo data."
+    />
+    <meta property="og:url" content="https://fhoffa.github.io/geotab-mcp-simulator/warehouse.html" />
+    <meta property="og:image" content="https://fhoffa.github.io/geotab-mcp-simulator/assets/og-warehouse.png?v=519f692" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Replicate Geotab into your warehouse — with only MCP calls" />
+    <meta
+      name="twitter:description"
+      content="An AI assistant builds the whole Geotab → MotherDuck pipeline with only MCP calls: bronze/silver/gold, incremental refresh, no ETL. Try it on demo data."
+    />
+    <meta name="twitter:image" content="https://fhoffa.github.io/geotab-mcp-simulator/assets/og-warehouse.png?v=519f692" />
+
+    <!-- Send people straight into the warehouse flow. Crawlers read OG first and
+         don't run JS, so they still get the card above. -->
+    <link rel="preload" as="image" href="assets/og-warehouse.png" />
+    <meta http-equiv="refresh" content="0; url=index.html#warehouse-intro" />
+    <script>
+      location.replace("index.html#warehouse-intro");
+    </script>
+    <style>
+      body {
+        margin: 0; min-height: 100vh; display: grid; place-items: center;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #f3f7fb; color: #142033;
+      }
+      a { color: #0e7490; }
+    </style>
+  </head>
+  <body>
+    <p>Opening the MotherDuck warehouse walkthrough… if it doesn't load,
+      <a href="index.html#warehouse-intro">continue here</a>.</p>
+  </body>
+</html>
