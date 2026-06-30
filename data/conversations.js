@@ -3607,12 +3607,36 @@ window.CONVERSATIONS = {
             { label: "Goal", value: "see rows land" },
           ],
           stages: D.warehouse.stages.empty,
-          note: "Bronze/silver/gold is intentionally not introduced yet; it will make more sense after the direct load works.",
+          note: "👉 Open the Warehouse panel at the top of the chat — it tracks every table as we build it (empty for now). Bronze/silver/gold is intentionally not introduced yet; it will make more sense after the direct load works.",
         },
       ],
       choices: [
         { label: "🦆 Start with GPS rows", say: "I already connected the Geotab MCP and created a free-tier MotherDuck account. Build me a warehouse starting with GPS points.", next: "warehouse-setup" },
+        { label: "❓ What is MotherDuck?", say: "Before we start — what actually is MotherDuck?", next: "warehouse-what-is" },
         { label: "↩︎ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-what-is": {
+      id: "warehouse-what-is",
+      title: "Warehouse · what is MotherDuck",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "**MotherDuck** is a serverless analytics warehouse built on **DuckDB** — the fast in-process SQL engine. You get DuckDB's speed with cloud storage, sharing and scale, plus a generous free tier, so a fleet warehouse like the one we're about to build can start at **$0**.\n\n" +
+            "Why it fits this Geotab workflow specifically:\n" +
+            "- It can read the **signed CSV URLs** Geotab Ace returns *directly* — `read_csv_auto('https://…')`, no download and no separate ETL service.\n" +
+            "- It speaks standard **DuckDB SQL** (window functions, `DISTINCT ON`, `QUALIFY`, spatial + H3), so the bronze/silver/gold transforms are just SQL.\n" +
+            "- The `query` / `query_rw` tools the assistant calls here are the real MotherDuck MCP interface — what you see is what you'd run.\n\n" +
+            "Full docs, the free tier and pricing are on their site: **[motherduck.com](https://motherduck.com)**.",
+        },
+      ],
+      choices: [
+        { label: "🦆 Start with GPS rows", say: "Got it. Now build me a warehouse starting with GPS points.", next: "warehouse-setup" },
+        { label: "↩︎ Back to the warehouse intro", say: "Go back to the warehouse intro.", next: "warehouse-intro" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
 
@@ -3698,7 +3722,7 @@ window.CONVERSATIONS = {
             { label: "Types", value: "raw strings" },
           ],
           stages: D.warehouse.stages.loaded,
-          note: "This direct table is intentionally naive. It is perfect for teaching the connection, but it is not yet safe for repeated daily loads.",
+          note: "👉 Open the Warehouse panel to watch gps_points fill — expand its sample rows to see the raw strings land. This direct table is intentionally naive: perfect for teaching the connection, but not yet safe for repeated daily loads.",
         },
       ],
       choices: [
@@ -3743,7 +3767,7 @@ window.CONVERSATIONS = {
             { label: "Why", value: "repeatable loads" },
           ],
           stages: D.warehouse.stages.layered,
-          note: "Bronze/silver/gold is not ceremony — it fixes URL expiry, overlap, type casting, dedup and provenance.",
+          note: "👉 In the Warehouse panel you can now see the bronze/silver/gold split. Bronze/silver/gold is not ceremony — it fixes URL expiry, overlap, type casting, dedup and provenance.",
         },
       ],
       choices: [
@@ -3890,13 +3914,99 @@ window.CONVERSATIONS = {
             { label: "Gold marts", value: "4" },
           ],
           stages: D.warehouse.stages.operational,
-          note: "Trips use driver assignments when present and tolerate UnknownDriverId when the vehicle had no assigned driver.",
+          note: "Loaded — but these trips went in append-only like GPS, and that's not safe yet: watch what tomorrow's re-split does to these rows.",
+        },
+      ],
+      choices: [
+        { label: "⚠️ Why trips & drivers can't just append", say: "Wait — trips and driver assignments aren't append-only like GPS. Show me what breaks and how to reconcile it.", next: "warehouse-restated" },
+        { label: "✅ Add quality checks and gap detection", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
+        { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
+        { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-restated": {
+      id: "warehouse-restated",
+      title: "Warehouse · trips aren't append-only",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Careful — we just loaded trips and driver assignments the *same* append-only way as GPS, and that's a bug waiting to happen. GPS pings, status, exceptions and faults are **immutable events**: once `(device, timestamp)` is written it never changes, so append + dedup is correct.\n\n" +
+            "**A `Trip` is different — it's derived, not recorded.** Geotab recomputes a trip's boundaries when new evidence arrives (a `DriverChange` assignment, or late/out-of-order GPS). A recompute can change the trip's stop time and give it a **brand-new `TripId`, retiring the old one**. So a trip you already loaded can vanish under its old id and reappear under a new id — an *update* that append + dedup never sees.\n\n" +
+            "👉 Keep the **Warehouse** panel (top of the chat) open for this one — you'll watch a retired trip row get replaced.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh4", typeName: "Trip", search: { id: "b10FEE52" }, propertySelector: { fields: ["id", "device", "start", "stop", "distance", "driver"] } },
+          summary: "the trip we loaded this morning is gone",
+          result: "[] — id b10FEE52 no longer exists. The 23:18 drive was b10FEE52 (23:18→23:28) at bootstrap; the source now has b11011A1 (23:18→23:42) for the same drive.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query",
+          args: { sql: "WITH src AS (SELECT TripId FROM read_csv_auto('<fresh-trips-csv-url>', all_varchar=true)), sil AS (SELECT TripId FROM silver.trips WHERE trip_start_utc::DATE = DATE '2026-06-29') SELECT (SELECT count(*) FROM sil WHERE TripId NOT IN (SELECT TripId FROM src)) AS orphaned_in_silver, (SELECT count(*) FROM src WHERE TripId NOT IN (SELECT TripId FROM sil)) AS missing_from_silver;" },
+          summary: "silver vs a fresh source pull for 06-29",
+          result: "orphaned_in_silver: 50 (retired ids still in silver) · missing_from_silver: 51 (current splits) — all clustered in the ~2h before the watermark",
+        },
+        {
+          type: "assistant",
+          text:
+            "Why a normal forward catch-up can't fix this: the re-split trip's **start is unchanged (23:18) and sits *before* the watermark**, so `WHERE start > watermark` never pulls the new id. Deduping on `TripId` can't help (the id changed), and deduping on `(DeviceId, start)` would keep the *stale* row.\n\n" +
+            "The fix is a **trip re-split reconcile** — run right after each forward trips load. Re-pull from `watermark − L`, where `L` ≥ your longest expected trip (a few hours for urban fleets, ≥24–36h for long-haul). The same lookback also catches long trips that *completed* after a shorter trip advanced the watermark.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: {
+            database: "demo_fh4",
+            new_chat: true,
+            prompt: "List every Trip that started after 2026-06-29 21:28:52 UTC (watermark minus a 2h lookback), across all devices. Return exact columns: TripId, DeviceId, DeviceName, Start, Stop, Distance, DrivingDuration, Driver. Use UTC. Do not summarize or aggregate.",
+          },
+          summary: "re-pull the settling window into bronze",
+          result: "1,647 rows in signed CSV · landed append-only in bronze.trips_raw with _batch_id='reconcile:2026-06-29 21:28:52'",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "DELETE FROM silver.trips WHERE trip_start_utc >= TIMESTAMP '2026-06-29 21:28:52' AND TripId NOT IN (SELECT TripId FROM bronze.trips_raw WHERE _batch_id = 'reconcile:2026-06-29 21:28:52'); INSERT INTO silver.trips SELECT DISTINCT ON (TripId) DeviceId, DeviceName, TripId, try_cast(replace(Start,' UTC','') AS TIMESTAMP) AS trip_start_utc, try_cast(replace(Stop,' UTC','') AS TIMESTAMP) AS trip_end_utc, coalesce(Driver,'UnknownDriverId') AS driver_id FROM bronze.trips_raw b WHERE b._batch_id = 'reconcile:2026-06-29 21:28:52' AND NOT EXISTS (SELECT 1 FROM silver.trips s WHERE s.TripId = b.TripId);" },
+          summary: "DELETE retired orphans + anti-join the current splits",
+          result: "DELETE 50 retired orphans · INSERT 51 current splits · day now 2,138 == 2,138, 0 orphans, 0 missing. This is the one place the warehouse DELETEs silver facts — justified because the source retired those ids.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Trips reconciled",
+          subtitle: "Bronze keeps every version of the drive; silver holds one current row per drive, keyed on (DeviceId, trip_start_utc).",
+          metrics: [
+            { label: "Mutable fact", value: "Trip" },
+            { label: "Retired ids", value: "50 deleted" },
+            { label: "Re-split", value: "51 inserted" },
+            { label: "Reconciled", value: "2,138 = 2,138" },
+          ],
+          stages: D.warehouse.stages.restated,
+          note: "👉 Open the Warehouse panel to compare bronze.trips_raw (two versions of the 23:18 drive) with silver.trips (only the current b11011A1).",
+        },
+        {
+          type: "assistant",
+          text:
+            "One last trap: bronze keeps every version, so it's tempting to just replay bronze → silver. But a `DISTINCT ON (TripId)` replay **resurrects the retired ids** — bronze holds both `b10FEE52` *and* `b11011A1`, and they have different `TripId`s. So `Trip` doesn't replay like an immutable fact. Rebuild on the **stable drive key**, keeping the latest load:\n\n" +
+            "`CREATE OR REPLACE TABLE silver.trips AS SELECT DISTINCT ON (DeviceId, trip_start_utc) … FROM bronze.trips_raw ORDER BY DeviceId, trip_start_utc, _loaded_at DESC;`\n\n" +
+            "And driver assignments: the `DriverChange` events themselves *are* append-only, but `Trip.driver` is derived from them — it resolves to `dim_user.id` or the sentinel `UnknownDriverId`, so every trips→drivers join must tolerate that sentinel.\n\n" +
+            "**The mental model — three shapes, three strategies:** immutable events (GPS, status, exceptions, faults) → append + dedup on the natural key · the mutable Trip → forward derive, then reconcile (DELETE retired + anti-join), or a drive-key rebuild · dimensions (Device, User/drivers, Zone, Rule, Diagnostic) → `Get`, no bronze, `CREATE OR REPLACE`.",
         },
       ],
       choices: [
         { label: "✅ Add quality checks and gap detection", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
         { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
-        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "🧩 Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
     },
@@ -3910,24 +4020,24 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "Before scheduling this, decide what counts as trustworthy. The checks are not looking for every vehicle and driver in every fact table; they are looking for gaps we cannot explain.\n\n" +
-            "Examples: parked vehicles may have no GPS/trips today even though `dim_device` still lists the full fleet. Trips without an assigned driver should stay explicit as `UnknownDriverId`, not disappear from the report.",
+            "Examples: parked vehicles may have no GPS/trips today even though `dim_device` still lists the full fleet. Trips without an assigned driver should stay explicit as `UnknownDriverId`, not disappear from the report. We also keep two **semantic** warnings from reading the SQL Ace returned — Ace added a `Speed != 0` filter to a status prompt, and picked a different source table for two equivalent trip prompts — because that drift never shows up as a bad row, only as a wrong shape.",
         },
         {
           type: "tool",
           server: "motherduck",
           name: "query",
-          args: { sql: "SELECT table_name, max_event_time, lag_minutes, devices_seen, expected_devices FROM silver.fact_freshness JOIN silver.coverage_by_device;" },
-          summary: "freshness + coverage checked",
-          result: "gps: 2 min lag / 26 active devices · trips: event-driven · driver assignments: 88% assigned, UnknownDriverId kept explicit · faults: latest 9h ago but valid · exceptions: 50 devices covered",
+          args: { sql: "SELECT 'gps: dupes on (DeviceId,GpsDateTime)' AS check, (count(*) - count(DISTINCT DeviceId || '|' || gps_datetime_utc::VARCHAR))::VARCHAR AS value FROM silver.planet_gps_pings UNION ALL SELECT 'gps: null natural key', count(*) FILTER (WHERE DeviceId IS NULL OR gps_datetime_utc IS NULL)::VARCHAR FROM silver.planet_gps_pings UNION ALL SELECT 'gps: future rows', count(*) FILTER (WHERE gps_datetime_utc > now())::VARCHAR FROM silver.planet_gps_pings UNION ALL SELECT 'gps: freshness minutes', round(date_diff('minute', max(gps_datetime_utc), now()), 0)::VARCHAR FROM silver.planet_gps_pings UNION ALL SELECT 'trips: device not in dim_device', count(DISTINCT t.DeviceId) FILTER (WHERE d.id IS NULL)::VARCHAR FROM silver.trips t LEFT JOIN silver.dim_device d ON d.id = t.DeviceId UNION ALL SELECT 'trips: re-split orphans (06-29)', count(*)::VARCHAR FROM silver.trips s WHERE s.trip_start_utc::DATE = DATE '2026-06-29' AND s.TripId NOT IN (SELECT TripId FROM bronze.trips_raw WHERE _batch_id = 'reconcile:2026-06-29 21:28:52');" },
+          summary: "quality battery — one row per check, non-zero = investigate",
+          result: "gps dupes 0 · null key 0 · future rows 0 · freshness 2 min · trips device-not-in-dim 0 · re-split orphans 0 (reconciled)",
         },
         {
           type: "tool",
           server: "motherduck",
           name: "query_rw",
           write: true,
-          args: { sql: "INSERT INTO silver.ingest_anomalies SELECT ... WHERE returned_sql_contains_unrequested_filter OR row_count_deviates_from_expected_window;" },
-          summary: "2 warnings logged for review",
-          result: "warning 1: Ace added Speed != 0 to a status prompt · warning 2: Trip source table changed between two equivalent prompts",
+          args: { sql: "CREATE TABLE IF NOT EXISTS silver.warehouse_quality_checks (run_id UUID, check VARCHAR, value VARCHAR, passed BOOLEAN, checked_at TIMESTAMP); INSERT INTO silver.warehouse_quality_checks SELECT uuid(), check, value, value = '0', now() FROM (SELECT 'gps: dupes on (DeviceId,GpsDateTime)' AS check, (count(*) - count(DISTINCT DeviceId || '|' || gps_datetime_utc::VARCHAR))::VARCHAR AS value FROM silver.planet_gps_pings UNION ALL SELECT 'gps: future rows', count(*) FILTER (WHERE gps_datetime_utc > now())::VARCHAR FROM silver.planet_gps_pings UNION ALL SELECT 'trips: device not in dim_device', count(DISTINCT t.DeviceId) FILTER (WHERE d.id IS NULL)::VARCHAR FROM silver.trips t LEFT JOIN silver.dim_device d ON d.id = t.DeviceId);" },
+          summary: "results appended to a time series for alerting",
+          result: "3 checks recorded with run_id + checked_at · all passed=true this run · regressions now alertable against history",
         },
         {
           type: "warehouse",
@@ -3947,7 +4057,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
         { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
-        { label: "🧩 Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
+        { label: "🧩 How trips re-split", say: "Remind me why trips and driver assignments aren't append-only.", next: "warehouse-restated" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
     },
@@ -3992,8 +4102,8 @@ window.CONVERSATIONS = {
             { label: "Lite compute", value: "10 CU-h/mo" },
             { label: "50 vehicles", value: "$0/mo" },
           ],
-          stages: D.warehouse.stages.costs,
-          note: "Trust includes cost controls: row counts, bytes scanned, run seconds and alerts when usage jumps.",
+          stages: D.warehouse.stages.quality,
+          note: "The panel still shows the real warehouse — the cost figures above are measured against exactly these bronze/silver/gold tables. Trust includes cost controls: row counts, bytes scanned, run seconds and alerts when usage jumps.",
         },
       ],
       choices: [

@@ -292,6 +292,29 @@ window.SAMPLE_DATA = {
           { name: "gold.idling_cost_daily", rows: "31 days", },
         ] },
       ],
+      restated: [
+        { kind: "bronze", name: "Bronze", status: "every version kept", active: true, tables: [
+          { name: "bronze.trips_raw", rows: "8,412 rows", note: "append-only: retired + current trip ids both on disk", sample: [
+            { TripId: "b10FEE52", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:28:51", _batch_id: "forward" },
+            { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", _batch_id: "reconcile" },
+          ] },
+          { name: "bronze.driver_changes_raw", rows: "1,126 rows", note: "DriverChange login/logout — append-only events", sample: [
+            { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-29 23:18:24", type: "login" },
+            { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-30 02:41:10", type: "logout" },
+          ] },
+        ] },
+        { kind: "silver", name: "Silver", status: "reconciled", active: true, tables: [
+          { name: "silver.trips", rows: "8,407 rows", note: "1 row per drive · key (DeviceId, trip_start_utc) · latest load wins", sample: [
+            { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", driver_id: "u_demo_31" },
+            { TripId: "b10F7C03", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", driver_id: "UnknownDriverId" },
+          ] },
+          { name: "silver.driver_assignments", rows: "1,118 rows", note: "Trip.driver → dim_user.id or UnknownDriverId" },
+          { name: "silver.dim_user", rows: "113 rows", note: "drivers are Users with isDriver=true" },
+        ] },
+        { kind: "gold", name: "Gold", status: "reconcile audit", active: true, tables: [
+          { name: "gold.trip_reconcile_log", rows: "50 retired · 51 re-split" },
+        ] },
+      ],
       quality: [
         { kind: "bronze", name: "Bronze", status: "audited", active: true, tables: [
           { name: "bronze.gps_raw", rows: "698,323 rows" },
@@ -310,24 +333,8 @@ window.SAMPLE_DATA = {
           { name: "gold.shop_worklist", rows: "9 rows" },
         ] },
       ],
-      costs: [
-        { kind: "default", name: "Measured anchor", status: "live skill data", active: true, tables: [
-          { name: "cost.measured_database_size", rows: "35.2 MiB" },
-          { name: "cost.gps_storage_rate", rows: "54 B/ping bronze+silver" },
-          { name: "cost.refresh_cycle", rows: "25–30 CU-sec" },
-        ] },
-        { kind: "default", name: "Lite free tier", status: "$0 path", active: true, tables: [
-          { name: "plan.lite_storage", rows: "10 GB included" },
-          { name: "plan.lite_compute", rows: "10 CU-hours/month" },
-          { name: "plan.lite_capacity", rows: "~300 vehicle-years" },
-        ] },
-        { kind: "default", name: "Scale examples", status: "monthly", tables: [
-          { name: "estimate.50_vehicles", rows: "$0/mo" },
-          { name: "estimate.500_vehicles_business", rows: "~$260/mo" },
-          { name: "estimate.5000_vehicles_business", rows: "~$270–300/mo" },
-          { name: "estimate.50000_vehicles_business", rows: "~$370–520/mo" },
-        ] },
-      ],
+      /* The cost node reuses the `quality` stage above — the MotherDuck panel
+         always shows the real bronze/silver/gold tables, never pricing rows. */
     },
   },
 };

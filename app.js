@@ -491,19 +491,18 @@
     if (!rows.length) return null;
     var details = el("details", "warehouse-sample");
     details.appendChild(el("summary", "warehouse-sample-toggle", "Sample rows"));
+    var scroll = el("div", "warehouse-sample-scroll");
+    // One grid for header + every data cell, so columns share tracks and always
+    // line up (separate per-row grids size their columns independently and drift).
     var grid = el("div", "warehouse-sample-grid");
     var cols = Object.keys(rows[0] || {});
-    var header = el("div", "warehouse-sample-row warehouse-sample-head");
-    header.style.setProperty("--warehouse-sample-cols", cols.length);
-    cols.forEach(function (c) { header.appendChild(el("span", null, escapeHtml(c))); });
-    grid.appendChild(header);
+    grid.style.setProperty("--warehouse-sample-cols", cols.length);
+    cols.forEach(function (c) { grid.appendChild(el("span", "warehouse-sample-cell warehouse-sample-head", escapeHtml(c))); });
     rows.forEach(function (r) {
-      var sr = el("div", "warehouse-sample-row");
-      sr.style.setProperty("--warehouse-sample-cols", cols.length);
-      cols.forEach(function (c) { sr.appendChild(el("span", null, escapeHtml(String(r[c] == null ? "" : r[c])))); });
-      grid.appendChild(sr);
+      cols.forEach(function (c) { grid.appendChild(el("span", "warehouse-sample-cell", escapeHtml(String(r[c] == null ? "" : r[c])))); });
     });
-    details.appendChild(grid);
+    scroll.appendChild(grid);
+    details.appendChild(scroll);
     return details;
   }
 

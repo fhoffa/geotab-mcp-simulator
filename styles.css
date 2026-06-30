@@ -8,6 +8,7 @@
   --accent: #0e7490; /* cool harbor blue */
   --accent-ink: #0a5268;
   --accent-soft: #e5f5fa;
+  --md: #f5b400; /* MotherDuck duck-amber — warehouse pane tint */
   --user-bg: #e7f0ff;
   --tool-bg: #f8fbfe;
   --tool-line: #d2e0ec;
@@ -1108,8 +1109,9 @@ body {
   top: 59px;
   z-index: 4;
   width: 100%;
-  border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel) 94%, var(--bg));
+  border-top: 2px solid color-mix(in srgb, var(--md) 55%, var(--line));
+  border-bottom: 1px solid color-mix(in srgb, var(--md) 30%, var(--line));
+  background: color-mix(in srgb, var(--md) 7%, var(--panel));
   backdrop-filter: blur(12px);
 }
 .motherduck-pane.hidden { display: none; }
@@ -1128,7 +1130,7 @@ body {
   font: inherit;
   cursor: pointer;
 }
-.motherduck-pane-toggle:hover { background: var(--tool-bg); }
+.motherduck-pane-toggle:hover { background: color-mix(in srgb, var(--md) 14%, var(--panel)); }
 .motherduck-pane-title { min-width: 0; display: grid; gap: 0; }
 .motherduck-pane-body {
   display: block;
@@ -1147,8 +1149,8 @@ body {
   width: 24px;
   height: 24px;
   border-radius: 7px;
-  background: var(--tool-bg);
-  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--md) 22%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--md) 45%, var(--line));
   font-size: 14px;
 }
 .warehouse-kicker {
@@ -1290,23 +1292,34 @@ body {
   transition: transform 0.15s ease;
 }
 .warehouse-sample[open] .warehouse-sample-toggle::before { transform: rotate(90deg); }
-.warehouse-sample-grid {
-  margin-top: 4px;
+.warehouse-sample-scroll {
+  margin-top: 5px;
   overflow-x: auto;
+  border-radius: 6px;
 }
-.warehouse-sample-row {
+.warehouse-sample-grid {
   display: grid;
-  grid-template-columns: repeat(var(--warehouse-sample-cols, 5), minmax(88px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(var(--warehouse-sample-cols, 5), minmax(max-content, auto));
+  gap: 3px 16px;
+  width: max-content;
+  min-width: 100%;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 10.5px;
   color: var(--ink);
-  padding: 2px 0;
+}
+.warehouse-sample-cell {
+  white-space: nowrap;
+  padding: 1px 0;
 }
 .warehouse-sample-head {
   color: var(--ink-soft);
   font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 3px;
+  margin-bottom: 1px;
 }
 
 [data-server="motherduck"] .tool-dot { background: #6b5bd6; }
