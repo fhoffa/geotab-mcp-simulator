@@ -15,7 +15,6 @@
   var trayEl = document.getElementById("tray");
   var connEl = document.getElementById("connStatus");
   var restartBtn = document.getElementById("restartBtn");
-  var shareBtn = document.getElementById("shareBtn");
   var landingOverlay = document.getElementById("landingOverlay");
   var startSimBtn = document.getElementById("startSimBtn");
   var tryRealOverlay = document.getElementById("tryRealOverlay");
@@ -749,27 +748,10 @@
   function closeAbout() { closeOverlay(aboutOverlay); }
 
   /* ------------------------------------------------------------- controls */
-  // copy a deep link to the current node (the hash already tracks playback in
-  // playNode via replaceState) so people can share "look at *this* answer".
-  function shareLink() {
-    var url = location.href;
-    var done = function () {
-      var prev = shareBtn.textContent;
-      shareBtn.textContent = "✓ Link copied";
-      setTimeout(function () { shareBtn.textContent = prev; }, 1600);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(done, function () { window.prompt("Copy this link:", url); });
-    } else {
-      window.prompt("Copy this link:", url);
-    }
-  }
-
   function clearChat() { chatEl.innerHTML = ""; trayEl.innerHTML = ""; }
   function restart() { playToken++; clearChat(); playNode(GRAPH.start); }
 
   restartBtn.addEventListener("click", restart);
-  shareBtn.addEventListener("click", shareLink);
   startSimBtn.addEventListener("click", closeLanding);
   settingsBtn.addEventListener("click", openSettings);
   settingsClose.addEventListener("click", closeSettings);
