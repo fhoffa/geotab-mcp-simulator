@@ -3630,7 +3630,7 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "Not as an official recommendation. This MCP-orchestrated Geotab → MotherDuck warehouse path is **new and not yet tested at scale**. It's interesting in this new MCP world because the assistant can coordinate both sides — ask Geotab for rows, then ask MotherDuck to load and transform them — without a separate ETL service.\n\n" +
-            "We should treat it as an experiment, not a replacement for proven production patterns. I'll update this node with alternatives that Geotab customers have used for years to replicate fleet data into their own warehouses.",
+            "We should treat it as an experiment, not a replacement for proven production patterns. We'll update this node with alternatives that Geotab customers have used for years to replicate fleet data into their own warehouses.",
         },
       ],
       choices: [
