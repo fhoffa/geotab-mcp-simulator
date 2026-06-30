@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<!--
+  Source for assets/og-warehouse.png — the social card for warehouse.html.
+  Rendered at 1200x630 by scripts/shoot-og-warehouse.mjs (playwright-core + Chrome).
+  Edit here, then re-run that script to regenerate the PNG.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      :root {
+        --bg: #f3f7fb;
+        --ink: #142033;
+        --ink-soft: #5b6b80;
+        --line: #d9e4ef;
+        --panel: #ffffff;
+        --geotab: #0a7d3c;
+        --accent: #0e7490;
+        --md: #f5b400;
+        --bronze: #9a6b2f;
+        --silver: #64748b;
+        --gold: #9f7a24;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 1200px; height: 630px; }
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 88% -10%, rgba(245, 180, 0, 0.16), transparent 42%),
+          radial-gradient(circle at 0% 0%, rgba(14, 116, 144, 0.12), transparent 40%),
+          linear-gradient(180deg, #f8fbff 0%, var(--bg) 60%);
+        padding: 64px 72px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-top: 10px solid var(--md);
+      }
+      .kicker {
+        display: flex; align-items: center; gap: 14px;
+        font-size: 20px; font-weight: 800; letter-spacing: 0.14em;
+        text-transform: uppercase; color: var(--ink-soft);
+      }
+      .kicker .duck {
+        display: grid; place-items: center; width: 44px; height: 44px;
+        border-radius: 12px; background: color-mix(in srgb, var(--md) 22%, white);
+        border: 1px solid color-mix(in srgb, var(--md) 55%, var(--line)); font-size: 24px;
+      }
+      .kicker b { color: var(--geotab); }
+      .kicker .x { color: var(--md); font-weight: 900; }
+      h1 {
+        font-size: 60px; line-height: 1.06; letter-spacing: -0.02em; max-width: 18ch;
+      }
+      h1 .hl { color: var(--accent); }
+      .sub { font-size: 26px; color: var(--ink-soft); line-height: 1.35; max-width: 30ch; margin-top: 6px; }
+      .flow { display: flex; align-items: center; gap: 14px; }
+      .pill {
+        display: flex; flex-direction: column; gap: 2px;
+        padding: 14px 22px; border-radius: 16px; background: var(--panel);
+        border: 1px solid var(--line); box-shadow: 0 8px 22px rgba(20, 32, 51, 0.06);
+      }
+      .pill .lbl { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 9px; }
+      .pill .meta { font-size: 16px; color: var(--ink-soft); }
+      .dot { width: 13px; height: 13px; border-radius: 999px; }
+      .src { border-color: color-mix(in srgb, var(--geotab) 40%, var(--line)); }
+      .src .dot { background: var(--geotab); }
+      .b .dot { background: var(--bronze); } .b { border-color: color-mix(in srgb, var(--bronze) 35%, var(--line)); }
+      .s .dot { background: var(--silver); } .s { border-color: color-mix(in srgb, var(--silver) 35%, var(--line)); }
+      .g .dot { background: var(--gold); } .g { border-color: color-mix(in srgb, var(--gold) 38%, var(--line)); }
+      .arrow { font-size: 30px; color: var(--md); font-weight: 900; }
+      .foot { display: flex; align-items: center; justify-content: space-between; }
+      .foot .url { font-size: 22px; font-weight: 700; color: var(--accent); }
+      .foot .tag { font-size: 19px; color: var(--ink-soft); }
+      .mcp { color: var(--md); font-weight: 800; }
+    </style>
+  </head>
+  <body>
+    <div class="kicker"><span class="duck">🦆</span> <b>GEOTAB</b> <span class="x">×</span> MOTHERDUCK</div>
+
+    <div>
+      <h1>Replicate your Geotab data into your own <span class="hl">data warehouse</span></h1>
+      <p class="sub">An AI assistant builds the whole pipeline with <span class="mcp">only MCP calls</span> — no ETL.</p>
+    </div>
+
+    <div class="flow">
+      <div class="pill src"><span class="lbl"><span class="dot"></span>Geotab MCP</span><span class="meta">Ace CSV · Get</span></div>
+      <span class="arrow">→</span>
+      <div class="pill b"><span class="lbl"><span class="dot"></span>Bronze</span><span class="meta">raw, append-only</span></div>
+      <span class="arrow">→</span>
+      <div class="pill s"><span class="lbl"><span class="dot"></span>Silver</span><span class="meta">typed · deduped</span></div>
+      <span class="arrow">→</span>
+      <div class="pill g"><span class="lbl"><span class="dot"></span>Gold</span><span class="meta">answer-ready marts</span></div>
+    </div>
+
+    <div class="foot">
+      <span class="url">fhoffa.github.io/geotab-mcp-simulator</span>
+      <span class="tag">Interactive simulator — try it on demo data</span>
+    </div>
+  </body>
+</html>
