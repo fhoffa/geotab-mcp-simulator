@@ -66,7 +66,8 @@ window.CONVERSATIONS = {
           text:
             "Hi, I'm an assistant. Once you connect the Geotab MCP connector, I can read live data from your fleet " +
             "and take actions on it, right here in chat — no separate dashboard.\n\n" +
-            "(Worth knowing: the connector itself is just an open MCP server. Copilot, ChatGPT, Claude — anything " +
+            "(Worth knowing: MCP is the *Model Context Protocol* — an open standard for connecting AI assistants " +
+            "to tools — and the connector is just an open MCP server. Copilot, ChatGPT, Claude — anything " +
             "that speaks MCP can plug into the same one. No single assistant is special here.)\n\n" +
             "One practical detail: the MCP server does not automatically know or enumerate every database your " +
             "account can access. You need to know the database name you want, then ask the assistant to use it.\n\n" +
