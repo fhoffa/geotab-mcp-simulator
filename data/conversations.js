@@ -3917,6 +3917,7 @@ window.CONVERSATIONS = {
           args: {
             database: "demo_fh4",
             calls: [
+              { method: "Get", params: { typeName: "Device", propertySelector: { fields: ["id", "name", "vehicleIdentificationNumber", "groups"] }, resultsLimit: 1000 } },
               { method: "Get", params: { typeName: "User", search: { isDriver: true }, propertySelector: { fields: ["id", "name", "firstName", "lastName", "activeFrom", "activeTo", "isDriver"] }, resultsLimit: 1000 } },
               { method: "Get", params: { typeName: "Rule", propertySelector: { fields: ["id", "name", "activeFrom", "activeTo"] }, resultsLimit: 1000 } },
               { method: "Get", params: { typeName: "Diagnostic", propertySelector: { fields: ["id", "name", "source", "unitOfMeasure"] }, resultsLimit: 1000 } },
@@ -3925,7 +3926,7 @@ window.CONVERSATIONS = {
             ],
           },
           summary: "dimension snapshots returned",
-          result: "dim_user includes driver Users · dim_rule · dim_diagnostic · dim_zone · dim_group refreshed via exact Get API",
+          result: "dim_device is the full fleet roster · dim_user includes driver Users · dim_rule · dim_diagnostic · dim_zone · dim_group refreshed via exact Get API",
         },
         {
           type: "tool",

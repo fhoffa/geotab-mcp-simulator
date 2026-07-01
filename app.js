@@ -431,56 +431,109 @@
   function fallbackWarehouseSample(t) {
     if (!tableHasRows(t)) return [];
     var name = String(t.name || "table");
-    var base = { sample_key: "demo", rows: String(t.rows || "") };
     if (/gps|pings/.test(name)) return [
       { device: "Demo - 02", event_time: "2026-06-30 08:14:22", speed: "48 km/h", lat: "39.4699", lon: "-0.3763" },
-      { device: "Demo - 14", event_time: "2026-06-30 08:14:25", speed: "0 km/h", lat: "39.4731", lon: "-0.3808" }
+      { device: "Demo - 14", event_time: "2026-06-30 08:14:25", speed: "0 km/h", lat: "39.4731", lon: "-0.3808" },
+      { device: "Demo - 31", event_time: "2026-06-30 08:14:27", speed: "67 km/h", lat: "39.4564", lon: "-0.3521" }
+    ];
+    if (/reconcile/.test(name)) return [
+      { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEE52", new_trip_id: "b11011A1", action: "re-split" },
+      { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEE31", new_trip_id: "b1101196", action: "re-split" },
+      { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEDF7", new_trip_id: "b11011C4", action: "re-split" }
     ];
     if (/trip/.test(name)) return [
-      { device: "Demo - 08", trip_start: "2026-06-30 07:10", driver_id: "u_demo_17", distance_km: "18.4", duration_min: "31" }
+      { device: "Demo - 08", trip_start: "2026-06-30 07:10", driver_id: "u_demo_17", distance_km: "18.4", duration_min: "31" },
+      { device: "Demo - 21", trip_start: "2026-06-30 07:42", driver_id: "u_demo_04", distance_km: "9.7", duration_min: "22" },
+      { device: "Demo - 14", trip_start: "2026-06-30 08:05", driver_id: "UnknownDriverId", distance_km: "5.1", duration_min: "14" }
+    ];
+    if (/driver_assignment_coverage/.test(name)) return [
+      { device: "Demo - 08", trips_today: "6", assigned: "6", unknown_driver: "0" },
+      { device: "Demo - 14", trips_today: "4", assigned: "3", unknown_driver: "1" },
+      { device: "Demo - 21", trips_today: "5", assigned: "5", unknown_driver: "0" }
     ];
     if (/driver_assignment|driver_assignments|driver_changes/.test(name)) return [
       { device: "Demo - 08", driver_id: "u_demo_17", active_from: "2026-06-30 07:06", source: "DriverChange" },
-      { device: "Demo - 14", driver_id: "UnknownDriverId", active_from: "2026-06-30 08:00", source: "unassigned" }
+      { device: "Demo - 14", driver_id: "UnknownDriverId", active_from: "2026-06-30 08:00", source: "unassigned" },
+      { device: "Demo - 21", driver_id: "u_demo_04", active_from: "2026-06-30 07:38", source: "DriverChange" }
     ];
     if (/status_data/.test(name)) return [
-      { device: "Demo - 21", diagnostic: "EngineSpeed", event_time: "2026-06-30 08:12", value: "1420" }
+      { device: "Demo - 21", diagnostic: "EngineSpeed", event_time: "2026-06-30 08:12", value: "1420" },
+      { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-30 08:12", value: "92" },
+      { device: "Demo - 02", diagnostic: "Fuel level", event_time: "2026-06-30 08:11", value: "63" }
     ];
     if (/exception/.test(name)) return [
-      { device: "Demo - 31", rule: "Posted speed", event_time: "2026-06-30 08:03", severity: "review" }
+      { device: "Demo - 31", rule: "Posted speed", event_time: "2026-06-30 08:03", severity: "review" },
+      { device: "Demo - 14", rule: "Harsh braking", event_time: "2026-06-30 08:09", severity: "coach" },
+      { device: "Demo - 08", rule: "Idling", event_time: "2026-06-30 08:22", severity: "info" }
     ];
     if (/fault/.test(name)) return [
-      { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-29 21:44", fault_state: "active" }
+      { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-29 21:44", fault_state: "active" },
+      { device: "Demo - 22", diagnostic: "DPF regeneration", event_time: "2026-06-29 18:02", fault_state: "cleared" },
+      { device: "Demo - 31", diagnostic: "Low tire pressure", event_time: "2026-06-29 14:37", fault_state: "active" }
+    ];
+    if (/dim_device/.test(name)) return [
+      { name: "Demo - 06", vin: "WDB9076571P106588" },
+      { name: "Demo - 08", vin: "WDB9076571P106590" },
+      { name: "Demo - 12", vin: "WDF9634031C001659" }
     ];
     if (/dim_user/.test(name)) return [
-      { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" }
+      { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" },
+      { user_id: "u_demo_04", display_name: "Driver 04", home_group: "Barcelona" },
+      { user_id: "u_demo_31", display_name: "Driver 31", home_group: "Madrid" }
+    ];
+    if (/dim_zone/.test(name)) return [
+      { zone_id: "z_val_depot", name: "Valencia depot", type: "Customer" },
+      { zone_id: "z_bcn_lez", name: "Barcelona LEZ", type: "Zone" },
+      { zone_id: "z_mad_hub", name: "Madrid hub", type: "Customer" }
+    ];
+    if (/dim_group/.test(name)) return [
+      { group_id: "g_valencia", name: "Valencia", parent: "Company Group" },
+      { group_id: "g_barcelona", name: "Barcelona", parent: "Company Group" },
+      { group_id: "g_madrid", name: "Madrid", parent: "Company Group" }
     ];
     if (/dim_rule/.test(name)) return [
-      { rule_id: "r_posted_speed", name: "Posted speed", active: "true" }
+      { rule_id: "r_posted_speed", name: "Posted speed", active: "true" },
+      { rule_id: "r_harsh_brake", name: "Harsh braking", active: "true" },
+      { rule_id: "r_idling", name: "Idling", active: "true" }
     ];
     if (/dim_diagnostic/.test(name)) return [
-      { diagnostic_id: "d_engine_speed", name: "EngineSpeed", unit: "rpm" }
+      { diagnostic_id: "d_engine_speed", name: "EngineSpeed", unit: "rpm" },
+      { diagnostic_id: "d_coolant_temp", name: "Engine coolant temp", unit: "°C" },
+      { diagnostic_id: "d_fuel_level", name: "Fuel level", unit: "%" }
     ];
     if (/daily_device_km/.test(name)) return [
-      { date: "2026-06-30", device: "Demo - 02", km: "142.8" }
+      { date: "2026-06-30", device: "Demo - 02", km: "142.8" },
+      { date: "2026-06-30", device: "Demo - 14", km: "88.3" },
+      { date: "2026-06-30", device: "Demo - 31", km: "205.1" }
     ];
     if (/driver_safety_score|coaching/.test(name)) return [
-      { driver: "Driver 31", score: "72", reason: "speed exceptions per km" }
+      { driver: "Driver 31", score: "72", reason: "speed exceptions per km" },
+      { driver: "Driver 14", score: "81", reason: "harsh braking events" },
+      { driver: "Driver 04", score: "93", reason: "clean week" }
     ];
     if (/maintenance|shop_worklist/.test(name)) return [
-      { device: "Demo - 08", priority: "P2", reason: "fault cluster + downtime" }
+      { device: "Demo - 08", priority: "P2", reason: "fault cluster + downtime" },
+      { device: "Demo - 22", priority: "P3", reason: "DPF regen overdue" },
+      { device: "Demo - 31", priority: "P1", reason: "low tire pressure, active" }
     ];
     if (/idling/.test(name)) return [
-      { date: "2026-06-30", group: "Valencia", estimated_cost_usd: "38" }
+      { date: "2026-06-30", group: "Valencia", estimated_cost_usd: "38" },
+      { date: "2026-06-30", group: "Barcelona", estimated_cost_usd: "24" },
+      { date: "2026-06-30", group: "Madrid", estimated_cost_usd: "51" }
     ];
     if (/freshness/.test(name)) return [
-      { table_name: "silver.planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" }
+      { table_name: "silver.planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" },
+      { table_name: "silver.status_data", max_event_time: "2026-06-30 08:14", lag_minutes: "3" },
+      { table_name: "silver.exception_events", max_event_time: "2026-06-30 08:09", lag_minutes: "8" }
     ];
     if (/coverage/.test(name)) return [
-      { device: "Demo - 02", gps_seen: "true", expected_today: "true" }
+      { device: "Demo - 02", gps_seen: "true", expected_today: "true" },
+      { device: "Demo - 37", gps_seen: "false", expected_today: "true" },
+      { device: "Demo - 14", gps_seen: "true", expected_today: "true" }
     ];
     if (/anomal/.test(name)) return [
-      { check_name: "returned_sql_filter", severity: "warn", status: "needs review" }
+      { check_name: "returned_sql_filter", severity: "warn", status: "needs review" },
+      { check_name: "gps_gap > 30min", severity: "warn", status: "needs review" }
     ];
     if (/fleet_ops_overview/.test(name)) return [
       { vehicles: "50", active_today: "26", open_faults: "9", coaching_queue: "14" }
@@ -488,7 +541,9 @@
     if (/storage|compute|refresh|query_cost|load_runs|row_counts|cost/.test(name)) return [
       { measure: name, value: String(t.rows || ""), source: "measured/estimated" }
     ];
-    return [base];
+    // No curated shape for this table — show its name + row count only, never a
+    // fabricated placeholder row.
+    return [];
   }
 
   function renderWarehouseSample(t) {
