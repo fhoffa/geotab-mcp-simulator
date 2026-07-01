@@ -3615,8 +3615,28 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🦆 Start with GPS rows", say: "I already connected the Geotab MCP and created a free-tier MotherDuck account. Build me a warehouse starting with GPS points.", next: "warehouse-setup" },
+        { label: "❓ Is this what Geotab recommends?", say: "Is this what Geotab recommends?", next: "warehouse-geotab-recommendation" },
         { label: "❓ What is MotherDuck?", say: "Before we start — what actually is MotherDuck?", next: "warehouse-what-is" },
         { label: "↩︎ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-geotab-recommendation": {
+      id: "warehouse-geotab-recommendation",
+      title: "Warehouse · Geotab recommendation?",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Not as an official recommendation. This MCP-orchestrated Geotab → MotherDuck warehouse path is a **proof of concept**: new, interesting in this MCP world, and not yet tested at scale. The assistant can coordinate both sides — ask Geotab for rows, then ask MotherDuck to load and transform them — without a separate ETL service.\n\n" +
+            "We should treat it as a proof of concept, not a replacement for proven production patterns. We'll update this node with alternatives that Geotab customers have used for years to replicate fleet data into their own warehouses.",
+        },
+      ],
+      choices: [
+        { label: "🦆 Continue with GPS rows", say: "Understood. Continue with the experimental MCP path and start with GPS rows.", next: "warehouse-setup" },
+        { label: "❓ What is MotherDuck?", say: "Before we start — what actually is MotherDuck?", next: "warehouse-what-is" },
+        { label: "↩︎ Back to the warehouse intro", say: "Go back to the warehouse intro.", next: "warehouse-intro" },
       ],
     },
 
