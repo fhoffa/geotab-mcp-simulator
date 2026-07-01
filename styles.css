@@ -810,6 +810,35 @@ body {
 .chip.subtle { color: var(--ink-soft); }
 .tray-hint { width: 100%; font-size: 12px; color: var(--ink-soft); margin: 0 2px 2px; }
 .tool-hint { font-size: 12px; line-height: 1.45; color: var(--ink-soft); margin: 2px 2px 6px; }
+
+/* ------------------------------------------------------- fleet progress game */
+.progress-strip {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 10px;
+  margin: 0 2px 6px;
+}
+.progress-strip strong { color: var(--accent-ink); }
+.progress-track {
+  flex: 1 1 110px;
+  min-width: 70px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.progress-fill { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.progress-full { width: 100%; font-weight: 600; color: var(--accent-ink); }
+.chip.done { border-style: dashed; }
+.chip-check { color: var(--geotab); font-weight: 700; }
 .tray-group {
   width: 100%;
   font-size: 11px;

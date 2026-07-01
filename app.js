@@ -83,6 +83,62 @@
   var ENTRY_NODES = { connect: 1, authorize: 1, hub: 1 };
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // -------------------------------------------------------- fleet progress game
+  // Exploring scenarios "grows" your simulated fleet: you start managing a small
+  // 5-vehicle operation and every hub scenario you complete adds vehicles toward
+  // the full 50-vehicle demo fleet, plus points for every distinct node you reach.
+  // All local (localStorage) — nothing leaves the browser. Restart keeps progress;
+  // Settings has the reset.
+  var PROGRESS_KEY = "geotab-mcp-sim-progress";
+  var FLEET_BASE = 5;
+  var FLEET_PER_SCENARIO = 2;
+  var FLEET_MAX = 50;
+  var PTS_SCENARIO = 25;
+  var PTS_NODE = 5;
+
+  var progress = readProgress();
+  function readProgress() {
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(PROGRESS_KEY);
+      var p = raw ? JSON.parse(raw) : null;
+      return p && typeof p === "object" && p.nodes ? p : { nodes: {} };
+    } catch (_) { return { nodes: {} }; }
+  }
+  function writeProgress() {
+    try { if (window.localStorage) window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); } catch (_) {}
+  }
+  function scenarioTargets() {
+    var t = {};
+    (((NODES.hub || {}).choices) || []).forEach(function (c) { if (c.next) t[c.next] = true; });
+    return t;
+  }
+  function progressStats() {
+    var targets = scenarioTargets();
+    var scenarios = 0, others = 0;
+    Object.keys(progress.nodes).forEach(function (id) {
+      if (ENTRY_NODES[id]) return; // connect/authorize/hub don't score
+      if (targets[id]) scenarios++;
+      else others++;
+    });
+    var fleet = Math.min(FLEET_MAX, FLEET_BASE + FLEET_PER_SCENARIO * scenarios);
+    return {
+      scenarios: scenarios,
+      totalScenarios: Object.keys(targets).length,
+      points: PTS_SCENARIO * scenarios + PTS_NODE * others,
+      fleet: fleet,
+      full: fleet >= FLEET_MAX,
+    };
+  }
+  function recordVisit(id) {
+    if (ENTRY_NODES[id] || progress.nodes[id]) return;
+    progress.nodes[id] = 1;
+    writeProgress();
+  }
+  function resetProgress() {
+    progress = { nodes: {} };
+    writeProgress();
+  }
+
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
   function jitter(ms) { return Math.round(ms * (0.85 + Math.random() * 0.3)); } // +/-15%, feels less robotic
   function wordCount(text) { return ((text || "").trim().match(/\S+/g) || []).length; }
@@ -841,6 +897,7 @@
     }
     currentNodeId = id;
     writeNodeUrl(id, navMode || "replace");
+    recordVisit(id);
 
     var toolContainer = null;
 
@@ -909,6 +966,23 @@
 
   function renderChoices(choices) {
     trayEl.innerHTML = "";
+    var atHub = currentNodeId === "hub";
+    if (atHub) {
+      var st = progressStats();
+      // only once there's something to show — a first-timer's hub stays clean
+      if (st.scenarios > 0) {
+        var pct = st.totalScenarios ? Math.round((st.scenarios / st.totalScenarios) * 100) : 0;
+        var strip = el("div", "progress-strip");
+        strip.innerHTML =
+          '<span>🚚 Fleet grown to <strong>' + st.fleet + '</strong> vehicles</span>' +
+          '<span>' + st.points + " pts · " + st.scenarios + "/" + st.totalScenarios + " scenarios explored</span>" +
+          '<span class="progress-track" aria-hidden="true"><span class="progress-fill" style="width:' + pct + '%"></span></span>' +
+          (st.full
+            ? '<span class="progress-full">🏆 Full 50-vehicle fleet unlocked — ready to run a real one? Use "Connect real account" above.</span>'
+            : "");
+        trayEl.appendChild(strip);
+      }
+    }
     trayEl.appendChild(el("div", "tray-hint", "Choose a suggested prompt to continue the simulator:"));
     var lastGroup = null;
     choices.forEach(function (c, idx) {
@@ -917,9 +991,13 @@
         lastGroup = c.group;
       }
       var primary = c.recommended || (idx === 0 && c.next);
-      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action ? " subtle" : ""));
+      var done = atHub && c.next && progress.nodes[c.next];
+      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action ? " subtle" : "") + (done ? " done" : ""));
       btn.type = "button";
-      btn.innerHTML = (c.recommended ? '<span class="chip-badge">Start here</span>' : "") + escapeHtml(c.label);
+      btn.innerHTML =
+        (c.recommended ? '<span class="chip-badge">Start here</span>' : "") +
+        escapeHtml(c.label) +
+        (done ? ' <span class="chip-check" aria-label="explored">✓</span>' : "");
       btn.addEventListener("click", function () { onChoice(c); });
       trayEl.appendChild(btn);
     });
@@ -1076,11 +1154,24 @@
   startSimBtn.addEventListener("click", closeLanding);
   if (startWarehouseBtn) startWarehouseBtn.addEventListener("click", function () { closeLanding(); playToken++; clearChat(); playNode("warehouse-intro", "push"); });
   if (motherduckPaneToggle) motherduckPaneToggle.addEventListener("click", function () { setMotherduckPaneOpen(motherduckPane.classList.contains("collapsed")); });
-  settingsBtn.addEventListener("click", openSettings);
+  settingsBtn.addEventListener("click", function () { updateProgressUi(); openSettings(); });
   settingsClose.addEventListener("click", closeSettings);
   settingsOverlay.addEventListener("click", function (e) { if (e.target === settingsOverlay) closeSettings(); });
   speedOptionBtns.forEach(function (btn) {
     btn.addEventListener("click", function () { setSpeedMode(btn.getAttribute("data-speed")); });
+  });
+  var progressSummaryEl = document.getElementById("progressSummary");
+  var progressResetBtn = document.getElementById("progressResetBtn");
+  function updateProgressUi() {
+    if (!progressSummaryEl) return;
+    var st = progressStats();
+    progressSummaryEl.textContent = "🚚 " + st.fleet + " vehicles · " + st.points + " pts · " + st.scenarios + "/" + st.totalScenarios + " scenarios";
+  }
+  if (progressResetBtn) progressResetBtn.addEventListener("click", function () {
+    resetProgress();
+    updateProgressUi();
+    // if the hub tray is showing, redraw it so strip and checkmarks clear immediately
+    if (currentNodeId === "hub") renderChoices((NODES.hub && NODES.hub.choices) || []);
   });
   tryRealBtn.addEventListener("click", openTryReal);
   tryRealBtnLanding.addEventListener("click", openTryReal);

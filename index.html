@@ -54,7 +54,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=710feea" />
+    <link rel="stylesheet" href="styles.css?v=1aa2f79" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png?v=d4e1997" />
   </head>
   <body>
@@ -182,6 +182,16 @@
                 <span class="settings-option-copy">Measured API/Ace timing — API calls take seconds, Ace can take 30–50s. Click the transcript to fast-forward.</span>
               </button>
             </div>
+          </section>
+          <section class="settings-section" aria-labelledby="settingsProgressTitle">
+            <div class="settings-row-head">
+              <div>
+                <h3 id="settingsProgressTitle">Fleet progress</h3>
+                <p>Scenarios you explore grow your simulated fleet toward the full 50 vehicles. Stored only in this browser.</p>
+              </div>
+              <span class="settings-value" id="progressSummary">—</span>
+            </div>
+            <button id="progressResetBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↺</span>Reset progress</button>
           </section>
         </div>
       </div>
@@ -311,7 +321,7 @@
 
     <script src="data/sample-data.js?v=d750d80"></script>
     <script src="data/conversations.js?v=695f343"></script>
-    <script src="app.js?v=30366a0"></script>
+    <script src="app.js?v=f88957e"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6", "spa": true}'></script>
     <!-- End Cloudflare Web Analytics -->

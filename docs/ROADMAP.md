@@ -217,6 +217,29 @@ content must be reconciled. See **WS6**.
 - **Acceptance:** map artifact plots the real positions; Valencia vehicles stand
   out; labeled "illustrative — assistant-rendered, not a live map".
 
+### WS12 — Fleet Progress game  🟡 (v1 shipped)
+- **Goal:** give explorers a progression loop — *your simulated fleet grows as
+  you learn Geotab + MCP* — so finishing one scenario pulls you into the next.
+- **Shipped (v1):** localStorage-only progression (nothing leaves the browser):
+  - **Checkboxes** — hub chips get a ✓ once that scenario has been explored.
+  - **Points** — 25/scenario + 5 for every other distinct node reached
+    (cross-links and deep dives count, so exploration pays).
+  - **Growing fleet** — you start managing 5 vehicles; each scenario adds 2,
+    toward the full 50-vehicle demo fleet. A progress strip appears on the hub
+    (only after the first scenario, so a first-timer's hub stays clean); at 50
+    a 🏆 milestone points at **Connect real account** — the game's exit is the
+    real product.
+  - **Settings → Fleet progress** shows the tally and has the reset; Restart
+    deliberately does *not* wipe progress.
+- **Future ideas (not built):** per-theme badges ("Safety lead" after all 🛟
+  scenarios); fleet *upgrades* tied to what you learned (EV conversions unlock
+  after the EV episode, dashcams after the dashcam episode); a shareable
+  "my fleet" card; streaks for returning visitors. Keep it honest: progression
+  should reward *understanding scenarios*, never grind.
+- **Files:** `app.js` (progress store + hub strip + checkmarks), `index.html`
+  (settings section), `styles.css`.
+- **Depends on:** nothing. **Parallel:** yes.
+
 ### WS7 — Polish (later)  ⬜
 - Responsive/a11y pass across new pages; meta/OG tags for sharing; optional
   privacy-respecting analytics; favicon/og image; "copy link to this episode".
