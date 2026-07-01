@@ -440,7 +440,8 @@
       { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEE31", new_trip_id: "b1101196", action: "re-split" }
     ];
     if (/trip/.test(name)) return [
-      { device: "Demo - 08", trip_start: "2026-06-30 07:10", driver_id: "u_demo_17", distance_km: "18.4", duration_min: "31" }
+      { device: "Demo - 08", trip_start: "2026-06-30 07:10", driver_id: "u_demo_17", distance_km: "18.4", duration_min: "31" },
+      { device: "Demo - 21", trip_start: "2026-06-30 07:42", driver_id: "u_demo_04", distance_km: "9.7", duration_min: "22" }
     ];
     if (/driver_assignment_coverage/.test(name)) return [
       { device: "Demo - 08", trips_today: "6", assigned: "6", unknown_driver: "0" },
@@ -451,20 +452,24 @@
       { device: "Demo - 14", driver_id: "UnknownDriverId", active_from: "2026-06-30 08:00", source: "unassigned" }
     ];
     if (/status_data/.test(name)) return [
-      { device: "Demo - 21", diagnostic: "EngineSpeed", event_time: "2026-06-30 08:12", value: "1420" }
+      { device: "Demo - 21", diagnostic: "EngineSpeed", event_time: "2026-06-30 08:12", value: "1420" },
+      { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-30 08:12", value: "92" }
     ];
     if (/exception/.test(name)) return [
-      { device: "Demo - 31", rule: "Posted speed", event_time: "2026-06-30 08:03", severity: "review" }
+      { device: "Demo - 31", rule: "Posted speed", event_time: "2026-06-30 08:03", severity: "review" },
+      { device: "Demo - 14", rule: "Harsh braking", event_time: "2026-06-30 08:09", severity: "coach" }
     ];
     if (/fault/.test(name)) return [
-      { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-29 21:44", fault_state: "active" }
+      { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-29 21:44", fault_state: "active" },
+      { device: "Demo - 22", diagnostic: "DPF regeneration", event_time: "2026-06-29 18:02", fault_state: "cleared" }
     ];
     if (/dim_device/.test(name)) return [
       { device_id: "b12A4", name: "Demo - 02", vin: "WDB9066331S1B2345", model: "Mercedes-Benz Sprinter", group: "Valencia" },
       { device_id: "b12B9", name: "Demo - 14", vin: "1FTBW2CM8GKA12345", model: "Ford Transit", group: "Barcelona" }
     ];
     if (/dim_user/.test(name)) return [
-      { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" }
+      { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" },
+      { user_id: "u_demo_04", display_name: "Driver 04", home_group: "Barcelona" }
     ];
     if (/dim_zone/.test(name)) return [
       { zone_id: "z_val_depot", name: "Valencia depot", type: "Customer" },
@@ -475,31 +480,40 @@
       { group_id: "g_barcelona", name: "Barcelona", parent: "Company Group" }
     ];
     if (/dim_rule/.test(name)) return [
-      { rule_id: "r_posted_speed", name: "Posted speed", active: "true" }
+      { rule_id: "r_posted_speed", name: "Posted speed", active: "true" },
+      { rule_id: "r_harsh_brake", name: "Harsh braking", active: "true" }
     ];
     if (/dim_diagnostic/.test(name)) return [
-      { diagnostic_id: "d_engine_speed", name: "EngineSpeed", unit: "rpm" }
+      { diagnostic_id: "d_engine_speed", name: "EngineSpeed", unit: "rpm" },
+      { diagnostic_id: "d_coolant_temp", name: "Engine coolant temp", unit: "°C" }
     ];
     if (/daily_device_km/.test(name)) return [
-      { date: "2026-06-30", device: "Demo - 02", km: "142.8" }
+      { date: "2026-06-30", device: "Demo - 02", km: "142.8" },
+      { date: "2026-06-30", device: "Demo - 14", km: "88.3" }
     ];
     if (/driver_safety_score|coaching/.test(name)) return [
-      { driver: "Driver 31", score: "72", reason: "speed exceptions per km" }
+      { driver: "Driver 31", score: "72", reason: "speed exceptions per km" },
+      { driver: "Driver 14", score: "81", reason: "harsh braking events" }
     ];
     if (/maintenance|shop_worklist/.test(name)) return [
-      { device: "Demo - 08", priority: "P2", reason: "fault cluster + downtime" }
+      { device: "Demo - 08", priority: "P2", reason: "fault cluster + downtime" },
+      { device: "Demo - 22", priority: "P3", reason: "DPF regen overdue" }
     ];
     if (/idling/.test(name)) return [
-      { date: "2026-06-30", group: "Valencia", estimated_cost_usd: "38" }
+      { date: "2026-06-30", group: "Valencia", estimated_cost_usd: "38" },
+      { date: "2026-06-30", group: "Barcelona", estimated_cost_usd: "24" }
     ];
     if (/freshness/.test(name)) return [
-      { table_name: "silver.planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" }
+      { table_name: "silver.planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" },
+      { table_name: "silver.status_data", max_event_time: "2026-06-30 08:14", lag_minutes: "3" }
     ];
     if (/coverage/.test(name)) return [
-      { device: "Demo - 02", gps_seen: "true", expected_today: "true" }
+      { device: "Demo - 02", gps_seen: "true", expected_today: "true" },
+      { device: "Demo - 37", gps_seen: "false", expected_today: "true" }
     ];
     if (/anomal/.test(name)) return [
-      { check_name: "returned_sql_filter", severity: "warn", status: "needs review" }
+      { check_name: "returned_sql_filter", severity: "warn", status: "needs review" },
+      { check_name: "gps_gap > 30min", severity: "warn", status: "needs review" }
     ];
     if (/fleet_ops_overview/.test(name)) return [
       { vehicles: "50", active_today: "26", open_faults: "9", coaching_queue: "14" }
