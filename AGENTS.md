@@ -21,6 +21,7 @@ Key files:
 - When editing conversation flows, keep node ids, `next`, and `choices[].next` references valid.
 - Treat the simulator’s demo fleet data as public demo data only; do not add real customer data, private notes, secrets, tokens, or credentials.
 - Keep the UI provider-neutral: Claude can be recommended as the clearest starting MCP client when alternatives stay visible, but the simulator itself should use Geotab/simulator language, a distinct palette/icon/type system, and copy that avoids claiming to be or imitating any chatbot brand.
+- Skills framing: this repo does **not** ship official/installable skills. `skills/geotab-weekly-review/SKILL.md` is a worked example serving one lesson — *have conversations first, then package the ones you repeat into skills relevant to your own fleet*. Never present it as an artifact to install as-is. Ready-to-follow shared skills (e.g. the MotherDuck warehouse skill) live in the companion `github.com/fhoffa/geotab-vibe-guide`.
 
 ### Design principle — enriching incomplete demo data
 

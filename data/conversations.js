@@ -116,7 +116,9 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "You're connected. What do you want to look at?\n\n" +
-            "(In the real connector you'd just type this — here, pick one of the options below.)",
+            "(In the real connector you'd just type this — here, pick one of the options below. " +
+            "Don't overthink the choice: every answer offers natural follow-ups, so any door leads to the " +
+            "others. **⭐ Start here** is the fastest tour.)",
         },
       ],
       choices: [
@@ -463,9 +465,13 @@ window.CONVERSATIONS = {
             "gets the careful version every time, not just a faster version.\n\n" +
             "Drop it in your team's shared skills and anyone can just say \"run my weekly review\" and get this same brief, " +
             "without re-explaining any of this to them first.\n\n" +
-            "And this one isn't simulated: a real, installable copy of this exact skill ships with this project — " +
-            "[skills/geotab-weekly-review/SKILL.md](https://github.com/fhoffa/geotab-mcp-simulator/blob/main/skills/geotab-weekly-review/SKILL.md). " +
-            "Take it with you when you connect your own fleet.",
+            "That's the pattern worth stealing from this whole demo: **conversations first, skills second.** Run the " +
+            "review by hand for a few weeks, notice what you keep re-explaining or correcting, then freeze exactly " +
+            "that into a skill. The one above stays public in this project as a worked example — " +
+            "[skills/geotab-weekly-review/SKILL.md](https://github.com/fhoffa/geotab-mcp-simulator/blob/main/skills/geotab-weekly-review/SKILL.md) — " +
+            "not something to install as-is, because the rules that make a skill valuable come out of *your* fleet's " +
+            "conversations. (For ready-to-follow shared skills — like the MotherDuck warehouse one this simulator's " +
+            "warehouse path uses — see the companion [geotab-vibe-guide](https://github.com/fhoffa/geotab-vibe-guide).)",
         },
         {
           type: "endcard",

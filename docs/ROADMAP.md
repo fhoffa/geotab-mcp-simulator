@@ -462,6 +462,18 @@ real PII before sending.
 
 ## Findings log (verified live)
 
+- **Conversation-path review (1 Jul 2026).** Full read-through plus graph metrics
+  across all 78 nodes: flagship beats (weekly review, agentic safety, ROI,
+  warehouse) are strong — teaching beats land, choices read like real follow-ups,
+  honest caveats survive. Structurally: only two nodes end with hub/restart alone
+  (both dispatch write-conclusions, both carry endcards); non-hub trays cap at 6
+  choices; single-parent nodes are all mid-chain steps, not orphans. Corrected a
+  framing slip introduced during review: `skills/geotab-weekly-review/SKILL.md`
+  is a **teaching example** (the lesson: conversations first, then build skills
+  relevant to your own fleet), never an official installable — ready-to-follow
+  shared skills live in `geotab-vibe-guide`. Hub intro now tells first-timers the
+  paths cross-link, so the 27-chip tray doesn't read as a commitment.
+
 - **VIN episode (Ep6) was scrapped** — too thin a story to feature. Underlying
   facts: you cannot create a vehicle from a VIN (`Add Device` needs a valid,
   registered GO **serialNumber**; a test serial returned `"Invalid serial

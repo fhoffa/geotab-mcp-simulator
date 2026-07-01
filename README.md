@@ -73,11 +73,15 @@ When you're done playing, the real thing takes three steps — the in-app
    data. Review your privacy/DPA obligations before connecting production data,
    and prefer vehicle/asset-level questions over person-level ones.
 
-**Bonus — install a skill.** [`skills/geotab-weekly-review/SKILL.md`](skills/geotab-weekly-review/SKILL.md)
-packages the Monday-morning review as a reusable skill for any MCP client. It
-encodes real Geotab data quirks (the all-time trip counter, per-driver HOS,
-pagination caps that fake "outliers") and a strict no-PII default — so anyone on
-the team gets the same correct brief.
+**The skill lesson.** This project deliberately doesn't ship "official" skills.
+The pattern it teaches is: **have the conversations first, then package the ones
+you find yourself repeating into skills relevant to *your* fleet.**
+[`skills/geotab-weekly-review/SKILL.md`](skills/geotab-weekly-review/SKILL.md)
+stays here as a worked example of what that looks like — it encodes real Geotab
+data quirks (the all-time trip counter, per-driver HOS, pagination caps that
+fake "outliers") and a strict no-PII default. Ready-to-follow shared skills —
+like the MotherDuck warehouse skill the simulator's warehouse path follows —
+live in the companion [geotab-vibe-guide](https://github.com/fhoffa/geotab-vibe-guide).
 
 ## Run it locally
 
