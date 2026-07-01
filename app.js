@@ -77,6 +77,10 @@
   var warehousePointerShown = false; // chat pointer to the pane: show once, then update silently
   var currentNodeId = null; // last id written to the ?n= URL param by playNode
   var REAL_ACCOUNT_HASH = "connect-real"; // shareable deep link straight to the "connect real account" overlay
+  // Generic preamble before any "chapter" starts. When a deep link lands mid-flow,
+  // we rebuild the lead-up transcript but trim everything up to and including the
+  // last of these — so a warehouse link opens at warehouse-intro, not at "connect".
+  var ENTRY_NODES = { connect: 1, authorize: 1, hub: 1 };
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
@@ -930,6 +934,78 @@
     if (c.next) playNode(c.next, "push"); // user-initiated step → new history entry + analytics pageview
   }
 
+  // Shortest route start→target through the graph, as [{id, say}] where `say` is
+  // the user question that led INTO each node (null for the start / auto-advance
+  // edges). Used to rebuild the lead-up transcript for a deep link. Returns null
+  // if the node is unreachable.
+  function pathTo(targetId) {
+    var start = GRAPH.start;
+    if (targetId === start) return [{ id: start, say: null }];
+    var prev = {}, edge = {}, q = [start];
+    prev[start] = "";
+    while (q.length) {
+      var cur = q.shift();
+      if (cur === targetId) break;
+      var node = NODES[cur];
+      if (!node) continue;
+      var outs = [];
+      (node.choices || []).forEach(function (c) { if (c.next) outs.push({ to: c.next, say: c.say || c.label || null }); });
+      if (node.next) outs.push({ to: node.next, say: null });
+      outs.forEach(function (o) {
+        if (NODES[o.to] && !(o.to in prev)) { prev[o.to] = cur; edge[o.to] = o.say; q.push(o.to); }
+      });
+    }
+    if (!(targetId in prev)) return null;
+    var chain = [];
+    for (var n = targetId; n !== ""; n = prev[n]) chain.unshift({ id: n, say: edge[n] || null });
+    return chain;
+  }
+
+  // Render one node's events into the transcript with no waits/typing — used to
+  // reconstruct prior context instantly. Mirrors playNode's event loop (incl. the
+  // per-run Geotab db badge grouping) but calls the settled renderers directly.
+  function renderNodeInstant(id) {
+    var node = NODES[id];
+    if (!node) return;
+    var toolContainer = null;
+    (node.events || []).forEach(function (ev) {
+      if (ev.type === "tool") {
+        if (ev.server === "geotab" && node.db && !toolContainer) toolContainer = addDbBadge(node.db);
+        addToolCard(ev, ev.server === "geotab" && toolContainer ? toolContainer : null);
+        return;
+      }
+      toolContainer = null;
+      if (ev.type === "assistant") addBubble("assistant", ev.text);
+      else if (ev.type === "system") addSystem(ev.text);
+      else if (ev.type === "warehouse") addWarehousePane(ev);
+      else if (ev.type === "chart") addChart(ev);
+      else if (ev.type === "map") addMap(ev);
+      else if (ev.type === "confirm") addConfirmCard(ev);
+      else if (ev.type === "endcard") addEndcard(ev.lines || []);
+      else if (ev.type === "media") addMedia(ev);
+    });
+  }
+
+  // Arrive at a node from outside the normal forward flow (a deep link, or
+  // back/forward). Rebuild the chapter's lead-up transcript instantly, then play
+  // the target node live so it animates in and shows its choices. The chapter
+  // starts just after the last ENTRY_NODES step, so a mid-warehouse link opens at
+  // warehouse-intro (with its framing question) rather than at "connect".
+  function jumpToNode(id, finalMode) {
+    playToken++;
+    clearChat();
+    var chain = pathTo(id);
+    if (!chain) { playNode(id, finalMode); return; } // unreachable — just play it
+    var start = 0;
+    for (var i = 0; i < chain.length - 1; i++) { if (ENTRY_NODES[chain[i].id]) start = i + 1; }
+    if (start > chain.length - 1) { playNode(id, finalMode); return; }
+    for (var j = start; j < chain.length; j++) {
+      if (chain[j].say) addBubble("user", chain[j].say);
+      if (j < chain.length - 1) renderNodeInstant(chain[j].id);
+      else playNode(id, finalMode);
+    }
+  }
+
   // --- modal focus management: move focus in on open, trap Tab inside the
   // panel, and restore focus to the trigger on close (a11y for the dialogs).
   var lastFocused = null;
@@ -1036,7 +1112,7 @@
     var id = idFromUrl();
     if (id === REAL_ACCOUNT_HASH) { openTryReal(); return; }
     closeTryReal();
-    if (NODES[id]) { closeLanding(); playToken++; clearChat(); playNode(id, "none"); }
+    if (NODES[id]) { closeLanding(); jumpToNode(id, "none"); }
   });
 
   /* ---------------------------------------------------------------- boot */
@@ -1045,7 +1121,9 @@
   var bootId = idFromUrl();
   var hasNode = !!NODES[bootId];
   if (hasNode) closeLanding();
-  playNode(hasNode ? bootId : GRAPH.start, "replace");
+  // Deep link to a mid-flow node → rebuild its lead-up context; otherwise start fresh.
+  if (hasNode && bootId !== GRAPH.start) jumpToNode(bootId, "replace");
+  else playNode(GRAPH.start, "replace");
   if (bootId === REAL_ACCOUNT_HASH) {
     openTryReal();
     // playNode rewrote ?n= to the underlying node; put the deep link back so
