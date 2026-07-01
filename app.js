@@ -431,13 +431,20 @@
   function fallbackWarehouseSample(t) {
     if (!tableHasRows(t)) return [];
     var name = String(t.name || "table");
-    var base = { sample_key: "demo", rows: String(t.rows || "") };
     if (/gps|pings/.test(name)) return [
       { device: "Demo - 02", event_time: "2026-06-30 08:14:22", speed: "48 km/h", lat: "39.4699", lon: "-0.3763" },
       { device: "Demo - 14", event_time: "2026-06-30 08:14:25", speed: "0 km/h", lat: "39.4731", lon: "-0.3808" }
     ];
+    if (/reconcile/.test(name)) return [
+      { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEE52", new_trip_id: "b11011A1", action: "re-split" },
+      { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEE31", new_trip_id: "b1101196", action: "re-split" }
+    ];
     if (/trip/.test(name)) return [
       { device: "Demo - 08", trip_start: "2026-06-30 07:10", driver_id: "u_demo_17", distance_km: "18.4", duration_min: "31" }
+    ];
+    if (/driver_assignment_coverage/.test(name)) return [
+      { device: "Demo - 08", trips_today: "6", assigned: "6", unknown_driver: "0" },
+      { device: "Demo - 14", trips_today: "4", assigned: "3", unknown_driver: "1" }
     ];
     if (/driver_assignment|driver_assignments|driver_changes/.test(name)) return [
       { device: "Demo - 08", driver_id: "u_demo_17", active_from: "2026-06-30 07:06", source: "DriverChange" },
@@ -452,8 +459,20 @@
     if (/fault/.test(name)) return [
       { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-29 21:44", fault_state: "active" }
     ];
+    if (/dim_device/.test(name)) return [
+      { device_id: "b12A4", name: "Demo - 02", vin: "WDB9066331S1B2345", model: "Mercedes-Benz Sprinter", group: "Valencia" },
+      { device_id: "b12B9", name: "Demo - 14", vin: "1FTBW2CM8GKA12345", model: "Ford Transit", group: "Barcelona" }
+    ];
     if (/dim_user/.test(name)) return [
       { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" }
+    ];
+    if (/dim_zone/.test(name)) return [
+      { zone_id: "z_val_depot", name: "Valencia depot", type: "Customer" },
+      { zone_id: "z_bcn_lez", name: "Barcelona LEZ", type: "Zone" }
+    ];
+    if (/dim_group/.test(name)) return [
+      { group_id: "g_valencia", name: "Valencia", parent: "Company Group" },
+      { group_id: "g_barcelona", name: "Barcelona", parent: "Company Group" }
     ];
     if (/dim_rule/.test(name)) return [
       { rule_id: "r_posted_speed", name: "Posted speed", active: "true" }
@@ -488,7 +507,9 @@
     if (/storage|compute|refresh|query_cost|load_runs|row_counts|cost/.test(name)) return [
       { measure: name, value: String(t.rows || ""), source: "measured/estimated" }
     ];
-    return [base];
+    // No curated shape for this table — show its name + row count only, never a
+    // fabricated placeholder row.
+    return [];
   }
 
   function renderWarehouseSample(t) {
