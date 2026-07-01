@@ -472,9 +472,9 @@
       { device: "Demo - 31", diagnostic: "Low tire pressure", event_time: "2026-06-29 14:37", fault_state: "active" }
     ];
     if (/dim_device/.test(name)) return [
-      { device_id: "b12A4", name: "Demo - 02", vin: "WDB9066331S1B2345", model: "Mercedes-Benz Sprinter", group: "Valencia" },
-      { device_id: "b12B9", name: "Demo - 14", vin: "1FTBW2CM8GKA12345", model: "Ford Transit", group: "Barcelona" },
-      { device_id: "b12C1", name: "Demo - 31", vin: "W1V9076331N123456", model: "Mercedes-Benz Vito", group: "Madrid" }
+      { name: "Demo - 06", vin: "WDB9076571P106588" },
+      { name: "Demo - 08", vin: "WDB9076571P106590" },
+      { name: "Demo - 12", vin: "WDF9634031C001659" }
     ];
     if (/dim_user/.test(name)) return [
       { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" },
