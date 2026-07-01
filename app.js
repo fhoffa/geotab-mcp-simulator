@@ -75,8 +75,12 @@
   var skip = false;
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
   var warehousePointerShown = false; // chat pointer to the pane: show once, then update silently
-  var currentNodeId = null; // last id pushed to location.hash by playNode
+  var currentNodeId = null; // last id written to the ?n= URL param by playNode
   var REAL_ACCOUNT_HASH = "connect-real"; // shareable deep link straight to the "connect real account" overlay
+  // Generic preamble before any "chapter" starts. When a deep link lands mid-flow,
+  // we rebuild the lead-up transcript but trim everything up to and including the
+  // last of these — so a warehouse link opens at warehouse-intro, not at "connect".
+  var ENTRY_NODES = { connect: 1, authorize: 1, hub: 1 };
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
@@ -508,25 +512,17 @@
   }
 
   function renderWarehouseBody(ev, body) {
+    // The pane is a warehouse catalog, nothing more: each schema (bronze/silver/
+    // gold) with its tables, row counts and a sample. Process telemetry (refresh
+    // metrics, watermarks, load deltas) belongs in the chat, not here.
     body.innerHTML = "";
-    if (ev.metrics && ev.metrics.length) {
-      var metrics = el("div", "warehouse-metrics");
-      ev.metrics.forEach(function (m) {
-        var metric = el("div", "warehouse-metric");
-        metric.appendChild(el("span", "warehouse-metric-label", escapeHtml(m.label || "")));
-        metric.appendChild(el("strong", null, escapeHtml(String(m.value || ""))));
-        metrics.appendChild(metric);
-      });
-      body.appendChild(metrics);
-    }
 
     var stages = el("div", "warehouse-stages");
     (ev.stages || []).forEach(function (stage) {
-      var stageEl = el("div", "warehouse-stage warehouse-stage-" + (stage.kind || "default") + (stage.active ? " active" : ""));
+      var stageEl = el("div", "warehouse-stage warehouse-stage-" + (stage.kind || "default"));
       var title = el("div", "warehouse-stage-title");
       title.appendChild(el("span", "warehouse-stage-dot"));
       title.appendChild(el("strong", null, escapeHtml(stage.name || "Stage")));
-      if (stage.status) title.appendChild(el("span", "warehouse-stage-status", escapeHtml(stage.status)));
       stageEl.appendChild(title);
       var tableList = el("div", "warehouse-tables");
       (stage.tables || []).forEach(function (t) {
@@ -556,8 +552,7 @@
   function addWarehousePane(ev) {
     if (!motherduckPane || !motherduckPaneBody) return;
     var tableCount = (ev.stages || []).reduce(function (n, stage) { return n + ((stage.tables || []).length); }, 0);
-    var topMetric = ev.metrics && ev.metrics.length ? String(ev.metrics[0].value || "") : "";
-    var summary = ev.summary || (tableCount ? tableCount + " tables" : topMetric || "updated");
+    var summary = ev.summary || (tableCount ? tableCount + " tables" : "empty");
 
     motherduckPane.classList.remove("hidden");
     if (motherduckPaneTitle) motherduckPaneTitle.textContent = ev.title === "MotherDuck" ? "Warehouse" : (ev.title || "Warehouse");
@@ -798,7 +793,24 @@
     else { connEl.textContent = "Not connected"; connEl.className = "conn-pill conn-off"; }
   }
 
-  async function playNode(id) {
+  // Per-node URL for Cloudflare Web Analytics SPA tracking. The beacon hooks
+  // history.pushState + popstate (replaceState and #hash routing are NOT tracked),
+  // so each step needs a distinct History-API URL. We use a ?n= query param, not a
+  // path, so GitHub Pages still serves index.html on reload/back.
+  function idFromUrl() {
+    var n = null;
+    try { n = new URLSearchParams(location.search).get("n"); } catch (e) {}
+    return n || (location.hash || "").replace(/^#/, ""); // legacy #hash deep links
+  }
+  function writeNodeUrl(id, mode) {
+    if (mode === "none" || !history.pushState) return; // "none": URL came from history already
+    var url = location.pathname + "?n=" + encodeURIComponent(id);
+    // push = a counted, user-initiated step; replace = silent (boot / auto-advance)
+    if (mode === "push") history.pushState({ n: id }, "", url);
+    else history.replaceState({ n: id }, "", url);
+  }
+
+  async function playNode(id, navMode) {
     var node = NODES[id];
     if (!node) return;
     var myToken = ++playToken;
@@ -814,7 +826,7 @@
       motherduckPane.classList.add("hidden", "collapsed");
     }
     currentNodeId = id;
-    if (history.replaceState) history.replaceState(null, "", "#" + id);
+    writeNodeUrl(id, navMode || "replace");
 
     var toolContainer = null;
 
@@ -878,7 +890,7 @@
     if (myToken !== playToken) return;
 
     if (node.choices && node.choices.length) renderChoices(node.choices);
-    else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next); }
+    else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next, "replace"); }
   }
 
   function renderChoices(choices) {
@@ -910,7 +922,79 @@
       if (!(await typeUserText(prose, c.say || c.label, myToken))) return;
     }
     if (myToken !== playToken) return;
-    if (c.next) playNode(c.next);
+    if (c.next) playNode(c.next, "push"); // user-initiated step → new history entry + analytics pageview
+  }
+
+  // Shortest route start→target through the graph, as [{id, say}] where `say` is
+  // the user question that led INTO each node (null for the start / auto-advance
+  // edges). Used to rebuild the lead-up transcript for a deep link. Returns null
+  // if the node is unreachable.
+  function pathTo(targetId) {
+    var start = GRAPH.start;
+    if (targetId === start) return [{ id: start, say: null }];
+    var prev = {}, edge = {}, q = [start];
+    prev[start] = "";
+    while (q.length) {
+      var cur = q.shift();
+      if (cur === targetId) break;
+      var node = NODES[cur];
+      if (!node) continue;
+      var outs = [];
+      (node.choices || []).forEach(function (c) { if (c.next) outs.push({ to: c.next, say: c.say || c.label || null }); });
+      if (node.next) outs.push({ to: node.next, say: null });
+      outs.forEach(function (o) {
+        if (NODES[o.to] && !(o.to in prev)) { prev[o.to] = cur; edge[o.to] = o.say; q.push(o.to); }
+      });
+    }
+    if (!(targetId in prev)) return null;
+    var chain = [];
+    for (var n = targetId; n !== ""; n = prev[n]) chain.unshift({ id: n, say: edge[n] || null });
+    return chain;
+  }
+
+  // Render one node's events into the transcript with no waits/typing — used to
+  // reconstruct prior context instantly. Mirrors playNode's event loop (incl. the
+  // per-run Geotab db badge grouping) but calls the settled renderers directly.
+  function renderNodeInstant(id) {
+    var node = NODES[id];
+    if (!node) return;
+    var toolContainer = null;
+    (node.events || []).forEach(function (ev) {
+      if (ev.type === "tool") {
+        if (ev.server === "geotab" && node.db && !toolContainer) toolContainer = addDbBadge(node.db);
+        addToolCard(ev, ev.server === "geotab" && toolContainer ? toolContainer : null);
+        return;
+      }
+      toolContainer = null;
+      if (ev.type === "assistant") addBubble("assistant", ev.text);
+      else if (ev.type === "system") addSystem(ev.text);
+      else if (ev.type === "warehouse") addWarehousePane(ev);
+      else if (ev.type === "chart") addChart(ev);
+      else if (ev.type === "map") addMap(ev);
+      else if (ev.type === "confirm") addConfirmCard(ev);
+      else if (ev.type === "endcard") addEndcard(ev.lines || []);
+      else if (ev.type === "media") addMedia(ev);
+    });
+  }
+
+  // Arrive at a node from outside the normal forward flow (a deep link, or
+  // back/forward). Rebuild the chapter's lead-up transcript instantly, then play
+  // the target node live so it animates in and shows its choices. The chapter
+  // starts just after the last ENTRY_NODES step, so a mid-warehouse link opens at
+  // warehouse-intro (with its framing question) rather than at "connect".
+  function jumpToNode(id, finalMode) {
+    playToken++;
+    clearChat();
+    var chain = pathTo(id);
+    if (!chain) { playNode(id, finalMode); return; } // unreachable — just play it
+    var start = 0;
+    for (var i = 0; i < chain.length - 1; i++) { if (ENTRY_NODES[chain[i].id]) start = i + 1; }
+    if (start > chain.length - 1) { playNode(id, finalMode); return; }
+    for (var j = start; j < chain.length; j++) {
+      if (chain[j].say) addBubble("user", chain[j].say);
+      if (j < chain.length - 1) renderNodeInstant(chain[j].id);
+      else playNode(id, finalMode);
+    }
   }
 
   // --- modal focus management: move focus in on open, trap Tab inside the
@@ -957,9 +1041,9 @@
   }
   function closeTryReal() {
     closeOverlay(tryRealOverlay);
-    // a deep link (#connect-real) shouldn't stick around in the address bar once dismissed
-    if (location.hash.replace(/^#/, "") === REAL_ACCOUNT_HASH && history.replaceState && currentNodeId) {
-      history.replaceState(null, "", "#" + currentNodeId);
+    // a deep link (?n=connect-real) shouldn't stick around in the address bar once dismissed
+    if (idFromUrl() === REAL_ACCOUNT_HASH && currentNodeId) {
+      writeNodeUrl(currentNodeId, "replace");
     }
   }
   function openAbout() { openOverlay(aboutOverlay); }
@@ -976,7 +1060,7 @@
 
   restartBtn.addEventListener("click", restart);
   startSimBtn.addEventListener("click", closeLanding);
-  if (startWarehouseBtn) startWarehouseBtn.addEventListener("click", function () { closeLanding(); playToken++; clearChat(); playNode("warehouse-intro"); });
+  if (startWarehouseBtn) startWarehouseBtn.addEventListener("click", function () { closeLanding(); playToken++; clearChat(); playNode("warehouse-intro", "push"); });
   if (motherduckPaneToggle) motherduckPaneToggle.addEventListener("click", function () { setMotherduckPaneOpen(motherduckPane.classList.contains("collapsed")); });
   settingsBtn.addEventListener("click", openSettings);
   settingsClose.addEventListener("click", closeSettings);
@@ -1012,17 +1096,29 @@
     skip = true;
   });
 
+  // Back/forward: ?n= URLs are History-API entries (pushed on each user-chosen
+  // step), so a popstate replays that node fresh. "none" mode = don't re-write the
+  // URL (it already reflects where we are).
+  window.addEventListener("popstate", function () {
+    var id = idFromUrl();
+    if (id === REAL_ACCOUNT_HASH) { openTryReal(); return; }
+    closeTryReal();
+    if (NODES[id]) { closeLanding(); jumpToNode(id, "none"); }
+  });
+
   /* ---------------------------------------------------------------- boot */
   updateSpeedUi();
   checkGraph();
-  var hash = (location.hash || "").replace(/^#/, "");
-  var hasNodeHash = !!NODES[hash];
-  if (hasNodeHash) closeLanding();
-  playNode(hasNodeHash ? hash : GRAPH.start);
-  if (hash === REAL_ACCOUNT_HASH) {
+  var bootId = idFromUrl();
+  var hasNode = !!NODES[bootId];
+  if (hasNode) closeLanding();
+  // Deep link to a mid-flow node → rebuild its lead-up context; otherwise start fresh.
+  if (hasNode && bootId !== GRAPH.start) jumpToNode(bootId, "replace");
+  else playNode(GRAPH.start, "replace");
+  if (bootId === REAL_ACCOUNT_HASH) {
     openTryReal();
-    // playNode already rewrote the hash to the underlying node; put the deep link back
-    // so refreshing or copying the URL while the overlay is open returns here, not to the start.
-    if (history.replaceState) history.replaceState(null, "", "#" + REAL_ACCOUNT_HASH);
+    // playNode rewrote ?n= to the underlying node; put the deep link back so
+    // refreshing or copying the URL while the overlay is open returns here.
+    writeNodeUrl(REAL_ACCOUNT_HASH, "replace");
   }
 })();
