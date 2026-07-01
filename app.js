@@ -512,25 +512,17 @@
   }
 
   function renderWarehouseBody(ev, body) {
+    // The pane is a warehouse catalog, nothing more: each schema (bronze/silver/
+    // gold) with its tables, row counts and a sample. Process telemetry (refresh
+    // metrics, watermarks, load deltas) belongs in the chat, not here.
     body.innerHTML = "";
-    if (ev.metrics && ev.metrics.length) {
-      var metrics = el("div", "warehouse-metrics");
-      ev.metrics.forEach(function (m) {
-        var metric = el("div", "warehouse-metric");
-        metric.appendChild(el("span", "warehouse-metric-label", escapeHtml(m.label || "")));
-        metric.appendChild(el("strong", null, escapeHtml(String(m.value || ""))));
-        metrics.appendChild(metric);
-      });
-      body.appendChild(metrics);
-    }
 
     var stages = el("div", "warehouse-stages");
     (ev.stages || []).forEach(function (stage) {
-      var stageEl = el("div", "warehouse-stage warehouse-stage-" + (stage.kind || "default") + (stage.active ? " active" : ""));
+      var stageEl = el("div", "warehouse-stage warehouse-stage-" + (stage.kind || "default"));
       var title = el("div", "warehouse-stage-title");
       title.appendChild(el("span", "warehouse-stage-dot"));
       title.appendChild(el("strong", null, escapeHtml(stage.name || "Stage")));
-      if (stage.status) title.appendChild(el("span", "warehouse-stage-status", escapeHtml(stage.status)));
       stageEl.appendChild(title);
       var tableList = el("div", "warehouse-tables");
       (stage.tables || []).forEach(function (t) {
@@ -560,8 +552,7 @@
   function addWarehousePane(ev) {
     if (!motherduckPane || !motherduckPaneBody) return;
     var tableCount = (ev.stages || []).reduce(function (n, stage) { return n + ((stage.tables || []).length); }, 0);
-    var topMetric = ev.metrics && ev.metrics.length ? String(ev.metrics[0].value || "") : "";
-    var summary = ev.summary || (tableCount ? tableCount + " tables" : topMetric || "updated");
+    var summary = ev.summary || (tableCount ? tableCount + " tables" : "empty");
 
     motherduckPane.classList.remove("hidden");
     if (motherduckPaneTitle) motherduckPaneTitle.textContent = ev.title === "MotherDuck" ? "Warehouse" : (ev.title || "Warehouse");
