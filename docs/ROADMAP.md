@@ -483,6 +483,73 @@ To make the "real" path and the connect beat authentic, these would help:
 Drop them in `assets/` (or share and I'll place them). PNG/SVG; please scrub any
 real PII before sending.
 
+## Review & improvement loop (standing plan)
+
+Added 1 Jul 2026 after the full-experience review. Two halves: **recurring
+review passes** (run on a cadence, or when the thing they guard changes) and a
+**prioritized build backlog**. Each item is self-contained so a future session
+or agent can pick it up cold. Every pass ends the same way: a findings-log
+entry below, and at most a handful of concrete changes — reviews that only
+produce reports rot as fast as the thing they review.
+
+### Recurring review passes
+
+**R1 — Grounding freshness** *(quarterly, or when the demo DBs change)*
+- The simulator's numbers were captured live 18–19 Jun 2026. Re-capture the
+  headline facts (fleet sizes, exception/fault counts, Ace rankings, live
+  positions) against the demo DBs and reconcile `data/sample-data.js`.
+- Valencia ZBE (Ep3) is *politically in flux by design* — re-verify the rules
+  via live web search before trusting the episode's claims.
+- Update the capture date in the footer, README, and landing copy together.
+- **Acceptance:** no simulator claim contradicts a fresh live capture.
+
+**R2 — Analytics path review** *(monthly)*
+- Cloudflare tracks a pageview per `?n=` node. Read the funnels: hub →
+  scenario click-through; drop-off inside long episodes; scenarios that are
+  never clicked (relabel, regroup, or retire); endcard-CTA → connect-real
+  opens; Fleet Progress engagement (this gates WS12 v2 — don't build badges
+  nobody will earn).
+- **Acceptance:** one findings-log entry + at most 2–3 content changes.
+
+**R3 — Conversation quality read-through** *(whenever episodes are added or edited)*
+- Read new nodes **as conversations, not diffs**: does the teaching beat land,
+  do honest caveats survive, do choices read like real follow-ups, does the
+  episode cross-link *into* and *out of* the rest of the graph, is the endcard
+  at the moment of impact?
+- Guardrails that have already been violated once each, so check explicitly:
+  the **skills framing** (worked example, never an official installable —
+  see Development expectations) and **map-doc sync** (now CI-enforced;
+  `node scripts/check-graph.js --map-table` regenerates).
+- **Acceptance:** `check-graph` passes; a stranger can land mid-episode via a
+  `?n=` deep link and not be lost.
+
+**R4 — Link & surface rot** *(quarterly)*
+- External links: the Geotab getting-started walkthrough, `mcp.geotab.com`
+  connector URL, `my.geotab.com/registration.html`, vibe-guide skill paths.
+- The MCP tool surface itself: diff the live connector's tools against the
+  episodes. New tools are new-episode candidates (Ep-Report still unprobed;
+  Emissions still blocked on device enrollment).
+- **Acceptance:** every user-facing link resolves; the episode backlog reflects
+  the current tool list.
+
+### Build backlog (prioritized)
+
+1. **CI browser smoke test.** The Playwright checks run by hand during reviews
+   (load → connect → one episode → no JS errors → endcard CTA opens
+   connect-real) belong in a workflow next to `check-graph.yml`. Dev-only
+   dependency; the site itself stays zero-build.
+2. **WS0 multi-page shell** (unchanged, still the biggest structural win): the
+   "what is MCP / get started" content is overlay-only today, invisible to
+   search. WS1/WS2/WS3a/WS5a unlock behind it.
+3. **Warehouse conversion beat.** The warehouse path ends by looping to the
+   hub — the fleet episodes' "try this with your own fleet" endcard has no
+   MotherDuck-flavored equivalent ("stand this up for real: free tier +
+   vibe-guide skill").
+4. **Fleet Progress v2** — theme badges, fleet upgrades earned from episodes
+   (EVs after the EV episode, dashcams after Ep-Dashcam), share card. **Gated
+   on R2 engagement data.**
+5. **WS7 polish** (a11y sweep across the new strip/hints, Lighthouse pass).
+
 ## Findings log (verified live)
 
 - **Conversation-path review (1 Jul 2026).** Full read-through plus graph metrics
