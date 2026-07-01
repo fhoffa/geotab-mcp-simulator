@@ -65,6 +65,10 @@ Before finishing changes, run:
 node scripts/check-graph.js
 ```
 
+The check also fails if `docs/CONVERSATION-MAP.md` has drifted from the graph
+(node count or missing ids). After adding/removing nodes, regenerate the doc's
+node table with `node scripts/check-graph.js --map-table` and paste it in.
+
 For UI-affecting changes, also run a local static server and smoke-test the main simulator path:
 
 ```bash

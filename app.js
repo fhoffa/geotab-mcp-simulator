@@ -364,6 +364,10 @@
     return row;
   }
 
+  // One-time teaching beat: the first tool card a visitor sees is the heart of
+  // the whole demo (this *is* MCP), so explain it once, then stay quiet.
+  var toolHintShown = false;
+
   function addToolCard(ev, container) {
     var card = el("div", "tool-card");
     card.setAttribute("data-server", ev.server || "geotab");
@@ -396,6 +400,16 @@
     card.appendChild(body);
     if (ev.openByDefault) card.classList.add("open");
     (container || chatEl).appendChild(card);
+    if (!toolHintShown) {
+      toolHintShown = true;
+      (container || chatEl).appendChild(el(
+        "div",
+        "tool-hint",
+        "☝ That's an <strong>MCP tool call</strong> — the assistant using the Model Context Protocol " +
+          "to query MyGeotab. Click the card to see the exact request and response. Connect a real " +
+          "account and these calls run live against your fleet."
+      ));
+    }
     scrollDown();
   }
 

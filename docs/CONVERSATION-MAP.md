@@ -6,6 +6,9 @@ readable version for GitHub. The numbers/drivers the newer scenarios quote live
 in `data/sample-data.js` (the sample-data store); conversation nodes ground
 their charts and results on it.
 
+CI fails if the node table below drifts from the graph; regenerate it with
+`node scripts/check-graph.js --map-table`.
+
 ```mermaid
 flowchart TD
     connect["🔌 Connect the connector"] --> authorize["Authorize"]
@@ -69,17 +72,29 @@ flowchart TD
     epMS --> ep12
     epMD --> ep12
     epOF --> epEVv
+
+    %% --- Package-as-a-skill beats ---
+    ep1 -->|"🛠️ package as a skill"| ep1s["Ep1 · Weekly-review skill"]
+    epSR -->|"🛠️ skill"| epSRs["Skill · Safety scorecard"]
+    ep8 -->|"🛠️ skill"| ep8s["Skill · Maintenance triage"]
+    epROI -->|"🛠️ skill"| epROIsk["Skill · Quarterly ROI case"]
+
+    %% --- Warehouse (MotherDuck teaching path) ---
+    hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (60)
+## Nodes (78)
 
 | id | title | database | leads to |
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question (hub) | — | every scenario entry point |
+| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep1-skill`, `ep4-answer`, `ep-agentic-coaching`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
 | `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-skill`, `ep7-ace`, `hub` |
 | `ep1-skill` | Ep1 · Package as a skill | — | `ep9-fleet`, `hub`, restart |
+| `ep-safety-skill` | Skill · Package the safety scorecard | — | `ep-safety-risk`, `ep-agentic-coaching`, `hub`, restart |
+| `ep-maint-skill` | Skill · Package the maintenance triage | — | `ep8-maintenance`, `ep-maint-overdue`, `hub`, restart |
+| `ep-roi-skill` | Skill · Package the quarterly ROI case | — | `ep-roi-onepager`, `ep-roi`, `hub`, restart |
 | `ep2-answer` | Ep2 · Ask why | demo_fh_vegas4 | `ep2-action`, `ep10-postedspeed`, `hub` |
 | `ep2-action` | Ep2 · Create alert | demo_fh_vegas4 | `ep8-maintenance`, `hub`, restart |
 | `ep3-answer` | Ep3 · Zone from the news | demo_fh4 | `ep3-prefs`, `ep9-fleet-23-31`, `hub` |
@@ -96,7 +111,7 @@ flowchart TD
 | `ep13-leaveopen` | Ep13 · Leave the case open | demo_fh4 | `ep9-fleet-12`, `hub`, restart |
 | `ep7-ace` | Ep7 · Ask Geotab Ace | demo_fh_vegas4 | `ep7-reasoning`, `ep2-action`, `hub` |
 | `ep7-reasoning` | Ep7 · Ace reasoning | demo_fh_vegas4 | `ep8-maintenance`, `ep1-answer`, `hub`, restart |
-| `ep8-maintenance` | Ep8 · Triage the worklist | demo_fh4 | `ep9-fleet-08`, `ep12-investigate`, `ep5-answer`, `hub` |
+| `ep8-maintenance` | Ep8 · Triage the worklist | demo_fh4 | `ep-maint-skill`, `ep9-fleet-08`, `ep12-investigate`, `ep5-answer`, `hub` |
 | `ep9-fleet-08` | Ep9 · What is Demo - 08 | demo_fh4 | `ep12-investigate`, `ep5-answer`, `ep9-fleet`, `hub` |
 | `ep9-fleet-06` | Ep9 · What is Demo - 06 | demo_fh4 | `ep9-fleet`, `hub`, restart |
 | `ep9-fleet-12` | Ep9 · What is Demo - 12 | demo_fh4 | `ep9-fleet`, `hub`, restart |
@@ -118,24 +133,36 @@ flowchart TD
 | `ep-exec` | Ep-Exec · Board snapshot, both fleets | cross-DB | `ep-roi`, `ep-exec-chart`, `ep2-answer`, `ep8-maintenance`, `hub`, restart |
 | `ep-exec-chart` | Ep-Exec · Utilization & exceptions charts | — | `ep2-answer`, `ep8-maintenance`, `hub`, restart |
 | `ep-dashcam` | Ep-Dashcam · Pull the clip (illustrative) | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
-| `ep-safety-risk` | Safety · Driver safety scorecard | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-harsh`, `ep2-action`, `hub` |
+| `ep-safety-risk` | Safety · Riskiest drivers this week | demo_fh_vegas4 | `ep-safety-skill`, `ep-agentic-coaching`, `ep-safety-harsh`, `ep2-action`, `hub` |
 | `ep-safety-harsh` | Safety · Harsh braking by driver | demo_fh_vegas4 | `ep-safety-harsh-spain`, `ep-agentic-coaching`, `ep-safety-risk`, `hub` |
 | `ep-safety-harsh-spain` | Safety · Harsh-braking hotspot | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-risk`, `hub`, restart |
 | `ep-safety-schoolzone` | Safety · Speeding in school zones | demo_fh_vegas4 | `ep-safety-schoolzone-create`, `ep-agentic-coaching`, `ep-safety-postedspeed-08`, `hub` |
 | `ep-safety-schoolzone-create` | Safety · Create school-zone alert | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-risk`, `hub`, restart |
 | `ep-safety-postedspeed-08` | Safety · Posted-speed truth-check (Demo - 08) | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-schoolzone-create`, `hub` |
 | `ep-maint-overdue` | Maintenance · Overdue for service | demo_fh4 | `ep-maint-overdue-book`, `ep-maint-severity`, `ep-maint-downtime`, `hub` |
-| `ep-maint-overdue-book` | Maintenance · Book the overdue ITV (Demo - 25) | demo_fh4 | `ep-maint-severity`, `ep-maint-downtime`, `hub`, restart |
 | `ep-maint-severity` | Maintenance · Fault codes + severity | demo_fh4 | `ep-maint-severity-book`, `ep12-investigate`, `ep-maint-downtime`, `hub` |
+| `ep-maint-overdue-book` | Maintenance · Book the overdue ITV (Demo - 25) | demo_fh4 | `ep-maint-severity`, `ep-maint-downtime`, `hub`, restart |
 | `ep-maint-severity-book` | Maintenance · Book the 3 red-lamp units | demo_fh4 | `ep12-investigate`, `ep-maint-overdue`, `hub`, restart |
-| `ep-maint-downtime` | Maintenance · Unplanned downtime | demo_fh4 | `ep12-investigate`, `ep-maint-severity`, `hub` |
+| `ep-maint-downtime` | Maintenance · Unplanned downtime | demo_fh4 | `ep12-investigate`, `ep-maint-severity`, `ep-maint-overdue`, `hub` |
 | `ep-ops-fuel` | Operations · Fuel economy by type | demo_fh_vegas4 | `ep9-ev-vegas`, `ep-ops-idle`, `ep2-action`, `ep-roi`, `hub` |
 | `ep-ops-idle` | Operations · Longest idle times | demo_fh_vegas4 | `ep-ops-idle-alert`, `ep-ops-fuel`, `hub` |
 | `ep-ops-idle-alert` | Operations · Create idling alert | demo_fh_vegas4 | `ep-ops-fuel`, `hub`, restart |
 | `ep-agentic-safety` | Agentic · Top 3 safety risks + fixes | demo_fh_vegas4 | `ep2-action`, `ep-agentic-coaching`, `ep-safety-schoolzone-create`, `ep-roi`, `ep-safety-risk`, `hub` |
 | `ep-agentic-coaching` | Agentic · Draft coaching summary | demo_fh_vegas4 | `ep-coaching-send`, `ep-agentic-safety`, `ep2-action`, `hub` |
 | `ep-coaching-send` | Agentic · Send coaching summary | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
-| `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep2-action`, `ep-agentic-coaching`, `hub` |
+| `warehouse-intro` | Warehouse · simplest path | — | `warehouse-setup`, `warehouse-geotab-recommendation`, `warehouse-what-is`, `hub` |
+| `warehouse-geotab-recommendation` | Warehouse · Geotab recommendation? | — | `warehouse-setup`, `warehouse-what-is`, `warehouse-intro` |
+| `warehouse-what-is` | Warehouse · what is MotherDuck | — | `warehouse-setup`, `warehouse-intro`, `hub` |
+| `warehouse-setup` | Warehouse · get many points | — | `warehouse-first-load`, `hub` |
+| `warehouse-first-load` | Warehouse · one-table load | — | `warehouse-layering`, `hub` |
+| `warehouse-layering` | Warehouse · why layers appear | — | `warehouse-incremental`, `hub` |
+| `warehouse-incremental` | Warehouse · incremental refresh | — | `warehouse-operational`, `warehouse-intro`, `hub`, restart |
+| `warehouse-operational` | Warehouse · operational mirror | — | `warehouse-restated`, `hub` |
+| `warehouse-restated` | Warehouse · trips aren't append-only | — | `warehouse-quality`, `warehouse-operational`, `hub` |
+| `warehouse-quality` | Warehouse · quality and gaps | — | `warehouse-costs`, `warehouse-answers`, `warehouse-restated`, `hub` |
+| `warehouse-costs` | Warehouse · cost estimate | — | `warehouse-answers`, `warehouse-quality`, `hub` |
+| `warehouse-answers` | Warehouse · answer-ready marts | — | `warehouse-quality`, `warehouse-intro`, `hub` |
+| `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep-roi-skill`, `ep2-action`, `ep-agentic-coaching`, `hub` |
 | `ep-roi-onepager` | ROI · Draft the business case | demo_fh_vegas4 | `ep-roi-send`, `ep2-action`, `hub` |
 | `ep-roi-send` | ROI · Send the business case | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
 

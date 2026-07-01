@@ -462,7 +462,10 @@ window.CONVERSATIONS = {
             "page cap, HOS being per-driver, the Trip-count trap) plus a strict no-PII default, so whoever runs it " +
             "gets the careful version every time, not just a faster version.\n\n" +
             "Drop it in your team's shared skills and anyone can just say \"run my weekly review\" and get this same brief, " +
-            "without re-explaining any of this to them first.",
+            "without re-explaining any of this to them first.\n\n" +
+            "And this one isn't simulated: a real, installable copy of this exact skill ships with this project — " +
+            "[skills/geotab-weekly-review/SKILL.md](https://github.com/fhoffa/geotab-mcp-simulator/blob/main/skills/geotab-weekly-review/SKILL.md). " +
+            "Take it with you when you connect your own fleet.",
         },
         {
           type: "endcard",

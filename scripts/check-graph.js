@@ -94,6 +94,58 @@ Object.keys(NODES).forEach(function (id) {
 
 if (!NODES[GRAPH.start]) problems.push("start node '" + GRAPH.start + "' does not exist");
 
+// docs/CONVERSATION-MAP.md is the GitHub-readable version of this graph, and it
+// has rotted silently before (stuck at 60 nodes while the graph grew to 78).
+// Fail when it drifts; `--map-table` prints a fresh node table to paste in.
+var fs = require("fs");
+var MAP_DOC = path.join(__dirname, "..", "docs", "CONVERSATION-MAP.md");
+
+function mapTable() {
+  var lines = [
+    "## Nodes (" + Object.keys(NODES).length + ")",
+    "",
+    "| id | title | database | leads to |",
+    "|---|---|---|---|",
+  ];
+  Object.keys(NODES).forEach(function (id) {
+    var n = NODES[id];
+    var targets = [];
+    if (n.next) targets.push("`" + n.next + "` (auto)");
+    (n.choices || []).forEach(function (c) {
+      if (c.next && targets.indexOf("`" + c.next + "`") < 0) targets.push("`" + c.next + "`");
+      else if (c.action === "restart" && targets.indexOf("restart") < 0) targets.push("restart");
+    });
+    lines.push("| `" + id + "` | " + (n.title || "") + " | " + (n.db || "—") + " | " + (targets.join(", ") || "—") + " |");
+  });
+  return lines.join("\n");
+}
+
+if (process.argv.indexOf("--map-table") >= 0) {
+  console.log(mapTable());
+  process.exit(0);
+}
+
+var mapDoc = "";
+try { mapDoc = fs.readFileSync(MAP_DOC, "utf8"); } catch (e) { /* doc optional */ }
+if (mapDoc) {
+  var countMatch = mapDoc.match(/## Nodes \((\d+)\)/);
+  var nodeCount = Object.keys(NODES).length;
+  if (countMatch && Number(countMatch[1]) !== nodeCount) {
+    problems.push(
+      "docs/CONVERSATION-MAP.md says " + countMatch[1] + " nodes but the graph has " + nodeCount +
+      " — regenerate with: node scripts/check-graph.js --map-table"
+    );
+  }
+  Object.keys(NODES).forEach(function (id) {
+    if (mapDoc.indexOf("`" + id + "`") < 0) {
+      problems.push(
+        "docs/CONVERSATION-MAP.md is missing node `" + id +
+        "` — regenerate with: node scripts/check-graph.js --map-table"
+      );
+    }
+  });
+}
+
 if (problems.length) {
   console.error("[check-graph] " + problems.length + " problem(s):\n" + problems.join("\n"));
   process.exit(1);

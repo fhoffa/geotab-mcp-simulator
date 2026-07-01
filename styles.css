@@ -809,6 +809,7 @@ body {
 .chip.primary:hover { background: var(--accent-ink); color: #fff; }
 .chip.subtle { color: var(--ink-soft); }
 .tray-hint { width: 100%; font-size: 12px; color: var(--ink-soft); margin: 0 2px 2px; }
+.tool-hint { font-size: 12px; line-height: 1.45; color: var(--ink-soft); margin: 2px 2px 6px; }
 .tray-group {
   width: 100%;
   font-size: 11px;
