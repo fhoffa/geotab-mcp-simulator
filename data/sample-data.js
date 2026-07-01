@@ -301,10 +301,12 @@ window.SAMPLE_DATA = {
           { name: "bronze.trips_raw", rows: "8,412 rows", note: "append-only: retired + current trip ids both on disk", sample: [
             { TripId: "b10FEE52", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:28:51", _batch_id: "forward" },
             { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", _batch_id: "reconcile" },
+            { TripId: "b10FED90", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", _batch_id: "forward" },
           ] },
           { name: "bronze.driver_changes_raw", rows: "1,126 rows", note: "DriverChange login/logout — append-only events", sample: [
             { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-29 23:18:24", type: "login" },
             { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-30 02:41:10", type: "logout" },
+            { device: "Demo - 14", driver: "u_demo_14", dateTime: "2026-06-30 06:02:11", type: "login" },
           ] },
           { name: "bronze.status_data_raw", rows: "1.9M rows", },
           { name: "bronze.exception_events_raw", rows: "42,806 rows", },
@@ -315,6 +317,7 @@ window.SAMPLE_DATA = {
           { name: "silver.trips", rows: "8,407 rows", note: "1 row per drive · key (DeviceId, trip_start_utc) · latest load wins", sample: [
             { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", driver_id: "u_demo_31" },
             { TripId: "b10F7C03", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", driver_id: "UnknownDriverId" },
+            { TripId: "b1100F42", DeviceName: "Demo - 08", trip_start_utc: "2026-06-30 07:10:02", trip_end_utc: "2026-06-30 07:41:19", driver_id: "u_demo_17" },
           ] },
           { name: "silver.driver_assignments", rows: "1,118 rows", note: "Trip.driver → dim_user.id or UnknownDriverId" },
           { name: "silver.status_data", rows: "1.9M rows", },
