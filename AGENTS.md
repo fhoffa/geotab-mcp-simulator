@@ -67,8 +67,10 @@ node scripts/check-graph.js
 ```
 
 The check also fails if `docs/CONVERSATION-MAP.md` has drifted from the graph
-(node count or missing ids). After adding/removing nodes, regenerate the doc's
-node table with `node scripts/check-graph.js --map-table` and paste it in.
+(node count or missing ids). The node table there is machine-written — CI
+regenerates and commits it on PRs from this repo; locally run
+`node scripts/check-graph.js --fix-map` after adding/removing nodes. The map's
+Mermaid diagram and prose stay hand-curated.
 
 For UI-affecting changes, also run a local static server and smoke-test the main simulator path:
 
