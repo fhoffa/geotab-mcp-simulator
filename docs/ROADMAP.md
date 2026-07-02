@@ -217,9 +217,12 @@ content must be reconciled. See **WS6**.
 - **Acceptance:** map artifact plots the real positions; Valencia vehicles stand
   out; labeled "illustrative — assistant-rendered, not a live map".
 
-### WS12 — Fleet Progress game  🟡 (v1 shipped)
+### WS12 — Fleet Progress game  🟡 (v1 shipped as an experimental, off-by-default mode)
 - **Goal:** give explorers a progression loop — *your simulated fleet grows as
   you learn Geotab + MCP* — so finishing one scenario pulls you into the next.
+- **Positioning:** the simulator stays a plain simulator by default. The game is
+  an **experimental toggle in Settings** (off unless the user opts in); while
+  off there is no tracking, no strip, no checkmarks.
 - **Shipped (v1):** localStorage-only progression (nothing leaves the browser):
   - **Checkboxes** — hub chips get a ✓ once that scenario has been explored.
   - **Points** — 25/scenario + 5 for every other distinct node reached

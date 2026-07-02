@@ -84,11 +84,25 @@
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // -------------------------------------------------------- fleet progress game
-  // Exploring scenarios "grows" your simulated fleet: you start managing a small
-  // 5-vehicle operation and every hub scenario you complete adds vehicles toward
-  // the full 50-vehicle demo fleet, plus points for every distinct node you reach.
-  // All local (localStorage) — nothing leaves the browser. Restart keeps progress;
-  // Settings has the reset.
+  // EXPERIMENTAL, off by default — the simulator stays a plain simulator unless
+  // the user turns this on in Settings. When on: exploring scenarios "grows" your
+  // simulated fleet from a small 5-vehicle operation toward the full 50-vehicle
+  // demo fleet, plus points for every distinct node you reach. All local
+  // (localStorage) — nothing leaves the browser. Restart keeps progress; Settings
+  // has the toggle and the reset.
+  var GAME_KEY = "geotab-mcp-sim-game";
+  var gameMode = readGameMode();
+  function readGameMode() {
+    try {
+      return window.localStorage && window.localStorage.getItem(GAME_KEY) === "on" ? "on" : "off";
+    } catch (_) { return "off"; }
+  }
+  function gameOn() { return gameMode === "on"; }
+  function setGameMode(mode) {
+    gameMode = mode === "on" ? "on" : "off";
+    try { if (window.localStorage) window.localStorage.setItem(GAME_KEY, gameMode); } catch (_) {}
+  }
+
   var PROGRESS_KEY = "geotab-mcp-sim-progress";
   var FLEET_BASE = 5;
   var FLEET_PER_SCENARIO = 2;
@@ -130,6 +144,7 @@
     };
   }
   function recordVisit(id) {
+    if (!gameOn()) return;
     if (ENTRY_NODES[id] || progress.nodes[id]) return;
     progress.nodes[id] = 1;
     writeProgress();
@@ -966,7 +981,7 @@
 
   function renderChoices(choices) {
     trayEl.innerHTML = "";
-    var atHub = currentNodeId === "hub";
+    var atHub = currentNodeId === "hub" && gameOn();
     if (atHub) {
       var st = progressStats();
       // only once there's something to show — a first-timer's hub stays clean
@@ -1162,16 +1177,32 @@
   });
   var progressSummaryEl = document.getElementById("progressSummary");
   var progressResetBtn = document.getElementById("progressResetBtn");
+  var gameOptionBtns = Array.prototype.slice.call(document.querySelectorAll(".game-option"));
   function updateProgressUi() {
+    gameOptionBtns.forEach(function (btn) {
+      var active = btn.getAttribute("data-game") === gameMode;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-checked", active ? "true" : "false");
+    });
     if (!progressSummaryEl) return;
+    if (!gameOn()) { progressSummaryEl.textContent = "off"; return; }
     var st = progressStats();
     progressSummaryEl.textContent = "🚚 " + st.fleet + " vehicles · " + st.points + " pts · " + st.scenarios + "/" + st.totalScenarios + " scenarios";
   }
+  function redrawHubTray() {
+    if (currentNodeId === "hub") renderChoices((NODES.hub && NODES.hub.choices) || []);
+  }
+  gameOptionBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setGameMode(btn.getAttribute("data-game"));
+      updateProgressUi();
+      redrawHubTray(); // strip + checkmarks follow the toggle immediately
+    });
+  });
   if (progressResetBtn) progressResetBtn.addEventListener("click", function () {
     resetProgress();
     updateProgressUi();
-    // if the hub tray is showing, redraw it so strip and checkmarks clear immediately
-    if (currentNodeId === "hub") renderChoices((NODES.hub && NODES.hub.choices) || []);
+    redrawHubTray();
   });
   tryRealBtn.addEventListener("click", openTryReal);
   tryRealBtnLanding.addEventListener("click", openTryReal);

@@ -839,6 +839,19 @@ body {
 .progress-full { width: 100%; font-weight: 600; color: var(--accent-ink); }
 .chip.done { border-style: dashed; }
 .chip-check { color: var(--geotab); font-weight: 700; }
+.settings-flag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--notice);
+  background: var(--notice-bg);
+  border: 1px solid var(--notice-line);
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin-left: 6px;
+  vertical-align: 2px;
+}
 .tray-group {
   width: 100%;
   font-size: 11px;
