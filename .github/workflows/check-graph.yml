@@ -23,7 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || '' }}
+          # Same-repo PRs check out the head branch so the fix-map step can push
+          # back to it. Fork PRs must NOT use head_ref — that branch doesn't
+          # exist in this repo, so checkout would fail before the push step's
+          # same-repo guard could skip it; they get the default merge-commit
+          # checkout and the plain drift check instead.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref || '' }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
