@@ -16,25 +16,72 @@ experience is grounded in real data.
 > (driver names, locations). Review your privacy obligations before connecting a
 > production fleet.
 
-On load you'll see a **landing overlay** that frames the value prop for a fleet
-manager who already knows Geotab: plain-English fleet questions, a note that the
-connector is an open MCP server (Claude is the clearest starting point, while
-Microsoft Copilot, ChatGPT, and other MCP clients can speak to it too), and two CTAs
-— jump into the simulator, or open the **"Connect your real account"** overlay
-(reachable anytime from the header), which walks through getting MyGeotab
-access, connecting the connector to your assistant of choice, and a prominent
-PII warning before touching production data.
+## MCP in 30 seconds
+
+**MCP — the Model Context Protocol — is an open standard that lets AI
+assistants securely call external tools and data sources.** Geotab publishes an
+[official MCP server](https://www.geotab.com/geotab-mcp-connector/) for
+MyGeotab. That means any MCP-capable assistant — Claude, Microsoft Copilot,
+ChatGPT, and others — can read your live fleet data and take real actions
+(create zones, rules, alerts) from a plain-English conversation. No dashboards,
+no report builder, no export/import loop.
+
+This simulator shows what that feels like *before* you connect anything real.
+More on the protocol itself: [modelcontextprotocol.io](https://modelcontextprotocol.io).
 
 ## What you can try
 
-Connect the (simulated) connector, then pick any of six scenarios:
+Connect the (simulated) connector, then pick from **~24 scenarios across six
+themes** (plus a warehouse-building path — full map in
+[docs/CONVERSATION-MAP.md](docs/CONVERSATION-MAP.md)):
 
-1. **The Monday morning review** — a whole week's fleet brief in one ask, then package it as a reusable skill.
-2. **Why are speeding alerts up?** — diagnostic reasoning that shows the spike is fleet-wide (not one outlier), contrasting a capped raw query with Geotab Ace, then create a live alert.
-3. **React to a low-emission zone** — read today's Valencia ZBE rules from the web, see which of *your* vehicles are exposed, then create the zone + entry alert.
-4. **Get 5 fleet chores done** — a montage of real write-actions (geofence, idling rule, dismiss faults, group, route alerts).
-5. **Fault → email garage → book service** — a cross-tool chain (Geotab + Gmail + Calendar).
-6. **Ask Geotab Ace** — pose a fleet question in plain English; Ace returns a ranked answer, a chart, and its reasoning.
+- **⭐ Start here** — the Monday morning review (a week's fleet brief in one ask),
+  your top-3 safety risks with fixes, "where is my fleet leaking money?" (an ROI
+  case built live), and a guided **MotherDuck warehouse** build from MCP calls.
+- **🛟 Safety** — riskiest drivers, harsh braking by driver, school-zone speeding,
+  a "why are speeding alerts up?" diagnosis (a capped raw query vs **Geotab Ace**),
+  and settling a disputed flag with posted road speeds.
+- **🔧 Maintenance** — triage the shop's worklist, overdue service, fault codes by
+  severity, unplanned downtime, a root-cause dig on one repeat offender, and a
+  cross-tool chain: fault → email the garage → book service (Geotab + Gmail + Calendar).
+- **🚀 Operations** — fuel economy by vehicle type, idle-time hotspots,
+  EV-replacement candidates, "what's actually in my fleet?" (VIN decode), and
+  reacting to Valencia's low-emission zone with live web rules.
+- **🧠 Automate & share** — package the weekly review as a reusable **skill**,
+  knock out 5 fleet chores (write-actions) in one ask, draft coaching notes.
+- **🚚 Cross-tool & exec** — "who's closest and free right now?" dispatch, settle
+  a late-delivery dispute against a Salesforce case, and a board snapshot across
+  two fleets.
+
+## Get started with your real fleet
+
+When you're done playing, the real thing takes three steps — the in-app
+**"Connect real account"** overlay walks through them with screenshots:
+
+1. **Get a MyGeotab database.** Fastest: register a **free demo database** at
+   [my.geotab.com/registration.html](https://my.geotab.com/registration.html) —
+   anonymized data, same shape as this simulator, safe to explore. For
+   production access, ask your Geotab account rep or fleet admin.
+2. **Add the connector to your AI assistant.** Geotab's official MCP server URL
+   is `https://mcp.geotab.com/mygeotab`. In Claude: **Settings → Connectors →
+   Add custom connector**, paste the URL, and sign in with your MyGeotab
+   credentials when prompted. Microsoft Copilot, ChatGPT, and other MCP clients
+   follow the same pattern. Official walkthrough:
+   [Getting started with MyGeotab MCP](https://support.geotab.com/help/mygeotab/access-and-administration/mygeotab-mcp/getting-started-with-mygeotab-mcp).
+3. **Know what you're exposing.** The connector inherits your MyGeotab
+   permissions, so the assistant can see anything you can — including personal
+   data. Review your privacy/DPA obligations before connecting production data,
+   and prefer vehicle/asset-level questions over person-level ones.
+
+**The skill lesson.** This project deliberately doesn't ship "official" skills.
+The pattern it teaches is: **have the conversations first, then package the ones
+you find yourself repeating into skills relevant to *your* fleet.**
+[`skills/geotab-weekly-review/SKILL.md`](skills/geotab-weekly-review/SKILL.md)
+stays here as a worked example of what that looks like — it encodes real Geotab
+data quirks (the all-time trip counter, per-driver HOS, pagination caps that
+fake "outliers") and a strict no-PII default. Ready-to-follow shared skills —
+like the MotherDuck warehouse skill the simulator's warehouse path follows —
+live in the companion [geotab-vibe-guide](https://github.com/fhoffa/geotab-vibe-guide).
 
 ## Run it locally
 
