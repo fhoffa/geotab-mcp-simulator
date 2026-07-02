@@ -6,8 +6,9 @@ readable version for GitHub. The numbers/drivers the newer scenarios quote live
 in `data/sample-data.js` (the sample-data store); conversation nodes ground
 their charts and results on it.
 
-CI fails if the node table below drifts from the graph; regenerate it with
-`node scripts/check-graph.js --map-table`.
+The node table below is **machine-written**: CI regenerates and commits it on
+every PR (locally: `node scripts/check-graph.js --fix-map`). The Mermaid
+diagram and the prose are curated by hand — edit those freely.
 
 ```mermaid
 flowchart TD
@@ -130,7 +131,7 @@ flowchart TD
 | `ep-dispatch-send-50` | Ep-Dispatch · Dispatch Demo - 50 | demo_fh_vegas4 | `hub`, restart |
 | `ep-dispatch-map` | Ep-Dispatch · Live positions map | — | `ep-dispatch-send-45`, `hub`, restart |
 | `ep-dispatch-chart` | Ep-Dispatch · Distance chart | — | `ep-dispatch-send-50`, `hub`, restart |
-| `ep-exec` | Ep-Exec · Board snapshot, both fleets | cross-DB | `ep-roi`, `ep-exec-chart`, `ep2-answer`, `ep8-maintenance`, `hub`, restart |
+| `ep-exec` | Ep-Exec · Board snapshot, both fleets | — | `ep-roi`, `ep-exec-chart`, `ep2-answer`, `ep8-maintenance`, `hub`, restart |
 | `ep-exec-chart` | Ep-Exec · Utilization & exceptions charts | — | `ep2-answer`, `ep8-maintenance`, `hub`, restart |
 | `ep-dashcam` | Ep-Dashcam · Pull the clip (illustrative) | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
 | `ep-safety-risk` | Safety · Riskiest drivers this week | demo_fh_vegas4 | `ep-safety-skill`, `ep-agentic-coaching`, `ep-safety-harsh`, `ep2-action`, `hub` |

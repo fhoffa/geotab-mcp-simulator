@@ -96,7 +96,10 @@ if (!NODES[GRAPH.start]) problems.push("start node '" + GRAPH.start + "' does no
 
 // docs/CONVERSATION-MAP.md is the GitHub-readable version of this graph, and it
 // has rotted silently before (stuck at 60 nodes while the graph grew to 78).
-// Fail when it drifts; `--map-table` prints a fresh node table to paste in.
+// The node table is machine-derived, so the machine writes it: `--fix-map`
+// regenerates it in place (CI runs this on every PR and commits the result;
+// see .github/workflows/check-graph.yml), `--map-table` prints it to stdout,
+// and the default run still fails on drift as the backstop for forks/local.
 var fs = require("fs");
 var MAP_DOC = path.join(__dirname, "..", "docs", "CONVERSATION-MAP.md");
 
@@ -125,6 +128,24 @@ if (process.argv.indexOf("--map-table") >= 0) {
   process.exit(0);
 }
 
+if (process.argv.indexOf("--fix-map") >= 0) {
+  var docNow = fs.readFileSync(MAP_DOC, "utf8");
+  // the table block: the "## Nodes (N)" heading plus every consecutive |-row
+  var tableBlock = /## Nodes \(\d+\)\n\n(\|[^\n]*\n)+/;
+  if (!tableBlock.test(docNow)) {
+    console.error("[check-graph] --fix-map: could not find the node table in " + MAP_DOC);
+    process.exit(1);
+  }
+  var docFixed = docNow.replace(tableBlock, function () { return mapTable() + "\n"; });
+  if (docFixed === docNow) {
+    console.log("[check-graph] map table already current.");
+  } else {
+    fs.writeFileSync(MAP_DOC, docFixed);
+    console.log("[check-graph] map table regenerated in " + MAP_DOC + ".");
+  }
+  process.exit(0);
+}
+
 var mapDoc = "";
 try { mapDoc = fs.readFileSync(MAP_DOC, "utf8"); } catch (e) { /* doc optional */ }
 if (mapDoc) {
@@ -133,14 +154,14 @@ if (mapDoc) {
   if (countMatch && Number(countMatch[1]) !== nodeCount) {
     problems.push(
       "docs/CONVERSATION-MAP.md says " + countMatch[1] + " nodes but the graph has " + nodeCount +
-      " — regenerate with: node scripts/check-graph.js --map-table"
+      " — run: node scripts/check-graph.js --fix-map (CI does this automatically on PRs)"
     );
   }
   Object.keys(NODES).forEach(function (id) {
     if (mapDoc.indexOf("`" + id + "`") < 0) {
       problems.push(
         "docs/CONVERSATION-MAP.md is missing node `" + id +
-        "` — regenerate with: node scripts/check-graph.js --map-table"
+        "` — run: node scripts/check-graph.js --fix-map (CI does this automatically on PRs)"
       );
     }
   });
