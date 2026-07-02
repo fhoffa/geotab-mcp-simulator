@@ -275,7 +275,7 @@ window.CONVERSATIONS = {
           say:
             "Package my weekly fleet review into a reusable skill so I — and anyone on my team — " +
             "can run the identical review just by asking for it.",
-          next: "ep1-skill",
+          next: "ep1-skill-first",
         },
         {
           group: "🧠 Automate & share",
@@ -395,20 +395,149 @@ window.CONVERSATIONS = {
             "worth a sanity check on your end.\n\n" +
             "(Didn't put trip count in here — the raw all-time counter isn't a meaningful weekly number, so I left it out rather than report something misleading.)\n\n" +
             "That's the version of this brief that used to mean pulling four reports and cross-checking them by hand — " +
-            "probably 30–45 minutes on a Monday. This was one ask.",
+            "probably 30–45 minutes on a Monday. This was one ask.\n\n" +
+            "One thing before you file it, though: that's *my* default shape — several paragraphs of prose. If this " +
+            "is about to become your Monday ritual, push back now. Too wordy? Wrong order? Want it visual? Whatever " +
+            "we settle on together is what we can later freeze into a skill for your whole team.",
         },
       ],
       choices: [
         {
-          label: "🛠️ Turn this into a reusable skill",
+          label: "📊 Too much prose — chart the speeding",
           say:
-            "This is exactly my weekly routine. Turn it into a reusable skill so I — and anyone on my team — " +
-            "can run the identical review just by asking for it.",
-          next: "ep1-skill",
+            "Useful, but honestly Monday-me won't read five paragraphs. Make it visual — chart the speeding " +
+            "so I can see the top vehicles at a glance.",
+          next: "ep1-shape-viz",
         },
         { label: "🤖 Double-check the speeding with Ace", say: "Double-check that speeding read with Geotab Ace.", next: "ep7-ace" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
+    },
+
+    /* ------------------------------------- ep1 · shaping the review together */
+    /* The user pushes back on the default brief and the review gets reshaped
+     * in conversation — first the visualization, then the format. Whatever gets
+     * settled here is exactly what ep1-skill freezes: conversations first,
+     * skills second, demonstrated rather than told. */
+    "ep1-shape-viz": {
+      id: "ep1-shape-viz",
+      title: "Ep1 · Shape it: chart the speeding",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Fair — and this is exactly the moment to say so, while we're still shaping the thing.\n\n" +
+            "One catch first: I won't chart the raw pull. It's capped at the newest ~200 rows, so a chart of it " +
+            "would just be a prettier version of a paging artifact. Let me have Ace aggregate the whole week " +
+            "across the whole fleet, then chart the real ranking.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "Top 5 vehicles by speeding events, last 7 days?", new_chat: true },
+          summary: "whole-fleet aggregate → top 5 cluster 118–142",
+          result:
+            '{ "answer": "1. Demo-16: 142  2. Demo-01: 134  3. Demo-08: 129  4. Demo-15: 121  5. Demo-04: 118" }',
+        },
+        {
+          type: "chart",
+          title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
+          bars: [
+            { label: "Demo - 16", value: 142 },
+            { label: "Demo - 01", value: 134 },
+            { label: "Demo - 08", value: 129 },
+            { label: "Demo - 15", value: 121 },
+            { label: "Demo - 04", value: 118 },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "There's the picture — and notice it carries the argument the paragraph was making. One bad vehicle " +
+            "would look like a single long bar and a cliff; this is a plateau, five vehicles within about 20 events " +
+            "of each other. \"Fleet-wide problem, fix it with policy\" — now at a glance instead of in a sentence.\n\n" +
+            "(I'd skip charting the maintenance side this week: every bar would be zero. When a chart has nothing " +
+            "to say, the sentence \"zero active faults\" says it better.)\n\n" +
+            "Keep shaping — what about the words around it? Same six sections, or tighter?",
+        },
+      ],
+      choices: [
+        {
+          label: "🧾 Headline, chart, three bullets — it gets forwarded",
+          say:
+            "Tighter. Headline on top, then the chart, then three bullets max. And it gets forwarded to my " +
+            "ops manager, so keep it plain and keep driver names out of it.",
+          next: "ep1-shape-brief",
+        },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep1-shape-brief": {
+      id: "ep1-shape-brief",
+      title: "Ep1 · Shape it: the reshaped brief",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Deal. Same week, reshaped — this is what your Monday brief looks like from now on:\n\n" +
+            "**Clean trucks, heavy right feet — speeding is a fleet problem this week, not a driver problem.**",
+        },
+        {
+          type: "chart",
+          title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
+          bars: [
+            { label: "Demo - 16", value: 142 },
+            { label: "Demo - 01", value: 134 },
+            { label: "Demo - 08", value: 129 },
+            { label: "Demo - 15", value: 121 },
+            { label: "Demo - 04", value: 118 },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "- All 50 vehicles reporting, **zero active faults** — a genuinely clean maintenance week.\n" +
+            "- **Speeding is fleet-wide** — the top five sit within 118–142 events, nobody running away with it. " +
+            "The fix is a policy plus a live alert, not one conversation.\n" +
+            "- **HOS spot-checked clean; DVIR silent** — HOS is per-driver only, so confirm crews are filing " +
+            "rather than assuming.\n\n" +
+            "That's the whole thing — forwardable as-is, vehicles not people, and the chart does the arguing.\n\n" +
+            "Worth noticing what just happened: this shape didn't come from me, it came out of the conversation. " +
+            "You said Monday-you won't read paragraphs, so the chart leads. You said it gets forwarded, so it's " +
+            "plain and names no drivers. That's exactly what makes it worth freezing — want me to package *this*, " +
+            "format and all the data traps I had to dodge, into a skill anyone on your team can run?",
+        },
+      ],
+      choices: [
+        {
+          label: "🛠️ Freeze it — make this the team skill",
+          say:
+            "Freeze it. Package exactly this into a reusable skill so anyone on my team gets the same brief " +
+            "just by asking for it.",
+          next: "ep1-skill",
+        },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* Entry from the hub's "turn my weekly review into a team skill" ask:
+     * don't package a guess — run the review once and shape it first. */
+    "ep1-skill-first": {
+      id: "ep1-skill-first",
+      title: "Ep1 · Run it once before packaging",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Happy to — but I don't want to package a guess. A skill is only as good as the conversation it's " +
+            "frozen from, so here's the plan: I run your review once, you tell me what's wrong with it — too " +
+            "long, wrong shape, missing things — and whatever we settle on together is what I save. Running it now.",
+        },
+      ],
+      next: "ep1-answer",
     },
 
     "ep1-skill": {
@@ -420,7 +549,7 @@ window.CONVERSATIONS = {
           server: "assistant",
           name: "Create skill",
           args: { name: "geotab-weekly-review" },
-          summary: "SKILL.md written — 90 lines, grounding rules + no-PII default included",
+          summary: "SKILL.md written — shaped format (headline → chart → 3 bullets), grounding rules + no-PII default",
           write: true,
           openByDefault: true,
           result:
@@ -428,17 +557,21 @@ window.CONVERSATIONS = {
             "name: geotab-weekly-review\n" +
             "description: >-\n" +
             "  Produce a manager-ready weekly fleet review from a Geotab MCP connection —\n" +
-            "  fleet size, faults, speeding/harsh driving, HOS, DVIR, and trip activity — as a\n" +
-            "  short written brief. Encodes Geotab data quirks and a strict no-PII default so\n" +
-            "  the answer is correct and repeatable for anyone on the team.\n" +
+            "  a one-line headline, one whole-fleet ranking chart, and at most three\n" +
+            "  bullets. Encodes Geotab data quirks and a strict no-PII default so the\n" +
+            "  answer is correct and repeatable for anyone on the team.\n" +
             "---\n\n" +
             "# Geotab Weekly Fleet Review\n\n" +
             "## When to use\n" +
             "When the user asks for a weekly/periodic fleet review, a \"Monday morning\" summary, " +
             "or \"how did the fleet do this week.\" Default window: last 7 days.\n\n" +
-            "## What to produce\n" +
-            "1. Fleet size  2. Faults/maintenance  3. Driving exceptions  4. HOS  5. DVIR  6. Trip activity\n" +
-            "End with a headline, a needs-attention list, and 2–3 recommended actions.\n\n" +
+            "## What to check\n" +
+            "1. Fleet size  2. Faults/maintenance  3. Driving exceptions  4. HOS  5. DVIR  6. Trip activity\n\n" +
+            "## Output format (shaped in conversation — reshape for your fleet)\n" +
+            "- Headline first: one line with the week's verdict.\n" +
+            "- One chart: top vehicles from a whole-window aggregate — never from a capped raw list.\n" +
+            "- Three bullets max, then stop. Forwardable as-is: plain language, no driver names.\n" +
+            "- Chart only what has signal — a clean section is a sentence (\"zero active faults\"), not a chart of zeros.\n\n" +
             "## Grounding rules (avoid these traps)\n" +
             "- Never report a raw Trip count — GetCountOf on Trip ignores the date window.\n" +
             "- HOS is per-driver — DutyStatusViolation needs a userSearch; treat as a spot-check.\n" +
@@ -450,24 +583,26 @@ window.CONVERSATIONS = {
             "- Watch the name field itself — some device names encode a person; fall back to make/model + a non-identifying id.\n" +
             "- Never return emails, phone numbers, employee numbers, or per-person location histories.\n\n" +
             "## Suggested tool flow\n" +
-            "GetCountOf Device → Get/GetCountOf FaultData → Get ExceptionEvent (or GetAceResults to rank) → " +
+            "GetCountOf Device → Get/GetCountOf FaultData → GetAceResults to rank exceptions for the chart → " +
             "spot-check DutyStatusViolation → Get DVIRLog → bounded Get Trip.\n\n" +
-            "## Output style\n" +
-            "Plain language, short sentences, manager-ready. No jargon, no raw JSON, no PII.\n\n" +
-            "(90 lines total — this is the trimmed preview.)",
+            "(~100 lines total — this is the trimmed preview.)",
         },
         {
           type: "assistant",
           text:
             "Packaged it as geotab-weekly-review — open the card above if you want to see what's actually in it. " +
-            "It's not just a shortcut that replays these same steps; I wrote in the gotchas too (the ExceptionEvent " +
-            "page cap, HOS being per-driver, the Trip-count trap) plus a strict no-PII default, so whoever runs it " +
-            "gets the careful version every time, not just a faster version.\n\n" +
-            "Drop it in your team's shared skills and anyone can just say \"run my weekly review\" and get this same brief, " +
-            "without re-explaining any of this to them first.\n\n" +
-            "That's the pattern worth stealing from this whole demo: **conversations first, skills second.** Run the " +
-            "review by hand for a few weeks, notice what you keep re-explaining or correcting, then freeze exactly " +
-            "that into a skill. The one above stays public in this project as a worked example — " +
+            "Every line of it traces back to something that happened in this conversation:\n\n" +
+            "- The **chart-first format** is in there because you said Monday-you won't read paragraphs.\n" +
+            "- The **three-bullet cap** and the **no-driver-names rule** are in there because you said the brief " +
+            "gets forwarded.\n" +
+            "- The **\"aggregate the whole window, never rank from a capped list\"** rule is in there because the " +
+            "raw pull would have told the wrong story before Ace corrected it.\n" +
+            "- Plus the traps you never saw me dodge: the Trip counter that ignores dates, HOS being per-driver only.\n\n" +
+            "Drop it in your team's shared skills and anyone can just say \"run my weekly review\" and get exactly " +
+            "the brief we shaped — the careful version every time, without re-litigating any of this first.\n\n" +
+            "That's the pattern worth stealing from this whole demo: **conversations first, skills second.** Don't " +
+            "write a skill from a blank page — run the review by hand, argue with it the way you just did, then " +
+            "freeze what you settle on. The one above stays public in this project as a worked example — " +
             "[skills/geotab-weekly-review/SKILL.md](https://github.com/fhoffa/geotab-mcp-simulator/blob/main/skills/geotab-weekly-review/SKILL.md) — " +
             "not something to install as-is, because the rules that make a skill valuable come out of *your* fleet's " +
             "conversations. (For ready-to-follow shared skills — like the MotherDuck warehouse one this simulator's " +

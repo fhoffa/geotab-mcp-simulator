@@ -17,6 +17,8 @@ flowchart TD
 
     %% --- Productivity ---
     hub -->|"📋 Weekly review"| ep1["Ep1 · Weekly review"]
+    hub -->|"🛠️ weekly review as a skill"| ep1sf["Ep1 · Run it once first"]
+    ep1sf -->|auto| ep1
     hub -->|"⚡ 5 fleet chores"| ep4["Ep4 · Five actions"]
 
     %% --- Safety ---
@@ -74,8 +76,10 @@ flowchart TD
     epMD --> ep12
     epOF --> epEVv
 
-    %% --- Package-as-a-skill beats ---
-    ep1 -->|"🛠️ package as a skill"| ep1s["Ep1 · Weekly-review skill"]
+    %% --- Package-as-a-skill beats (Ep1 shapes the review in conversation first) ---
+    ep1 -->|"📊 chart the speeding"| ep1v["Ep1 · Shape: chart it"]
+    ep1v -->|"🧾 headline + 3 bullets"| ep1b["Ep1 · Shape: reshaped brief"]
+    ep1b -->|"🛠️ freeze the shaped review"| ep1s["Ep1 · Weekly-review skill"]
     epSR -->|"🛠️ skill"| epSRs["Skill · Safety scorecard"]
     ep8 -->|"🛠️ skill"| ep8s["Skill · Maintenance triage"]
     epROI -->|"🛠️ skill"| epROIsk["Skill · Quarterly ROI case"]
@@ -84,14 +88,17 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (78)
+## Nodes (81)
 
 | id | title | database | leads to |
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep1-skill`, `ep4-answer`, `ep-agentic-coaching`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
-| `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-skill`, `ep7-ace`, `hub` |
+| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
+| `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-shape-viz`, `ep7-ace`, `hub` |
+| `ep1-shape-viz` | Ep1 · Shape it: chart the speeding | demo_fh_vegas4 | `ep1-shape-brief`, `hub` |
+| `ep1-shape-brief` | Ep1 · Shape it: the reshaped brief | — | `ep1-skill`, `hub` |
+| `ep1-skill-first` | Ep1 · Run it once before packaging | — | `ep1-answer` (auto) |
 | `ep1-skill` | Ep1 · Package as a skill | — | `ep9-fleet`, `hub`, restart |
 | `ep-safety-skill` | Skill · Package the safety scorecard | — | `ep-safety-risk`, `ep-agentic-coaching`, `hub`, restart |
 | `ep-maint-skill` | Skill · Package the maintenance triage | — | `ep8-maintenance`, `ep-maint-overdue`, `hub`, restart |
