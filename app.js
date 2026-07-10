@@ -326,8 +326,15 @@
   // yanking them back down until they return to the bottom (or fast-forward).
   var stickToBottom = true;
   var lastAutoScroll = 0;
+  var footerEl = document.querySelector(".app-footer");
+  // The scroll anchor is the bottom of the conversation column (chat + tray +
+  // footer), NOT document bottom — a static SEO overview lives below the footer
+  // for crawlers and must never pull the viewport past the transcript.
+  function conversationBottom() {
+    return footerEl ? footerEl.offsetTop + footerEl.offsetHeight : document.documentElement.scrollHeight;
+  }
   function distanceFromBottom() {
-    return document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+    return conversationBottom() - window.innerHeight - window.scrollY;
   }
   // An upward gesture always unpins immediately — even mid-stream, when our own
   // smooth-scroll ticks would otherwise mask the user's intent.
@@ -354,7 +361,7 @@
     var behavior = skip || reduceMotion ? "auto" : "smooth";
     lastAutoScroll = Date.now();
     chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: behavior });
-    window.scrollTo({ top: document.body.scrollHeight, behavior: behavior });
+    window.scrollTo({ top: Math.max(0, conversationBottom() - window.innerHeight), behavior: behavior });
   }
   function wait(ms) {
     // playNode() already re-checks playToken after every wait(), and the click
