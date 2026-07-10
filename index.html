@@ -42,15 +42,70 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Geotab MCP — Experience Simulator",
-        "url": "https://fhoffa.github.io/geotab-mcp-simulator/",
-        "description": "See what the Geotab MCP connector can do — a guided, no-setup simulator of an AI assistant working a real fleet through the Model Context Protocol, grounded in Geotab demo-fleet data.",
-        "author": {
-          "@type": "Person",
-          "name": "Felipe Hoffa",
-          "sameAs": "https://www.linkedin.com/in/hoffa"
-        }
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://fhoffa.github.io/geotab-mcp-simulator/#website",
+            "name": "Geotab MCP — Experience Simulator",
+            "url": "https://fhoffa.github.io/geotab-mcp-simulator/",
+            "description": "See what the Geotab MCP connector can do — a guided, no-setup simulator of an AI assistant working a real fleet through the Model Context Protocol, grounded in Geotab demo-fleet data.",
+            "author": {
+              "@type": "Person",
+              "name": "Felipe Hoffa",
+              "sameAs": "https://www.linkedin.com/in/hoffa"
+            }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://fhoffa.github.io/geotab-mcp-simulator/#app",
+            "name": "Geotab MCP — Experience Simulator",
+            "url": "https://fhoffa.github.io/geotab-mcp-simulator/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Any (modern web browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "A no-setup, in-browser simulator of the Geotab MCP connector: an AI assistant reads a live MyGeotab fleet and takes real actions through the Model Context Protocol (MCP). Answers are grounded in real Geotab demo-fleet data.",
+            "about": [
+              "Geotab",
+              "MyGeotab",
+              "Geotab MCP connector",
+              "Model Context Protocol",
+              "fleet management",
+              "telematics",
+              "AI assistant"
+            ],
+            "featureList": [
+              "Weekly Monday-morning fleet review (faults, idling, harsh driving, HOS, DVIR, trips)",
+              "Top-three safety risks with corrective actions",
+              "Fleet ROI case — where the fleet is leaking money",
+              "Build a MotherDuck data warehouse from Geotab MCP calls",
+              "Riskiest drivers and harsh-braking breakdown by driver",
+              "School-zone speeding and disputed-speeding checks with posted road speeds",
+              "Diagnose a spike in speeding alerts, including Geotab Ace",
+              "Maintenance worklist triage, overdue service, and fault codes by severity",
+              "Unplanned-downtime ranking and repeat-offender root-cause analysis",
+              "Fault to email-the-garage to book-service chain (Geotab + Gmail + Calendar)",
+              "Fuel economy by vehicle type and idle-time hotspots",
+              "EV-replacement candidates and fleet VIN decode",
+              "React to a low-emission zone with live web-sourced rules",
+              "Package a weekly review into a reusable skill",
+              "Run multiple fleet write-actions in a single request",
+              "Dispatch the nearest available vehicle",
+              "Settle a late-delivery dispute against a Salesforce case",
+              "Two-fleet executive board snapshot"
+            ],
+            "author": {
+              "@type": "Person",
+              "name": "Felipe Hoffa",
+              "sameAs": "https://www.linkedin.com/in/hoffa"
+            }
+          }
+        ]
       }
     </script>
 
@@ -118,6 +173,56 @@
         can surface personal data — review your privacy obligations before connecting a production fleet.
       </p>
     </footer>
+
+    <!-- Static overview: persistent, crawlable summary of what the simulator covers.
+         Lives outside #chat so it survives the JS that clears the transcript on boot,
+         keeping it in both the raw HTML and the rendered DOM for search/LLM crawlers. -->
+    <section class="sim-overview" aria-label="What you can try in this Geotab MCP simulator">
+      <h2>What you can try in this Geotab MCP simulator</h2>
+      <p>
+        A no-setup, in-browser demo of the <strong>Geotab MCP connector</strong> — an AI
+        assistant reading a live MyGeotab fleet and taking real actions through the Model
+        Context Protocol (MCP). Every answer is grounded in real Geotab demo-fleet data.
+        Scenarios span six themes:
+      </p>
+      <ul>
+        <li>
+          <strong>Start here</strong> — the Monday-morning weekly fleet review, your top-three
+          safety risks with fixes, a live "where is my fleet leaking money?" ROI case, and a
+          guided <strong>MotherDuck warehouse</strong> build from MCP calls.
+        </li>
+        <li>
+          <strong>Safety</strong> — riskiest drivers, harsh braking by driver, school-zone
+          speeding, diagnosing a spike in speeding alerts (a capped raw query vs Geotab Ace),
+          and settling a disputed flag with posted road speeds.
+        </li>
+        <li>
+          <strong>Maintenance</strong> — triage the shop worklist, overdue service, fault codes
+          by severity, unplanned downtime, a root-cause dig on a repeat offender, and a
+          fault → email the garage → book service chain across Geotab, Gmail, and Calendar.
+        </li>
+        <li>
+          <strong>Operations</strong> — fuel economy by vehicle type, idle-time hotspots,
+          EV-replacement candidates, "what's actually in my fleet?" (VIN decode), and reacting
+          to a low-emission zone with live web-sourced rules.
+        </li>
+        <li>
+          <strong>Automate &amp; share</strong> — package the weekly review as a reusable
+          skill, knock out five fleet write-actions in one ask, and draft coaching notes.
+        </li>
+        <li>
+          <strong>Cross-tool &amp; exec</strong> — dispatch the nearest available vehicle,
+          settle a late-delivery dispute against a Salesforce case, and build a two-fleet
+          board snapshot.
+        </li>
+      </ul>
+      <p>
+        Learn more about
+        <a href="https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/OFFICIAL_MCP_CONNECTOR.md">the official Geotab MCP connector</a>,
+        or read the
+        <a href="https://github.com/fhoffa/geotab-mcp-simulator#readme">project README</a>.
+      </p>
+    </section>
 
     <!-- Landing / value-prop overlay — shown first, dismissible -->
     <div id="landingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Welcome">

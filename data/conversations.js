@@ -68,7 +68,9 @@ window.CONVERSATIONS = {
             "and take actions on it, right here in chat — no separate dashboard.\n\n" +
             "(Worth knowing: MCP is the *Model Context Protocol* — an open standard for connecting AI assistants " +
             "to tools — and the connector is just an open MCP server. Copilot, ChatGPT, Claude — anything " +
-            "that speaks MCP can plug into the same one. No single assistant is special here.)\n\n" +
+            "that speaks MCP can plug into the same one. No single assistant is special here. Want the full " +
+            "picture of the real connector — what it can **Ask** and **Act** on, and how to get access? See " +
+            "[The Official Geotab MCP Connector](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/OFFICIAL_MCP_CONNECTOR.md).)\n\n" +
             "One practical detail: the MCP server does not automatically know or enumerate every database your " +
             "account can access. You need to know the database name you want, then ask the assistant to use it.\n\n" +
             "This particular page is a simulator, so you'll click suggested questions instead of typing and " +

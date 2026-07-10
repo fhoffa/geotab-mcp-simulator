@@ -143,6 +143,30 @@ body {
   letter-spacing: -0.02em;
 }
 .empty-state p { margin: 0; }
+
+/* Static, crawlable "what you can try" summary that sits below the footer.
+   Persistent (not inside #chat), muted, and below the fold — background context
+   for search/LLM crawlers rather than a focal UI element. */
+.sim-overview {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 20px 16px 32px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.sim-overview h2 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.sim-overview p { margin: 0 0 10px; }
+.sim-overview ul { margin: 0 0 10px; padding-left: 18px; }
+.sim-overview li { margin: 0 0 6px; }
+.sim-overview strong { color: var(--ink); }
+.sim-overview a { color: var(--accent-ink); }
 .empty-kicker {
   margin: 0 0 8px;
   color: var(--accent-ink);
