@@ -1227,8 +1227,12 @@
   // click anywhere while it's playing to fast-forward — not just the chat column,
   // so a click in the desktop margins during a long paragraph still skips. Ignore
   // clicks on interactive controls (choices, links, card/pane toggles, settings).
+  // The MotherDuck pane's own controls (its toggle button, the "Sample rows"
+  // summary) are already covered by `button`/`summary` below, so we do NOT exclude
+  // the whole pane — otherwise clicks on its wide, sticky body would silently fail
+  // to fast-forward during the warehouse tutorial.
   document.addEventListener("click", function (e) {
-    if (e.target.closest("button, a, input, textarea, select, label, summary, .tool-head, .motherduck-pane, .overlay")) return;
+    if (e.target.closest("button, a, input, textarea, select, label, summary, .tool-head, .overlay")) return;
     skip = true;
   });
 
