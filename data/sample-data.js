@@ -370,6 +370,42 @@ window.SAMPLE_DATA = {
           { name: "gold.trip_reconcile_log", rows: "101 rows", note: "50 retired · 51 re-split" },
         ] },
       ],
+      /* Side-quest stage: `quality` plus the ASOF-joined fault locations mart.
+         Only the warehouse-enrichment node shows it. */
+      enriched: [
+        { kind: "bronze", name: "Bronze", status: "audited", active: true, tables: [
+          { name: "bronze.gps_raw", rows: "698,323 rows" },
+          { name: "bronze.trips_raw", rows: "8,412 rows" },
+          { name: "bronze.driver_changes_raw", rows: "1,126 rows" },
+          { name: "bronze.status_data_raw", rows: "1.9M rows" },
+          { name: "bronze.exception_events_raw", rows: "42,806 rows" },
+          { name: "bronze.fault_data_raw", rows: "4,918 rows" },
+        ] },
+        { kind: "silver", name: "Silver", status: "checked", active: true, tables: [
+          { name: "silver.planet_gps_pings", rows: "698,308 rows" },
+          { name: "silver.trips", rows: "8,407 rows" },
+          { name: "silver.driver_assignments", rows: "1,118 rows" },
+          { name: "silver.status_data", rows: "1.9M rows" },
+          { name: "silver.exception_events", rows: "42,781 rows" },
+          { name: "silver.fault_data", rows: "4,912 rows" },
+          { name: "silver.dim_device", rows: "50 rows" },
+          { name: "silver.dim_user", rows: "113 rows" },
+          { name: "silver.dim_zone", rows: "37 rows" },
+          { name: "silver.dim_group", rows: "21 rows" },
+          { name: "silver.dim_rule", rows: "386 rows" },
+          { name: "silver.dim_diagnostic", rows: "2,184 rows" },
+        ] },
+        { kind: "gold", name: "Gold", status: "enriched", active: true, tables: [
+          { name: "gold.daily_device_km", rows: "1,550 rows" },
+          { name: "gold.driver_safety_score", rows: "50 rows" },
+          { name: "gold.maintenance_risk", rows: "50 rows" },
+          { name: "gold.idling_cost_daily", rows: "1,550 rows" },
+          { name: "gold.fault_locations", rows: "4,912 rows", note: "ASOF-joined to the nearest prior GPS ping", sample: [
+            { FaultId: "aF83…", DeviceName: "Demo - 31", fault_datetime_utc: "2026-06-29 14:02:17", lat: "39.4571", lon: "-0.3544", gps_gap: "2 s" },
+            { FaultId: "aF91…", DeviceName: "Demo - 08", fault_datetime_utc: "2026-06-29 16:44:03", lat: "39.4712", lon: "-0.3791", gps_gap: "5 s" },
+          ] },
+        ] },
+      ],
       /* The cost node reuses the `quality` stage above — same full warehouse,
          the panel just never shows pricing rows. The `answers` stage below is
          `quality` plus the answer-ready marts, so the pane only ever grows. */

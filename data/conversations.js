@@ -3738,7 +3738,7 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "**Is this even a good idea? Yes — once your questions get bigger than a single API call.**\n\n" +
-            "The live MCP connector is great at point questions about current state. A warehouse is for the analytical ones: **joining trips + faults + exceptions + GPS together**, joining all of that **against your own data** — fuel cards, maintenance ERP, payroll, weather — aggregating the **whole fleet at once**, slicing by group or vehicle type, and yes, trends over time too. You ask them **repeatedly and cheaply** without re-pulling from the live API, on data you **own and control**, so you can hang dashboards, scheduled briefs and agent skills off it. The connector is the access layer; MotherDuck is the durable memory layer.\n\n" +
+            "The live MCP connector is great at point questions about current state. A warehouse is for the analytical ones: **joining trips + faults + exceptions + GPS together**, joining all of that **against your own data** — fuel cards, maintenance ERP, payroll, weather — aggregating the **whole fleet at once**, slicing by group or vehicle type, and yes, trends over time too. You ask them **repeatedly and cheaply** without re-pulling from the live API, on data you **own and control**, so you can hang dashboards, scheduled briefs and agent skills off it. The connector is the access layer; MotherDuck is the durable memory layer. (If you want the battle-tested, non-MCP route instead, Geotab's open-source **MyGeotab API Adapter** has replicated fleet data into Postgres/SQL Server for years — ask *“Is this what Geotab recommends?”* below.)\n\n" +
             "Here's the genuinely cool part: **the assistant orchestrates the entire pipeline with MCP calls** — no ETL service, no Airflow, no glue code. It asks Geotab (MCP) for the data and tells MotherDuck (MCP) to load, transform and schedule it. Extract, load, transform, refresh — all just tool calls in this chat. Geotab Ace even hands back a **signed CSV URL** that MotherDuck reads *directly*, so nothing is ever downloaded.\n\n" +
             "And we pick **MotherDuck specifically for its free tier**: a 50-vehicle fleet runs at **$0** for years, so you can stand this whole thing up without a budget conversation.\n\n" +
             "So here's the plan: one concrete loop first — ask for raw GPS rows, load the signed CSV into `gps_points`, query it. Once that works, the reason for bronze/silver/gold becomes obvious: repeatable loads, typed rows, dedup, provenance, quality checks, and cost controls.",
@@ -3775,11 +3775,13 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "Not as an official recommendation. This MCP-orchestrated Geotab → MotherDuck warehouse path is a **proof of concept**: new, interesting in this MCP world, and not yet tested at scale. The assistant can coordinate both sides — ask Geotab for rows, then ask MotherDuck to load and transform them — without a separate ETL service.\n\n" +
-            "We should treat it as a proof of concept, not a replacement for proven production patterns. We'll update this node with alternatives that Geotab customers have used for years to replicate fleet data into their own warehouses.",
+            "The proven pattern Geotab customers have used for years is the open-source **[MyGeotab API Adapter](https://github.com/Geotab/mygeotab-api-adapter/blob/master/MyGeotabAPIAdapter/README.md)** — a mature .NET service (no MCP involved) that replicates your fleet data into your own **PostgreSQL or SQL Server** database. It pulls incrementally through MyGeotab data feeds (GPS logs, trips, faults, and more), keeps device/user/zone reference data cached, and ships with production plumbing: retries, transactions, partition maintenance. Standing it up is a classic, well-documented data engineering project — you run the service once and your database fills itself.\n\n" +
+            "So the honest framing: **MyGeotab API Adapter** for battle-tested replication into Postgres/SQL Server you operate yourself; **this MCP + MotherDuck path** for a lightweight, conversation-driven warehouse you can stand up in a chat at $0. We'll keep updating this node as the MCP approach matures.",
         },
       ],
       choices: [
         { label: "🦆 Continue with GPS rows", say: "Understood. Continue with the experimental MCP path and start with GPS rows.", next: "warehouse-setup" },
+        { label: "⏱ How fresh can the MCP path get?", say: "The adapter polls every few seconds. How fresh can this MCP warehouse actually be?", next: "warehouse-freshness" },
         { label: "❓ What is MotherDuck?", say: "Before we start — what actually is MotherDuck?", next: "warehouse-what-is" },
         { label: "↩︎ Back to the warehouse intro", say: "Go back to the warehouse intro.", next: "warehouse-intro" },
       ],
@@ -4018,6 +4020,8 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🧩 Add trips, faults, status and dimensions", say: "This is useful, but GPS points alone are not a warehouse. Add trips, faults, status data, exceptions and the dimensions that make them readable.", next: "warehouse-operational" },
+        { label: "⏱ How fresh is this, really?", say: "How fresh is this warehouse, really? Geotab's own adapter polls every few seconds — why aren't we using its feed?", next: "warehouse-freshness" },
+        { label: "🩺 What if it falls behind?", say: "What happens if the warehouse falls behind — a paused schedule, a vacation, an outage? How would I even notice?", next: "warehouse-backfill" },
         { label: "🧱 Replay from setup", say: "Replay the MotherDuck setup from the beginning.", next: "warehouse-intro" },
         { label: "⚡ Try fleet questions", say: "Take me back to the fleet simulator.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
@@ -4102,6 +4106,8 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "⚠️ Why trips & drivers can't just append", say: "Wait — trips and driver assignments aren't append-only like GPS. Show me what breaks and how to reconcile it.", next: "warehouse-restated" },
+        { label: "📍 Faults have no location?", say: "Hold on — fault and status rows don't include GPS coordinates? How would I put faults on a map?", next: "warehouse-enrichment" },
+        { label: "🗑 What about deletions?", say: "What happens when someone deletes a zone or deactivates a driver in Geotab? Does my warehouse notice?", next: "warehouse-deletions" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
     },
@@ -4243,6 +4249,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
         { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "🩺 Add a warehouse health view", say: "One thing is missing: how do I notice when a table quietly falls behind?", next: "warehouse-backfill" },
         { label: "🧩 How trips re-split", say: "Remind me why trips and driver assignments aren't append-only.", next: "warehouse-restated" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
@@ -4293,6 +4300,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "📉 Can I downsample to stay free?", say: "The big table is status_data. Can I sample or downsample it to stay on the free tier?", next: "warehouse-downsample" },
         { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
         { label: "✅ Review quality checks", say: "Show the warehouse quality checks again.", next: "warehouse-quality" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
@@ -4342,9 +4350,243 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "📍 Put faults on the map", say: "Can I put faults on a map? I don't remember fault rows having coordinates.", next: "warehouse-enrichment" },
         { label: "✅ Review quality checks again", say: "Show the warehouse quality checks again.", next: "warehouse-quality" },
         { label: "🧱 Replay from setup", say: "Replay the MotherDuck warehouse story from setup.", next: "warehouse-intro" },
         { label: "⚡ Try fleet questions", say: "Take me back to the fleet simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-freshness": {
+      id: "warehouse-freshness",
+      title: "Warehouse · why watermarks, not GetFeed",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Fair question — and it's the honest architectural difference between this path and Geotab's own adapter.\n\n" +
+            "The MyGeotab API Adapter syncs with **`GetFeed`**: an official API that returns a **version cursor** per entity type, so the service can poll every few seconds (configurable down to 2s) and never miss or re-fetch a row, even across restarts. **The MCP connector doesn't expose `GetFeed`** — the skill audited all 20 MCP tools, and none accepts a feed token.\n\n" +
+            "So this warehouse uses the MCP-compatible substitute: **watermark + natural-key dedup**. Ask for rows newer than the latest timestamp already stored, and let the dedup absorb the boundary overlap (remember: Ace only honors boundaries to the second). It's the same idea as a feed cursor, rebuilt from what MCP does offer.\n\n" +
+            "What that trade buys and costs:\n" +
+            "- **Cadence:** this warehouse refreshes when an agent runs — on demand or on a schedule, typically minutes to daily. The adapter is a 24/7 service refreshing in seconds.\n" +
+            "- **Correctness:** equivalent for immutable events (dedup handles the overlap); trips need their reconcile pass on either path.\n" +
+            "- **The line to respect:** analytics, dashboards, scheduled briefs — this path is enough. Live dispatch or alerting on seconds-old data — that's a job for the live connector itself, or the adapter.\n\n" +
+            "The skill keeps a full side-by-side of the two: **[MCP → MotherDuck vs GetFeed → API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MCP_TO_MOTHERDUCK_VS_GETFEED_API_ADAPTER.md)** — including the graduation path: prototype here with zero infrastructure, move to the adapter if sub-minute freshness ever becomes the requirement. The concepts transfer directly; both mirror the same entities.",
+        },
+      ],
+      choices: [
+        { label: "🩺 What if it falls behind?", say: "So if refreshes only run when an agent runs — what happens when the warehouse falls behind? How would I even notice?", next: "warehouse-backfill" },
+        { label: "🦆 Start the build (GPS rows)", say: "Good enough for analytics. Build the warehouse, starting with GPS points.", next: "warehouse-setup" },
+        { label: "↩︎ Back to the refresh loop", say: "Go back to the incremental refresh step.", next: "warehouse-incremental" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-backfill": {
+      id: "warehouse-backfill",
+      title: "Warehouse · falling behind, and noticing",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Two separate problems hide in that question: **noticing you're behind** and **catching up safely**. Most people only think about the second one.\n\n" +
+            "Noticing is a job for the warehouse itself. The adapter tracks per-service cursors in a health table; ours is one view — per fact table, the newest event time, the lag against now, and the last load:",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE OR REPLACE VIEW main.warehouse_health AS SELECT 'planet_gps_pings' AS table_name, max(gps_datetime_utc) AS max_event_time, date_diff('minute', max(gps_datetime_utc), now()) AS lag_minutes, count(*) AS row_count FROM silver.planet_gps_pings UNION ALL SELECT 'trips', max(trip_end_utc), date_diff('minute', max(trip_end_utc), now()), count(*) FROM silver.trips UNION ALL SELECT 'status_data', max(status_datetime_utc), date_diff('minute', max(status_datetime_utc), now()), count(*) FROM silver.status_data UNION ALL SELECT 'exception_events', max(active_from_utc), date_diff('minute', max(active_from_utc), now()), count(*) FROM silver.exception_events UNION ALL SELECT 'fault_data', max(fault_datetime_utc), date_diff('minute', max(fault_datetime_utc), now()), count(*) FROM silver.fault_data; SELECT * FROM main.warehouse_health ORDER BY lag_minutes DESC;" },
+          summary: "one view answers 'is anything behind?'",
+          result: "status_data lag 194 min ⚠️ · fault_data 55 min · trips 41 min · exception_events 38 min · planet_gps_pings 2 min — one table is quietly 3+ hours behind",
+        },
+        {
+          type: "assistant",
+          text:
+            "There it is — **`status_data` is 3.2 hours behind** and nothing errored. Yesterday's status pull returned *exactly* the page limit, and the loop treated a full page as 'done'. That's the trap the adapter's pacing heuristic exists for:\n\n" +
+            "**If a window's pull returns rows right up to the upper bound — or fills the page limit — you are still behind: pull again immediately. Only a partial window means you're current.** No guessing, no fixed sleeps.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: {
+            database: "demo_fh4",
+            new_chat: true,
+            prompt: "List every StatusData record after 2026-06-30 04:12:00 UTC in windows, exact warehouse columns, UTC. Keep pulling while a window comes back full; stop on the first partial window.",
+          },
+          summary: "catch-up paced by the stop rule",
+          result: "window 1: full page (still behind) · window 2: full page (still behind) · window 3: partial (current) — 3 CSVs landed in bronze, silver deduped, status_data lag now 2 min",
+        },
+        {
+          type: "assistant",
+          text:
+            "Caught up in three windows, and the third window's partial result is the *proof* we're current — the loop earns its own stop condition.\n\n" +
+            "One more operational rule from the adapter, which enforces it with a machine-name guard; we adopt it as discipline: **one writer per warehouse**. Two agent sessions refreshing the same tables will interleave loads and corrupt each other's watermarks. One session owns the refresh; everything else reads.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Health + catch-up",
+          subtitle: "The health view makes 'is anything behind?' a one-query question; the stop rule makes catch-up self-pacing.",
+          metrics: [
+            { label: "Health view", value: "warehouse_health" },
+            { label: "Caught behind", value: "status_data 3.2h" },
+            { label: "Stop rule", value: "partial = current" },
+            { label: "Writers", value: "exactly 1" },
+          ],
+          stages: D.warehouse.stages.quality,
+          note: "Run the health view at the start of every refresh — it's the difference between finding a gap now and finding it in next month's report.",
+        },
+      ],
+      choices: [
+        { label: "✅ Continue to quality checks", say: "Good. Now add the quality checks and gap detection.", next: "warehouse-quality" },
+        { label: "⏱ Why watermarks, not GetFeed?", say: "Back up — why is this warehouse on watermarks instead of Geotab's official feed API?", next: "warehouse-freshness" },
+        { label: "↩︎ Back to the refresh loop", say: "Go back to the incremental refresh step.", next: "warehouse-incremental" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-enrichment": {
+      id: "warehouse-enrichment",
+      title: "Warehouse · faults get coordinates",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Sharp catch — **`FaultData` and `StatusData` carry no coordinates**. In Geotab's model, location lives in `LogRecord`; a fault only knows its device and timestamp. The API Adapter dedicates **two entire background services** to interpolating lat/lon/speed/bearing from surrounding LogRecords into fault and status rows.\n\n" +
+            "In a columnar warehouse that's one query. DuckDB's **`ASOF JOIN`** takes, for each fault, the nearest GPS ping at-or-before the fault's timestamp, per device:",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE OR REPLACE TABLE gold.fault_locations AS SELECT f.*, g.latitude AS lat, g.longitude AS lon, g.speed AS speed_at_fault, date_diff('second', g.gps_datetime_utc, f.fault_datetime_utc) AS gps_gap_s FROM silver.fault_data f ASOF JOIN silver.planet_gps_pings g ON f.DeviceId = g.DeviceId AND g.gps_datetime_utc <= f.fault_datetime_utc;" },
+          summary: "every fault located in one query",
+          result: "gold.fault_locations: 4,912 faults · 100% matched · median gap to nearest ping 2 s · p95 23 s",
+        },
+        {
+          type: "assistant",
+          text:
+            "All **4,912 faults picked up coordinates**, and the gap distribution says the match is honest: median 2 seconds from the nearest ping, p95 23 seconds. (The skill validated this exact pattern live at **822,203 events, 100% matched** — it holds at scale.)\n\n" +
+            "One trap, and it's the same late-data lesson trips taught: **GPS arrives late too**. A fault logged 30 seconds ago may not have its bracketing pings in silver yet, so the join would grab a ping minutes stale. Either **only enrich events older than a small buffer**, or simply **rebuild this mart on every refresh** — at this size the rebuild is cheap, so that's what we schedule.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Faults located",
+          subtitle: "An ASOF JOIN gives every fault the nearest prior GPS ping — location, speed and an honesty metric (the gap) in one pass.",
+          metrics: [
+            { label: "Faults located", value: "4,912 · 100%" },
+            { label: "Median gap", value: "2 s" },
+            { label: "p95 gap", value: "23 s" },
+            { label: "Method", value: "ASOF JOIN" },
+          ],
+          stages: D.warehouse.stages.enriched,
+          note: "The adapter needs two dedicated interpolation services for this; the warehouse does it in one query. This is the clearest 'why a warehouse' moment in the whole build.",
+        },
+      ],
+      choices: [
+        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "✅ Add quality checks", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
+        { label: "↩︎ Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-deletions": {
+      id: "warehouse-deletions",
+      title: "Warehouse · deletions & mutability",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Not by itself — and this is one of the quietest traps in incremental replication. **A deletion never shows up in an incremental pull.** A deleted zone doesn't arrive marked 'deleted'; it just stops appearing. Watermark loops only see *new* rows, so `dim_zone` would happily keep serving a zone that no longer exists.\n\n" +
+            "The adapter's answer — which this warehouse already follows without having said why — is that **dimensions get a periodic full snapshot, never an incremental one**. That's why every dim here is `Get` → `CREATE OR REPLACE`: no bronze, no watermark. Each refresh replaces the roster wholesale, so a disappearance *is* the signal. It's also why **dimensions load before facts**: fact rows should never arrive ahead of the rows that decode them.\n\n" +
+            "Two refinements:\n" +
+            "- Geotab often **retires instead of deletes**: `activeFrom`/`activeTo` on Users and similar. Keep retired rows with their dates — history still joins to them.\n" +
+            "- The subset shortcut inherits the rule: if you keep only the ~56 diagnostics your faults actually reference (out of 65K), that subset must also be **fully re-derived** each refresh, or a newly-referenced diagnostic never appears.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query",
+          args: { sql: "SELECT 'trips → dim_device' AS ref, count(DISTINCT t.DeviceId) FILTER (WHERE d.id IS NULL) AS orphans FROM silver.trips t LEFT JOIN silver.dim_device d ON d.id = t.DeviceId UNION ALL SELECT 'exceptions → dim_rule', count(DISTINCT e.RuleId) FILTER (WHERE r.id IS NULL) FROM silver.exception_events e LEFT JOIN silver.dim_rule r ON r.id = e.RuleId UNION ALL SELECT 'faults → dim_diagnostic', count(DISTINCT f.DiagnosticId) FILTER (WHERE g.id IS NULL) FROM silver.fault_data f LEFT JOIN silver.dim_diagnostic g ON g.id = f.DiagnosticId;" },
+          summary: "orphan check: facts pointing at missing dimension rows",
+          result: "0 orphans across all three joins — but only because every refresh re-snapshots the dims. Skip the dim refresh for a week and this number starts lying to you.",
+        },
+        {
+          type: "assistant",
+          text:
+            "The general habit the adapter teaches: before loading any new entity, ask **\"does this row mutate after creation?\"**\n\n" +
+            "- **Never** (GPS, status, exceptions, faults, `DriverChange`) → append + dedup on the natural key.\n" +
+            "- **Yes — replaced** (`Trip`: re-split under a brand-new id) → the reconcile pass you've seen.\n" +
+            "- **Yes — updated in place** (`DVIRLog`: a defect later gains its repair status) → re-pull a trailing window, latest version wins.\n" +
+            "- **Dimensions** (Device, User, Zone, Rule, Diagnostic) → full snapshot; deletions handled by construction.\n\n" +
+            "One row in that list is sneaky: `DriverChange` is itself append-only, but its *arrival* triggers trip re-splits — an immutable event that mutates a different table.",
+        },
+      ],
+      choices: [
+        { label: "🧩 How trips re-split", say: "Remind me how the trip re-split reconcile works.", next: "warehouse-restated" },
+        { label: "✅ Continue to quality checks", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
+        { label: "↩︎ Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-downsample": {
+      id: "warehouse-downsample",
+      title: "Warehouse · downsample, never at ingest",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Yes — but *where* you downsample decides whether you can ever change your mind.\n\n" +
+            "The API Adapter offers ingest-time sampling: a minimum interval of 1–3600 s per device for LogRecords and StatusData. Effective, and its own docs carry the warning that matters: **what you discard at ingest can never be backfilled.** Pick a 60 s floor today, need 10 s granularity next quarter — that history is gone.\n\n" +
+            "The warehouse version of the same lever is safer: **keep bronze complete, downsample in the silver derive or the gold mart.** Storage is the cheap part (~54 bytes per ping, remember) — what you're really tuning is mart size and scan cost:",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE OR REPLACE TABLE gold.status_track AS SELECT * FROM silver.status_data QUALIFY row_number() OVER (PARTITION BY DeviceId, DiagnosticId, time_bucket(INTERVAL 30 SECOND, status_datetime_utc) ORDER BY status_datetime_utc) = 1;" },
+          summary: "30-second floor applied in the mart — bronze untouched",
+          result: "silver.status_data 1.9M rows → gold.status_track 412K rows (−78%) · bronze.status_data_raw still complete at 1.9M",
+        },
+        {
+          type: "assistant",
+          text:
+            "A 78% smaller mart for dashboards and daily questions, while **every original row is still one `CREATE TABLE` away** — change the floor to 10 s next quarter and rebuild.\n\n" +
+            "One honest caveat before you lean on that reversibility: it only lasts as long as bronze does. If you later add a **bronze pruning window** (say, a 7–30 day rolling window) to cap storage, then for pruned history the downsample becomes exactly as permanent as the adapter's. So the order of decisions matters: **pick your granularity floor before pruning catches up** with the history you care about.\n\n" +
+            "For this 50-vehicle fleet none of it is forced — the whole warehouse is 35.2 MiB against 10 GB free. This lever exists for the day the fleet is 10× and `status_data` is the reason the storage line moved.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Downsampled mart",
+          subtitle: "The mart gets smaller; bronze stays complete — so the decision stays reversible until you start pruning bronze.",
+          metrics: [
+            { label: "status_data", value: "1.9M rows" },
+            { label: "Track mart", value: "412K (−78%)" },
+            { label: "Bronze", value: "untouched" },
+            { label: "Reversible", value: "until pruning" },
+          ],
+          stages: D.warehouse.stages.quality,
+          note: "The adapter samples at ingest and can never backfill; the warehouse samples in the derive and can. Same lever, opposite regret profile.",
+        },
+      ],
+      choices: [
+        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "💵 Back to the cost estimate", say: "Show the cost estimate again.", next: "warehouse-costs" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
 

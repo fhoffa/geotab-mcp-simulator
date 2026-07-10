@@ -88,7 +88,7 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (81)
+## Nodes (86)
 
 | id | title | database | leads to |
 |---|---|---|---|
@@ -159,17 +159,22 @@ flowchart TD
 | `ep-agentic-coaching` | Agentic · Draft coaching summary | demo_fh_vegas4 | `ep-coaching-send`, `ep-agentic-safety`, `ep2-action`, `hub` |
 | `ep-coaching-send` | Agentic · Send coaching summary | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
 | `warehouse-intro` | Warehouse · simplest path | — | `warehouse-setup`, `warehouse-geotab-recommendation`, `warehouse-what-is`, `hub` |
-| `warehouse-geotab-recommendation` | Warehouse · Geotab recommendation? | — | `warehouse-setup`, `warehouse-what-is`, `warehouse-intro` |
+| `warehouse-geotab-recommendation` | Warehouse · Geotab recommendation? | — | `warehouse-setup`, `warehouse-freshness`, `warehouse-what-is`, `warehouse-intro` |
 | `warehouse-what-is` | Warehouse · what is MotherDuck | — | `warehouse-setup`, `warehouse-intro`, `hub` |
 | `warehouse-setup` | Warehouse · get many points | — | `warehouse-first-load`, `hub` |
 | `warehouse-first-load` | Warehouse · one-table load | — | `warehouse-layering`, `hub` |
 | `warehouse-layering` | Warehouse · why layers appear | — | `warehouse-incremental`, `hub` |
-| `warehouse-incremental` | Warehouse · incremental refresh | — | `warehouse-operational`, `warehouse-intro`, `hub`, restart |
-| `warehouse-operational` | Warehouse · operational mirror | — | `warehouse-restated`, `hub` |
+| `warehouse-incremental` | Warehouse · incremental refresh | — | `warehouse-operational`, `warehouse-freshness`, `warehouse-backfill`, `warehouse-intro`, `hub`, restart |
+| `warehouse-operational` | Warehouse · operational mirror | — | `warehouse-restated`, `warehouse-enrichment`, `warehouse-deletions`, `hub` |
 | `warehouse-restated` | Warehouse · trips aren't append-only | — | `warehouse-quality`, `warehouse-operational`, `hub` |
-| `warehouse-quality` | Warehouse · quality and gaps | — | `warehouse-costs`, `warehouse-answers`, `warehouse-restated`, `hub` |
-| `warehouse-costs` | Warehouse · cost estimate | — | `warehouse-answers`, `warehouse-quality`, `hub` |
-| `warehouse-answers` | Warehouse · answer-ready marts | — | `warehouse-quality`, `warehouse-intro`, `hub` |
+| `warehouse-quality` | Warehouse · quality and gaps | — | `warehouse-costs`, `warehouse-answers`, `warehouse-backfill`, `warehouse-restated`, `hub` |
+| `warehouse-costs` | Warehouse · cost estimate | — | `warehouse-downsample`, `warehouse-answers`, `warehouse-quality`, `hub` |
+| `warehouse-answers` | Warehouse · answer-ready marts | — | `warehouse-enrichment`, `warehouse-quality`, `warehouse-intro`, `hub` |
+| `warehouse-freshness` | Warehouse · why watermarks, not GetFeed | — | `warehouse-backfill`, `warehouse-setup`, `warehouse-incremental`, `hub` |
+| `warehouse-backfill` | Warehouse · falling behind, and noticing | — | `warehouse-quality`, `warehouse-freshness`, `warehouse-incremental`, `hub` |
+| `warehouse-enrichment` | Warehouse · faults get coordinates | — | `warehouse-answers`, `warehouse-quality`, `warehouse-operational`, `hub` |
+| `warehouse-deletions` | Warehouse · deletions & mutability | — | `warehouse-restated`, `warehouse-quality`, `warehouse-operational`, `hub` |
+| `warehouse-downsample` | Warehouse · downsample, never at ingest | — | `warehouse-answers`, `warehouse-costs`, `hub` |
 | `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep-roi-skill`, `ep2-action`, `ep-agentic-coaching`, `hub` |
 | `ep-roi-onepager` | ROI · Draft the business case | demo_fh_vegas4 | `ep-roi-send`, `ep2-action`, `hub` |
 | `ep-roi-send` | ROI · Send the business case | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
