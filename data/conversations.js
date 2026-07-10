@@ -4372,7 +4372,7 @@ window.CONVERSATIONS = {
             "- **Cadence:** this warehouse refreshes when an agent runs — on demand or on a schedule, typically minutes to daily. The adapter is a 24/7 service refreshing in seconds.\n" +
             "- **Correctness:** equivalent for immutable events (dedup handles the overlap); trips need their reconcile pass on either path.\n" +
             "- **The line to respect:** analytics, dashboards, scheduled briefs — this path is enough. Live dispatch or alerting on seconds-old data — that's a job for the live connector itself, or the adapter.\n\n" +
-            "The skill keeps a full side-by-side of the two: **[MotherDuck skill vs API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MOTHERDUCK_VS_API_ADAPTER.md)** — including the graduation path: prototype here with zero infrastructure, move to the adapter if sub-minute freshness ever becomes the requirement. The concepts transfer directly; both mirror the same entities.",
+            "The skill keeps a full side-by-side of the two: **[MCP → MotherDuck vs GetFeed → API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MCP_TO_MOTHERDUCK_VS_GETFEED_API_ADAPTER.md)** — including the graduation path: prototype here with zero infrastructure, move to the adapter if sub-minute freshness ever becomes the requirement. The concepts transfer directly; both mirror the same entities.",
         },
       ],
       choices: [
