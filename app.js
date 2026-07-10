@@ -321,10 +321,38 @@
     if (html != null) e.innerHTML = html;
     return e;
   }
+  // "Stick to bottom" state: keep following new content only while the reader is
+  // already at the bottom. If they scroll up to re-read something mid-stream, stop
+  // yanking them back down until they return to the bottom (or fast-forward).
+  var stickToBottom = true;
+  var lastAutoScroll = 0;
+  function distanceFromBottom() {
+    return document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+  }
+  // An upward gesture always unpins immediately — even mid-stream, when our own
+  // smooth-scroll ticks would otherwise mask the user's intent.
+  window.addEventListener("wheel", function (e) { if (e.deltaY < 0) stickToBottom = false; }, { passive: true });
+  window.addEventListener("touchmove", function () { if (distanceFromBottom() > 140) stickToBottom = false; }, { passive: true });
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home") stickToBottom = false;
+  });
+  // Plain scroll re-pins when the reader returns to the bottom. Ignore the events
+  // our own auto-scroll generates (they'd otherwise flip the flag mid-animation);
+  // while unpinned we never auto-scroll, so those scroll events are all the user's.
+  window.addEventListener("scroll", function () {
+    if (Date.now() - lastAutoScroll < 500) return;
+    stickToBottom = distanceFromBottom() < 140;
+  }, { passive: true });
+
   function scrollDown() {
+    // Respect a reader who scrolled up — unless they fast-forwarded, which means
+    // "take me to the end".
+    if (!stickToBottom && !skip) return;
+    if (skip) stickToBottom = true;
     // smooth while playing normally so motion tracks content arriving; snap
     // instantly once the user fast-forwards (or asks for reduced motion)
     var behavior = skip || reduceMotion ? "auto" : "smooth";
+    lastAutoScroll = Date.now();
     chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: behavior });
     window.scrollTo({ top: document.body.scrollHeight, behavior: behavior });
   }
