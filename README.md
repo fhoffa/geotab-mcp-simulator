@@ -28,9 +28,7 @@ no report builder, no export/import loop.
 
 This simulator shows what that feels like *before* you connect anything real.
 More on the protocol itself: [modelcontextprotocol.io](https://modelcontextprotocol.io).
-For a deeper walkthrough of the official connector — what it can **Ask** and
-**Act** on, how it inherits your permissions, and how to get access — see
-[The Official Geotab MCP Connector](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/OFFICIAL_MCP_CONNECTOR.md).
+More on the real connector: [the MCP connector guide](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/OFFICIAL_MCP_CONNECTOR.md).
 
 ## What you can try
 
