@@ -39,9 +39,14 @@ body {
      chips. min-height keeps short conversations full-bleed while letting long
      ones scroll the page normally. */
   min-height: 100%;
+  /* Pin the backdrop to the viewport and blend it across the full height, so it
+     reads as one calm wash instead of a two-tone seam that slides as the page
+     scrolls (the old gradient stopped at 42% of the tall, growing body). */
   background:
     radial-gradient(circle at top left, rgba(14, 116, 144, 0.09), transparent 34rem),
-    linear-gradient(180deg, #f7fbff 0%, var(--bg) 42%);
+    linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--ink);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 15px;
@@ -143,6 +148,30 @@ body {
   letter-spacing: -0.02em;
 }
 .empty-state p { margin: 0; }
+
+/* Static, crawlable "what you can try" summary that sits below the footer.
+   Persistent (not inside #chat), muted, and below the fold — background context
+   for search/LLM crawlers rather than a focal UI element. */
+.sim-overview {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 20px 16px 32px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.sim-overview h2 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+.sim-overview p { margin: 0 0 10px; }
+.sim-overview ul { margin: 0 0 10px; padding-left: 18px; }
+.sim-overview li { margin: 0 0 6px; }
+.sim-overview strong { color: var(--ink); }
+.sim-overview a { color: var(--accent-ink); }
 .empty-kicker {
   margin: 0 0 8px;
   color: var(--accent-ink);

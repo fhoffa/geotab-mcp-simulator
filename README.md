@@ -28,6 +28,7 @@ no report builder, no export/import loop.
 
 This simulator shows what that feels like *before* you connect anything real.
 More on the protocol itself: [modelcontextprotocol.io](https://modelcontextprotocol.io).
+More on the real connector: [the MCP connector guide](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/OFFICIAL_MCP_CONNECTOR.md).
 
 ## What you can try
 
@@ -82,6 +83,9 @@ data quirks (the all-time trip counter, per-driver HOS, pagination caps that
 fake "outliers") and a strict no-PII default. Ready-to-follow shared skills —
 like the MotherDuck warehouse skill the simulator's warehouse path follows —
 live in the companion [geotab-vibe-guide](https://github.com/fhoffa/geotab-vibe-guide).
+If you outgrow the zero-infra warehouse and need sub-minute freshness, that
+guide's [MCP → MotherDuck vs GetFeed → API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MCP_TO_MOTHERDUCK_VS_GETFEED_API_ADAPTER.md)
+compares it side-by-side with the official self-hosted adapter.
 
 ## Run it locally
 

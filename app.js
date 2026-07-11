@@ -321,12 +321,50 @@
     if (html != null) e.innerHTML = html;
     return e;
   }
+  // "Stick to bottom" state: keep following new content only while the reader is
+  // already at the bottom. If they scroll up to re-read something mid-stream, stop
+  // yanking them back down until they return to the bottom (or fast-forward).
+  var stickToBottom = true;
+  var lastAutoScroll = 0;
+  var footerEl = document.querySelector(".app-footer");
+  // The scroll anchor is the bottom of the conversation column (chat + tray +
+  // footer), NOT document bottom — a static SEO overview lives below the footer
+  // for crawlers and must never pull the viewport past the transcript.
+  function conversationBottom() {
+    return footerEl ? footerEl.offsetTop + footerEl.offsetHeight : document.documentElement.scrollHeight;
+  }
+  function distanceFromBottom() {
+    return conversationBottom() - window.innerHeight - window.scrollY;
+  }
+  // An upward gesture always unpins immediately — even mid-stream, when our own
+  // smooth-scroll ticks would otherwise mask the user's intent. Ignore gestures
+  // inside nested scrollables (the choice tray, the MotherDuck pane): their wheel
+  // events bubble to window but don't move the page, so they must not unpin.
+  function inNestedScroller(e) { return !!(e.target.closest && e.target.closest(".tray, .motherduck-pane")); }
+  window.addEventListener("wheel", function (e) { if (e.deltaY < 0 && !inNestedScroller(e)) stickToBottom = false; }, { passive: true });
+  window.addEventListener("touchmove", function (e) { if (!inNestedScroller(e) && distanceFromBottom() > 140) stickToBottom = false; }, { passive: true });
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home") stickToBottom = false;
+  });
+  // Plain scroll re-pins when the reader returns to the bottom. Ignore the events
+  // our own auto-scroll generates (they'd otherwise flip the flag mid-animation);
+  // while unpinned we never auto-scroll, so those scroll events are all the user's.
+  window.addEventListener("scroll", function () {
+    if (Date.now() - lastAutoScroll < 500) return;
+    stickToBottom = distanceFromBottom() < 140;
+  }, { passive: true });
+
   function scrollDown() {
+    // Respect a reader who scrolled up — unless they fast-forwarded, which means
+    // "take me to the end".
+    if (!stickToBottom && !skip) return;
+    if (skip) stickToBottom = true;
     // smooth while playing normally so motion tracks content arriving; snap
     // instantly once the user fast-forwards (or asks for reduced motion)
     var behavior = skip || reduceMotion ? "auto" : "smooth";
+    lastAutoScroll = Date.now();
     chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: behavior });
-    window.scrollTo({ top: document.body.scrollHeight, behavior: behavior });
+    window.scrollTo({ top: Math.max(0, conversationBottom() - window.innerHeight), behavior: behavior });
   }
   function wait(ms) {
     // playNode() already re-checks playToken after every wait(), and the click
@@ -1227,8 +1265,12 @@
   // click anywhere while it's playing to fast-forward — not just the chat column,
   // so a click in the desktop margins during a long paragraph still skips. Ignore
   // clicks on interactive controls (choices, links, card/pane toggles, settings).
+  // The MotherDuck pane's own controls (its toggle button, the "Sample rows"
+  // summary) are already covered by `button`/`summary` below, so we do NOT exclude
+  // the whole pane — otherwise clicks on its wide, sticky body would silently fail
+  // to fast-forward during the warehouse tutorial.
   document.addEventListener("click", function (e) {
-    if (e.target.closest("button, a, input, textarea, select, label, summary, .tool-head, .motherduck-pane, .overlay")) return;
+    if (e.target.closest("button, a, input, textarea, select, label, summary, .tool-head, .overlay")) return;
     skip = true;
   });
 
