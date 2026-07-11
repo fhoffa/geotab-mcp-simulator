@@ -337,9 +337,12 @@
     return conversationBottom() - window.innerHeight - window.scrollY;
   }
   // An upward gesture always unpins immediately — even mid-stream, when our own
-  // smooth-scroll ticks would otherwise mask the user's intent.
-  window.addEventListener("wheel", function (e) { if (e.deltaY < 0) stickToBottom = false; }, { passive: true });
-  window.addEventListener("touchmove", function () { if (distanceFromBottom() > 140) stickToBottom = false; }, { passive: true });
+  // smooth-scroll ticks would otherwise mask the user's intent. Ignore gestures
+  // inside nested scrollables (the choice tray, the MotherDuck pane): their wheel
+  // events bubble to window but don't move the page, so they must not unpin.
+  function inNestedScroller(e) { return !!(e.target.closest && e.target.closest(".tray, .motherduck-pane")); }
+  window.addEventListener("wheel", function (e) { if (e.deltaY < 0 && !inNestedScroller(e)) stickToBottom = false; }, { passive: true });
+  window.addEventListener("touchmove", function (e) { if (!inNestedScroller(e) && distanceFromBottom() > 140) stickToBottom = false; }, { passive: true });
   window.addEventListener("keydown", function (e) {
     if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home") stickToBottom = false;
   });
