@@ -1,6 +1,12 @@
 # Geotab MCP — Experience Simulator
 
-**🔗 [Try it live](https://fhoffa.github.io/geotab-mcp-simulator/)** · **🎥 [Watch the demo video](https://youtube.com/watch?v=7uMXqWfxlC0)**
+**🔗 [Try it live](https://fhoffa.github.io/geotab-mcp-simulator/)**
+
+<a href="https://youtube.com/watch?v=7uMXqWfxlC0" target="_blank" rel="noopener">
+  <img src="https://img.youtube.com/vi/7uMXqWfxlC0/hqdefault.jpg" alt="▶ Watch the demo video — the Geotab MCP connector in action" width="480">
+</a>
+
+**🎥 [Watch the demo video](https://youtube.com/watch?v=7uMXqWfxlC0)** — Felipe Hoffa on connecting AI assistants to live Geotab fleet data via MCP.
 
 A guided, **zero-setup** chatbot simulator for the **Geotab MCP connector** —
 *without* installing anything, connecting a real fleet, or authenticating.
