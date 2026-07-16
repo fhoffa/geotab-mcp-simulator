@@ -1153,8 +1153,17 @@
       writeNodeUrl(currentNodeId, "replace");
     }
   }
-  function openAbout() { openOverlay(aboutOverlay); }
-  function closeAbout() { closeOverlay(aboutOverlay); }
+  var aboutVideoFrame = document.getElementById("aboutVideoFrame");
+  function openAbout() {
+    if (aboutVideoFrame && !aboutVideoFrame.src) aboutVideoFrame.src = aboutVideoFrame.dataset.src;
+    openOverlay(aboutOverlay);
+  }
+  function closeAbout() {
+    closeOverlay(aboutOverlay);
+    // Closing only hides the overlay via CSS — clear the iframe src too, otherwise a
+    // playing video keeps running invisibly in the background.
+    if (aboutVideoFrame) aboutVideoFrame.src = "";
+  }
 
   /* ------------------------------------------------------------- controls */
   function clearChat() {
@@ -1214,7 +1223,10 @@
   document.addEventListener("keydown", function (e) {
     var open = activeOverlay();
     if (!open) return;
-    if (e.key === "Escape") { closeOverlay(open); return; }
+    if (e.key === "Escape") {
+      if (open === aboutOverlay) closeAbout(); else closeOverlay(open);
+      return;
+    }
     if (e.key === "Tab") {
       // keep focus inside the open dialog
       var f = focusables(open);
