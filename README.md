@@ -6,7 +6,7 @@
   <img src="https://img.youtube.com/vi/7uMXqWfxlC0/hqdefault.jpg" alt="▶ Watch the demo video — the Geotab MCP connector in action" width="480">
 </a>
 
-**🎥 [Watch the demo video](https://youtube.com/watch?v=7uMXqWfxlC0)** — Felipe Hoffa on connecting AI assistants to live Geotab fleet data via MCP.
+**🎥 [Watch the demo video](https://youtube.com/watch?v=7uMXqWfxlC0)** — connecting AI assistants to live Geotab fleet data via MCP.
 
 A guided, **zero-setup** chatbot simulator for the **Geotab MCP connector** —
 *without* installing anything, connecting a real fleet, or authenticating.
