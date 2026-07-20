@@ -354,8 +354,14 @@ content must be reconciled. See **WS6**.
 >   deletion carries. Folded into the simulator as `ep-zonelife-safety`,
 >   reachable from the delete episode. Recommended habit for anyone scripting
 >   this for real: check `GetCountOf(ExceptionEvent,
->   search:{ruleSearch:{id:...}})` (or the zone equivalent) before calling
->   `Remove`, and get explicit human sign-off if the count isn't zero — the
+>   search:{ruleSearch:{id:...}})` before calling `Remove` on a `Rule`.
+>   `ExceptionEvent` only carries a rule id, not a zone id, so there's no
+>   direct filter for a `Zone` — find the rule(s) referencing it first
+>   (`Get(Rule)`, matching `condition.zone.id`), then run the same count per
+>   rule id. **Caught by codex review on this PR, not independently
+>   verified against a live `ExceptionEventSearch` call** — flagged here as
+>   the corrected assumption, not a second grounding pass.
+>   Get explicit human sign-off if the count isn't zero — the
 >   connector won't pause for you the way the native UI does.
 
 

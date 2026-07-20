@@ -1528,9 +1528,11 @@ window.CONVERSATIONS = {
             "real stock \"Speeding\" rule on this same database carries **518** historical exception events. Anyone " +
             "calling `Remove` on a rule like that through this connector should know going in that it carries the " +
             "same weight as the native delete — the MCP layer just doesn't pause to ask first.\n\n" +
-            "Practical habit worth building into any real automation: before calling `Remove` on a real `Rule` or " +
-            "`Zone`, check `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:...}})` (or the zone equivalent) first, " +
-            "surface that number to a human, and get explicit sign-off if it isn't zero. Don't rely on the MCP tool " +
+            "Practical habit worth building into any real automation: before calling `Remove` on a real `Rule`, " +
+            "check `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:...}})` first. `ExceptionEvent` only carries " +
+            "a rule id, not a zone id, so there's no direct filter for a `Zone` — find the rule(s) that reference " +
+            "it first (`Get(Rule)`, matching `condition.zone.id`), then run the same count for each. Surface " +
+            "whatever you find to a human, and get explicit sign-off if it isn't zero. Don't rely on the MCP tool " +
             "to stop you — it won't.",
         },
       ],
@@ -1586,19 +1588,24 @@ window.CONVERSATIONS = {
             "Before calling `Remove` on a `Rule` or `Zone` through the MCP connector — any time the target isn't " +
             "obviously disposable test data.\n\n" +
             "## What to check first\n" +
-            "1. `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:<ruleId>}})` for a Rule (or the zone equivalent) " +
-            "— read-only, safe to run on anything.\n" +
-            "2. Count is 0 → proceed, it's genuinely disposable.\n" +
-            "3. Count is anything else → stop. Tell the human the number and what it means (historical exceptions " +
+            "1. Deleting a `Rule`: `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:<ruleId>}})` — read-only, " +
+            "safe to run on anything.\n" +
+            "2. Deleting a `Zone`: `ExceptionEvent` has no zone filter, only `ruleSearch`/`deviceSearch`. Find the " +
+            "rule(s) that reference the zone first (`Get(Rule)`, matching `condition.zone.id`), then run the same " +
+            "count for each rule id found.\n" +
+            "3. Count is 0 (across all matching rules) → proceed, it's genuinely disposable.\n" +
+            "4. Count is anything else → stop. Tell the human the number and what it means (historical exceptions " +
             "that get invalidated, not archived), and wait for explicit go-ahead before calling `Remove`.\n\n" +
             "## Why this exists\n" +
             "Editing or removing a Rule invalidates the exceptions it generated — expected behavior, not a " +
             "malfunction — but it isn't logged as its own audit event, and native MyGeotab's warning dialog before " +
             "a rule delete doesn't extend to the MCP connector. This skill puts that pause back in.\n\n" +
             "## Suggested tool flow\n" +
-            "GetCountOf(ExceptionEvent, ruleSearch/zoneSearch) → report the count → wait for sign-off if non-zero " +
-            "→ Remove(Rule) → Remove(Zone) → Get by id to confirm a hard delete, not a retire.\n\n" +
-            "(38 lines total — trimmed preview.)",
+            "If deleting a Zone: Get(Rule) to find the rule(s) referencing it (condition.zone.id) → " +
+            "GetCountOf(ExceptionEvent, ruleSearch:{id:...}) per rule found → report the total → wait for " +
+            "sign-off if non-zero → Remove(Rule) → Remove(Zone) → Get by id to confirm a hard delete, not a " +
+            "retire.\n\n" +
+            "(41 lines total — trimmed preview.)",
         },
         {
           type: "assistant",
