@@ -315,6 +315,31 @@ content must be reconciled. See **WS6**.
 >   no camera media enrolled on the demo DB. Confirmed dead end for *live*
 >   footage; revived as an **illustrative** episode instead (see Ep-Dashcam below).
 
+> **Grounding pass done 20 Jul 2026** against the live MCP, connected to a real
+> database — this pass exercised `Remove` for the first time (previously only
+> `Add` had been used; see note below). Test entities only, unmistakably named
+> (`ZTEST-DELETE-ME-…` / `RTEST-DELETE-ME-…`), cleaned up after and confirmed
+> gone. Folded into the simulator as `ep-zonelife-answer` → `-create` →
+> `-delete` → `-cascade` on `demo_fh_vegas4`. Captured facts:
+> - `Zone` `Add` requires `name` + `points` (closed polygon, `x`/`y` = lon/lat,
+>   first point repeated to close it). `groups` defaults, not required.
+> - `Rule` `Add` real validation error: `Undefined or empty
+>   ExceptionRule.Groups` — the connector's own schema marks `groups` as
+>   optional, but the live API rejects a rule without a non-empty one (every
+>   real stock rule carries `groups: [{ id: "GroupCompanyId" }]`).
+> - A rule tied to a zone uses `baseType: "ZoneStop"` +
+>   `condition: { conditionType: "ZoneStop", zone: { id: "<zoneId>" } }` — no
+>   pre-existing zone-based rule existed to copy, so this shape was confirmed
+>   live (persisted correctly, `Get` echoed `condition.zone.id` back intact).
+> - `Remove` is a **true hard delete**, not a retire via `activeTo` — a
+>   follow-up `Get` by id returns empty, not a record with a past `activeTo`.
+>   True for both `Zone` and `Rule`.
+> - Order test: removing a zone *before* its dependent `ZoneStop` rule does
+>   **not** error — the rule cascade-deletes along with it (confirmed via
+>   `Get` returning empty and `GetCountOf(Rule)` back at baseline). Not
+>   documented behavior, so scripted cleanup should still delete rule-then-zone
+>   explicitly rather than rely on the cascade.
+
 
 
 **Goal:** broaden the simulator beyond the fleet-manager lens. The original six
@@ -332,7 +357,9 @@ beat. Items marked SHIPPED were grounded against the live MCP and built into
 > the live Geotab MCP: `SearchMedia`, `GetMediaUrl`, `DownloadMediaFile`,
 > `GetEmissionComplianceDeadline`, `EmissionEnrollDevices`,
 > `GetPostedRoadSpeedsForDevice`, `SendReportProcessingRequest`, `DecodeVins`,
-> `GetDevicesInformation`, plus `Set`/`Remove` (only `Add` is used so far).
+> `GetDevicesInformation`, plus `Set` (still unused — `Remove` is now grounded,
+> see the 20 Jul 2026 pass above: it's a true delete, not a retire, and can
+> cascade to dependent `ZoneStop` rules).
 
 ### Backlog (each = one new hub choice + answer node, optional action node)
 
