@@ -268,6 +268,15 @@ window.CONVERSATIONS = {
             "whether my fleet drives through that zone and what a non-compliant entry would cost us.",
           next: "ep3-answer",
         },
+        {
+          group: "🚀 Operations",
+          label: "🧪 Test creating & deleting a zone/rule",
+          say:
+            "Before I automate anything with zones and rules, walk me through creating a disposable test " +
+            "zone and rule, verifying they exist, then deleting both and confirming they're actually gone " +
+            "— not just deactivated.",
+          next: "ep-zonelife-answer",
+        },
 
         {
           group: "🧠 Automate & share",
@@ -1213,6 +1222,508 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🚐 What make and model are these?", say: "What make and model are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet-23-31" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* --------------------------------------------- ep-zonelife · zone/rule lifecycle */
+    // Grounded 20 Jul 2026 against the live MCP (real database, disposable test
+    // entities, cleaned up after). Verdicts below are from real calls, not
+    // guesses — see docs/ROADMAP.md's grounding-pass log for the raw transcript.
+    "ep-zonelife-answer": {
+      id: "ep-zonelife-answer",
+      title: "Ops · Zone & rule lifecycle test",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Before I build anything you'd rely on, let's prove the whole lifecycle actually works — create a zone " +
+            "and a rule, confirm they're really there, then delete both and confirm they're *really* gone, not just " +
+            "deactivated. Checking the current baseline first.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Zone" },
+          summary: "0 zones currently on this database",
+          result: '{ "result": 0 }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Rule" },
+          summary: "17 rules — the stock set (Speeding, Harsh Braking, Collision, Seatbelt, …)",
+          result: '{ "result": 17 }',
+        },
+        {
+          type: "assistant",
+          text:
+            "No zones yet, 17 stock rules already in place, no custom zone-based ones. I'll create a throwaway pair — " +
+            "named unmistakably as test data — verify them, then tear both down and confirm the counts land back on " +
+            "0 and 17.",
+        },
+      ],
+      choices: [
+        {
+          label: "🧪 Go ahead — create the test zone + rule",
+          say: "Go ahead — create a disposable test zone and rule so we can verify the full lifecycle including deletion.",
+          next: "ep-zonelife-create",
+        },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep-zonelife-create": {
+      id: "ep-zonelife-create",
+      title: "Ops · Create test zone + rule",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text: "Creating the zone first — a small closed polygon, named so it can't be mistaken for real fleet config.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Zone",
+            entity: {
+              name: "ZTEST-DELETE-ME-2026-07-20",
+              points: [
+                { x: -115.14, y: 36.17 }, { x: -115.139, y: 36.17 },
+                { x: -115.139, y: 36.169 }, { x: -115.14, y: 36.169 }, { x: -115.14, y: 36.17 },
+              ],
+            },
+          },
+          summary: "Zone created",
+          write: true,
+          result: '{ "result": "Zoneb…ztest-2026-07-20" }',
+        },
+        {
+          type: "assistant",
+          text: "Zone's in — verifying it's actually retrievable before building on it, then adding the rule tied to it.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Rule",
+            entity: {
+              name: "RTEST-DELETE-ME-2026-07-20",
+              baseType: "ZoneStop",
+              condition: { conditionType: "ZoneStop", zone: { id: "Zoneb…ztest-2026-07-20" } },
+            },
+          },
+          summary: "rejected — Groups required",
+          write: true,
+          result: 'Error: Undefined or empty ExceptionRule.Groups',
+        },
+        {
+          type: "assistant",
+          text:
+            "First attempt bounced: `Undefined or empty ExceptionRule.Groups`. The schema lists `groups` as optional, " +
+            "but the live API disagrees — every real rule on this database carries `groups: [{ id: \"GroupCompanyId\" }]`, " +
+            "so I'll add that and retry rather than guess further.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Rule",
+            entity: {
+              name: "RTEST-DELETE-ME-2026-07-20",
+              baseType: "ZoneStop",
+              groups: [{ id: "GroupCompanyId" }],
+              condition: { conditionType: "ZoneStop", zone: { id: "Zoneb…ztest-2026-07-20" } },
+            },
+          },
+          summary: "Rule created and tied to the zone",
+          write: true,
+          result: '{ "result": "Ruleb…rtest-2026-07-20" }',
+        },
+        {
+          type: "assistant",
+          text: "Both created. Pulling them back by id to confirm the zone reference actually persisted, not just accepted.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", search: { id: "Ruleb…rtest-2026-07-20" } },
+          summary: "confirmed — condition.zone.id matches the test zone",
+          result: '[{ "id": "Ruleb…rtest-2026-07-20", "name": "RTEST-DELETE-ME-2026-07-20", "condition": { "zone": { "id": "Zoneb…ztest-2026-07-20" } } }]',
+        },
+        {
+          type: "confirm",
+          changes: [
+            "Zone \"ZTEST-DELETE-ME-2026-07-20\" created on demo_fh_vegas4",
+            "Rule \"RTEST-DELETE-ME-2026-07-20\" created and tied to that zone",
+          ],
+        },
+      ],
+      choices: [
+        {
+          label: "🗑️ Now delete both, rule first",
+          say: "Good — now delete the rule, then the zone, and confirm both are actually gone.",
+          next: "ep-zonelife-delete",
+        },
+      ],
+    },
+
+    "ep-zonelife-delete": {
+      id: "ep-zonelife-delete",
+      title: "Ops · Delete + verify zone/rule",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text: "Removing the rule first, then the zone — the safer, most portable order regardless of what the API happens to allow.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Remove",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", entity: { id: "Ruleb…rtest-2026-07-20" } },
+          summary: "removed",
+          write: true,
+          result: "{}",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Remove",
+          args: { database: "demo_fh_vegas4", typeName: "Zone", entity: { id: "Zoneb…ztest-2026-07-20" } },
+          summary: "removed",
+          write: true,
+          result: "{}",
+        },
+        {
+          type: "assistant",
+          text: "Both calls returned clean. Confirming they're actually gone rather than trusting a success response — checking `Get` by id, not just `activeTo`.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Zone", search: { id: "Zoneb…ztest-2026-07-20" } },
+          summary: "empty — hard-deleted, not retired",
+          result: "[]",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", search: { id: "Ruleb…rtest-2026-07-20" } },
+          summary: "empty — hard-deleted, not retired",
+          result: "[]",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Zone" },
+          summary: "back to 0",
+          result: '{ "result": 0 }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Rule" },
+          summary: "back to 17",
+          result: '{ "result": 17 }',
+        },
+        {
+          type: "assistant",
+          text:
+            "Confirmed: `Remove` genuinely deletes on this API — the follow-up `Get` came back empty, not a record " +
+            "with `activeTo` set to a past date. That matters, because `activeFrom`/`activeTo` exist on both entities " +
+            "for scheduling and could easily be mistaken for the delete mechanism; they're not. Counts are back to " +
+            "baseline — 0 zones, 17 rules — so nothing test-related is left behind.",
+        },
+        {
+          type: "confirm",
+          changes: [
+            "Rule removed and confirmed gone (Get returns empty, not a retired record)",
+            "Zone removed and confirmed gone (Get returns empty, not a retired record)",
+            "Zone & Rule counts back to baseline (0 zones / 17 rules)",
+          ],
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Tested end-to-end — create, verify, delete, verify. Nothing left behind."] },
+      ],
+      choices: [
+        {
+          label: "⚠️ Does deleting a rule wipe its exception history?",
+          say:
+            "Wait — would that Remove call have also wiped out this rule's historical exceptions? Native MyGeotab " +
+            "shows a warning popup before you delete a rule. Does the MCP connector warn about that too?",
+          next: "ep-zonelife-safety",
+        },
+        {
+          label: "🔀 What if I delete the zone first?",
+          say: "What happens if I delete the zone before the rule — does it error, or does the rule get orphaned?",
+          next: "ep-zonelife-cascade",
+        },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-zonelife-safety": {
+      id: "ep-zonelife-safety",
+      title: "Ops · What deleting a rule clears (and how to check first)",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Good instinct to check — let me look at this properly instead of guessing, without touching any real rule " +
+            "or its history. Two things: how much history a real rule actually carries, and what the documentation " +
+            "says happens to it on delete.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "ExceptionEvent", search: { ruleSearch: { id: "RuleSpeedingId" } } },
+          summary: "518 historical exception events tied to the stock Speeding rule — read-only, nothing touched",
+          result: '{ "result": 518 }',
+        },
+        {
+          type: "tool",
+          server: "web",
+          name: "web_search",
+          args: { query: "Geotab MyGeotab rule deletion exception history behavior" },
+          summary: "MyGeotab docs & support content: editing or removing a rule invalidates the exceptions it generated",
+          result:
+            'geotab.com/support · community.geotab.com\n' +
+            '"Editing, removing, or reprocessing a rule invalidates the exceptions it previously generated, since an ' +
+            'exception tied to a rule definition that no longer exists — or no longer matches — isn\'t a meaningful ' +
+            'record to keep. This is treated as part of normal rule maintenance rather than a separate event: the ' +
+            'audit log captures the rule change itself, not a running list of which exception rows were invalidated ' +
+            'underneath it."',
+        },
+        {
+          type: "assistant",
+          text:
+            "So: yes. Editing or removing a rule invalidates its attached `ExceptionEvent` history — that's expected " +
+            "behavior given how rules work, not a malfunction. The thing worth being deliberate about is that this " +
+            "isn't a separate audit-log event: the log records the rule change itself, not an inventory of what got " +
+            "invalidated underneath it, so there's nothing built-in that tells you afterward how much history a given " +
+            "change actually cleared.\n\n" +
+            "Native MyGeotab shows a warning popup before a delete like this — exactly the kind of moment where a " +
+            "human should pause. The `Remove` calls I ran earlier in this test went straight through, no prompt, " +
+            "because that test rule was fresh with zero exceptions attached, so there was nothing at stake. But the " +
+            "real stock \"Speeding\" rule on this same database carries **518** historical exception events. Anyone " +
+            "calling `Remove` on a rule like that through this connector should know going in that it carries the " +
+            "same weight as the native delete — the MCP layer just doesn't pause to ask first.\n\n" +
+            "Practical habit worth building into any real automation: before calling `Remove` on a real `Rule`, " +
+            "check `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:...}})` first. `ExceptionEvent` only carries " +
+            "a rule id, not a zone id, so there's no direct filter for a `Zone` — find the rule(s) that reference " +
+            "it first (`Get(Rule)`, matching `condition.zone.id`), then run the same count for each. Surface " +
+            "whatever you find to a human, and get explicit sign-off if it isn't zero. Don't rely on the MCP tool " +
+            "to stop you — it won't.",
+        },
+      ],
+      choices: [
+        {
+          label: "🛠️ Turn this into a reusable safety-check skill",
+          say:
+            "Should I wait for Geotab to build a guardrail like this into the connector, or can we just package " +
+            "this check into a skill ourselves right now?",
+          next: "ep-zonelife-skill",
+        },
+        {
+          label: "🔀 What if I delete the zone first?",
+          say: "What happens if I delete the zone before the rule — does it error, or does the rule get orphaned?",
+          next: "ep-zonelife-cascade",
+        },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-zonelife-skill": {
+      id: "ep-zonelife-skill",
+      title: "Skill · Package the pre-delete safety check",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Good question to end on, and you don't have to pick one — but there's no reason to sit and wait. The " +
+            "gap we just found came from testing the real behavior in this exact conversation, which is the same raw " +
+            "material every skill in this project gets built from. Packaging it now.",
+        },
+        {
+          type: "tool",
+          server: "assistant",
+          name: "Create skill",
+          args: { name: "geotab-safe-delete" },
+          summary: "SKILL.md written — pre-delete ExceptionEvent check, human sign-off on any non-zero count",
+          write: true,
+          openByDefault: true,
+          result:
+            "---\n" +
+            "name: geotab-safe-delete\n" +
+            "description: >-\n" +
+            "  Guardrail for removing a MyGeotab Rule or Zone through the MCP connector.\n" +
+            "  Checks how much ExceptionEvent history is attached before calling Remove,\n" +
+            "  and pauses for human sign-off on anything that isn't disposable test data —\n" +
+            "  since native MyGeotab warns about this and the connector doesn't.\n" +
+            "---\n\n" +
+            "# Safe Delete for Rules & Zones\n\n" +
+            "## When to use\n" +
+            "Before calling `Remove` on a `Rule` or `Zone` through the MCP connector — any time the target isn't " +
+            "obviously disposable test data.\n\n" +
+            "## What to check first\n" +
+            "1. Deleting a `Rule`: `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:<ruleId>}})` — read-only, " +
+            "safe to run on anything.\n" +
+            "2. Deleting a `Zone`: `ExceptionEvent` has no zone filter, only `ruleSearch`/`deviceSearch`. Find the " +
+            "rule(s) that reference the zone first (`Get(Rule)`, matching `condition.zone.id`), then run the same " +
+            "count for each rule id found.\n" +
+            "3. Count is 0 (across all matching rules) → proceed, it's genuinely disposable.\n" +
+            "4. Count is anything else → stop. Tell the human the number and what it means (historical exceptions " +
+            "that get invalidated, not archived), and wait for explicit go-ahead before calling `Remove`.\n\n" +
+            "## Why this exists\n" +
+            "Editing or removing a Rule invalidates the exceptions it generated — expected behavior, not a " +
+            "malfunction — but it isn't logged as its own audit event, and native MyGeotab's warning dialog before " +
+            "a rule delete doesn't extend to the MCP connector. This skill puts that pause back in.\n\n" +
+            "## Suggested tool flow\n" +
+            "If deleting a Zone: Get(Rule) to find the rule(s) referencing it (condition.zone.id) → " +
+            "GetCountOf(ExceptionEvent, ruleSearch:{id:...}) per rule found → report the total → wait for " +
+            "sign-off if non-zero → Remove(Rule) → Remove(Zone) → Get by id to confirm a hard delete, not a " +
+            "retire.\n\n" +
+            "(41 lines total — trimmed preview.)",
+        },
+        {
+          type: "assistant",
+          text:
+            "Packaged it as geotab-safe-delete — open the card to see what's in it. It's small on purpose: one " +
+            "check, one rule for what to do with the result. Same caveat as the weekly-review skill earlier in " +
+            "this demo: this stays here as a **worked example**, not something to install as-is — package your " +
+            "own version from a real conversation on your own fleet, since that's where a skill actually worth " +
+            "trusting comes from.\n\n" +
+            "On waiting versus building: if Geotab ships an equivalent confirmation at the API or connector level " +
+            "later, that's strictly better — a first-party guardrail beats a client-side one, and a skill like " +
+            "this would retire in its favor. But that's not a reason to sit on the gap in the meantime. This one " +
+            "came from testing the real behavior right here, same pattern as every skill in this project — " +
+            "conversations first, skills second. You don't need a vendor roadmap to fix something you can just " +
+            "fix; you just shouldn't mistake a demo artifact for a deployed guardrail.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Ask once. Automate it. Share it with your whole team."] },
+      ],
+      choices: [
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-zonelife-cascade": {
+      id: "ep-zonelife-cascade",
+      title: "Ops · Delete order — zone before rule",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Good question — I recommended rule-then-zone as the safe default, but let's actually test the reverse: " +
+            "a second disposable pair, then remove the zone while the rule still references it.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Zone",
+            entity: {
+              name: "ZTEST-ORDERCHECK-2026-07-20",
+              points: [
+                { x: -115.145, y: 36.175 }, { x: -115.144, y: 36.175 },
+                { x: -115.144, y: 36.174 }, { x: -115.145, y: 36.174 }, { x: -115.145, y: 36.175 },
+              ],
+            },
+          },
+          summary: "second test zone created",
+          write: true,
+          result: '{ "result": "Zoneb…ordercheck" }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Rule",
+            entity: {
+              name: "RTEST-ORDERCHECK-2026-07-20",
+              baseType: "ZoneStop",
+              groups: [{ id: "GroupCompanyId" }],
+              condition: { conditionType: "ZoneStop", zone: { id: "Zoneb…ordercheck" } },
+            },
+          },
+          summary: "second test rule created, tied to the zone",
+          write: true,
+          result: '{ "result": "Ruleb…ordercheck" }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Remove",
+          args: { database: "demo_fh_vegas4", typeName: "Zone", entity: { id: "Zoneb…ordercheck" } },
+          summary: "removed the zone while the rule still referenced it — no error",
+          write: true,
+          result: "{}",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", search: { id: "Ruleb…ordercheck" } },
+          summary: "empty — the rule is gone too",
+          result: "[]",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Rule" },
+          summary: "back to 17 — not just hidden, actually gone",
+          result: '{ "result": 17 }',
+        },
+        {
+          type: "assistant",
+          text:
+            "No referential-integrity error, and the rule didn't get orphaned — it cascade-deleted along with the " +
+            "zone it depended on. Rule count went straight back to the 17-rule baseline without me ever calling " +
+            "`Remove(Rule)` on it directly.\n\n" +
+            "Useful to know, but I still wouldn't script around it: cascade behavior like this isn't documented, and " +
+            "there's no guarantee every rule `baseType`/`conditionType` combination behaves the same way. Delete the " +
+            "rule explicitly before the zone in anything you automate — it's the assumption that stays correct even " +
+            "if this particular cascade doesn't.",
+        },
+        {
+          type: "confirm",
+          changes: [
+            "Confirmed: removing a referenced zone does not error, even with a dependent rule still attached",
+            "The dependent ZoneStop rule cascade-deleted along with its zone (Get + count both confirm)",
+            "Counts back to baseline after both orderings — no orphans in either test",
+          ],
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Verified, not assumed — the delete path actually deletes."] },
+      ],
+      choices: [
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],

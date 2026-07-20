@@ -88,13 +88,13 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (86)
+## Nodes (92)
 
 | id | title | database | leads to |
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
+| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep-zonelife-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
 | `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-shape-viz`, `ep7-ace`, `hub` |
 | `ep1-shape-viz` | Ep1 · Shape it: chart the speeding | demo_fh_vegas4 | `ep1-shape-brief`, `hub` |
 | `ep1-shape-brief` | Ep1 · Shape it: the reshaped brief | — | `ep1-skill`, `hub` |
@@ -110,6 +110,12 @@ flowchart TD
 | `ep3-action` | Ep3 · Create zone + rule | demo_fh4 | `ep3-map`, `hub`, restart |
 | `ep3-action-wide` | Ep3 · Create zone + rule (entry+exit, group) | demo_fh4 | `ep3-map`, `hub`, restart |
 | `ep3-map` | Ep3 · ZBE zone on a map | — | `ep9-fleet-23-31`, `hub`, restart |
+| `ep-zonelife-answer` | Ops · Zone & rule lifecycle test | demo_fh_vegas4 | `ep-zonelife-create`, `hub` |
+| `ep-zonelife-create` | Ops · Create test zone + rule | demo_fh_vegas4 | `ep-zonelife-delete` |
+| `ep-zonelife-delete` | Ops · Delete + verify zone/rule | demo_fh_vegas4 | `ep-zonelife-safety`, `ep-zonelife-cascade`, `hub`, restart |
+| `ep-zonelife-safety` | Ops · What deleting a rule clears (and how to check first) | demo_fh_vegas4 | `ep-zonelife-skill`, `ep-zonelife-cascade`, `hub`, restart |
+| `ep-zonelife-skill` | Skill · Package the pre-delete safety check | demo_fh_vegas4 | `hub`, restart |
+| `ep-zonelife-cascade` | Ops · Delete order — zone before rule | demo_fh_vegas4 | `hub`, restart |
 | `ep4-answer` | Ep4 · Five actions | demo_fh4 | `ep8-maintenance`, `ep9-fleet-23-31`, `hub`, restart |
 | `ep5-answer` | Ep5 · Geotab + Gmail + Calendar | demo_fh4 | `ep5-send`, `ep5-hold` |
 | `ep5-send` | Ep5 · Send the draft | demo_fh4 | `ep9-fleet-06`, `hub`, restart |
