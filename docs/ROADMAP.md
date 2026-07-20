@@ -339,6 +339,23 @@ content must be reconciled. See **WS6**.
 >   `Get` returning empty and `GetCountOf(Rule)` back at baseline). Not
 >   documented behavior, so scripted cleanup should still delete rule-then-zone
 >   explicitly rather than rely on the cascade.
+> - **Safety gap, flagged by a reviewer and then verified:** deleting — or even
+>   just editing — a `Rule` purges its attached `ExceptionEvent` history, and
+>   Geotab does this **without an audit-log entry**, by design (a Geotab
+>   support engineer confirmed this on a customer thread, to avoid flooding the
+>   log with potentially millions of removed-event rows; per Geotab's own FAQ
+>   and community support threads). Native MyGeotab shows a warning dialog
+>   before a delete that would do this; the MCP `Remove` tool does not — the
+>   test `Remove` calls above went through immediately because the test rule
+>   had zero exceptions attached. The real stock "Speeding" rule on
+>   `demo_fh_vegas4` carries **518** historical `ExceptionEvent` records
+>   (`GetCountOf`, read-only, untouched) — the scale of what a careless
+>   `Remove` on a real rule could silently drop. Folded into the simulator as
+>   `ep-zonelife-safety`, reachable from the delete episode. Recommended
+>   guardrail for anyone scripting this for real: check
+>   `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:...}})` (or the zone
+>   equivalent) before calling `Remove`, and get explicit human sign-off if the
+>   count isn't zero — the API layer enforces nothing here.
 
 
 
