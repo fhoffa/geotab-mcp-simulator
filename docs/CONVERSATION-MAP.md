@@ -113,7 +113,7 @@ flowchart TD
 | `ep-zonelife-answer` | Ops · Zone & rule lifecycle test | demo_fh_vegas4 | `ep-zonelife-create`, `hub` |
 | `ep-zonelife-create` | Ops · Create test zone + rule | demo_fh_vegas4 | `ep-zonelife-delete`, `hub` |
 | `ep-zonelife-delete` | Ops · Delete + verify zone/rule | demo_fh_vegas4 | `ep-zonelife-safety`, `ep-zonelife-cascade`, `hub`, restart |
-| `ep-zonelife-safety` | Ops · Delete wipes exception history — and MCP won't warn you | demo_fh_vegas4 | `ep-zonelife-cascade`, `hub`, restart |
+| `ep-zonelife-safety` | Ops · What deleting a rule clears (and how to check first) | demo_fh_vegas4 | `ep-zonelife-cascade`, `hub`, restart |
 | `ep-zonelife-cascade` | Ops · Delete order — zone before rule | demo_fh_vegas4 | `hub`, restart |
 | `ep4-answer` | Ep4 · Five actions | demo_fh4 | `ep8-maintenance`, `ep9-fleet-23-31`, `hub`, restart |
 | `ep5-answer` | Ep5 · Geotab + Gmail + Calendar | demo_fh4 | `ep5-send`, `ep5-hold` |
