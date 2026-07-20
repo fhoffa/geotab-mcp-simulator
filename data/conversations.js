@@ -1611,14 +1611,16 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "Packaged it as geotab-safe-delete — open the card to see what's in it. It's small on purpose: one " +
-            "check, one rule for what to do with the result. Drop it in shared skills and any agent about to call " +
-            "`Remove` on a real `Rule` or `Zone` runs this pause automatically, whether or not that particular " +
-            "conversation happened to think of it.\n\n" +
+            "check, one rule for what to do with the result. Same caveat as the weekly-review skill earlier in " +
+            "this demo: this stays here as a **worked example**, not something to install as-is — package your " +
+            "own version from a real conversation on your own fleet, since that's where a skill actually worth " +
+            "trusting comes from.\n\n" +
             "On waiting versus building: if Geotab ships an equivalent confirmation at the API or connector level " +
-            "later, that's strictly better — a first-party guardrail beats a client-side one, and this skill would " +
-            "retire in its favor. But that's not a reason to sit on the gap in the meantime. This one came from " +
-            "testing the real behavior right here, same as every other skill in this project — conversations " +
-            "first, skills second. You don't need a vendor roadmap to fix something you can just fix.",
+            "later, that's strictly better — a first-party guardrail beats a client-side one, and a skill like " +
+            "this would retire in its favor. But that's not a reason to sit on the gap in the meantime. This one " +
+            "came from testing the real behavior right here, same pattern as every skill in this project — " +
+            "conversations first, skills second. You don't need a vendor roadmap to fix something you can just " +
+            "fix; you just shouldn't mistake a demo artifact for a deployed guardrail.",
         },
         { type: "endcard", lines: ["Geotab MCP Connector", "Ask once. Automate it. Share it with your whole team."] },
       ],
