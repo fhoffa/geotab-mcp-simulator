@@ -1482,15 +1482,15 @@ window.CONVERSATIONS = {
 
     "ep-zonelife-safety": {
       id: "ep-zonelife-safety",
-      title: "Ops · Delete wipes exception history — and MCP won't warn you",
+      title: "Ops · What deleting a rule clears (and how to check first)",
       db: "demo_fh_vegas4",
       events: [
         {
           type: "assistant",
           text:
             "Good instinct to check — let me look at this properly instead of guessing, without touching any real rule " +
-            "or its history. Two things: how much history a real rule actually carries, and what happens to it on " +
-            "delete, per Geotab's own documentation.",
+            "or its history. Two things: how much history a real rule actually carries, and what the documentation " +
+            "says happens to it on delete.",
         },
         {
           type: "tool",
@@ -1504,31 +1504,31 @@ window.CONVERSATIONS = {
           type: "tool",
           server: "web",
           name: "web_search",
-          args: { query: "Geotab API delete rule removes historical exceptions audit log" },
-          summary: "Geotab FAQ + support threads: modifying or removing a rule purges its exceptions, silently",
+          args: { query: "Geotab MyGeotab rule deletion exception history behavior" },
+          summary: "MyGeotab docs & support content: editing or removing a rule invalidates the exceptions it generated",
           result:
             'geotab.com/support · community.geotab.com\n' +
-            '"Modifying a rule removes its historic exceptions, since they may no longer be valid — the same applies ' +
-            'to removing a rule or triggering a reprocess. One customer described intentionally deleting zones in bulk ' +
-            'specifically because it also cleared the exceptions tied to them. A Geotab support engineer, asked why ' +
-            'the audit log showed nothing after a rule edit wiped out exceptions, confirmed it was deliberate — they ' +
-            'did not want to flood the audit log with potentially millions of removed-event entries, and log a lighter ' +
-            '\'reprocess\' marker instead of what was actually deleted."',
+            '"Editing, removing, or reprocessing a rule invalidates the exceptions it previously generated, since an ' +
+            'exception tied to a rule definition that no longer exists — or no longer matches — isn\'t a meaningful ' +
+            'record to keep. This is treated as part of normal rule maintenance rather than a separate event: the ' +
+            'audit log captures the rule change itself, not a running list of which exception rows were invalidated ' +
+            'underneath it."',
         },
         {
           type: "assistant",
           text:
-            "So: yes, and it's worse than a UI quirk. Deleting — or even just editing — a rule purges its attached " +
-            "`ExceptionEvent` history, and Geotab does this on purpose without writing what was removed to the audit " +
-            "log, specifically to avoid flooding it with potentially millions of entries. That's silent, unrecoverable " +
-            "data loss by design, not a bug.\n\n" +
-            "Native MyGeotab shows a warning popup before a delete that would do this. The `Remove` calls I ran " +
-            "earlier in this test went through immediately, no prompt — because that test rule was fresh and had " +
-            "zero exceptions attached, so there was nothing to lose. But the real stock \"Speeding\" rule on this " +
-            "same database carries **518** historical exception events. If someone ran `Remove` on a rule like that " +
-            "through this connector the way I ran it on my test rule, there's a real chance those events vanish with " +
-            "no popup and no audit trail telling you afterward what disappeared.\n\n" +
-            "Practical guardrail, since the API layer won't provide one: before calling `Remove` on a real `Rule` or " +
+            "So: yes. Editing or removing a rule invalidates its attached `ExceptionEvent` history — that's expected " +
+            "behavior given how rules work, not a malfunction. The thing worth being deliberate about is that this " +
+            "isn't a separate audit-log event: the log records the rule change itself, not an inventory of what got " +
+            "invalidated underneath it, so there's nothing built-in that tells you afterward how much history a given " +
+            "change actually cleared.\n\n" +
+            "Native MyGeotab shows a warning popup before a delete like this — exactly the kind of moment where a " +
+            "human should pause. The `Remove` calls I ran earlier in this test went straight through, no prompt, " +
+            "because that test rule was fresh with zero exceptions attached, so there was nothing at stake. But the " +
+            "real stock \"Speeding\" rule on this same database carries **518** historical exception events. Anyone " +
+            "calling `Remove` on a rule like that through this connector should know going in that it carries the " +
+            "same weight as the native delete — the MCP layer just doesn't pause to ask first.\n\n" +
+            "Practical habit worth building into any real automation: before calling `Remove` on a real `Rule` or " +
             "`Zone`, check `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:...}})` (or the zone equivalent) first, " +
             "surface that number to a human, and get explicit sign-off if it isn't zero. Don't rely on the MCP tool " +
             "to stop you — it won't.",
