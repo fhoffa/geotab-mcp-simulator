@@ -1488,7 +1488,17 @@ window.CONVERSATIONS = {
           type: "tool",
           server: "geotab",
           name: "Add",
-          args: { database: "demo_fh_vegas4", typeName: "Zone", entity: { name: "ZTEST-ORDERCHECK-2026-07-20", points: "…polygon…" } },
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Zone",
+            entity: {
+              name: "ZTEST-ORDERCHECK-2026-07-20",
+              points: [
+                { x: -115.145, y: 36.175 }, { x: -115.144, y: 36.175 },
+                { x: -115.144, y: 36.174 }, { x: -115.145, y: 36.174 }, { x: -115.145, y: 36.175 },
+              ],
+            },
+          },
           summary: "second test zone created",
           write: true,
           result: '{ "result": "Zoneb…ordercheck" }',
