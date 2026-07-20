@@ -1377,7 +1377,6 @@ window.CONVERSATIONS = {
           say: "Good — now delete the rule, then the zone, and confirm both are actually gone.",
           next: "ep-zonelife-delete",
         },
-        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
       ],
     },
 
