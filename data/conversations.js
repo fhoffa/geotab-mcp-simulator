@@ -1536,10 +1536,86 @@ window.CONVERSATIONS = {
       ],
       choices: [
         {
+          label: "🛠️ Turn this into a reusable safety-check skill",
+          say:
+            "Should I wait for Geotab to build a guardrail like this into the connector, or can we just package " +
+            "this check into a skill ourselves right now?",
+          next: "ep-zonelife-skill",
+        },
+        {
           label: "🔀 What if I delete the zone first?",
           say: "What happens if I delete the zone before the rule — does it error, or does the rule get orphaned?",
           next: "ep-zonelife-cascade",
         },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-zonelife-skill": {
+      id: "ep-zonelife-skill",
+      title: "Skill · Package the pre-delete safety check",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Good question to end on, and you don't have to pick one — but there's no reason to sit and wait. The " +
+            "gap we just found came from testing the real behavior in this exact conversation, which is the same raw " +
+            "material every skill in this project gets built from. Packaging it now.",
+        },
+        {
+          type: "tool",
+          server: "assistant",
+          name: "Create skill",
+          args: { name: "geotab-safe-delete" },
+          summary: "SKILL.md written — pre-delete ExceptionEvent check, human sign-off on any non-zero count",
+          write: true,
+          openByDefault: true,
+          result:
+            "---\n" +
+            "name: geotab-safe-delete\n" +
+            "description: >-\n" +
+            "  Guardrail for removing a MyGeotab Rule or Zone through the MCP connector.\n" +
+            "  Checks how much ExceptionEvent history is attached before calling Remove,\n" +
+            "  and pauses for human sign-off on anything that isn't disposable test data —\n" +
+            "  since native MyGeotab warns about this and the connector doesn't.\n" +
+            "---\n\n" +
+            "# Safe Delete for Rules & Zones\n\n" +
+            "## When to use\n" +
+            "Before calling `Remove` on a `Rule` or `Zone` through the MCP connector — any time the target isn't " +
+            "obviously disposable test data.\n\n" +
+            "## What to check first\n" +
+            "1. `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:<ruleId>}})` for a Rule (or the zone equivalent) " +
+            "— read-only, safe to run on anything.\n" +
+            "2. Count is 0 → proceed, it's genuinely disposable.\n" +
+            "3. Count is anything else → stop. Tell the human the number and what it means (historical exceptions " +
+            "that get invalidated, not archived), and wait for explicit go-ahead before calling `Remove`.\n\n" +
+            "## Why this exists\n" +
+            "Editing or removing a Rule invalidates the exceptions it generated — expected behavior, not a " +
+            "malfunction — but it isn't logged as its own audit event, and native MyGeotab's warning dialog before " +
+            "a rule delete doesn't extend to the MCP connector. This skill puts that pause back in.\n\n" +
+            "## Suggested tool flow\n" +
+            "GetCountOf(ExceptionEvent, ruleSearch/zoneSearch) → report the count → wait for sign-off if non-zero " +
+            "→ Remove(Rule) → Remove(Zone) → Get by id to confirm a hard delete, not a retire.\n\n" +
+            "(38 lines total — trimmed preview.)",
+        },
+        {
+          type: "assistant",
+          text:
+            "Packaged it as geotab-safe-delete — open the card to see what's in it. It's small on purpose: one " +
+            "check, one rule for what to do with the result. Drop it in shared skills and any agent about to call " +
+            "`Remove` on a real `Rule` or `Zone` runs this pause automatically, whether or not that particular " +
+            "conversation happened to think of it.\n\n" +
+            "On waiting versus building: if Geotab ships an equivalent confirmation at the API or connector level " +
+            "later, that's strictly better — a first-party guardrail beats a client-side one, and this skill would " +
+            "retire in its favor. But that's not a reason to sit on the gap in the meantime. This one came from " +
+            "testing the real behavior right here, same as every other skill in this project — conversations " +
+            "first, skills second. You don't need a vendor roadmap to fix something you can just fix.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Ask once. Automate it. Share it with your whole team."] },
+      ],
+      choices: [
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
