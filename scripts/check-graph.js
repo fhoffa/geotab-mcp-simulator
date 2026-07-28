@@ -43,7 +43,7 @@ Object.keys(NODES).forEach(function (id) {
     if (!c.next && !c.action) {
       problems.push(id + " → choice '" + (c.label || "") + "' has neither 'next' nor 'action'");
     }
-    if (c.action && c.action !== "restart" && c.action !== "map") {
+    if (c.action && c.action !== "restart" && c.action !== "map" && c.action !== "video") {
       problems.push(id + " → choice '" + (c.label || "") + "' has unknown action '" + c.action + "'");
     }
   });

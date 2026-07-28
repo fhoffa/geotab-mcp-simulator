@@ -29,7 +29,7 @@
  *               - label : chip text
  *               - say   : what shows as the user's message (defaults to label)
  *               - next  : node id to go to
- *               - action: "restart" | "map" (engine-handled, no node needed)
+ *               - action: "restart" | "video" (engine-handled, no node needed)
  *   next    : auto-advance to this node id (used when there are no choices)
  */
 /* ------------------------------------------- Grounding on the sample-data store
@@ -78,6 +78,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔌 Connect the Geotab MCP connector", say: "Connect the Geotab MCP connector.", next: "authorize" },
+        { label: "🎥 Watch the 2-minute demo video first", action: "video" },
       ],
     },
 

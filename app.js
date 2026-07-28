@@ -1022,6 +1022,7 @@
 
   async function onChoice(c) {
     if (c.action === "restart") { restart(); return; }
+    if (c.action === "video") { openAbout(); return; }
     var myToken = playToken; // still the node whose choices are showing
     trayEl.innerHTML = ""; // one shot — no double-clicking another chip mid-type
     if (c.say || c.label) {
@@ -1161,8 +1162,10 @@
   function closeAbout() {
     closeOverlay(aboutOverlay);
     // Closing only hides the overlay via CSS — clear the iframe src too, otherwise a
-    // playing video keeps running invisibly in the background.
-    if (aboutVideoFrame) aboutVideoFrame.src = "";
+    // playing video keeps running invisibly in the background. removeAttribute (not
+    // src = "") so a later read of .src comes back empty instead of resolving to this
+    // page's own URL, which would stop openAbout() from ever re-embedding the video.
+    if (aboutVideoFrame) aboutVideoFrame.removeAttribute("src");
   }
 
   /* ------------------------------------------------------------- controls */
