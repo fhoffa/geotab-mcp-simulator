@@ -1077,6 +1077,8 @@ body {
 .setup-docs { margin: 0 0 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .setup-heading { margin: 0 0 8px; font-weight: 600; color: var(--ink); }
 .setup-steps { margin: 0 0 10px; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.setup-steps + .setup-heading { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.setup-sub { margin: 0 0 6px; color: var(--ink-soft); }
 .setup-shot {
   display: block;
   width: 100%;

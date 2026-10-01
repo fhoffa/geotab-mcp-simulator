@@ -68,11 +68,20 @@ When you're done playing, the real thing takes three steps — the in-app
    [my.geotab.com/registration.html](https://my.geotab.com/registration.html) —
    anonymized data, same shape as this simulator, safe to explore. For
    production access, ask your Geotab account rep or fleet admin.
-2. **Add the connector to your AI assistant.** Geotab's official MCP server URL
-   is `https://mcp.geotab.com/mygeotab`. In Claude: **Settings → Connectors →
-   Add custom connector**, paste the URL, and sign in with your MyGeotab
-   credentials when prompted. Microsoft Copilot, ChatGPT, and other MCP clients
-   follow the same pattern. Official walkthrough:
+2. **Add the connector to your AI assistant.** The quickest way: find
+   **MyGeotab MCP** in your assistant's directory, with more directories on the way.
+   - **Claude:** open the
+     [MyGeotab MCP listing](https://claude.ai/directory/mygeotab-mcp-prod?open_in_browser=1)
+     and click **Connect to Claude**
+     ([walkthrough](https://www.linkedin.com/feed/update/urn:li:activity:7498420900682153984/)).
+   - **ChatGPT:** **Plugins** → search "Geotab" → **Install plugin**
+     ([walkthrough](https://www.linkedin.com/feed/update/urn:li:activity:7508970838931435520/)).
+   - **Any other client** (Microsoft Copilot, etc.): add a custom/remote MCP
+     connector pointing at Geotab's official server URL,
+     `https://mcp.geotab.com/mygeotab`. In Claude that's **Settings → Connectors →
+     Add custom connector**.
+
+   Either way, you sign in with your MyGeotab credentials once. Official walkthrough:
    [Getting started with MyGeotab MCP](https://support.geotab.com/help/mygeotab/access-and-administration/mygeotab-mcp/getting-started-with-mygeotab-mcp).
 3. **Know what you're exposing.** The connector inherits your MyGeotab
    permissions, so the assistant can see anything you can — including personal
