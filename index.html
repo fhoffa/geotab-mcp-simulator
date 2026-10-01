@@ -54,7 +54,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=5e8199c" />
+    <link rel="stylesheet" href="styles.css?v=69e9f57" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png?v=d4e1997" />
   </head>
   <body>
@@ -273,16 +273,30 @@
           </li>
           <li>
             <strong>Connect the Geotab MCP connector to your assistant of choice.</strong> Geotab
-            publishes an official MCP (Model Context Protocol) server. Claude is the clearest starting point today; Microsoft
-            Copilot, ChatGPT, and other MCP-capable clients can connect to the same server using the
-            same URL below; only the menu names differ.
+            publishes an official MCP (Model Context Protocol) server. The quickest way in: it's listed
+            in the Claude and ChatGPT directories, with more on the way. Microsoft Copilot and any other
+            MCP-capable client can add the same server by its URL.
             <div class="setup-box">
               <p class="setup-docs">
                 Start with Geotab's official walkthrough:
                 <a href="https://support.geotab.com/help/mygeotab/access-and-administration/mygeotab-mcp/getting-started-with-mygeotab-mcp" target="_blank" rel="noopener">Getting started with MyGeotab MCP</a>.
                 The quick version is below.
               </p>
-              <p class="setup-heading">Example client setup:</p>
+              <p class="setup-heading">Option A: find it in your assistant's directory</p>
+              <ul class="setup-steps">
+                <li><strong>Claude:</strong> open the
+                  <a href="https://claude.ai/directory/mygeotab-mcp-prod?open_in_browser=1" target="_blank" rel="noopener">MyGeotab MCP listing</a>
+                  (or <strong>Directory</strong> → search "Geotab"), then click <strong>Connect to Claude</strong>.
+                  <a href="https://www.linkedin.com/feed/update/urn:li:activity:7498420900682153984/" target="_blank" rel="noopener">Watch the walkthrough</a>.</li>
+                <li><strong>ChatGPT:</strong> open <strong>Plugins</strong>, search "Geotab", pick
+                  <strong>MyGeotab MCP</strong>, then tap <strong>Install plugin</strong>.
+                  <a href="https://www.linkedin.com/feed/update/urn:li:activity:7508970838931435520/" target="_blank" rel="noopener">Watch the walkthrough</a>
+                  (all from a phone).</li>
+                <li>Either way, you sign in to MyGeotab once and approve the connection; your existing
+                  permissions carry straight over.</li>
+              </ul>
+              <p class="setup-heading">Option B: add it by URL in any other client</p>
+              <p class="setup-sub">For example, Claude's custom connector:</p>
               <ol class="setup-steps">
                 <li>Go to <strong>claude.ai → Settings → Connectors</strong>, then click
                   <strong>Add custom connector</strong>.</li>
@@ -308,8 +322,8 @@
                 </li>
               </ol>
               <p class="setup-foot">
-                Microsoft Copilot, ChatGPT, and other MCP-capable clients follow the same pattern —
-                add a custom/remote MCP connector, point it at
+                Microsoft Copilot and other MCP-capable clients follow the same pattern — add a
+                custom/remote MCP connector, point it at
                 <code>https://mcp.geotab.com/mygeotab</code>, and sign in with your MyGeotab
                 credentials when prompted.
               </p>
@@ -345,7 +359,7 @@
     </div>
 
     <script src="data/sample-data.js?v=612deeb"></script>
-    <script src="data/conversations.js?v=8f6c370"></script>
+    <script src="data/conversations.js?v=261dd55"></script>
     <script src="app.js?v=9fc1f79"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6", "spa": true}'></script>
