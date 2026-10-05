@@ -227,13 +227,14 @@
       if (isAceTool(ev)) return jitter(isAceHeavy(ev) ? t.toolAceHeavy : t.toolAceSimple);
       if (ev.server === "web") return jitter(t.toolWeb);
       if (ev.write || isExternalIntegration(ev)) return jitter(t.toolWrite);
+      if (ev.server === "carto") return jitter(t.toolApiReadMedium);
       if (isMediumApiRead(ev)) return jitter(t.toolApiReadMedium);
       return jitter(t.base.tool);
     }
     var d = t.base.tool;
     if (ev.write) d += t.toolWrite;
     if (ev.server === "web") d += t.toolWeb;
-    if (ev.server === "motherduck") d += 220;
+    if (ev.server === "motherduck" || ev.server === "carto") d += 220;
     return jitter(d);
   }
   function timedDelay(kind) { return jitter(timing().base[kind]); }
@@ -782,7 +783,9 @@
       (labeledPins.length ? "Markers: " + labeledPins.map(function (p) { return p.label; }).join(", ") + "." : ""));
     if (ev.title) card.appendChild(el("div", "map-title", escapeHtml(ev.title)));
     var canvas = el("div", "map-canvas" + (ev.mapStyle ? " map-canvas-" + ev.mapStyle : ""));
-    var chrome = el("div", "map-chrome", '<span>Street map</span><span class="map-zoom">＋ −</span>');
+    // a pre-rendered map image (e.g. a CARTO result) instead of a street basemap
+    if (ev.image) canvas.style.backgroundImage = 'url("' + ev.image + '")';
+    var chrome = el("div", "map-chrome", "<span>" + escapeHtml(ev.layerLabel || "Street map") + '</span><span class="map-zoom">＋ −</span>');
     chrome.setAttribute("aria-hidden", "true");
     canvas.appendChild(chrome);
     drawMapAreas(canvas, ev.areas || []);
@@ -806,7 +809,7 @@
       canvas.appendChild(zoneTag);
     }
     (ev.pins || []).forEach(function (p) {
-      var pin = el("div", "map-pin map-pin-" + (p.status || "free") + (p.compact ? " map-pin-compact" : ""));
+      var pin = el("div", "map-pin map-pin-" + (p.status || "free") + (p.compact ? " map-pin-compact" : "") + (p.flip ? " map-pin-flip" : ""));
       pin.style.left = (p.x || 0) + "%";
       pin.style.top = (p.y || 0) + "%";
       if (p.title || p.label) pin.setAttribute("title", p.title || p.label);
@@ -818,7 +821,8 @@
       canvas.appendChild(pin);
     });
     card.appendChild(canvas);
-    var scale = el("div", "map-scale", "200 m");
+    var scale = el("div", "map-scale", escapeHtml(ev.scale || "200 m"));
+    if (ev.scaleWidth) scale.style.width = ev.scaleWidth;
     scale.setAttribute("aria-hidden", "true");
     canvas.appendChild(scale);
     if (ev.summary) card.appendChild(el("div", "map-summary", escapeHtml(ev.summary)));
@@ -903,6 +907,7 @@
     trayEl.innerHTML = "";
     if (emptyStateEl) { emptyStateEl.remove(); emptyStateEl = null; }
     setConn(id !== "connect");
+    if (node.mode === "carto") connEl.textContent = "Connected · Geotab + CARTO";
     if (node.mode === "warehouse") {
       connEl.textContent = "Connected · Geotab + MotherDuck";
     } else if (motherduckPane) {

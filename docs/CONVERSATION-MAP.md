@@ -67,6 +67,16 @@ flowchart TD
     hub -->|"💼 Salesforce dispute"| ep13["Ep13 · Geotab + Salesforce"]
     hub -->|"📊 Board snapshot"| epX["Ep-Exec · Both fleets snapshot"]
 
+    %% --- Spatial analytics (Geotab MCP + CARTO MCP) ---
+    hub -->|"🗺️ Hubs + 15-min reach"| cartoF["CARTO · Where is my fleet?"]
+    cartoF --> cartoH["CARTO · Parked vehicles → hubs (H3)"]
+    cartoH --> cartoC["CARTO · What's around each hub"]
+    cartoC --> cartoR["CARTO · 15-min drive reach"]
+    cartoR --> cartoS["CARTO · Sixth-hub site"]
+    cartoS --> cartoM["CARTO · Shareable Builder map"]
+    cartoS --> cartoV["CARTO · What to double-check"]
+    cartoM --> cartoV
+
     %% A few representative cross-links (full set in conversations.js)
     ep2 -->|"🔔 Flag it live"| ep2a["Ep2 · Create alert"]
     epSR -->|"🧑‍🏫 Coach"| epAC
@@ -88,13 +98,13 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (92)
+## Nodes (100)
 
 | id | title | database | leads to |
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep-zonelife-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
+| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep-zonelife-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `carto-fleet`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
 | `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-shape-viz`, `ep7-ace`, `hub` |
 | `ep1-shape-viz` | Ep1 · Shape it: chart the speeding | demo_fh_vegas4 | `ep1-shape-brief`, `hub` |
 | `ep1-shape-brief` | Ep1 · Shape it: the reshaped brief | — | `ep1-skill`, `hub` |
@@ -184,11 +194,23 @@ flowchart TD
 | `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep-roi-skill`, `ep2-action`, `ep-agentic-coaching`, `hub` |
 | `ep-roi-onepager` | ROI · Draft the business case | demo_fh_vegas4 | `ep-roi-send`, `ep2-action`, `hub` |
 | `ep-roi-send` | ROI · Send the business case | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
+| `carto-fleet` | CARTO · Where is my fleet right now? | demo_fh_vegas8 | `carto-hubs`, `carto-what-is`, `hub` |
+| `carto-what-is` | CARTO · What is CARTO? | — | `carto-hubs`, `hub` |
+| `carto-hubs` | CARTO · Group parked vehicles into hubs | demo_fh_vegas8 | `carto-context`, `carto-what-is` |
+| `carto-context` | CARTO · What's around each hub? | — | `carto-reach` |
+| `carto-reach` | CARTO · 15-minute reach per hub | — | `carto-site` |
+| `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-caveats` |
+| `carto-map` | CARTO · Put it on a map I can share | — | `carto-caveats`, `hub`, restart |
+| `carto-caveats` | CARTO · What to double-check | — | `carto-map`, `hub`, restart |
 
 Episodes **cross-link** as well as branch to their own action node — e.g.
 maintenance → fleet composition → Valencia exposure, or speeding → posted-speed
 → live alert → dashcam — so the same entry points open many distinct paths.
-`ep-dispatch` and `ep-exec` are grounded entirely from live MCP calls.
+`ep-dispatch` and `ep-exec` are grounded entirely from live MCP calls. The
+`carto-*` path replays a real two-server session (Geotab MCP on
+`demo_fh_vegas8` + CARTO MCP): its numbers live in `SAMPLE_DATA.carto` and its
+maps are the assistant's renders of that session's results; tool and argument
+names follow the real schemas, while SQL and values are simplified.
 
 The **Safety / Maintenance / Operations / Agentic** scenarios are anchored to
 the live demo accounts (API + Ace) — fleet sizes, vehicle mix, the fleet-wide

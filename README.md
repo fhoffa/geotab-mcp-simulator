@@ -56,8 +56,10 @@ themes** (plus a warehouse-building path — full map in
 - **🧠 Automate & share** — package the weekly review as a reusable **skill**,
   knock out 5 fleet chores (write-actions) in one ask, draft coaching notes.
 - **🚚 Cross-tool & exec** — "who's closest and free right now?" dispatch, settle
-  a late-delivery dispute against a Salesforce case, and a board snapshot across
-  two fleets.
+  a late-delivery dispute against a Salesforce case, a board snapshot across
+  two fleets, and **Geotab + CARTO**: infer hubs from parked vehicles, profile
+  their neighborhoods, measure 15-minute drive reach, pick a sixth hub and
+  share it as a map — all from plain-English prompts, with no SQL written by hand.
 
 ## Get started with your real fleet
 

@@ -449,4 +449,45 @@ window.SAMPLE_DATA = {
       ],
     },
   },
+
+  /* ------------------------------- Geotab MCP + CARTO MCP (spatial analytics)
+   * REAL: captured from one live session on 1 Oct 2026 (~02:08 UTC) with both
+   * MCP servers connected — Geotab `demo_fh_vegas8`, CARTO connection
+   * `carto_dw`. Hubs are inferred from that single snapshot; the names are the
+   * assistant's descriptive labels, not depots in the database. Residents come
+   * from Kontur population (H3 res 8) everywhere; shops/food/tourism/night light
+   * from CARTO Spatial Features. `x`/`y` place each hub on the
+   * assets/carto-*.webp renders (percent of the image), which all share one
+   * framing. Candidates #2–#3 in `sixthHub.candidates` are enriched placeholders
+   * until the re-rendered score map (carto-map-prompt.md) supplies real values.
+   */
+  carto: {
+    database: "demo_fh_vegas8",
+    connection: "carto_dw",
+    snapshot: "1 Oct 2026, ~02:08 UTC",
+    snapshotLocal: "7:08 pm Las Vegas time (30 Sep)",
+    vehicles: 50,
+    driving: 22,
+    parked: 28,
+    parkedAtHubs: 25,
+    h3Res: 8,
+    contextRings: 3,               // H3_KRING radius around each hub cell (~2.5 km at res 8)
+    hubs: [
+      { name: "West",       parked: 6, residents: 78409, retail: 617,  food: 489,  tourism: 112, nightLight: 74,  reach15k: 419, x: 26.1, y: 47.6 },
+      { name: "Central",    parked: 5, residents: 58110, retail: 1582, food: 1193, tourism: 530, nightLight: 171, reach15k: 680, x: 53.8, y: 42.8 },
+      { name: "South-east", parked: 5, residents: 33480, retail: 840,  food: 465,  tourism: 126, nightLight: 77,  reach15k: 492, x: 56.2, y: 67.6 },
+      { name: "South",      parked: 4, residents: 19197, retail: 2140, food: 1758, tourism: 629, nightLight: 325, reach15k: 438, x: 49.3, y: 59.9 },
+      { name: "North",      parked: 5, residents: 69649, retail: 158,  food: 125,  tourism: 30,  nightLight: 45,  reach15k: 405, x: 44.8, y: 17.6 },
+    ],
+    isoline: { operation: "isolines", range: "900", rangeType: "time" },   // calculate_isolines args; provider TravelTime, car
+    coverage: { residents: "1.65M", pct: 80, studyArea: "2.07M", studyAreaDef: "populated cells within 25 km of the fleet" },
+    sixthHub: {
+      lon: -115.058, lat: 36.172, within8km: "~225k", newlyCovered: "+181k", pctWith: 88.5, gapKm: 8, spacingKm: 5, x: 71.9, y: 41.3,
+      candidates: [
+        { rank: 1, lon: -115.058, lat: 36.172, uncovered8km: "~225k" },
+        { rank: 2, lon: -115.243, lat: 36.004, uncovered8km: "~142k" },
+        { rank: 3, lon: -115.317, lat: 36.268, uncovered8km: "~118k" },
+      ],
+    },
+  },
 };
