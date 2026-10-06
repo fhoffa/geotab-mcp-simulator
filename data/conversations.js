@@ -43,6 +43,50 @@ function bars(list, labelKey, valueKey) {
   return (list || []).map(function (o) { return { label: o[labelKey], value: o[valueKey] }; });
 }
 
+/* The CARTO path's maps are the assistant's renders of this session's results
+ * (assets/carto-*.webp, one shared framing); `cartoMap` adds the chrome and
+ * labels points from D.carto by their x/y. opts: layer (chip text), source
+ * (what the map was drawn from), note (replaces the snapshot line), scaleWidth
+ * (for a map not on the shared framing). */
+var C = D.carto || { hubs: [], coverage: {}, sixthHub: { candidates: [] }, isoline: {} };
+function cartoMap(image, title, summary, labels, opts) {
+  opts = opts || {};
+  return {
+    type: "map",
+    mapStyle: "carto",
+    image: "assets/" + image,
+    title: title,
+    summary: summary,
+    layerLabel: opts.layer || "H3 res 8 · residents",
+    scale: "5 km",
+    scaleWidth: opts.scaleWidth || "10%",
+    pins: (labels || []).map(function (p) { return { label: p.label, x: p.x, y: p.y, status: "label", flip: !!p.flip }; }),
+    disclosure:
+      (opts.source || "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8)") +
+      " · " + (opts.note || "snapshot " + C.snapshot),
+  };
+}
+// hub labels sit right of their point; South's sits left so it clears South-east just below it on narrow screens
+function cartoHubLabels(text) {
+  return C.hubs.map(function (h) { return { label: text(h), x: h.x, y: h.y, flip: h.name === "South" }; });
+}
+// calculate_isolines returns GeoJSON in the response, not a table
+function cartoIsoline(origin, summary, parts) {
+  return {
+    type: "tool",
+    server: "carto",
+    name: "calculate_isolines",
+    args: { operation: C.isoline.operation, origin: origin, range: C.isoline.range, range_type: C.isoline.rangeType },
+    summary: summary,
+    result:
+      '{ "type": "MultiPolygon", "coordinates": [ [ [ [-115.2…, 36.1…], [-115.2…, 36.1…], … ] ], … ] }\n' +
+      "// " + (parts || 1) + (parts > 1 ? " parts" : " part") + " · 15-minute drive by car (" + C.isoline.range + " s)",
+  };
+}
+function cartoSql(sql) {
+  return { connection_name: C.connection, sql: sql };
+}
+
 window.CONVERSATIONS = {
   meta: {
     title: "Geotab MCP — Experience Simulator",
@@ -303,6 +347,12 @@ window.CONVERSATIONS = {
           next: "ep-agentic-coaching",
         },
 
+        {
+          group: "🚚 Cross-tool & exec",
+          label: "🗺️ Find my hubs + 15-min reach (CARTO)",
+          say: "Where is my fleet right now?",
+          next: "carto-fleet",
+        },
         {
           group: "🚚 Cross-tool & exec",
           label: "🚐 Who's closest and free right now?",
@@ -5254,6 +5304,544 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔔 Start lever #1 — the speed alert", say: "Now set up the fleet-wide posted-speed alert and route it to a manager.", next: "ep2-action" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ================= Spatial analytics · Geotab MCP + CARTO MCP =================
+     * Replays a real session (D.carto): one assistant calling Geotab tools for the
+     * fleet and CARTO tools for the spatial work. Tool names and argument names
+     * follow the real schemas; SQL and values are simplified on purpose, and so is
+     * the map bundle (real field names, most of the Kepler config elided). Two steps
+     * follow CARTO's recommended tool flow rather than the recorded session: the
+     * per-cell query behind the gaps/score maps, and the map step (validate_map
+     * schema → verify → create_map → view_map → get_workspace_info).
+     */
+    "carto-fleet": {
+      id: "carto-fleet",
+      title: "CARTO · Where is my fleet right now?",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "system",
+          text:
+            "Two MCP servers connected: **Geotab** (database `" + C.database + "`, a 50-vehicle Las Vegas demo fleet) " +
+            "and **CARTO** (connection `" + C.connection + "`, with the Kontur Population and Spatial Features datasets " +
+            "already available on it).",
+        },
+        { type: "assistant", text: "I'll check Geotab's query guidance first, then count the vehicles and get each one's latest position." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetSkill",
+          args: { intent: "Where is my fleet right now? Current position and driving state of every vehicle." },
+          summary: "safe-query guidance: count first, then DeviceStatusInfo with a property selector",
+          result: "// guidance: GetCountOf before large Gets · always set resultsLimit · DeviceStatusInfo = latest GPS + isDriving per device",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: C.database, typeName: "Device" },
+          summary: C.vehicles + " vehicles",
+          result: String(C.vehicles),
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: {
+            database: C.database,
+            typeName: "DeviceStatusInfo",
+            propertySelector: { fields: ["device", "latitude", "longitude", "isDriving", "dateTime", "isDeviceCommunicating"], isIncluded: true },
+            resultsLimit: C.vehicles,
+          },
+          summary: C.vehicles + " positions · " + C.driving + " driving · " + C.parked + " parked · all communicating",
+          result:
+            '[ { "device": { "id": "b1" }, "latitude": 36.1…, "longitude": -115.1…, "isDriving": true,\n' +
+            '    "dateTime": "2026-10-01T02:0…Z", "isDeviceCommunicating": true }, … ]\n' +
+            "// " + C.vehicles + " records · isDriving: " + C.driving + " true / " + C.parked + " false · " +
+            "isDeviceCommunicating: " + C.vehicles + " true · newest-to-oldest dateTime < 5 min",
+        },
+        cartoMap(
+          "carto-fleet.webp",
+          "Fleet right now · " + C.snapshotLocal,
+          C.driving + " driving (blue) · " + C.parked + " parked (red dots, bigger = more vehicles)",
+          null,
+          {
+            layer: "Vehicles · latest position",
+            // same projection as the other maps, zoomed in ~1.56× (about 32 km across), so 5 km is ~15.6% of the width
+            scaleWidth: "15.6%",
+            source: "Map built in CARTO Builder · © CARTO, © OpenStreetMap contributors",
+          }
+        ),
+        {
+          type: "assistant",
+          text:
+            "**" + C.vehicles + " vehicles: " + C.driving + " driving, " + C.parked + " parked**, all around Las Vegas. " +
+            "All " + C.vehicles + " reported in the last few minutes, so this is current as of " + C.snapshotLocal + ".",
+        },
+      ],
+      choices: [
+        { label: "📍 Group the parked vehicles into hubs", say: "Group the parked vehicles into hubs.", next: "carto-hubs" },
+        { label: "❓ What is CARTO?", say: "What is CARTO, and what's it doing here?", next: "carto-what-is" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-what-is": {
+      id: "carto-what-is",
+      title: "CARTO · What is CARTO?",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "CARTO is a location-analytics platform that runs spatial SQL in your data warehouse. Here I'm using it to " +
+            "group the parked vehicles, look at what's around them, and work out how far you can drive in 15 minutes.",
+        },
+      ],
+      choices: [
+        { label: "📍 Group the parked vehicles into hubs", say: "Group the parked vehicles into hubs.", next: "carto-hubs" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-hubs": {
+      id: "carto-hubs",
+      title: "CARTO · Group parked vehicles into hubs",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'm passing the " + C.parked + " parked positions straight into a query on your CARTO connection, grouped into H3 " +
+            "hexagons at resolution " + C.h3Res + " (about 0.7 km² each). Several vehicles in one hexagon often means a shared yard.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH parked AS (\n" +
+            "  SELECT * FROM UNNEST([STRUCT(-115.1… AS lon, 36.17… AS lat), … ])   -- the " + C.parked + " parked positions from Geotab\n" +
+            ")\n" +
+            "SELECT H3_FROMLONGLAT(lon, lat, " + C.h3Res + ") AS h3, COUNT(*) AS parked\n" +
+            "FROM parked\nGROUP BY h3\nORDER BY parked DESC"
+          ),
+          summary: "5 multi-vehicle cells · " + C.parkedAtHubs + " of " + C.parked + " parked vehicles",
+          result:
+            C.hubs.slice().sort(function (a, b) { return b.parked - a.parked; })
+              .map(function (h) { return "<res-8 cell> · " + h.parked + " parked"; }).join("\n") +
+            "\n// + " + (C.parked - C.parkedAtHubs) + " cells with a single vehicle",
+        },
+        cartoMap(
+          "carto-hubs.webp",
+          "Five hubs · parked vehicles per H3 cell",
+          C.parkedAtHubs + " of " + C.parked + " parked vehicles sit in five cells",
+          cartoHubLabels(function (h) { return h.name + " · " + h.parked; })
+        ),
+        {
+          type: "assistant",
+          text:
+            "**Five hubs.** " + C.parkedAtHubs + " of the " + C.parked + " parked vehicles are in one of five spots; the other " +
+            (C.parked - C.parkedAtHubs) + " are parked alone. I've named the hubs by where they sit on the map.\n\n" +
+            "This is one snapshot at about 7 pm, though, so I can't be sure these are yards. Some could be a customer site " +
+            "or a shared lot. A few weeks of parking data, or your depot list, would settle it.",
+        },
+      ],
+      choices: [
+        { label: "🏙️ What's around each hub?", say: "What's around each hub?", next: "carto-context" },
+        { label: "❓ What is CARTO?", say: "What is CARTO, and what's it doing here?", next: "carto-what-is" },
+      ],
+    },
+
+    "carto-context": {
+      id: "carto-context",
+      title: "CARTO · What's around each hub?",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll count residents (Kontur Population) plus shops, restaurants, tourism and night-time light (Spatial Features) " +
+            "within " + C.contextRings + " hexagon rings of each hub, about 2.5 km out.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH ring AS (\n" +
+            "  SELECT hub, cell FROM hubs, UNNEST(H3_KRING(h3, " + C.contextRings + ")) AS cell   -- hubs: the five cells from the last query\n" +
+            ")\n" +
+            "SELECT hub, SUM(k.population) AS residents, SUM(sf.retail) AS retail,\n" +
+            "       SUM(sf.food_drink) AS food_drink, SUM(sf.tourism) AS tourism, AVG(sf.night_light) AS night_light\n" +
+            "FROM ring\n" +
+            "LEFT JOIN kontur_population k ON k.h3 = ring.cell\n" +
+            "LEFT JOIN spatial_features sf ON sf.h3 = ring.cell\n" +
+            "GROUP BY hub"
+          ),
+          summary: "5 hubs × residents, retail, food & drink, tourism, night light",
+          result: C.hubs.map(function (h) {
+            return h.name + " · residents " + h.residentsK.toFixed(1) + "k · retail " + h.retail.toLocaleString("en-US") +
+              " · food " + h.food.toLocaleString("en-US") + " · tourism " + h.tourism + " · night light " + h.nightLight;
+          }).join("\n"),
+        },
+        {
+          type: "chart",
+          title: "Residents within 3 rings (thousands)",
+          bars: bars(C.hubs, "name", "residentsK"),
+        },
+        { type: "chart", title: "Retail POIs within 3 rings", bars: bars(C.hubs, "name", "retail") },
+        {
+          type: "assistant",
+          text:
+            "**South** is the commercial core: the fewest residents (~14k) but the most shops (2,140), places to eat (1,758), " +
+            "tourism and night light. **North** is the opposite, with ~55k residents and only 158 shops, the fewest of any hub. " +
+            "**West** has the most residents (~70k) and about four times North's retail. Central (~58k residents, 1,582 shops) " +
+            "is busy on both counts, and South-east sits in between.",
+        },
+      ],
+      choices: [
+        { label: "🚗 Who can each hub reach in 15 min?", say: "How many people can each hub reach in 15 minutes by car?", next: "carto-reach" },
+      ],
+    },
+
+    "carto-reach": {
+      id: "carto-reach",
+      title: "CARTO · 15-minute reach per hub",
+      mode: "carto",
+      events: [
+        { type: "assistant", text: "Roads decide how far you actually get, so I'll get a 15-minute drive-time area for each hub, then count the people inside." },
+      ].concat(
+        C.hubs.map(function (h) { return cartoIsoline("<" + h.name + " hub lon>,<lat>", h.name + " · 15-min drive area (GeoJSON)"); }),
+        [
+          {
+            type: "assistant",
+            text: "Those come back as GeoJSON, so I'll simplify the five polygons a little, drop them into the query as geometry, and count residents inside each.",
+          },
+          {
+            type: "tool",
+            server: "carto",
+            name: "execute_query",
+            args: cartoSql(
+              "WITH isolines AS (\n" +
+              "  SELECT 'West' AS hub, ST_GEOGFROMGEOJSON('{\"type\":\"MultiPolygon\",\"coordinates\":[…]}') AS geom\n" +
+              "  UNION ALL …   -- the other four drive areas\n" +
+              ")\n" +
+              "SELECT i.hub, SUM(p.population) AS residents\n" +
+              "FROM kontur_population p JOIN isolines i ON ST_CONTAINS(i.geom, H3_CENTER(p.h3))\n" +
+              "GROUP BY i.hub\n" +
+              "UNION ALL\n" +
+              "SELECT 'any hub', SUM(population) FROM kontur_population p\n" +
+              "WHERE EXISTS (SELECT 1 FROM isolines i WHERE ST_CONTAINS(i.geom, H3_CENTER(p.h3)))"
+            ),
+            summary: C.coverage.residents + " residents within 15 min · " + C.coverage.pct + "% of " + C.coverage.studyArea,
+            result:
+              C.hubs.slice().sort(function (a, b) { return b.reach15k - a.reach15k; })
+                .map(function (h) { return h.name + " · " + h.reach15k + "k"; }).join("\n") +
+              "\nany hub · " + C.coverage.residents + " (" + C.coverage.pct + "%)" +
+              "\n// study area: " + C.coverage.studyAreaResidents.toLocaleString("en-US") + " residents in " +
+              C.coverage.studyAreaCells.toLocaleString("en-US") + " " + C.coverage.studyAreaDef,
+          },
+          cartoMap(
+            "carto-isolines.webp",
+            "15-minute drive areas from each hub",
+            C.coverage.residents + " residents (" + C.coverage.pct + "%) within 15 min of a hub",
+            cartoHubLabels(function (h) { return h.name; }),
+            { note: "drive areas simplified · snapshot " + C.snapshot }
+          ),
+          {
+            type: "chart",
+            title: "Residents reachable in 15 min by car (thousands)",
+            bars: C.hubs.slice().sort(function (a, b) { return b.reach15k - a.reach15k; })
+              .map(function (h) { return { label: h.name, value: h.reach15k }; }),
+          },
+          {
+            type: "assistant",
+            text:
+              "**About " + C.coverage.residents + " people live within a 15-minute drive of at least one hub**, roughly " +
+              C.coverage.pct + "% of the " + C.coverage.studyArea + " in the area I'm counting: " + C.coverage.studyAreaDef + ". " +
+              "Central reaches the most (680k), North the least (405k).\n\n" +
+              "The per-hub numbers add up to more than " + C.coverage.residents + " because the drive areas overlap.",
+          },
+        ]
+      ),
+      choices: [
+        { label: "➕ Where would a sixth hub help most?", say: "Where would a sixth hub add the most reach?", next: "carto-site" },
+      ],
+    },
+
+    "carto-site": {
+      id: "carto-site",
+      title: "CARTO · Where would a sixth hub add the most reach?",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Checking drive times for every possible spot would take hundreds of calls, so I'll do it in two steps. First a " +
+            "quick shortlist by straight-line distance: call a neighborhood uncovered if it's more than " + C.sixthHub.gapKm +
+            " km from the nearest hub, and score each possible spot by how many uncovered residents live within " +
+            C.sixthHub.gapKm + " km of it. Then a proper drive-time check on the winner.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ),   -- the five hub cells\n" +
+            "study AS (   -- populated cells within " + C.coverage.rings + " rings of central Las Vegas\n" +
+            "  SELECT h3, population FROM kontur_population\n" +
+            "  WHERE population > 0\n" +
+            "    AND h3 IN UNNEST(H3_KRING(H3_FROMLONGLAT(" + C.coverage.center.lon + ", " + C.coverage.center.lat + ", " + C.h3Res + "), " + C.coverage.rings + "))\n" +
+            "), uncovered AS (   -- more than " + C.sixthHub.gapKm + " km in a straight line from the nearest hub\n" +
+            "  SELECT s.h3, s.population FROM study s\n" +
+            "  WHERE (SELECT MIN(ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(h.h3))) FROM hubs h) > " + C.sixthHub.gapKm * 1000 + "\n" +
+            ")\n" +
+            "SELECT c.h3, ST_Y(H3_CENTER(c.h3)) AS lat, ST_X(H3_CENTER(c.h3)) AS lon,\n" +
+            "       SUM(u.population) AS uncovered_within_8km\n" +
+            "FROM study c JOIN uncovered u\n" +
+            "  ON ST_DISTANCE(H3_CENTER(c.h3), H3_CENTER(u.h3)) <= " + C.sixthHub.gapKm * 1000 + "\n" +
+            "WHERE c.population > " + C.coverage.minResidents + "   -- candidate cells\n" +
+            "GROUP BY c.h3\nORDER BY uncovered_within_8km DESC\nLIMIT 5"
+          ),
+          summary: "top 5 cells · " + C.sixthHub.within8km + " uncovered residents within " + C.sixthHub.gapKm + " km of #1",
+          result: C.sixthHub.candidates.map(function (c) {
+            return c.rank + " · " + c.h3 + " · " + c.lat.toFixed(4) + ", " + c.lon.toFixed(4) + " · " + c.uncovered8km.toLocaleString("en-US");
+          }).join("\n"),
+        },
+        { type: "assistant", text: "To see why those five win, I'll pull every cell with its distance to the nearest hub and its score:" },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ), study AS ( … ), uncovered AS ( … )   -- same as above\n" +
+            "SELECT s.h3, s.population,\n" +
+            "  (SELECT MIN(ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(h.h3))) FROM hubs h) / 1000 AS dist_km_to_nearest_hub,\n" +
+            "  (SELECT SUM(u.population) FROM uncovered u\n" +
+            "     WHERE ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(u.h3)) <= " + C.sixthHub.gapKm * 1000 + ") AS score\n" +
+            "FROM study s"
+          ),
+          summary: C.coverage.studyAreaCells.toLocaleString("en-US") + " cells · distance to nearest hub + score",
+          result:
+            C.coverage.studyAreaCells.toLocaleString("en-US") + " rows · h3, population, dist_km_to_nearest_hub, score\n" +
+            "// top score: " + C.sixthHub.candidates[0].h3 + " · " + C.sixthHub.candidates[0].uncovered8km.toLocaleString("en-US") +
+            " (candidate #1)",
+        },
+        {
+          type: "assistant",
+          text:
+            "Red cells are more than " + C.sixthHub.gapKm + " km from every hub, so they count as uncovered. The second map scores " +
+            "each spot by how many of those residents live within " + C.sixthHub.gapKm + " km of it.",
+        },
+        cartoMap(
+          "carto-gaps.webp",
+          "Gaps · more than " + C.sixthHub.gapKm + " km from the nearest hub",
+          "Red = populated cells more than " + C.sixthHub.gapKm + " km in a straight line from every hub · dashed rings = " +
+            C.sixthHub.gapKm + " km around each hub",
+          null,
+          { layer: "H3 res 8 · uncovered (> " + C.sixthHub.gapKm + " km)" }
+        ),
+        cartoMap(
+          "carto-site-score.webp",
+          "Candidate score · uncovered residents within " + C.sixthHub.gapKm + " km",
+          "Darker = more uncovered residents within " + C.sixthHub.gapKm + " km · top five candidates circled",
+          [{ label: "Top 5", x: C.sixthHub.x, y: C.sixthHub.y }],
+          { layer: "H3 res 8 · candidate score" }
+        ),
+        {
+          type: "assistant",
+          text:
+            "The top five are neighboring cells within about 2 km of each other, and their scores are within 2%. So the " +
+            "answer is this part of town, not one exact cell. I'll check the top one by drive time:",
+        },
+        cartoIsoline(C.sixthHub.lon.toFixed(4) + "," + C.sixthHub.lat.toFixed(4), "Top cell · 15-min drive area (GeoJSON)", 3),
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH isolines AS ( … ),   -- the five existing drive areas, inlined as before\n" +
+            "new_area AS (SELECT ST_GEOGFROMGEOJSON('{\"type\":\"MultiPolygon\",\"coordinates\":[…]}') AS geom)\n" +
+            "-- residents inside the new drive area and outside all five existing ones\n" +
+            "SELECT SUM(population) AS newly_covered FROM kontur_population p, new_area n\n" +
+            "WHERE ST_CONTAINS(n.geom, H3_CENTER(p.h3))\n" +
+            "  AND NOT EXISTS (SELECT 1 FROM isolines i WHERE ST_CONTAINS(i.geom, H3_CENTER(p.h3)))"
+          ),
+          summary: C.sixthHub.newlyCovered + " residents newly covered · coverage " + C.coverage.pct + "% → " + C.sixthHub.pctWith + "%",
+          result: "newly_covered · " + C.sixthHub.newlyCoveredExact.toLocaleString("en-US") + "\n// coverage with six hubs: " + C.sixthHub.pctWith + "%",
+        },
+        cartoMap(
+          "carto-sixth-hub.webp",
+          "Proposed sixth hub · 15-minute drive area",
+          C.sixthHub.newlyCovered + " residents newly within 15 min · coverage → " + C.sixthHub.pctWith + "%",
+          [{ label: "Hub 6", x: C.sixthHub.x, y: C.sixthHub.y }],
+          { note: "drive areas simplified · snapshot " + C.snapshot }
+        ),
+        {
+          type: "assistant",
+          text:
+            "**The best area is just east of Central, around " + C.sixthHub.lat.toFixed(2) + "°N, " + Math.abs(C.sixthHub.lon).toFixed(2) +
+            "°W.** A hub there would put **" + C.sixthHub.newlyCovered.replace("+", "") + " more people** within a 15-minute drive, " +
+            "taking coverage from " + C.coverage.pct + "% to " + C.sixthHub.pctWith + "%.\n\n" +
+            "The " + C.sixthHub.within8km + " and the " + C.sixthHub.newlyCovered.replace("+", "") + " measure different things. " +
+            C.sixthHub.within8km + " is people more than " + C.sixthHub.gapKm + " km in a straight line from any hub who live within " +
+            C.sixthHub.gapKm + " km of the site. " + C.sixthHub.newlyCovered.replace("+", "") + " is people inside the new " +
+            "15-minute drive area who aren't already inside one of the five existing ones. (The two yardsticks disagree today too: " +
+            C.sixthHub.gapKm + " km in a straight line from a hub covers " + C.coverage.straightLine8kmPct + "%, the 15-minute " +
+            "drive areas about " + C.coverage.pct + "%.)",
+        },
+      ],
+      choices: [
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+      ],
+    },
+
+    "carto-map": {
+      id: "carto-map",
+      title: "CARTO · Put it on a map I can share",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll read CARTO's map format first rather than guess field names, check the map against it, then save it in " +
+            "Builder. I'll keep it private so you can choose who to share it with.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "validate_map",
+          args: { method: "schema" },
+          summary: "map format: datasets, layers, styling",
+          result: "// bundle schema: datasets (SQL or table, by connection), H3 datasets by index column + aggregation, Kepler layers referencing datasets by $ref, ordinal color maps …",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "validate_map",
+          args: {
+            method: "verify",
+            bundle: {
+              title: "Las Vegas fleet hubs",
+              privacy: "private",
+              datasets: [
+                {
+                  $ref: "vehicles", type: "query", connectionId: "…", geoColumn: "geom",
+                  source: "SELECT …, IF(isDriving, 'Driving', 'Parked') AS status FROM UNNEST([ … ])   -- " + C.vehicles + " positions",
+                },
+                {
+                  $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                  aggregationExp: "SUM(parked) AS parked",
+                  source: "SELECT h3, parked … -- the five hub cells + the proposed sixth site",
+                },
+                {
+                  $ref: "cell_scores", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                  aggregationExp: "SUM(population) AS population, AVG(dist_km_to_nearest_hub) AS dist_km_to_nearest_hub",
+                  source: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search",
+                },
+              ],
+              keplerMapConfig: {
+                config: {
+                  visState: {
+                    layers: [
+                      {
+                        type: "point",
+                        config: { dataId: "$ref:vehicles", visConfig: { colorRange: { colorMap: [["Driving", "#0A74D6"], ["Parked", "#E5303A"]] } } },
+                        visualChannels: { colorField: { name: "status", type: "string" }, colorScale: "ordinal" },
+                      },
+                      { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                      {
+                        type: "h3",
+                        config: { dataId: "$ref:cell_scores", columns: { hex: "h3" } },
+                        visualChannels: { colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+          summary: "bundle valid · 3 datasets · SQL dry-run OK",
+          result: '{ "valid": true, "datasets": [ { "name": "vehicles", "rows": ' + C.vehicles + ' }, … ] }',
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "create_map",
+          args: { bundle: "<the verified bundle>" },
+          summary: "private Builder map created",
+          write: true,
+          result: '{ "mapId": "…", "privacy": "private" }',
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "view_map",
+          args: { mapId: "…" },
+          summary: "interactive map in chat (MCP Apps hosts only)",
+          result: "// renders the map inline where the host supports MCP Apps; elsewhere, use the Builder link",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "get_workspace_info",
+          args: {},
+          summary: "workspace URL template for Builder links",
+          result:
+            '{ "workspaceUrl": "https://<your-carto-workspace>",\n' +
+            '  "urlTemplates": { "builderMap": { "template": "https://<your-carto-workspace>/builder/{mapId}" }, … } }',
+        },
+        {
+          type: "system",
+          text:
+            "`view_map` shows the interactive map in the chat only in apps that support MCP Apps; elsewhere you get the link. " +
+            "The map is private to the CARTO account that created it, so the simulator can't show it.",
+        },
+        {
+          type: "assistant",
+          text:
+            "I've saved it as a **private map in Builder**: the vehicles (blue driving, red parked), the five hubs plus the " +
+            "proposed sixth site, and distance to the nearest hub. If it didn't appear above, open it from the link: " +
+            "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.\n\n" +
+            "The drive-time areas aren't on it yet. Their polygons are too big to put inline in the map (it fails with " +
+            "\"URI too long\"), so I'd save them to a table with `execute_query` first and point the map at that table.",
+        },
+        { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Six plain-English questions. The assistant wrote the SQL."] },
+      ],
+      choices: [
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "carto-caveats": {
+      id: "carto-caveats",
+      title: "CARTO · What to double-check",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "A few things, before anyone acts on it:\n" +
+            "- **The hubs are inferred** from one evening snapshot, not your depot list.\n" +
+            "- **The sixth hub is a map-derived candidate, not a checked location.** Zoning, available yards and rent all still need a look.\n" +
+            "- **Only the winning cell got a drive-time check.** The other four are neighboring cells with almost the same score, so treat it as an area, not an address.\n" +
+            "- **Coverage counts residents, not customers.** If you have order or customer locations, use those instead.\n" +
+            "- **Coverage is counted by hexagon center.** A hexagon counts as covered if its center is inside a drive area, so edges are approximate.\n" +
+            "- **Drive times assume a car, 15 minutes and one time of day.** Traffic changes by hour, so rerun it for your busiest time.",
+        },
+      ],
+      choices: [
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],

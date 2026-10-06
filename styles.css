@@ -1386,6 +1386,20 @@ body {
 }
 
 [data-server="motherduck"] .tool-dot { background: #6b5bd6; }
+[data-server="carto"] .tool-dot { background: #d6336c; }
+
+/* CARTO path — maps are pre-rendered query results (H3 population + layers),
+   shown at their own square framing instead of the wide street-map canvas. */
+.map-canvas-carto {
+  aspect-ratio: 760 / 723;
+  max-width: 480px;
+  background: #f7f9fc center / 100% 100% no-repeat;
+}
+.map-canvas-carto::before,
+.map-canvas-carto::after { display: none; }
+.map-pin-label { transform: translate(9px, -50%); }
+.map-pin-label.map-pin-flip { transform: translate(calc(-100% - 9px), -50%); }
+.map-pin-label .map-dot { display: none; }
 
 @media (max-width: 760px) {
   .motherduck-pane { top: 96px; }

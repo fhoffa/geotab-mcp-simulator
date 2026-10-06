@@ -449,4 +449,54 @@ window.SAMPLE_DATA = {
       ],
     },
   },
+
+  /* ------------------------------- Geotab MCP + CARTO MCP (spatial analytics)
+   * REAL: captured from one live session on 1 Oct 2026 (~02:08 UTC) with both
+   * MCP servers connected — Geotab `demo_fh_vegas8`, CARTO connection
+   * `carto_dw`. Hubs are inferred from that single snapshot; the names are the
+   * assistant's descriptive labels, not depots in the database.
+   * Sources: every resident count (hub `residentsK`, `reach15k`, coverage, the
+   * study area and the sixth-hub figures) is Kontur Population (H3 res 8);
+   * retail/food/tourism/night light are CARTO Spatial Features. Kontur hub
+   * counts were reported in thousands, so they're kept that way. `x`/`y` place
+   * points on the assets/carto-*.webp renders (percent of the image), which all
+   * share one framing. `sixthHub.candidates` is the real top-5 site-search
+   * result: neighboring cells within ~2 km of each other, scores within 2%.
+   */
+  carto: {
+    database: "demo_fh_vegas8",
+    connection: "carto_dw",
+    snapshot: "1 Oct 2026, ~02:08 UTC",
+    snapshotLocal: "7:08 pm Las Vegas time (30 Sep)",
+    vehicles: 50,
+    driving: 22,
+    parked: 28,
+    parkedAtHubs: 25,
+    h3Res: 8,
+    contextRings: 3,               // H3_KRING radius around each hub cell (~2.5 km at res 8)
+    hubs: [
+      { name: "West",       parked: 6, residentsK: 69.6, retail: 617,  food: 489,  tourism: 112, nightLight: 74,  reach15k: 419, x: 26.1, y: 47.6 },
+      { name: "Central",    parked: 5, residentsK: 58.3, retail: 1582, food: 1193, tourism: 530, nightLight: 171, reach15k: 680, x: 53.8, y: 42.8 },
+      { name: "South-east", parked: 5, residentsK: 33.0, retail: 840,  food: 465,  tourism: 126, nightLight: 77,  reach15k: 492, x: 56.2, y: 67.6 },
+      { name: "South",      parked: 4, residentsK: 14.4, retail: 2140, food: 1758, tourism: 629, nightLight: 325, reach15k: 438, x: 49.3, y: 59.9 },
+      { name: "North",      parked: 5, residentsK: 55.3, retail: 158,  food: 125,  tourism: 30,  nightLight: 45,  reach15k: 405, x: 44.8, y: 17.6 },
+    ],
+    isoline: { operation: "isolines", range: "900", rangeType: "time" },   // calculate_isolines args; provider TravelTime, car
+    coverage: {
+      residents: "1.65M", pct: 80, straightLine8kmPct: 68,   // 68% = share within 8 km (straight line) of a hub
+      studyArea: "2.07M", studyAreaResidents: 2073195, studyAreaCells: 2090,
+      studyAreaDef: "populated cells within 55 H3 rings (about 50 km) of central Las Vegas",
+      center: { lon: -115.2, lat: 36.15 }, rings: 55, minResidents: 50,   // candidate cells need > minResidents
+    },
+    sixthHub: {
+      lon: -115.058, lat: 36.1718, within8km: "225k", newlyCovered: "+181k", newlyCoveredExact: 181015, pctWith: 88.5, gapKm: 8, x: 71.9, y: 41.3,
+      candidates: [
+        { rank: 1, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, uncovered8km: 225133 },
+        { rank: 2, h3: "88298616c7fffff", lat: 36.1701, lon: -115.0687, uncovered8km: 224552 },
+        { rank: 3, h3: "88298616c3fffff", lat: 36.1683, lon: -115.0795, uncovered8km: 222255 },
+        { rank: 4, h3: "88298616c5fffff", lat: 36.1636, lon: -115.0616, uncovered8km: 222076 },
+        { rank: 5, h3: "88298616c1fffff", lat: 36.1618, lon: -115.0724, uncovered8km: 221470 },
+      ],
+    },
+  },
 };
