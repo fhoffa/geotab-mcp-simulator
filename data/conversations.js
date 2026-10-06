@@ -58,7 +58,7 @@ function cartoMap(image, title, summary, labels, opts) {
     summary: summary,
     layerLabel: opts.layer || "H3 res 8 · residents",
     scale: "5 km",
-    scaleWidth: "12.5%",
+    scaleWidth: "10%",
     pins: (labels || []).map(function (p) { return { label: p.label, x: p.x, y: p.y, status: "label", flip: !!p.flip }; }),
     disclosure:
       (opts.source || "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8)") +
@@ -5605,6 +5605,20 @@ window.CONVERSATIONS = {
             return c.rank + " · " + c.h3 + " · " + c.lat.toFixed(4) + ", " + c.lon.toFixed(4) + " · " + c.uncovered8km.toLocaleString("en-US");
           }).join("\n"),
         },
+        {
+          type: "assistant",
+          text:
+            "Here's what counts as uncovered: the red cells are more than " + C.sixthHub.gapKm + " km from every hub. The second map " +
+            "scores each spot by how many of those residents live within " + C.sixthHub.gapKm + " km of it.",
+        },
+        cartoMap(
+          "carto-gaps.webp",
+          "Gaps · more than " + C.sixthHub.gapKm + " km from the nearest hub",
+          "Red = populated cells more than " + C.sixthHub.gapKm + " km in a straight line from every hub · dashed rings = " +
+            C.sixthHub.gapKm + " km around each hub",
+          null,
+          { layer: "H3 res 8 · uncovered (> " + C.sixthHub.gapKm + " km)" }
+        ),
         cartoMap(
           "carto-site-score.webp",
           "Candidate score · uncovered residents within " + C.sixthHub.gapKm + " km",
