@@ -46,7 +46,8 @@ function bars(list, labelKey, valueKey) {
 /* The CARTO path's maps are the assistant's renders of this session's results
  * (assets/carto-*.webp, one shared framing); `cartoMap` adds the chrome and
  * labels points from D.carto by their x/y. opts: layer (chip text), source
- * (what the map was drawn from), note (replaces the snapshot line). */
+ * (what the map was drawn from), note (replaces the snapshot line), scaleWidth
+ * (for a map not on the shared framing). */
 var C = D.carto || { hubs: [], coverage: {}, sixthHub: { candidates: [] }, isoline: {} };
 function cartoMap(image, title, summary, labels, opts) {
   opts = opts || {};
@@ -58,7 +59,7 @@ function cartoMap(image, title, summary, labels, opts) {
     summary: summary,
     layerLabel: opts.layer || "H3 res 8 · residents",
     scale: "5 km",
-    scaleWidth: "10%",
+    scaleWidth: opts.scaleWidth || "10%",
     pins: (labels || []).map(function (p) { return { label: p.label, x: p.x, y: p.y, status: "label", flip: !!p.flip }; }),
     disclosure:
       (opts.source || "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8)") +
@@ -5311,7 +5312,8 @@ window.CONVERSATIONS = {
     /* ================= Spatial analytics · Geotab MCP + CARTO MCP =================
      * Replays a real session (D.carto): one assistant calling Geotab tools for the
      * fleet and CARTO tools for the spatial work. Tool names and argument names
-     * follow the real schemas; SQL and values are simplified on purpose. Two steps
+     * follow the real schemas; SQL and values are simplified on purpose, and so is
+     * the map bundle (real field names, most of the Kepler config elided). Two steps
      * follow CARTO's recommended tool flow rather than the recorded session: the
      * per-cell query behind the gaps/score maps, and the map step (validate_map
      * schema → verify → create_map → view_map → get_workspace_info).
@@ -5366,9 +5368,14 @@ window.CONVERSATIONS = {
         cartoMap(
           "carto-fleet.webp",
           "Fleet right now · " + C.snapshotLocal,
-          C.driving + " driving (blue) · " + C.parked + " parked (red rings)",
+          C.driving + " driving (blue) · " + C.parked + " parked (red dots, bigger = more vehicles)",
           null,
-          { layer: "Vehicles · latest position", source: "Drawn by the assistant from this session's Geotab positions" }
+          {
+            layer: "Vehicles · latest position",
+            // same projection as the other maps, zoomed in ~1.56× (about 32 km across), so 5 km is ~15.6% of the width
+            scaleWidth: "15.6%",
+            source: "Map built in CARTO Builder · © CARTO, © OpenStreetMap contributors",
+          }
         ),
         {
           type: "assistant",
@@ -5726,15 +5733,21 @@ window.CONVERSATIONS = {
               title: "Las Vegas fleet hubs",
               privacy: "private",
               datasets: [
-                { name: "vehicles", connection_name: C.connection, sql: "SELECT … FROM UNNEST([ … ])   -- " + C.vehicles + " positions" },
-                { name: "hubs", connection_name: C.connection, sql: "SELECT … -- the five hub cells + the proposed sixth site" },
-                { name: "cell_scores", connection_name: C.connection, sql: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search" },
+                { $ref: "vehicles", type: "query", connectionId: "…", source: "SELECT … FROM UNNEST([ … ])   -- " + C.vehicles + " positions", geoColumn: "geom" },
+                { $ref: "hubs", type: "query", connectionId: "…", source: "SELECT … -- the five hub cells + the proposed sixth site", geoColumn: "h3" },
+                { $ref: "cell_scores", type: "query", connectionId: "…", source: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search", geoColumn: "h3" },
               ],
-              layers: [
-                { dataset: { $ref: "vehicles" }, type: "point", color_by: "isDriving", colors: { "true": "#0B73D6", "false": "#E0323E" } },
-                { dataset: { $ref: "hubs" }, type: "h3" },
-                { dataset: { $ref: "cell_scores" }, type: "h3", color_by: "dist_km_to_nearest_hub" },
-              ],
+              keplerMapConfig: {
+                config: {
+                  visState: {
+                    layers: [
+                      { type: "point", config: { dataId: "$ref:vehicles", colors: { "true": "#0A74D6", "false": "#E5303A" } }, visualChannels: { colorField: { name: "isDriving" } } },
+                      { type: "hexagonId", config: { dataId: "$ref:hubs" } },
+                      { type: "hexagonId", config: { dataId: "$ref:cell_scores" }, visualChannels: { colorField: { name: "dist_km_to_nearest_hub" } } },
+                    ],
+                  },
+                },
+              },
             },
           },
           summary: "bundle valid · 3 datasets · SQL dry-run OK",
@@ -5747,13 +5760,13 @@ window.CONVERSATIONS = {
           args: { bundle: "<the verified bundle>" },
           summary: "private Builder map created",
           write: true,
-          result: '{ "map_id": "…", "privacy": "private" }',
+          result: '{ "mapId": "…", "privacy": "private" }',
         },
         {
           type: "tool",
           server: "carto",
           name: "view_map",
-          args: { map_id: "…" },
+          args: { mapId: "…" },
           summary: "interactive map in chat (MCP Apps hosts only)",
           result: "// renders the map inline where the host supports MCP Apps; elsewhere, use the Builder link",
         },
@@ -5763,7 +5776,9 @@ window.CONVERSATIONS = {
           name: "get_workspace_info",
           args: {},
           summary: "workspace URL template for Builder links",
-          result: '{ "map_url_template": "https://<your-carto-workspace>/…/{map_id}", … }',
+          result:
+            '{ "workspaceUrl": "https://<your-carto-workspace>",\n' +
+            '  "urlTemplates": { "builderMap": { "template": "https://<your-carto-workspace>/builder/{mapId}" }, … } }',
         },
         {
           type: "system",
@@ -5776,7 +5791,7 @@ window.CONVERSATIONS = {
           text:
             "I've saved it as a **private map in Builder**: the vehicles (blue driving, red parked), the five hubs plus the " +
             "proposed sixth site, and distance to the nearest hub. If it didn't appear above, open it from the link: " +
-            "`https://<your-carto-workspace>/…/<map_id>`. Share it from there when you're ready.\n\n" +
+            "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.\n\n" +
             "The drive-time areas aren't on it yet. Their polygons are too big to put inline in the map (it fails with " +
             "\"URI too long\"), so I'd save them to a table with `execute_query` first and point the map at that table.",
         },
