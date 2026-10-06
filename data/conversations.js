@@ -5477,22 +5477,23 @@ window.CONVERSATIONS = {
           ),
           summary: "5 hubs × residents, retail, food & drink, tourism, night light",
           result: C.hubs.map(function (h) {
-            return h.name + " · residents " + h.residents.toLocaleString("en-US") + " · retail " + h.retail.toLocaleString("en-US") +
+            return h.name + " · residents " + h.residentsK.toFixed(1) + "k · retail " + h.retail.toLocaleString("en-US") +
               " · food " + h.food.toLocaleString("en-US") + " · tourism " + h.tourism + " · night light " + h.nightLight;
           }).join("\n"),
         },
         {
           type: "chart",
           title: "Residents within 3 rings (thousands)",
-          bars: C.hubs.map(function (h) { return { label: h.name, value: Math.round(h.residents / 100) / 10 }; }),
+          bars: bars(C.hubs, "name", "residentsK"),
         },
         { type: "chart", title: "Retail POIs within 3 rings", bars: bars(C.hubs, "name", "retail") },
         {
           type: "assistant",
           text:
-            "**South** is the commercial core: the fewest residents (~19k) but the most shops (2,140), places to eat (1,758), " +
-            "tourism and night light. **North** is the opposite, with ~70k residents and only 158 shops. West is also " +
-            "residential but has about four times North's retail. Central and South-east sit in between.",
+            "**South** is the commercial core: the fewest residents (~14k) but the most shops (2,140), places to eat (1,758), " +
+            "tourism and night light. **North** is the opposite, with ~55k residents and only 158 shops, the fewest of any hub. " +
+            "**West** has the most residents (~70k) and about four times North's retail. Central (~58k residents, 1,582 shops) " +
+            "is busy on both counts, and South-east sits in between.",
         },
       ],
       choices: [
@@ -5533,7 +5534,9 @@ window.CONVERSATIONS = {
             result:
               C.hubs.slice().sort(function (a, b) { return b.reach15k - a.reach15k; })
                 .map(function (h) { return h.name + " · " + h.reach15k + "k"; }).join("\n") +
-              "\nany hub · " + C.coverage.residents + " (" + C.coverage.pct + "% of " + C.coverage.studyArea + " in " + C.coverage.studyAreaDef + ")",
+              "\nany hub · " + C.coverage.residents + " (" + C.coverage.pct + "%)" +
+              "\n// study area: " + C.coverage.studyAreaResidents.toLocaleString("en-US") + " residents in " +
+              C.coverage.studyAreaCells.toLocaleString("en-US") + " " + C.coverage.studyAreaDef,
           },
           cartoMap(
             "carto-isolines.webp",
@@ -5552,7 +5555,7 @@ window.CONVERSATIONS = {
             type: "assistant",
             text:
               "**About " + C.coverage.residents + " people live within a 15-minute drive of at least one hub**, roughly " +
-              C.coverage.pct + "% of the " + C.coverage.studyArea + " in the area I'm counting (" + C.coverage.studyAreaDef + "). " +
+              C.coverage.pct + "% of the " + C.coverage.studyArea + " in the area I'm counting: " + C.coverage.studyAreaDef + ". " +
               "Central reaches the most (680k), North the least (405k).\n\n" +
               "The per-hub numbers add up to more than " + C.coverage.residents + " because the drive areas overlap.",
           },
@@ -5572,41 +5575,50 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "Checking drive times for every possible spot would take hundreds of calls, so I'll do it in two steps. First a " +
-            "shortlist: score each spot by how many people outside today's 15-minute areas live within " + C.sixthHub.gapKm +
-            " km of it. Then a proper drive-time check on the best one.",
+            "quick shortlist by straight-line distance: call a neighborhood uncovered if it's more than " + C.sixthHub.gapKm +
+            " km from the nearest hub, and score each possible spot by how many uncovered residents live within " +
+            C.sixthHub.gapKm + " km of it. Then a proper drive-time check on the winner.",
         },
         {
           type: "tool",
           server: "carto",
           name: "execute_query",
           args: cartoSql(
-            "WITH isolines AS ( … ),   -- the five drive areas, inlined as GeoJSON like the last query\n" +
-            "uncovered AS (   -- populated cells outside all five drive areas\n" +
-            "  SELECT h3, population FROM kontur_population p\n" +
-            "  WHERE population > 0 AND NOT EXISTS (\n" +
-            "    SELECT 1 FROM isolines i WHERE ST_CONTAINS(i.geom, H3_CENTER(p.h3)))\n" +
-            "), scored AS (\n" +
-            "  SELECT c.h3, SUM(u.population) AS uncovered_within_8km\n" +
-            "  FROM kontur_population c JOIN uncovered u\n" +
-            "    ON ST_DISTANCE(H3_CENTER(c.h3), H3_CENTER(u.h3)) <= " + C.sixthHub.gapKm * 1000 + "\n" +
-            "  GROUP BY c.h3\n" +
+            "WITH hubs AS ( … ),   -- the five hub cells\n" +
+            "study AS (   -- populated cells within " + C.coverage.rings + " rings of central Las Vegas\n" +
+            "  SELECT h3, population FROM kontur_population\n" +
+            "  WHERE population > 0\n" +
+            "    AND h3 IN UNNEST(H3_KRING(H3_FROMLONGLAT(" + C.coverage.center.lon + ", " + C.coverage.center.lat + ", " + C.h3Res + "), " + C.coverage.rings + "))\n" +
+            "), uncovered AS (   -- more than " + C.sixthHub.gapKm + " km in a straight line from the nearest hub\n" +
+            "  SELECT s.h3, s.population FROM study s\n" +
+            "  WHERE (SELECT MIN(ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(h.h3))) FROM hubs h) > " + C.sixthHub.gapKm * 1000 + "\n" +
             ")\n" +
-            "-- best cell, then the next best at least " + C.sixthHub.spacingKm + " km from any already picked (top 3)\n" +
-            "SELECT … FROM scored ORDER BY uncovered_within_8km DESC"
+            "SELECT c.h3, ST_Y(H3_CENTER(c.h3)) AS lat, ST_X(H3_CENTER(c.h3)) AS lon,\n" +
+            "       SUM(u.population) AS uncovered_within_8km\n" +
+            "FROM study c JOIN uncovered u\n" +
+            "  ON ST_DISTANCE(H3_CENTER(c.h3), H3_CENTER(u.h3)) <= " + C.sixthHub.gapKm * 1000 + "\n" +
+            "WHERE c.population > " + C.coverage.minResidents + "   -- candidate cells\n" +
+            "GROUP BY c.h3\nORDER BY uncovered_within_8km DESC\nLIMIT 5"
           ),
-          summary: "3 candidates · #1 has " + C.sixthHub.within8km + " uncovered residents within " + C.sixthHub.gapKm + " km",
+          summary: "top 5 cells · " + C.sixthHub.within8km + " uncovered residents within " + C.sixthHub.gapKm + " km of #1",
           result: C.sixthHub.candidates.map(function (c) {
-            return c.rank + " · (" + c.lat + ", " + c.lon + ") · " + c.uncovered8km + " uncovered within " + C.sixthHub.gapKm + " km";
+            return c.rank + " · " + c.h3 + " · " + c.lat.toFixed(4) + ", " + c.lon.toFixed(4) + " · " + c.uncovered8km.toLocaleString("en-US");
           }).join("\n"),
         },
         cartoMap(
           "carto-site-score.webp",
           "Candidate score · uncovered residents within " + C.sixthHub.gapKm + " km",
-          "Darker = more people outside today's 15-minute areas within " + C.sixthHub.gapKm + " km",
-          [{ label: "#1", x: C.sixthHub.x, y: C.sixthHub.y }]
+          "Darker = more uncovered residents within " + C.sixthHub.gapKm + " km · top five candidates circled",
+          [{ label: "Top 5", x: C.sixthHub.x, y: C.sixthHub.y }],
+          { layer: "H3 res 8 · candidate score" }
         ),
-        { type: "assistant", text: "#1 is well ahead of the other two. Checking it by drive time:" },
-        cartoIsoline(C.sixthHub.lon + "," + C.sixthHub.lat, "Candidate #1 · 15-min drive area (GeoJSON)", 3),
+        {
+          type: "assistant",
+          text:
+            "The top five are neighboring cells within about 2 km of each other, and their scores are within 2%. So the " +
+            "answer is this part of town, not one exact cell. I'll check the top one by drive time:",
+        },
+        cartoIsoline(C.sixthHub.lon.toFixed(4) + "," + C.sixthHub.lat.toFixed(4), "Top cell · 15-min drive area (GeoJSON)", 3),
         {
           type: "tool",
           server: "carto",
@@ -5620,7 +5632,7 @@ window.CONVERSATIONS = {
             "  AND NOT EXISTS (SELECT 1 FROM isolines i WHERE ST_CONTAINS(i.geom, H3_CENTER(p.h3)))"
           ),
           summary: C.sixthHub.newlyCovered + " residents newly covered · coverage " + C.coverage.pct + "% → " + C.sixthHub.pctWith + "%",
-          result: "newly_covered · " + C.sixthHub.newlyCovered + "\n// coverage with six hubs: " + C.sixthHub.pctWith + "%",
+          result: "newly_covered · " + C.sixthHub.newlyCoveredExact.toLocaleString("en-US") + "\n// coverage with six hubs: " + C.sixthHub.pctWith + "%",
         },
         cartoMap(
           "carto-sixth-hub.webp",
@@ -5632,11 +5644,15 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "**The best spot is around " + C.sixthHub.lat + "°N, " + Math.abs(C.sixthHub.lon) + "°W, just east of Central.** A hub " +
-            "there would put **" + C.sixthHub.newlyCovered.replace("+", "") + " more people** within a 15-minute drive, taking " +
-            "coverage from " + C.coverage.pct + "% to " + C.sixthHub.pctWith + "%.\n\n" +
-            "The shortlist estimated about " + C.sixthHub.within8km.replace("~", "") + "; the drive-time check came back at " +
-            C.sixthHub.newlyCovered.replace("+", "") + " because straight-line distance overstates how far you get on the roads.",
+            "**The best area is just east of Central, around " + C.sixthHub.lat.toFixed(2) + "°N, " + Math.abs(C.sixthHub.lon).toFixed(2) +
+            "°W.** A hub there would put **" + C.sixthHub.newlyCovered.replace("+", "") + " more people** within a 15-minute drive, " +
+            "taking coverage from " + C.coverage.pct + "% to " + C.sixthHub.pctWith + "%.\n\n" +
+            "The " + C.sixthHub.within8km + " and the " + C.sixthHub.newlyCovered.replace("+", "") + " measure different things. " +
+            C.sixthHub.within8km + " is people more than " + C.sixthHub.gapKm + " km in a straight line from any hub who live within " +
+            C.sixthHub.gapKm + " km of the site. " + C.sixthHub.newlyCovered.replace("+", "") + " is people inside the new " +
+            "15-minute drive area who aren't already inside one of the five existing ones. (The two yardsticks disagree today too: " +
+            C.sixthHub.gapKm + " km in a straight line from a hub covers " + C.coverage.straightLine8kmPct + "%, the 15-minute " +
+            "drive areas about " + C.coverage.pct + "%.)",
         },
       ],
       choices: [
@@ -5662,7 +5678,7 @@ window.CONVERSATIONS = {
               privacy: "private",
               datasets: [
                 { name: "vehicles", connection_name: C.connection, sql: "SELECT … FROM UNNEST([ … ])   -- " + C.vehicles + " positions" },
-                { name: "hubs", connection_name: C.connection, sql: "SELECT … -- the five hub cells" },
+                { name: "hubs", connection_name: C.connection, sql: "SELECT … -- the five hub cells + the proposed sixth site" },
                 { name: "distance_to_hub", connection_name: C.connection, sql: "SELECT h3, MIN(ST_DISTANCE(…)) … FROM kontur_population …" },
               ],
               layers: [
@@ -5701,8 +5717,8 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "I've created it as a **private map in Builder**: the vehicles, the five hubs, and distance to the nearest hub. " +
-            "Share it from there when you're ready. It doesn't include the drive-time areas or the sixth hub yet.",
+            "I've created it as a **private map in Builder**: the vehicles, the five hubs plus the proposed sixth site, and " +
+            "distance to the nearest hub. Share it from there when you're ready. The drive-time areas aren't on it yet.",
         },
         { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Six plain-English questions. The assistant wrote the SQL."] },
       ],
@@ -5724,7 +5740,7 @@ window.CONVERSATIONS = {
             "A few things, before anyone acts on it:\n" +
             "- **The hubs are inferred** from one evening snapshot, not your depot list.\n" +
             "- **The sixth hub is a map-derived candidate, not a checked location.** Zoning, available yards and rent all still need a look.\n" +
-            "- **Only candidate #1 got a drive-time check.** #2 and #3 were scored by straight-line distance only.\n" +
+            "- **Only the winning cell got a drive-time check.** The other four are neighboring cells with almost the same score, so treat it as an area, not an address.\n" +
             "- **Coverage counts residents, not customers.** If you have order or customer locations, use those instead.\n" +
             "- **Coverage is counted by hexagon center.** A hexagon counts as covered if its center is inside a drive area, so edges are approximate.\n" +
             "- **Drive times assume a car, 15 minutes and one time of day.** Traffic changes by hour, so rerun it for your busiest time.",
