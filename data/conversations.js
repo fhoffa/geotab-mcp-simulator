@@ -5721,7 +5721,7 @@ window.CONVERSATIONS = {
           name: "validate_map",
           args: { method: "schema" },
           summary: "map format: datasets, layers, styling",
-          result: "// bundle schema: datasets (SQL or table, by connection), layers referencing datasets by $ref, per-value colors …",
+          result: "// bundle schema: datasets (SQL or table, by connection), H3 datasets by index column + aggregation, Kepler layers referencing datasets by $ref, ordinal color maps …",
         },
         {
           type: "tool",
@@ -5733,17 +5733,36 @@ window.CONVERSATIONS = {
               title: "Las Vegas fleet hubs",
               privacy: "private",
               datasets: [
-                { $ref: "vehicles", type: "query", connectionId: "…", source: "SELECT … FROM UNNEST([ … ])   -- " + C.vehicles + " positions", geoColumn: "geom" },
-                { $ref: "hubs", type: "query", connectionId: "…", source: "SELECT … -- the five hub cells + the proposed sixth site", geoColumn: "h3" },
-                { $ref: "cell_scores", type: "query", connectionId: "…", source: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search", geoColumn: "h3" },
+                {
+                  $ref: "vehicles", type: "query", connectionId: "…", geoColumn: "geom",
+                  source: "SELECT …, IF(isDriving, 'Driving', 'Parked') AS status FROM UNNEST([ … ])   -- " + C.vehicles + " positions",
+                },
+                {
+                  $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                  aggregationExp: "SUM(parked) AS parked",
+                  source: "SELECT h3, parked … -- the five hub cells + the proposed sixth site",
+                },
+                {
+                  $ref: "cell_scores", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                  aggregationExp: "SUM(population) AS population, AVG(dist_km_to_nearest_hub) AS dist_km_to_nearest_hub",
+                  source: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search",
+                },
               ],
               keplerMapConfig: {
                 config: {
                   visState: {
                     layers: [
-                      { type: "point", config: { dataId: "$ref:vehicles", colors: { "true": "#0A74D6", "false": "#E5303A" } }, visualChannels: { colorField: { name: "isDriving" } } },
-                      { type: "hexagonId", config: { dataId: "$ref:hubs" } },
-                      { type: "hexagonId", config: { dataId: "$ref:cell_scores" }, visualChannels: { colorField: { name: "dist_km_to_nearest_hub" } } },
+                      {
+                        type: "point",
+                        config: { dataId: "$ref:vehicles", visConfig: { colorRange: { colorMap: [["Driving", "#0A74D6"], ["Parked", "#E5303A"]] } } },
+                        visualChannels: { colorField: { name: "status", type: "string" }, colorScale: "ordinal" },
+                      },
+                      { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                      {
+                        type: "h3",
+                        config: { dataId: "$ref:cell_scores", columns: { hex: "h3" } },
+                        visualChannels: { colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                      },
                     ],
                   },
                 },
