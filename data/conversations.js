@@ -5311,7 +5311,10 @@ window.CONVERSATIONS = {
     /* ================= Spatial analytics · Geotab MCP + CARTO MCP =================
      * Replays a real session (D.carto): one assistant calling Geotab tools for the
      * fleet and CARTO tools for the spatial work. Tool names and argument names
-     * follow the real schemas; SQL and values are simplified on purpose.
+     * follow the real schemas; SQL and values are simplified on purpose. Two steps
+     * follow CARTO's recommended tool flow rather than the recorded session: the
+     * per-cell query behind the gaps/score maps, and the map step (validate_map
+     * schema → verify → create_map → view_map → get_workspace_info).
      */
     "carto-fleet": {
       id: "carto-fleet",
@@ -5605,11 +5608,30 @@ window.CONVERSATIONS = {
             return c.rank + " · " + c.h3 + " · " + c.lat.toFixed(4) + ", " + c.lon.toFixed(4) + " · " + c.uncovered8km.toLocaleString("en-US");
           }).join("\n"),
         },
+        { type: "assistant", text: "To see why those five win, I'll pull every cell with its distance to the nearest hub and its score:" },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ), study AS ( … ), uncovered AS ( … )   -- same as above\n" +
+            "SELECT s.h3, s.population,\n" +
+            "  (SELECT MIN(ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(h.h3))) FROM hubs h) / 1000 AS dist_km_to_nearest_hub,\n" +
+            "  (SELECT SUM(u.population) FROM uncovered u\n" +
+            "     WHERE ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(u.h3)) <= " + C.sixthHub.gapKm * 1000 + ") AS score\n" +
+            "FROM study s"
+          ),
+          summary: C.coverage.studyAreaCells.toLocaleString("en-US") + " cells · distance to nearest hub + score",
+          result:
+            C.coverage.studyAreaCells.toLocaleString("en-US") + " rows · h3, population, dist_km_to_nearest_hub, score\n" +
+            "// top score: " + C.sixthHub.candidates[0].h3 + " · " + C.sixthHub.candidates[0].uncovered8km.toLocaleString("en-US") +
+            " (candidate #1)",
+        },
         {
           type: "assistant",
           text:
-            "Here's what counts as uncovered: the red cells are more than " + C.sixthHub.gapKm + " km from every hub. The second map " +
-            "scores each spot by how many of those residents live within " + C.sixthHub.gapKm + " km of it.",
+            "Red cells are more than " + C.sixthHub.gapKm + " km from every hub, so they count as uncovered. The second map scores " +
+            "each spot by how many of those residents live within " + C.sixthHub.gapKm + " km of it.",
         },
         cartoMap(
           "carto-gaps.webp",
@@ -5680,7 +5702,20 @@ window.CONVERSATIONS = {
       title: "CARTO · Put it on a map I can share",
       mode: "carto",
       events: [
-        { type: "assistant", text: "I'll check the map setup first, then create it in CARTO Builder. I'll keep it private so you can choose who to share it with." },
+        {
+          type: "assistant",
+          text:
+            "I'll read CARTO's map format first rather than guess field names, check the map against it, then save it in " +
+            "Builder. I'll keep it private so you can choose who to share it with.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "validate_map",
+          args: { method: "schema" },
+          summary: "map format: datasets, layers, styling",
+          result: "// bundle schema: datasets (SQL or table, by connection), layers referencing datasets by $ref, per-value colors …",
+        },
         {
           type: "tool",
           server: "carto",
@@ -5693,12 +5728,12 @@ window.CONVERSATIONS = {
               datasets: [
                 { name: "vehicles", connection_name: C.connection, sql: "SELECT … FROM UNNEST([ … ])   -- " + C.vehicles + " positions" },
                 { name: "hubs", connection_name: C.connection, sql: "SELECT … -- the five hub cells + the proposed sixth site" },
-                { name: "distance_to_hub", connection_name: C.connection, sql: "SELECT h3, MIN(ST_DISTANCE(…)) … FROM kontur_population …" },
+                { name: "cell_scores", connection_name: C.connection, sql: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search" },
               ],
               layers: [
-                { dataset: "vehicles", type: "point", color_by: "isDriving" },
-                { dataset: "hubs", type: "h3" },
-                { dataset: "distance_to_hub", type: "h3", color_by: "distance_m" },
+                { dataset: { $ref: "vehicles" }, type: "point", color_by: "isDriving", colors: { "true": "#0B73D6", "false": "#E0323E" } },
+                { dataset: { $ref: "hubs" }, type: "h3" },
+                { dataset: { $ref: "cell_scores" }, type: "h3", color_by: "dist_km_to_nearest_hub" },
               ],
             },
           },
@@ -5709,30 +5744,41 @@ window.CONVERSATIONS = {
           type: "tool",
           server: "carto",
           name: "create_map",
-          args: { bundle: "<same bundle as above>" },
+          args: { bundle: "<the verified bundle>" },
           summary: "private Builder map created",
           write: true,
-          result: '{ "map_id": "…", "privacy": "private", "url": "https://<your-carto-workspace>/builder/…" }',
+          result: '{ "map_id": "…", "privacy": "private" }',
         },
         {
           type: "tool",
           server: "carto",
           name: "view_map",
           args: { map_id: "…" },
-          summary: "map rendered inline",
-          result: "// interactive Builder map displayed in the conversation (host supports MCP Apps)",
+          summary: "interactive map in chat (MCP Apps hosts only)",
+          result: "// renders the map inline where the host supports MCP Apps; elsewhere, use the Builder link",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "get_workspace_info",
+          args: {},
+          summary: "workspace URL template for Builder links",
+          result: '{ "map_url_template": "https://<your-carto-workspace>/…/{map_id}", … }',
         },
         {
           type: "system",
           text:
-            "In the real session, `view_map` showed the interactive Builder map right here. It's private to that CARTO " +
-            "account, so the simulator can't show it.",
+            "`view_map` shows the interactive map in the chat only in apps that support MCP Apps; elsewhere you get the link. " +
+            "The map is private to the CARTO account that created it, so the simulator can't show it.",
         },
         {
           type: "assistant",
           text:
-            "I've created it as a **private map in Builder**: the vehicles, the five hubs plus the proposed sixth site, and " +
-            "distance to the nearest hub. Share it from there when you're ready. The drive-time areas aren't on it yet.",
+            "I've saved it as a **private map in Builder**: the vehicles (blue driving, red parked), the five hubs plus the " +
+            "proposed sixth site, and distance to the nearest hub. If it didn't appear above, open it from the link: " +
+            "`https://<your-carto-workspace>/…/<map_id>`. Share it from there when you're ready.\n\n" +
+            "The drive-time areas aren't on it yet. Their polygons are too big to put inline in the map (it fails with " +
+            "\"URI too long\"), so I'd save them to a table with `execute_query` first and point the map at that table.",
         },
         { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Six plain-English questions. The assistant wrote the SQL."] },
       ],
