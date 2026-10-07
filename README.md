@@ -129,6 +129,9 @@ data/
   sample-data.js     the explicit sample-data store — THE source of truth for
                      the safety/maintenance/ops/agentic numbers (window.SAMPLE_DATA)
   conversations.js   the conversation graph; charts & results ground on the store
+  i18n/
+    es-419.js        Latin American Spanish overlay (every node + UI string)
+    es-ES.js         sparse Spain-Spanish layer on top of es-419
 docs/
   CONVERSATION-MAP.md  a Mermaid diagram of the same graph, for reading on GitHub
 ```
@@ -191,6 +194,28 @@ points at a missing node.
 | `tool` event | `server`, `name`, `args`, `summary`, `result`, optional `write: true` |
 | `choices[]` | `{ label, say?, next?, action? }` — `action` is `"restart"` |
 | `next` | auto-advance to a node when there are no `choices` |
+
+## Languages
+
+The simulator runs in **English**, **Latin American Spanish** (`es-419`) and
+**Spain Spanish** (`es-ES`). Pick one from the selector in the header or on the
+landing screen, or link straight to it with `?lang=es-419` / `?lang=es-ES`
+(`?lang=en` for English). Without a choice it follows the browser language, and
+the pick is remembered.
+
+Translations are overlays, not copies of the graph: `data/i18n/<lang>.js` swaps
+display text (assistant prose, choice labels, chart titles, UI strings) into the
+English nodes by position. Tool names, arguments and results stay exactly as the
+real connector returns them, as do vehicle, driver and rule names. Wording follows
+MyGeotab's own Spanish UI (*reglas*, *excepciones*, *frenado brusco*, *ralentí*,
+*zonas*). `es-ES` only holds what differs in Spain (*informe*, *conducción*,
+*furgoneta*, *avería*, *coste*, `4.912` / `18,2`) and falls through to `es-419`
+for everything else. The demo video and its narration stay in English.
+
+Each overlay node is stamped with a hash of the English it translates, so
+`node scripts/check-graph.js` fails when an English node changes and its
+translation goes stale. Update the translation, then run
+`node scripts/check-graph.js --stamp-i18n`.
 
 ## Grounding & data notes
 

@@ -10,7 +10,9 @@ Key files:
 - `app.js` — simulator runtime and conversation engine
 - `data/sample-data.js` — explicit sample-data store (`window.SAMPLE_DATA`); source of truth for the safety/maintenance/ops/agentic numbers & drivers. Must load before `conversations.js`.
 - `data/conversations.js` — source of truth for scripted conversation nodes; grounds charts/results on the sample-data store via `bars()` / `D`
-- `scripts/check-graph.js` — graph integrity checker (loads both data files)
+- `data/i18n/es-419.js` — Latin American Spanish overlay (`window.SIM_I18N["es-419"]`): UI strings plus a positional translation of every node's display text. Must translate everything.
+- `data/i18n/es-ES.js` — sparse Spain-Spanish layer merged over es-419 (only the fields whose wording differs)
+- `scripts/check-graph.js` — graph integrity checker (loads both data files and both translation overlays)
 - `docs/CONVERSATION-MAP.md` — human-readable graph map
 
 ## Development expectations
@@ -57,6 +59,26 @@ and every node that quotes it stays consistent. Build a node's chart `bars`
 (and, where practical, its tool `result`) from `D` / `bars()` in
 `conversations.js`. The `facts` block in the store is real demo data; everything
 else is realistic and fictional — **driver names are fictional, no real PII**.
+
+### Translations (es-419 / es-ES)
+
+The English in `data/conversations.js` and `app.js`'s `UI_EN` table is the source;
+the overlays in `data/i18n/` replace display text by position (`null` slots keep
+the English). Rules:
+
+- Translate prose, choice labels/says, chart titles and bar labels, map/media
+  captions, UI strings. **Never** translate tool names, args, results, inline
+  code, link targets, or vehicle/driver/rule names.
+- Use the tú register in both variants. Follow MyGeotab's Spanish UI terminology
+  (reglas, excepciones, frenado brusco, ralentí, zonas, códigos de falla).
+- es-ES is sparse: a field present there replaces the whole es-419 field (arrays
+  such as `bars`/`stages` must be complete). Spain number format (`4.912`,
+  `18,2`) applies in es-ES outside code and links.
+- Workflow: edit the English → `check-graph` flags the node as stale in each
+  overlay that has it → update es-419 (and the es-ES entry, if any) → run
+  `node scripts/check-graph.js --stamp-i18n`. New UI strings need a `UI_EN`
+  entry in `app.js` and an es-419 entry. Overlay nodes must keep the
+  `  "id": {` line format so stamping can find them.
 
 ## Verification
 

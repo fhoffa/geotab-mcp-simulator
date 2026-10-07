@@ -167,6 +167,201 @@ if (mapDoc) {
   });
 }
 
+// ------------------------------------------------------------- translations
+// data/i18n/<lang>.js overlays swap display strings into the graph by position
+// (see the locale block at the top of app.js). They rot silently: a reworded
+// English node keeps showing yesterday's Spanish. So each overlay node carries
+// "h", a hash of the English it translates; a mismatch fails here until the
+// translation is updated and restamped with `--stamp-i18n`.
+var I18N_DIR = path.join(__dirname, "..", "data", "i18n");
+var LOCALES = ["es-419", "es-ES"]; // es-ES is a sparse layer over es-419
+var BASE_LOCALE = "es-419"; // must translate every node and every UI key
+
+// Per event type: the display fields an overlay may translate, and the subset
+// the base locale must translate. Everything else (tool names, args, results,
+// ids, styling) never changes with the language.
+var EVENT_FIELDS = {
+  assistant: { all: ["text"], req: ["text"] },
+  system: { all: ["text"], req: ["text"] },
+  endcard: { all: ["lines"], req: ["lines"] },
+  tool: { all: ["summary"], req: ["summary"] },
+  chart: { all: ["title", "bars"], req: ["title"] },
+  map: { all: ["title", "summary", "layerLabel", "disclosure", "zone", "pins"], req: ["title", "summary"] },
+  media: { all: ["caption", "fallbackText"], req: ["caption", "fallbackText"] },
+  confirm: { all: ["changes"], req: ["changes"] },
+  warehouse: { all: ["compactSubtitle", "note", "stages"], req: ["compactSubtitle", "note"] },
+};
+var CHOICE_FIELDS = ["group", "label", "say"];
+
+// The English text a node's translation depends on, as one string.
+function englishOf(n) {
+  var parts = [];
+  (n.events || []).forEach(function (ev, i) {
+    var spec = EVENT_FIELDS[ev.type];
+    if (!spec) return;
+    spec.all.forEach(function (k) {
+      var v = ev[k];
+      if (v == null) return;
+      if (k === "bars" || k === "pins") v = v.map(function (x) { return x.label; });
+      else if (k === "zone") v = v.label;
+      else if (k === "stages") v = v.map(function (st) {
+        return [st.name].concat((st.tables || []).map(function (t) { return t.note || ""; }));
+      });
+      parts.push(i + "." + k + "=" + JSON.stringify(v));
+    });
+  });
+  (n.choices || []).forEach(function (c, i) {
+    CHOICE_FIELDS.forEach(function (k) { if (c[k] != null) parts.push("c" + i + "." + k + "=" + c[k]); });
+  });
+  return parts.join("\n");
+}
+// FNV-1a, 32-bit — stable and dependency-free; this is change detection, not security.
+function fnv(s) {
+  var h = 0x811c9dc5;
+  for (var i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return ("0000000" + h.toString(16)).slice(-8);
+}
+
+function localeFile(lang) { return path.join(I18N_DIR, lang + ".js"); }
+global.window.SIM_I18N = {};
+LOCALES.forEach(function (lang) {
+  if (fs.existsSync(localeFile(lang))) require(localeFile(lang));
+  else problems.push("data/i18n/" + lang + ".js is missing");
+});
+var I18N = global.window.SIM_I18N;
+
+if (process.argv.indexOf("--stamp-i18n") >= 0) {
+  LOCALES.forEach(function (lang) {
+    var file = localeFile(lang);
+    if (!fs.existsSync(file)) return;
+    var src = fs.readFileSync(file, "utf8"), stamped = 0;
+    Object.keys((I18N[lang] || {}).nodes || {}).forEach(function (id) {
+      if (!NODES[id]) return;
+      var head = new RegExp('(\\n  "' + id.replace(/[-]/g, "\\$&") + '": \\{\\n)(    h: "[0-9a-f]{8}",\\n)?');
+      if (!head.test(src)) {
+        console.error("[check-graph] --stamp-i18n: can't find node '" + id + "' in " + file + ' (expected `  "' + id + '": {` on its own line)');
+        process.exit(1);
+      }
+      var next = src.replace(head, function (m, open) { return open + '    h: "' + fnv(englishOf(NODES[id])) + '",\n'; });
+      if (next !== src) stamped++;
+      src = next;
+    });
+    fs.writeFileSync(file, src);
+    console.log("[check-graph] " + lang + ": " + stamped + " node hash(es) updated.");
+  });
+  process.exit(0);
+}
+
+LOCALES.forEach(function (lang) {
+  var loc = I18N[lang];
+  if (!loc) return problems.push("data/i18n/" + lang + ".js didn't register window.SIM_I18N['" + lang + "']");
+  var isBase = lang === BASE_LOCALE;
+  var nodes = loc.nodes || {};
+  if (isBase) {
+    Object.keys(NODES).forEach(function (id) {
+      if (!nodes[id]) problems.push(lang + ": node '" + id + "' is untranslated");
+    });
+  }
+  Object.keys(nodes).forEach(function (id) {
+    var t = nodes[id], n = NODES[id], where = lang + " " + id;
+    if (!n) return problems.push(where + " → no such node in data/conversations.js (orphan translation)");
+    if (t.h !== fnv(englishOf(n))) {
+      problems.push(where + " → " + (t.h ? "stale: the English changed since this was translated" : "missing 'h'") +
+        " — update the translation, then run: node scripts/check-graph.js --stamp-i18n");
+    }
+    var evs = t.events || [], chs = t.choices || [];
+    if (evs.length > (n.events || []).length) problems.push(where + " → " + evs.length + " events, English has " + (n.events || []).length);
+    if (chs.length > (n.choices || []).length) problems.push(where + " → " + chs.length + " choices, English has " + (n.choices || []).length);
+    (n.events || []).forEach(function (ev, i) {
+      var spec = EVENT_FIELDS[ev.type], o = evs[i], at = where + " event[" + i + "] (" + ev.type + ")";
+      if (o && !spec) return problems.push(at + " → this event type has no translatable fields");
+      if (!spec) return;
+      // An explicit null tool slot means "nothing to translate" — summaries
+      // that are pure values ("50", a VIN, a model name).
+      if (isBase && !(o === null && ev.type === "tool")) {
+        spec.req.forEach(function (k) {
+          if (ev[k] != null && (!o || o[k] == null)) problems.push(at + " → '" + k + "' is untranslated");
+        });
+      }
+      if (!o) return;
+      Object.keys(o).forEach(function (k) {
+        var v = o[k], en = ev[k];
+        if (spec.all.indexOf(k) < 0) return problems.push(at + " → '" + k + "' is not a translatable field");
+        if (v == null) return;
+        if (en == null) return problems.push(at + " → translates '" + k + "' but the English event has none");
+        if (Array.isArray(en) && k !== "stages") {
+          if (!Array.isArray(v) || v.length !== en.length) problems.push(at + " → '" + k + "' needs " + en.length + " entries");
+        } else if (k === "stages") {
+          if (!Array.isArray(v) || v.length > en.length) return problems.push(at + " → 'stages' has more entries than the English");
+          v.forEach(function (st, j) {
+            if (st && st.notes && st.notes.length > (en[j].tables || []).length) {
+              problems.push(at + " → stages[" + j + "].notes has more entries than that stage's tables");
+            }
+          });
+        } else if (typeof v !== "string") {
+          problems.push(at + " → '" + k + "' should be a string");
+        }
+      });
+      // Inline code (tool names, SQL, ids) and link targets are never translated.
+      spec.all.forEach(function (k) {
+        if (typeof ev[k] !== "string" || typeof o[k] !== "string") return;
+        (ev[k].match(/`[^`]+`|\]\([^)]+\)/g) || []).forEach(function (frag) {
+          if (o[k].indexOf(frag) < 0) problems.push(at + " → '" + k + "' lost " + frag);
+        });
+      });
+    });
+    (n.choices || []).forEach(function (c, i) {
+      var o = chs[i], at = where + " choice[" + i + "]";
+      if (isBase) {
+        CHOICE_FIELDS.forEach(function (k) {
+          if (c[k] != null && (!o || o[k] == null)) problems.push(at + " → '" + k + "' is untranslated");
+        });
+      }
+      if (!o) return;
+      Object.keys(o).forEach(function (k) {
+        if (CHOICE_FIELDS.indexOf(k) < 0) problems.push(at + " → '" + k + "' is not a translatable field");
+        else if (c[k] == null && o[k] != null) problems.push(at + " → translates '" + k + "' but the English choice has none");
+      });
+    });
+  });
+});
+
+// UI strings: every key the page or app.js asks for must exist in the base
+// locale, and every key a locale defines must still be asked for somewhere.
+var ROOT = path.join(__dirname, "..");
+var appSrc = fs.readFileSync(path.join(ROOT, "app.js"), "utf8");
+var htmlSrc = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+var uiUsed = {};
+var m, reTr = /\btr\(([^;]*)/g, reKey = /data-i18n="([\w.]+)"/g, reAttr = /data-i18n-attr="([^"]+)"/g;
+// tr("a.b") or tr(cond ? "a.b" : "a.c")
+while ((m = reTr.exec(appSrc))) {
+  (m[1].match(/"[a-z]+\.[\w.]+"/g) || []).forEach(function (q) { uiUsed[q.slice(1, -1)] = "app.js"; });
+}
+while ((m = reKey.exec(htmlSrc))) uiUsed[m[1]] = "index.html";
+while ((m = reAttr.exec(htmlSrc))) {
+  m[1].split(";").forEach(function (pair) { uiUsed[(pair.split(":")[1] || "").trim()] = "index.html"; });
+}
+var uiEnMatch = appSrc.match(/var UI_EN = (\{[\s\S]*?\n {2}\});/);
+var UI_EN = uiEnMatch ? Function("return " + uiEnMatch[1])() : {};
+if (!uiEnMatch) problems.push("app.js: couldn't find the UI_EN table");
+Object.keys(uiUsed).forEach(function (k) {
+  if (uiUsed[k] === "app.js" && UI_EN[k] == null) problems.push("app.js: tr(\"" + k + "\") has no English in UI_EN");
+});
+LOCALES.forEach(function (lang) {
+  var ui = (I18N[lang] || {}).ui || {};
+  if (lang === BASE_LOCALE) {
+    Object.keys(uiUsed).forEach(function (k) {
+      if (ui[k] == null) problems.push(lang + ": UI string '" + k + "' (" + uiUsed[k] + ") is untranslated");
+    });
+  }
+  Object.keys(ui).forEach(function (k) {
+    if (!uiUsed[k]) problems.push(lang + ": UI string '" + k + "' isn't used by app.js or index.html");
+  });
+});
+
 if (problems.length) {
   console.error("[check-graph] " + problems.length + " problem(s):\n" + problems.join("\n"));
   process.exit(1);
