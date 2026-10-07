@@ -3,7 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Geotab MCP — Experience Simulator</title>
+    <title data-i18n="meta.title">Geotab MCP — Experience Simulator</title>
+    <script>
+      // Locale: ?lang= wins (and is remembered), then a saved choice, then the
+      // browser's language. Non-English pages stay hidden until app.js has applied
+      // the overlay, so the English copy never flashes first.
+      (function () {
+        var KEY = "geotab-mcp-sim-lang";
+        var NORM = { en: "en", es: "es-419", "es-419": "es-419", "es-es": "es-ES" };
+        var q = null, saved = null;
+        try { q = NORM[(new URLSearchParams(location.search).get("lang") || "").toLowerCase()]; } catch (e) {}
+        try { saved = NORM[(localStorage.getItem(KEY) || "").toLowerCase()]; } catch (e) {}
+        var nav = (navigator.language || "").toLowerCase();
+        var lang = q || saved || (nav === "es-es" ? "es-ES" : nav.indexOf("es") === 0 ? "es-419" : "en");
+        if (q) try { localStorage.setItem(KEY, q); } catch (e) {}
+        window.SIM_LANG = lang;
+        var root = document.documentElement;
+        root.lang = lang;
+        if (lang !== "en") {
+          root.classList.add("i18n-pending");
+          setTimeout(function () { root.classList.remove("i18n-pending"); }, 4000);
+        }
+      })();
+    </script>
     <script>
       // Mobile browsers often restore a stale snapshot from the back/forward cache when you
       // reopen the tab — there's no "hard refresh" gesture there, so force a real reload.
@@ -54,7 +76,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=08d1884" />
+    <link rel="stylesheet" href="styles.css?v=c780cc1" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png?v=d4e1997" />
   </head>
   <body>
@@ -63,29 +85,34 @@
         <span class="brand-mark" role="img" aria-label="Geotab"></span>
         <div class="brand-text">
           <strong>Geotab MCP</strong>
-          <span class="brand-sub">Experience Simulator</span>
+          <span class="brand-sub" data-i18n="hdr.sub">Experience Simulator</span>
         </div>
       </div>
       <div class="header-actions">
-        <span id="connStatus" class="conn-pill conn-off">Not connected</span>
-        <button id="tryRealBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↔</span>Connect real account</button>
-        <button id="aboutBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">?</span>About</button>
-        <button id="restartBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↻</span>Restart</button>
-        <button id="settingsBtn" class="ghost-btn settings-trigger" type="button" title="Simulator settings" aria-haspopup="dialog" aria-expanded="false">
-          <span class="ui-glyph" aria-hidden="true">⚙</span>Settings
+        <span id="connStatus" class="conn-pill conn-off" data-i18n="conn.off">Not connected</span>
+        <select id="langSelect" class="lang-select" aria-label="Language" data-i18n-attr="aria-label:lang.label">
+          <option value="en" lang="en">English</option>
+          <option value="es-419" lang="es-419">Español (Latam)</option>
+          <option value="es-ES" lang="es-ES">Español (España)</option>
+        </select>
+        <button id="tryRealBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↔</span><span data-i18n="hdr.connect">Connect real account</span></button>
+        <button id="aboutBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">?</span><span data-i18n="hdr.about">About</span></button>
+        <button id="restartBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↻</span><span data-i18n="hdr.restart">Restart</span></button>
+        <button id="settingsBtn" class="ghost-btn settings-trigger" type="button" title="Simulator settings" aria-haspopup="dialog" aria-expanded="false" data-i18n-attr="title:hdr.settingsTitle">
+          <span class="ui-glyph" aria-hidden="true">⚙</span><span data-i18n="hdr.settings">Settings</span>
         </button>
       </div>
     </header>
 
-    <aside id="motherduckPane" class="motherduck-pane hidden collapsed" aria-label="MotherDuck warehouse state">
+    <aside id="motherduckPane" class="motherduck-pane hidden collapsed" aria-label="MotherDuck warehouse state" data-i18n-attr="aria-label:md.aria">
       <button id="motherduckPaneToggle" class="motherduck-pane-toggle" type="button" aria-expanded="false">
         <span class="warehouse-duck" aria-hidden="true">🦆</span>
         <span class="motherduck-pane-title">
           <span class="warehouse-kicker">MotherDuck</span>
-          <strong id="motherduckPaneTitle">Warehouse</strong>
-          <span id="motherduckPaneSubtitle" class="warehouse-subtitle">No warehouse actions yet</span>
+          <strong id="motherduckPaneTitle" data-i18n="warehouse.title">Warehouse</strong>
+          <span id="motherduckPaneSubtitle" class="warehouse-subtitle" data-i18n="md.subtitle">No warehouse actions yet</span>
         </span>
-        <span id="motherduckPaneSummary" class="warehouse-summary">hidden</span>
+        <span id="motherduckPaneSummary" class="warehouse-summary" data-i18n="md.summary">hidden</span>
         <span class="warehouse-caret" aria-hidden="true">▶</span>
       </button>
       <div id="motherduckPaneBody" class="motherduck-pane-body"></div>
@@ -101,9 +128,9 @@
 
     <main class="chat" id="chat" aria-live="polite">
       <div class="empty-state" id="emptyState" aria-hidden="true">
-        <p class="empty-kicker">Demo chat ready</p>
-        <h2>Connect the sample fleet to start the guided simulator.</h2>
-        <p>Pick suggested prompts; the transcript will play back with realistic MCP tool calls and grounded fleet data.</p>
+        <p class="empty-kicker" data-i18n="empty.kicker">Demo chat ready</p>
+        <h2 data-i18n="empty.title">Connect the sample fleet to start the guided simulator.</h2>
+        <p data-i18n="empty.body">Pick suggested prompts; the transcript will play back with realistic MCP tool calls and grounded fleet data.</p>
       </div>
     </main>
 
@@ -112,7 +139,7 @@
     </div>
 
     <footer class="app-footer">
-      <p>
+      <p data-i18n="footer.note">
         <strong>Simulator.</strong> Answers are pre-recorded but grounded in real Geotab demo-fleet
         data (captured 18–19 Jun 2026). In real use the connector follows your MyGeotab permissions and
         can surface personal data — review your privacy obligations before connecting a production fleet.
@@ -120,101 +147,108 @@
     </footer>
 
     <!-- Landing / value-prop overlay — shown first, dismissible -->
-    <div id="landingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Welcome">
+    <div id="landingOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Welcome" data-i18n-attr="aria-label:landing.aria">
       <div class="overlay-panel landing-panel">
-        <p class="hero-eyebrow">GEOTAB MCP CONNECTOR</p>
-        <h1 class="hero-title">You already run Geotab. Now ask it questions instead of building reports.</h1>
-        <p class="hero-sub">
+        <div class="hero-top">
+          <p class="hero-eyebrow" data-i18n="landing.eyebrow">GEOTAB MCP CONNECTOR</p>
+          <select id="langSelectLanding" class="lang-select" aria-label="Language" data-i18n-attr="aria-label:lang.label">
+            <option value="en" lang="en">English</option>
+            <option value="es-419" lang="es-419">Español (Latinoamérica)</option>
+            <option value="es-ES" lang="es-ES">Español (España)</option>
+          </select>
+        </div>
+        <h1 class="hero-title" data-i18n="landing.title">You already run Geotab. Now ask it questions instead of building reports.</h1>
+        <p class="hero-sub" data-i18n="landing.sub">
           This is what it looks like when an AI assistant connects to your live MyGeotab data through
           Geotab's <strong>official MCP server</strong> — read fleet state, get diagnoses, and trigger
           real actions, all in plain English.
         </p>
         <ul class="hero-bullets">
-          <li>
+          <li data-i18n="landing.b1">
             <strong><span class="bullet-glyph" aria-hidden="true">ASK</span>Plain-English fleet questions.</strong> Weekly reviews, fault triage, "who's
             closest and free right now" — answered from live data, not a static export.
           </li>
-          <li>
+          <li data-i18n="landing.b2">
             <strong><span class="bullet-glyph" aria-hidden="true">MCP</span>Start with Claude, or bring your own assistant.</strong> MCP (the Model Context Protocol)
             is an open standard for connecting assistants to tools — Claude, Microsoft Copilot, ChatGPT, and
             other MCP-capable clients can all speak to the same Geotab server.
           </li>
-          <li>
+          <li data-i18n="landing.b3">
             <strong><span class="bullet-glyph" aria-hidden="true">DEMO</span>Try this version risk-free.</strong> Everything below runs against an anonymized
             Geotab demo fleet — no real account, no setup, no risk to production data.
           </li>
         </ul>
         <div class="hero-cta">
-          <button id="startSimBtn" class="cta-btn cta-primary" type="button"><span class="ui-glyph" aria-hidden="true">→</span>Try the fleet simulator</button>
-          <button id="startWarehouseBtn" class="cta-btn cta-secondary" type="button"><span class="ui-glyph" aria-hidden="true">▦</span>Build a MotherDuck warehouse</button>
+          <button id="startSimBtn" class="cta-btn cta-primary" type="button"><span class="ui-glyph" aria-hidden="true">→</span><span data-i18n="landing.ctaSim">Try the fleet simulator</span></button>
+          <button id="startWarehouseBtn" class="cta-btn cta-secondary" type="button"><span class="ui-glyph" aria-hidden="true">▦</span><span data-i18n="landing.ctaWarehouse">Build a MotherDuck warehouse</span></button>
           <button id="tryRealBtnLanding" class="cta-btn cta-secondary" type="button">
-            <span class="ui-glyph" aria-hidden="true">↔</span>Ready to connect your real account?
+            <span class="ui-glyph" aria-hidden="true">↔</span><span data-i18n="landing.ctaReal">Ready to connect your real account?</span>
           </button>
         </div>
-        <p class="hero-foot">Already comfortable with MCP? Jump straight in below.</p>
+        <p class="hero-foot" data-i18n="landing.foot">Already comfortable with MCP? Jump straight in below.</p>
       </div>
     </div>
 
     <!-- "Settings" overlay -->
-    <div id="settingsOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Settings">
+    <div id="settingsOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Settings" data-i18n-attr="aria-label:settings.title">
       <div class="overlay-panel settings-panel">
         <div class="overlay-head">
-          <h2>Settings</h2>
-          <button id="settingsClose" class="ghost-btn" type="button">✕ Close</button>
+          <h2 data-i18n="settings.title">Settings</h2>
+          <button id="settingsClose" class="ghost-btn" type="button" data-i18n="common.close">✕ Close</button>
         </div>
-        <p class="overlay-note">Tune how the simulator behaves. More controls can live here as the demo grows.</p>
+        <p class="overlay-note" data-i18n="settings.note">Tune how the simulator behaves. More controls can live here as the demo grows.</p>
         <div class="settings-stack">
           <section class="settings-section" aria-labelledby="settingsPlaybackTitle">
             <div class="settings-row-head">
               <div>
-                <h3 id="settingsPlaybackTitle">Playback</h3>
-                <p>Choose how fast the pre-recorded MCP transcript plays back.</p>
+                <h3 id="settingsPlaybackTitle" data-i18n="settings.playback">Playback</h3>
+                <p data-i18n="settings.playbackBody">Choose how fast the pre-recorded MCP transcript plays back.</p>
               </div>
-              <span class="settings-value">Speed: <strong id="speedModeLabel">xfast</strong></span>
+              <span class="settings-value"><span data-i18n="settings.speed">Speed:</span> <strong id="speedModeLabel">xfast</strong></span>
             </div>
-            <div class="settings-options" role="radiogroup" aria-label="Playback speed">
+            <div class="settings-options" role="radiogroup" aria-label="Playback speed" data-i18n-attr="aria-label:settings.speedAria">
               <button class="settings-option speed-option" type="button" role="radio" aria-checked="true" data-speed="xfast">
-                <span class="settings-option-title">xfast</span>
-                <span class="settings-option-copy">Current simulator pace — fast enough for demos and walkthroughs.</span>
+                <span class="settings-option-title" data-i18n="speed.xfast">xfast</span>
+                <span class="settings-option-copy" data-i18n="speed.xfastCopy">Current simulator pace — fast enough for demos and walkthroughs.</span>
               </button>
               <button class="settings-option speed-option" type="button" role="radio" aria-checked="false" data-speed="realistic">
-                <span class="settings-option-title">realistic</span>
-                <span class="settings-option-copy">Measured API/Ace timing — API calls take seconds, Ace can take 30–50s. Click the transcript to fast-forward.</span>
+                <span class="settings-option-title" data-i18n="speed.realistic">realistic</span>
+                <span class="settings-option-copy" data-i18n="speed.realisticCopy">Measured API/Ace timing — API calls take seconds, Ace can take 30–50s. Click the transcript to fast-forward.</span>
               </button>
             </div>
           </section>
           <section class="settings-section" aria-labelledby="settingsProgressTitle">
             <div class="settings-row-head">
               <div>
-                <h3 id="settingsProgressTitle">Fleet progress game <span class="settings-flag">experimental</span></h3>
-                <p>Off by default, so the simulator stays a simulator. Turn it on and the scenarios you explore grow a simulated fleet toward the full 50 vehicles — checkmarks and points included. Stored only in this browser.</p>
+                <h3 id="settingsProgressTitle" data-i18n="settings.game">Fleet progress game <span class="settings-flag">experimental</span></h3>
+                <p data-i18n="settings.gameBody">Off by default, so the simulator stays a simulator. Turn it on and the scenarios you explore grow a simulated fleet toward the full 50 vehicles — checkmarks and points included. Stored only in this browser.</p>
               </div>
               <span class="settings-value" id="progressSummary">off</span>
             </div>
-            <div class="settings-options" role="radiogroup" aria-label="Fleet progress game">
+            <div class="settings-options" role="radiogroup" aria-label="Fleet progress game" data-i18n-attr="aria-label:settings.gameAria">
               <button class="settings-option game-option" type="button" role="radio" aria-checked="true" data-game="off">
-                <span class="settings-option-title">off</span>
-                <span class="settings-option-copy">Plain simulator — no scores, no checkmarks.</span>
+                <span class="settings-option-title" data-i18n="game.off">off</span>
+                <span class="settings-option-copy" data-i18n="game.offCopy">Plain simulator — no scores, no checkmarks.</span>
               </button>
               <button class="settings-option game-option" type="button" role="radio" aria-checked="false" data-game="on">
-                <span class="settings-option-title">on</span>
-                <span class="settings-option-copy">Grow your fleet as you explore scenarios.</span>
+                <span class="settings-option-title" data-i18n="game.on">on</span>
+                <span class="settings-option-copy" data-i18n="game.onCopy">Grow your fleet as you explore scenarios.</span>
               </button>
             </div>
-            <button id="progressResetBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↺</span>Reset progress</button>
+            <button id="progressResetBtn" class="ghost-btn" type="button"><span class="ui-glyph" aria-hidden="true">↺</span><span data-i18n="settings.reset">Reset progress</span></button>
           </section>
         </div>
       </div>
     </div>
 
     <!-- "About this site" overlay -->
-    <div id="aboutOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="About this site">
+    <div id="aboutOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="About this site" data-i18n-attr="aria-label:about.title">
       <div class="overlay-panel">
         <div class="overlay-head">
-          <h2>About this site</h2>
-          <button id="aboutClose" class="ghost-btn" type="button">✕ Close</button>
+          <h2 data-i18n="about.title">About this site</h2>
+          <button id="aboutClose" class="ghost-btn" type="button" data-i18n="common.close">✕ Close</button>
         </div>
-        <p class="overlay-note">
+        <p class="overlay-note" data-i18n="about.built">
           Built by <strong>Felipe Hoffa</strong> —
           <a href="https://www.linkedin.com/in/hoffa" target="_blank" rel="noopener">LinkedIn</a>.
         </p>
@@ -223,29 +257,30 @@
             id="aboutVideoFrame"
             data-src="https://www.youtube-nocookie.com/embed/7uMXqWfxlC0"
             title="Geotab MCP connector demo video"
+            data-i18n-attr="title:about.videoTitle"
             loading="lazy"
             allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen
           ></iframe>
         </div>
-        <p class="overlay-note">
+        <p class="overlay-note" data-i18n="about.video">
           🎥 See how the official Geotab MCP connector lets AI assistants investigate
           fleet issues, automate alerts, and coordinate actions across tools like Gmail and calendars —
           <a href="https://youtube.com/watch?v=7uMXqWfxlC0" target="_blank" rel="noopener">open on YouTube</a>.
         </p>
-        <p class="overlay-note">
+        <p class="overlay-note" data-i18n="about.learn">
           Learn more about the real connector on the
           <a href="https://www.geotab.com/geotab-mcp-connector/" target="_blank" rel="noopener"
             >Geotab MCP Connector</a
           >
           landing page.
         </p>
-        <p class="overlay-note">
+        <p class="overlay-note" data-i18n="about.mcp">
           New to MCP? The <strong>Model Context Protocol</strong> is the open standard that lets AI
           assistants call external tools like MyGeotab — see
           <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">modelcontextprotocol.io</a>.
         </p>
-        <p class="overlay-note">
+        <p class="overlay-note" data-i18n="about.bug">
           Found a bug, or want to see another scenario? Open a
           <a href="https://github.com/fhoffa/geotab-mcp-simulator/issues" target="_blank" rel="noopener"
             >GitHub issue</a
@@ -255,16 +290,16 @@
     </div>
 
     <!-- "Connect your real account" overlay -->
-    <div id="tryRealOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Connect your real Geotab account">
+    <div id="tryRealOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Connect your real Geotab account" data-i18n-attr="aria-label:real.title">
       <div class="overlay-panel">
         <div class="overlay-head">
-          <h2>Connect your real Geotab account</h2>
-          <button id="tryRealClose" class="ghost-btn" type="button">✕ Close</button>
+          <h2 data-i18n="real.title">Connect your real Geotab account</h2>
+          <button id="tryRealClose" class="ghost-btn" type="button" data-i18n="common.close">✕ Close</button>
         </div>
-        <p class="overlay-note">Three things to do before an AI assistant touches your real fleet data.</p>
+        <p class="overlay-note" data-i18n="real.note">Three things to do before an AI assistant touches your real fleet data.</p>
 
         <ol class="steps-list">
-          <li>
+          <li data-i18n="real.s1">
             <strong>Get access to a MyGeotab database.</strong> The fastest way to start is a free
             demo database — register at
             <a href="https://my.geotab.com/registration.html" target="_blank" rel="noopener">my.geotab.com/registration.html</a>
@@ -272,35 +307,35 @@
             vehicles). For production access, ask your Geotab account rep or fleet admin.
           </li>
           <li>
-            <strong>Connect the Geotab MCP connector to your assistant of choice.</strong> Geotab
+            <span data-i18n="real.s2"><strong>Connect the Geotab MCP connector to your assistant of choice.</strong> Geotab
             publishes an official MCP (Model Context Protocol) server. The quickest way in: it's listed
             in the Claude and ChatGPT directories, with more on the way. Microsoft Copilot and any other
-            MCP-capable client can add the same server by its URL.
+            MCP-capable client can add the same server by its URL.</span>
             <div class="setup-box">
-              <p class="setup-docs">
+              <p class="setup-docs" data-i18n="real.docs">
                 Start with Geotab's official walkthrough:
                 <a href="https://support.geotab.com/help/mygeotab/access-and-administration/mygeotab-mcp/getting-started-with-mygeotab-mcp" target="_blank" rel="noopener">Getting started with MyGeotab MCP</a>.
                 The quick version is below.
               </p>
-              <p class="setup-heading">Option A: find it in your assistant's directory</p>
+              <p class="setup-heading" data-i18n="real.optA">Option A: find it in your assistant's directory</p>
               <ul class="setup-steps">
-                <li><strong>Claude:</strong> open the
+                <li data-i18n="real.optAClaude"><strong>Claude:</strong> open the
                   <a href="https://claude.ai/directory/mygeotab-mcp-prod?open_in_browser=1" target="_blank" rel="noopener">MyGeotab MCP listing</a>
                   (or <strong>Directory</strong> → search "Geotab"), then click <strong>Connect to Claude</strong>.
                   <a href="https://www.linkedin.com/feed/update/urn:li:activity:7498420900682153984/" target="_blank" rel="noopener">Watch the walkthrough</a>.</li>
-                <li><strong>ChatGPT:</strong> open <strong>Plugins</strong>, search "Geotab", pick
+                <li data-i18n="real.optAChatgpt"><strong>ChatGPT:</strong> open <strong>Plugins</strong>, search "Geotab", pick
                   <strong>MyGeotab MCP</strong>, then tap <strong>Install plugin</strong>.
                   <a href="https://www.linkedin.com/feed/update/urn:li:activity:7508970838931435520/" target="_blank" rel="noopener">Watch the walkthrough</a>
                   (all from a phone).</li>
-                <li>Either way, you sign in to MyGeotab once and approve the connection; your existing
+                <li data-i18n="real.optAEither">Either way, you sign in to MyGeotab once and approve the connection; your existing
                   permissions carry straight over.</li>
               </ul>
-              <p class="setup-heading">Option B: add it by URL in any other client</p>
-              <p class="setup-sub">For example, Claude's custom connector:</p>
+              <p class="setup-heading" data-i18n="real.optB">Option B: add it by URL in any other client</p>
+              <p class="setup-sub" data-i18n="real.optBSub">For example, Claude's custom connector:</p>
               <ol class="setup-steps">
-                <li>Go to <strong>claude.ai → Settings → Connectors</strong>, then click
+                <li data-i18n="real.optB1">Go to <strong>claude.ai → Settings → Connectors</strong>, then click
                   <strong>Add custom connector</strong>.</li>
-                <li>
+                <li data-i18n="real.optB2">
                   Fill in a <strong>name</strong> (e.g. "Geotab") and the <strong>remote MCP server
                   URL</strong>: <code>https://mcp.geotab.com/mygeotab</code>. Leave the OAuth fields
                   blank — Geotab's server handles that for you.
@@ -310,18 +345,19 @@
                     src="assets/mcp-claude-add-connector.png"
                     alt="Claude's &quot;Add custom connector&quot; dialog, pre-filled with the name Geotab and the URL https://mcp.geotab.com/mygeotab"
                     class="setup-shot"
+                    data-i18n-attr="alt:real.shotAlt"
                     loading="lazy"
                   />
                 </li>
-                <li>Click <strong>Add</strong> — Claude redirects you to a MyGeotab sign-in screen.
+                <li data-i18n="real.optB4">Click <strong>Add</strong> — Claude redirects you to a MyGeotab sign-in screen.
                   Log in with your MyGeotab username and password and approve the connection.</li>
-                <li>
+                <li data-i18n="real.optB5">
                   Back in the client, the connector now shows as <strong>Connected</strong>. Turn it on for
                   a chat from the tools/connectors picker (the connector icon below the
                   message box), then ask it anything you tried in this simulator.
                 </li>
               </ol>
-              <p class="setup-foot">
+              <p class="setup-foot" data-i18n="real.setupFoot">
                 Microsoft Copilot and other MCP-capable clients follow the same pattern — add a
                 custom/remote MCP connector, point it at
                 <code>https://mcp.geotab.com/mygeotab</code>, and sign in with your MyGeotab
@@ -330,25 +366,25 @@
             </div>
           </li>
           <li>
-            <strong>Know what you're exposing.</strong>
+            <strong data-i18n="real.s3">Know what you're exposing.</strong>
             <div class="pii-box">
-              <p>
+              <p data-i18n="real.piiLead">
                 <strong>Before connecting a production database:</strong> the connector inherits your
                 MyGeotab permissions, so the assistant can see anything you can see — including personal
                 data (driver names, employee numbers, emails, precise location history).
               </p>
               <ul>
-                <li>Review your AI provider's DPA and your GDPR / data-minimization obligations.</li>
-                <li>
+                <li data-i18n="real.pii1">Review your AI provider's DPA and your GDPR / data-minimization obligations.</li>
+                <li data-i18n="real.pii2">
                   Instruct the assistant to work at the vehicle/asset level — ask it to avoid driver
                   names, emails, and phone numbers in its answers.
                 </li>
-                <li>
+                <li data-i18n="real.pii3">
                   Demo databases (like the one above) are anonymized — "Demo - 01", no real driver data
                   — so they're safe to explore freely.
                 </li>
               </ul>
-              <p class="pii-foot">
+              <p class="pii-foot" data-i18n="real.piiFoot">
                 Not legal advice — check with your own counsel/compliance team before connecting
                 production data.
               </p>
@@ -360,7 +396,17 @@
 
     <script src="data/sample-data.js?v=36e2681"></script>
     <script src="data/conversations.js?v=551942d"></script>
-    <script src="app.js?v=f25749d"></script>
+    <script id="i18nLoader" data-es-419-src="data/i18n/es-419.js?v=31bb7b9" data-es-es-src="data/i18n/es-ES.js?v=3249323">
+      // Spanish overlays load only for Spanish visitors. document.write keeps them
+      // parser-blocking, so they run before app.js (an injected script wouldn't be
+      // ordered). es-ES is a sparse layer on top of es-419.
+      (function () {
+        var me = document.currentScript, lang = window.SIM_LANG;
+        var srcs = lang === "es-419" ? ["data-es-419-src"] : lang === "es-ES" ? ["data-es-419-src", "data-es-es-src"] : [];
+        srcs.forEach(function (a) { document.write('<script src="' + me.getAttribute(a) + '"><\/script>'); });
+      })();
+    </script>
+    <script src="app.js?v=26c9860"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6", "spa": true}'></script>
     <!-- End Cloudflare Web Analytics -->

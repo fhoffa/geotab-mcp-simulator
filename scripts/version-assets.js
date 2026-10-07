@@ -13,6 +13,10 @@ const ASSETS = [
   "data/sample-data.js",
   "data/conversations.js",
   "app.js",
+  // referenced as data-es-419-src / data-es-es-src on the i18n loader (the
+  // regex's src= alternative matches the attribute's tail)
+  "data/i18n/es-419.js",
+  "data/i18n/es-ES.js",
   "assets/geotab-mark.png",
   "assets/og-image.png",
 ];

@@ -102,6 +102,23 @@ body {
 .ghost-btn:hover { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
 .settings-trigger { font-weight: 650; }
 
+/* Language picker: a native <select> dressed as a ghost pill. */
+.lang-select {
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 6px 26px 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23667085' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.lang-select:hover { background-color: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+/* Hidden until app.js applies the Spanish overlay (head script sets the class). */
+html.i18n-pending body { visibility: hidden; }
+
 .ui-glyph {
   display: inline-grid;
   place-items: center;
@@ -995,6 +1012,8 @@ body {
 
 /* ------------------------------------------------------------------- hero */
 .landing-panel { width: min(680px, 100%); }
+.hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.hero-top .lang-select { margin-top: -4px; flex: 0 0 auto; }
 .hero-eyebrow {
   font-size: 10.5px;
   font-weight: 700;
