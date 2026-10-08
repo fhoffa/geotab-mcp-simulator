@@ -1153,12 +1153,21 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-customers": {
-    h: "3278ea51",
+    h: "51b3fb5a",
     events: [
       null, null, null, null, null, null,
       { summary: "distancia media 5,72 km → 3,16 km con el mejor hub nuevo" },
       null,
-      { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36,02°N, 115,08°O), reduce la distancia media que recorre un pedido de 5,72 km a 3,16 km, cerca de un 45% menos.**\n\nEl motivo se ve en la lista: tus tres cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2,5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos (ingresos y comercios), a unos 5 a 6 km. Que tres objetivos independientes coincidan es un argumento más fuerte que cualquiera por separado.\n\nSalvedades: las distancias son en línea recta, así que haz la comprobación de tiempo de conducción del ganador; doce cuentas son una muestra pequeña, y una ejecución real usaría todas; y los pedidos miden lo que has vendido, no lo que podrías vender." },
+      { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36,02°N, 115,08°O), reduce la distancia media que recorre un pedido de 5,72 km a 3,16 km, cerca de un 45% menos.**\n\nEl motivo se ve en la lista: tus tres cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2,5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos (ingresos y comercios), a unos 5 a 6 km. Que tres objetivos independientes coincidan es un argumento más fuerte que cualquiera por separado.\n\nAquí es donde ya vendes, así que es el lugar correcto para atender mejor a tus clientes. Para ver dónde podrías vender más, añadiría los datos demográficos. Una ejecución real usaría además todas tus cuentas, y la comprobación de tiempo de conducción viene después." },
+    ],
+  },
+  "carto-potential": {
+    h: "a3a94a86",
+    events: [
+      null,
+      { summary: "201.147 de 515.898 residentes de mayores ingresos (39%) están a más de 5 km de cualquier cliente" },
+      null,
+      { text: "**Los dos objetivos señalan hubs distintos, y ambos sirven.**\n- **Atender a los clientes que ya tienes:** Green Valley, en Henderson, acorta un 45% el viaje medio de un pedido.\n- **Abrir terreno nuevo:** el suroeste del valle (36,03°N, 115,22°O) tiene unas 4 veces más residentes de mayores ingresos sin ningún cliente cerca (43.538 vs 10.987).\n\nEl 39% de los residentes de mayores ingresos del área vive a más de 5 km de cualquier cuenta, así que hay espacio para crecer. Muchas flotas usan el primer hub para mejorar el servicio ahora y el segundo como base para una campaña de ventas. Con tu lista completa de cuentas, esto se afina más." },
     ],
   },
   "carto-map": {

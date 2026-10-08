@@ -529,6 +529,13 @@ window.SAMPLE_DATA = {
     customers: {
       orders: 953, baselineKm: 5.72, bestKm: 3.16, reductionPct: 45,
       best: { h3: "8829868e8bfffff", lat: 36.0219, lon: -115.0845 },
+      // real query over the illustrative customers: higher-income residents (ACS tract income x Kontur residents)
+      // living more than 5 km from every customer = "white space"; the new-hub score is the white space within 8 km
+      potential: {
+        hiIncome: 515898, whiteSpace: 201147, whiteSpacePct: 39, radiusKm: 5,
+        best: { h3: "88298684b7fffff", lat: 36.0302, lon: -115.2202, score: 43538 },
+        atCustomerPick: 10987,
+      },
       list: [
         { name: "Paseo Verde Pharmacy Supply",   address: "2000 Paseo Verde Pkwy, Henderson, NV",     orders: 142, lat: 36.0181, lon: -115.0720, dHubKm: 8.1 },
         { name: "Horizon Ridge Dental Group",    address: "1500 W Horizon Ridge Pkwy, Henderson, NV", orders: 96,  lat: 36.0194, lon: -115.0532, dHubKm: 9.6 },

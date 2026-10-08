@@ -48,7 +48,8 @@ function bars(list, labelKey, valueKey) {
  * labels points from D.carto by their x/y. opts: layer (chip text), source
  * (what the map was drawn from), note (replaces the snapshot line), scaleWidth
  * (for a map not on the shared framing). */
-var Cu = (D.carto && D.carto.customers) || { list: [], best: {} };
+var Cu = (D.carto && D.carto.customers) || { list: [], best: {}, potential: { best: {} } };
+var P = Cu.potential || { best: {} };
 var X = (D.carto && D.carto.explore) || { trips: {} };
 var O = (D.carto && D.carto.objectives) || { income: {}, poi: {}, people: {} };
 var C = D.carto || { hubs: [], coverage: {}, sixthHub: { candidates: [] }, isoline: {} };
@@ -5889,7 +5890,64 @@ window.CONVERSATIONS = {
             Cu.baselineKm + " km to " + Cu.bestKm + " km, about " + Cu.reductionPct + "% less.**\n\n" +
             "The reason is clear in the list: your three Henderson accounts are 37% of orders and sit 6 to 10 km from the nearest hub, while the customers downtown and in Summerlin are already within about 2.5 km of one.\n\n" +
             "That is also the corner of the valley the public data pointed to (income and shops), within about 5 to 6 km. Three independent goals agreeing is a stronger case than any one of them.\n\n" +
-            "Caveats: distances are straight-line, so run the drive-time check on the winner; twelve accounts is a small sample, and a real run would use all of them; and orders measure what you sold, not what you could sell.",
+            "This is where you already sell, so it's the right place to serve customers better. To see where you could sell more, I'd add the demographics. A real run would also use all of your accounts, and the drive-time check comes next.",
+        },
+      ],
+      choices: [
+        { label: "🔍 Where could I sell more?", say: "That's where I sell today. Where could I sell more?", next: "carto-potential" },
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-potential": {
+      id: "carto-potential",
+      title: "CARTO · Where could I sell more?",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Orders show where you already sell. To find where you could sell more, I'll take the higher-income residents from the Census data and keep only those who live more than " +
+            P.radiusKm + " km from any of your current customers. That's your white space. Then I'll score each possible hub by how much of it lies within " + C.sixthHub.gapKm + " km.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH cust AS ( … ),   -- the 12 geocoded accounts\n" +
+            "cells AS (   -- the same cells as before, with hi_income = residents * share of households earning $100k+\n" +
+            "  SELECT h3, hi_income, pt, MIN(ST_DISTANCE(pt, cust.pt)) AS d_cust FROM … GROUP BY h3, hi_income, pt\n" +
+            ")\n" +
+            "-- for each candidate cell: SUM(hi_income) of cells within " + C.sixthHub.gapKm + " km that are more than " + P.radiusKm + " km from every customer\n" +
+            "SELECT h3, white_space FROM … ORDER BY white_space DESC LIMIT 3"
+          ),
+          summary: P.whiteSpace.toLocaleString("en-US") + " of " + P.hiIncome.toLocaleString("en-US") + " higher-income residents (" + P.whiteSpacePct + "%) are more than " + P.radiusKm + " km from any customer",
+          result:
+            "higher-income residents · " + P.hiIncome.toLocaleString("en-US") + "\n" +
+            "more than " + P.radiusKm + " km from any customer · " + P.whiteSpace.toLocaleString("en-US") + " (" + P.whiteSpacePct + "%)\n" +
+            "best cell for a new hub · " + P.best.h3 + " · " + P.best.lat.toFixed(4) + ", " + P.best.lon.toFixed(4) + " · " + P.best.score.toLocaleString("en-US") + "\n" +
+            "customers' pick (Green Valley) · " + Cu.best.h3 + " · " + P.atCustomerPick.toLocaleString("en-US"),
+        },
+        {
+          type: "chart",
+          title: "White-space higher-income residents within " + C.sixthHub.gapKm + " km of the hub",
+          bars: [
+            { label: "Customers' pick (Henderson)", value: P.atCustomerPick },
+            { label: "White-space pick (south-west)", value: P.best.score },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "**The two goals point to different hubs, and both are useful.**\n" +
+            "- **Serve the customers you have:** Green Valley in Henderson shortens the average order trip by " + Cu.reductionPct + "%.\n" +
+            "- **Open new ground:** the south-west side of the valley (" + P.best.lat.toFixed(2) + "°N, " + Math.abs(P.best.lon).toFixed(2) + "°W) has about " +
+            Math.round(P.best.score / P.atCustomerPick) + " times as many higher-income residents with no customer nearby (" + P.best.score.toLocaleString("en-US") + " vs " + P.atCustomerPick.toLocaleString("en-US") + ").\n\n" +
+            P.whiteSpacePct + "% of the higher-income residents in the area live more than " + P.radiusKm + " km from any account, so there is room to grow. " +
+            "Many fleets use the first hub to improve service now and the second as the base for a sales push. With your full account list, this gets sharper.",
         },
       ],
       choices: [
