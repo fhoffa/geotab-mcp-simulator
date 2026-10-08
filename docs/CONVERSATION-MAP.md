@@ -105,7 +105,7 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (104)
+## Nodes (105)
 
 | id | title | database | leads to |
 |---|---|---|---|
@@ -208,7 +208,8 @@ flowchart TD
 | `carto-reach` | CARTO · 15-minute reach per hub | — | `carto-site` |
 | `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-data`, `carto-caveats` |
 | `carto-explore` | CARTO · What can I do with my fleet? | demo_fh_vegas8 | `carto-fleet`, `carto-data`, `carto-trips`, `hub` |
-| `carto-trips` | CARTO · Use my own trips as the goal | demo_fh_vegas8 | `carto-data`, `carto-fleet`, `hub` |
+| `carto-trips` | CARTO · Use my own trips as the goal | demo_fh_vegas8 | `carto-customers`, `carto-data`, `carto-fleet`, `hub` |
+| `carto-customers` | CARTO · Use my Salesforce customers as the goal | demo_fh_vegas8 | `carto-map`, `carto-caveats`, `hub` |
 | `carto-data` | CARTO · Finding data to weight by | — | `carto-objective`, `hub` |
 | `carto-objective` | CARTO · Optimize for something other than residents | demo_fh_vegas8 | `carto-map`, `carto-trips`, `carto-caveats`, `hub` |
 | `carto-map` | CARTO · Put it on a map I can share | — | `carto-caveats`, `hub`, restart |

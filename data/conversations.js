@@ -48,6 +48,7 @@ function bars(list, labelKey, valueKey) {
  * labels points from D.carto by their x/y. opts: layer (chip text), source
  * (what the map was drawn from), note (replaces the snapshot line), scaleWidth
  * (for a map not on the shared framing). */
+var Cu = (D.carto && D.carto.customers) || { list: [], best: {} };
 var X = (D.carto && D.carto.explore) || { trips: {} };
 var O = (D.carto && D.carto.objectives) || { income: {}, poi: {}, people: {} };
 var C = D.carto || { hubs: [], coverage: {}, sixthHub: { candidates: [] }, isoline: {} };
@@ -5837,8 +5838,93 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "🧾 Pull my customers from Salesforce", say: "My customers are in Salesforce. Can you pull them and use those?", next: "carto-customers" },
         { label: "🎯 Try public data instead", say: "Okay, what public data could I weight it by?", next: "carto-data" },
         { label: "📍 Where is my fleet right now?", say: "Where is my fleet right now?", next: "carto-fleet" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-customers": {
+      id: "carto-customers",
+      title: "CARTO · Use my Salesforce customers as the goal",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text: "Your customers live in Salesforce. I'll pull each account's delivery address and how many orders it placed in the last 90 days.",
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "query",
+          args: {
+            soql:
+              "SELECT Account.Name, Account.ShippingStreet, Account.ShippingCity, Account.ShippingState, COUNT(Id) orders\n" +
+              "FROM Order WHERE EffectiveDate = LAST_N_DAYS:90\n" +
+              "GROUP BY Account.Name, Account.ShippingStreet, Account.ShippingCity, Account.ShippingState ORDER BY COUNT(Id) DESC",
+          },
+          summary: Cu.list.length + " accounts · " + Cu.orders + " orders in 90 days",
+          result: Cu.list.slice().sort(function (a, b) { return b.orders - a.orders; }).slice(0, 4).map(function (c) {
+            return c.name + " · " + c.address + " · " + c.orders;
+          }).join("\n") + "\n// … " + (Cu.list.length - 4) + " more",
+        },
+        {
+          type: "system",
+          text: "The Salesforce call and these customers are **illustrative**: made-up companies and order counts, standing in for your CRM. The geocoding and the site search below ran for real against CARTO.",
+        },
+        { type: "assistant", text: "Addresses are just text, so I'll turn them into coordinates in one call." },
+        {
+          type: "tool",
+          server: "carto",
+          name: "geocode",
+          args: { operation: "geocode", addresses: Cu.list.map(function (c) { return c.address; }), country: "US", limit: 1 },
+          summary: Cu.list.length + " of " + Cu.list.length + " matched · all at street level (confidence 1.0)",
+          result: Cu.list.slice(0, 3).map(function (c) {
+            return c.address + " → " + c.lat.toFixed(4) + ", " + c.lon.toFixed(4) + " · confidence 1";
+          }).join("\n") + "\n// … " + (Cu.list.length - 3) + " more, all confidence 1",
+        },
+        {
+          type: "assistant",
+          text:
+            "Now the same site search with orders as the goal. For every order I measure how far it is from the nearest hub, then try each populated cell as a new hub and keep the one that shortens the order-weighted distance the most.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ),   -- the five cells with 4+ parked vehicles\n" +
+            "cust AS (SELECT name, ST_GEOGPOINT(lon, lat) AS pt, orders FROM UNNEST([ … ]))   -- the geocoded accounts\n" +
+            "-- baseline: SUM(orders * distance_to_nearest_hub) / SUM(orders)\n" +
+            "-- for each candidate cell: the same, with LEAST(distance_to_nearest_hub, distance_to_candidate)\n" +
+            "SELECT … ORDER BY new_avg_km LIMIT 3"
+          ),
+          summary: "average distance " + Cu.baselineKm + " km → " + Cu.bestKm + " km with the best new hub",
+          result:
+            "baseline · " + Cu.baselineKm + " km (order-weighted, " + Cu.orders + " orders)\n" +
+            "best new hub · " + Cu.best.h3 + " · " + Cu.best.lat.toFixed(4) + ", " + Cu.best.lon.toFixed(4) + " · " + Cu.bestKm + " km\n" +
+            "// straight-line distance, not drive time",
+        },
+        {
+          type: "chart",
+          title: "Distance to the nearest hub today (km)",
+          bars: Cu.list.slice().sort(function (a, b) { return b.dHubKm - a.dHubKm; }).slice(0, 6).map(function (c) { return { label: c.name, value: c.dHubKm }; }),
+        },
+        {
+          type: "assistant",
+          text:
+            "**A new hub near Green Valley in Henderson (" + Cu.best.lat.toFixed(2) + "°N, " + Math.abs(Cu.best.lon).toFixed(2) + "°W) cuts the average distance an order travels from " +
+            Cu.baselineKm + " km to " + Cu.bestKm + " km, about " + Cu.reductionPct + "% less.**\n\n" +
+            "The reason is clear in the list: your three Henderson accounts are 37% of orders and sit 6 to 10 km from the nearest hub, while the customers downtown and in Summerlin are already within about 2.5 km of one.\n\n" +
+            "That is also the corner of the valley the public data pointed to (income and shops), within about 5 to 6 km. Three independent goals agreeing is a stronger case than any one of them.\n\n" +
+            "Caveats: distances are straight-line, so run the drive-time check on the winner; twelve accounts is a small sample, and a real run would use all of them; and orders measure what you sold, not what you could sell.",
+        },
+      ],
+      choices: [
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },

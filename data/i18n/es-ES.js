@@ -1152,6 +1152,15 @@ window.SIM_I18N["es-ES"] = {
       { text: "Esto es lo que tienes. Una conexión de CARTO que puede ejecutar SQL espacial por sí sola, un servicio de tiempos de conducción con casi toda su cuota anual disponible (las llamadas de ubicación se miden; las usaré con moderación) y un catálogo público de unos 151 datasets demográficos que puedes consultar sin pagar, además de los premium si los compras.\n\nCombinado con Geotab, tres cosas que la gente suele probar primero:\n- **¿Dónde están mis vehículos y dónde se agrupan?** Agrupar los vehículos aparcados en hubs y ver qué hay alrededor.\n- **¿Dónde ayudaría más un hub nuevo?** Alcance por tiempo de conducción y luego una búsqueda de sitio, ponderada por lo que te importe.\n- **¿Pueden mis propios viajes decírmelo?** Usar dónde terminan realmente los viajes en vez de datos públicos." },
     ],
   },
+  "carto-customers": {
+    h: "3278ea51",
+    events: [
+      null, null, null, null, null, null,
+      { summary: "distancia media 5,72 km → 3,16 km con el mejor hub nuevo" },
+      null,
+      { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36,02°N, 115,08°O), reduce la distancia media que recorre un pedido de 5,72 km a 3,16 km, cerca de un 45% menos.**\n\nEl motivo se ve en la lista: tus tres cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2,5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos (ingresos y comercios), a unos 5 a 6 km. Que tres objetivos independientes coincidan es un argumento más fuerte que cualquiera por separado.\n\nSalvedades: las distancias son en línea recta, así que haz la comprobación de tiempo de conducción del ganador; doce cuentas son una muestra pequeña, y una ejecución real usaría todas; y los pedidos miden lo que has vendido, no lo que podrías vender." },
+    ],
+  },
   "carto-map": {
     h: "5eb14db9",
     events: [

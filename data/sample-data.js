@@ -520,6 +520,30 @@ window.SAMPLE_DATA = {
     },
     /* REAL, 8 Oct 2026: what the two servers report about themselves (discovery
      * steps) and what this demo fleet's trips look like. */
+    /* ILLUSTRATIVE customers (fictional companies and order counts, standing in for a
+     * Salesforce query), run through REAL calls on 8 Oct 2026: CARTO geocode on the
+     * street addresses (all matched at confidence 1.0) and a CARTO query that finds
+     * the new hub cell minimising the order-weighted straight-line distance from
+     * customers to their nearest hub. dHubKm = distance to the nearest of today's
+     * five hubs. */
+    customers: {
+      orders: 953, baselineKm: 5.72, bestKm: 3.16, reductionPct: 45,
+      best: { h3: "8829868e8bfffff", lat: 36.0219, lon: -115.0845 },
+      list: [
+        { name: "Paseo Verde Pharmacy Supply",   address: "2000 Paseo Verde Pkwy, Henderson, NV",     orders: 142, lat: 36.0181, lon: -115.0720, dHubKm: 8.1 },
+        { name: "Horizon Ridge Dental Group",    address: "1500 W Horizon Ridge Pkwy, Henderson, NV", orders: 96,  lat: 36.0194, lon: -115.0532, dHubKm: 9.6 },
+        { name: "Green Valley Hardware Co.",     address: "1301 N Green Valley Pkwy, Henderson, NV",  orders: 118, lat: 36.0284, lon: -115.0876, dHubKm: 6.4 },
+        { name: "Boulder Highway Auto Parts",    address: "4600 Boulder Hwy, Las Vegas, NV",          orders: 74,  lat: 36.1212, lon: -115.0742, dHubKm: 9.1 },
+        { name: "Eastern Ave Fresh Market",      address: "8905 S Eastern Ave, Las Vegas, NV",        orders: 131, lat: 36.0274, lon: -115.1186, dHubKm: 4.3 },
+        { name: "Sahara Office Interiors",       address: "2300 W Sahara Ave, Las Vegas, NV",         orders: 62,  lat: 36.1454, lon: -115.1743, dHubKm: 2.2 },
+        { name: "Summerlin Festival Catering",   address: "1980 Festival Plaza Dr, Las Vegas, NV",    orders: 88,  lat: 36.1509, lon: -115.3340, dHubKm: 2.4 },
+        { name: "Flamingo West Clinic",          address: "9500 W Flamingo Rd, Las Vegas, NV",        orders: 54,  lat: 36.1165, lon: -115.2993, dHubKm: 3.4 },
+        { name: "Fort Apache Fitness",           address: "7075 S Fort Apache Rd, Las Vegas, NV",     orders: 47,  lat: 36.0590, lon: -115.2977, dHubKm: 9.7 },
+        { name: "Tenaya Way Print Shop",         address: "3200 N Tenaya Way, Las Vegas, NV",         orders: 39,  lat: 36.2183, lon: -115.2512, dHubKm: 7.5 },
+        { name: "Fourth Street Coffee Roasters", address: "300 S 4th St, Las Vegas, NV",              orders: 58,  lat: 36.1669, lon: -115.1440, dHubKm: 1.7 },
+        { name: "Decatur Garden Center",         address: "6600 N Decatur Blvd, Las Vegas, NV",       orders: 44,  lat: 36.2804, lon: -115.2064, dHubKm: 0.6 },
+      ],
+    },
     explore: {
       quota: 15000, quotaUsed: 9, quotaLeft: 14991,   // calculate_isolines capabilities
       publicDemographics: 151, premiumUsa: 172,       // Data Observatory, US

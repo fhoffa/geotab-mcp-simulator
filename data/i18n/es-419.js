@@ -2443,7 +2443,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-trips": {
-    h: "a91a533f",
+    h: "ed86f020",
     events: [
       /*0 assistant*/ { text: "Dónde terminan tus propios viajes es la mejor señal de demanda que tienes. Los viajes son de alto volumen, así que primero miro una ventana corta." },
       /*1 tool*/ { summary: "534 viajes en 6 horas · cada uno con su punto de parada" },
@@ -2453,10 +2453,34 @@ window.SIM_I18N["es-419"] = {
       /*5 assistant*/ { text: "**Esta flota demo no puede responder eso.** Los 534 puntos de parada caen en solo 6 lugares, los cinco hubs y uno más, y no hay sitios de clientes guardados como zonas. Ponderar por viajes solo te devolvería los hubs.\n\nCon una flota real la misma pregunta sí funciona, porque los viajes terminan en clientes. Tus opciones, de menos a más trabajo:\n- **Zonas que ya tienes.** Si los sitios de clientes están guardados como zonas en MyGeotab, léelas y pondera por visitas.\n- **Una lista de direcciones de clientes.** CARTO las convierte en puntos y ponderas por pedidos. Revisa primero la confianza de la coincidencia: la dirección completa coincidió exactamente (1.0), pero los nombres de lugar sacaron solo 0.31 a 0.54, y Allegiant Stadium apareció cerca del centro, que no es donde está. Usa direcciones de calle y descarta o revisa las coincidencias de baja confianza.\n- **Más historial de viajes.** Unas semanas de puntos de parada, agrupados en hexágonos, muestran dónde está la demanda real.\n\nEn todos los casos reemplaza el peso en la misma búsqueda de sitio, así que el resto de los pasos no cambia." },
     ],
     choices: [
+      { label: "🧾 Traer mis clientes desde Salesforce",
+        say: "Mis clientes están en Salesforce. ¿Puedes traerlos y usar esos?" },
       { label: "🎯 Probar con datos públicos",
         say: "Está bien, ¿con qué datos públicos podría ponderarlo?" },
       { label: "📍 ¿Dónde está mi flota ahora mismo?",
         say: "¿Dónde está mi flota ahora mismo?" },
+      { label: "↩︎ Preguntar otra cosa",
+        say: "Muéstrame otra cosa." },
+    ],
+  },
+  "carto-customers": {
+    h: "3278ea51",
+    events: [
+      /*0 assistant*/ { text: "Tus clientes viven en Salesforce. Traeré la dirección de entrega de cada cuenta y cuántos pedidos hizo en los últimos 90 días." },
+      /*1 tool*/ { summary: "12 cuentas · 953 pedidos en 90 días" },
+      /*2 system*/ { text: "La llamada a Salesforce y estos clientes son **ilustrativos**: empresas y cantidades de pedidos inventadas, en lugar de tu CRM. La geocodificación y la búsqueda de sitio de abajo sí se ejecutaron de verdad en CARTO." },
+      /*3 assistant*/ { text: "Las direcciones son solo texto, así que las convierto en coordenadas en una sola llamada." },
+      /*4 tool*/ { summary: "12 de 12 con coincidencia · todas a nivel de calle (confianza 1.0)" },
+      /*5 assistant*/ { text: "Ahora la misma búsqueda de sitio con los pedidos como objetivo. Para cada pedido mido qué tan lejos está del hub más cercano, luego pruebo cada celda poblada como hub nuevo y me quedo con la que más acorta la distancia ponderada por pedidos." },
+      /*6 tool*/ { summary: "distancia promedio 5.72 km → 3.16 km con el mejor hub nuevo" },
+      /*7 chart*/ { title: "Distancia al hub más cercano hoy (km)" },
+      /*8 assistant*/ { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36.02°N, 115.08°O), reduce la distancia promedio que recorre un pedido de 5.72 km a 3.16 km, cerca de un 45% menos.**\n\nEl motivo se ve en la lista: tus tres cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2.5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos (ingresos y comercios), a unos 5 a 6 km. Que tres objetivos independientes coincidan es un argumento más fuerte que cualquiera por separado.\n\nSalvedades: las distancias son en línea recta, así que haz la revisión de tiempo de manejo del ganador; doce cuentas son una muestra pequeña, y una corrida real usaría todas; y los pedidos miden lo que vendiste, no lo que podrías vender." },
+    ],
+    choices: [
+      { label: "🗺️ Ponerlo en un mapa que pueda compartir",
+        say: "Ponlo en un mapa que pueda compartir." },
+      { label: "🧐 ¿Qué debería verificar?",
+        say: "¿Qué debería verificar antes de actuar con esto?" },
       { label: "↩︎ Preguntar otra cosa",
         say: "Muéstrame otra cosa." },
     ],
