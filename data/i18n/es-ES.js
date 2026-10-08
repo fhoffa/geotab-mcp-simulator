@@ -42,7 +42,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "hub": {
-    h: "d48b31dd",
+    h: "11611b5a",
     choices: [
       { say: "Dame mi revisión semanal de la flota de los últimos 7 días: averías, ralentí y conducción brusca, infracciones de HOS, pendientes de DVIR y actividad de viajes. Que sea un resumen corto sobre el que pueda actuar." },
       null,
@@ -69,6 +69,7 @@ window.SIM_I18N["es-ES"] = {
       { say: "Empaqueta mi revisión semanal de la flota en una skill reutilizable para que yo, y cualquiera de mi equipo, pueda ejecutar exactamente la misma revisión con solo pedirla." },
       { say: "Tengo varias tareas de la flota pendientes: crear una geocerca para el depósito, una alerta de ralentí, borrar las averías de una furgoneta que ya pasó por servicio, agrupar mis vehículos de Valencia y enviar las alertas a un responsable." },
       { label: "🧑‍🏫 Redactar notas de coaching para un responsable", say: "Identifica a los conductores que necesitan coaching y redacta un resumen que pueda enviar a su responsable." },
+      null,
       null,
       null,
       null,
@@ -1040,7 +1041,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-fleet": {
-    h: "fd66bced",
+    h: "6fa38ebf",
     events: [
       null,
       null,
@@ -1105,7 +1106,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-site": {
-    h: "13345b34",
+    h: "bd0d7b3f",
     events: [
       { text: "Revisar los tiempos de conducción de cada punto posible tomaría cientos de llamadas, así que lo hago en dos pasos. Primero, una preselección rápida por distancia en línea recta: considero sin cobertura un vecindario si está a más de 8 km del hub más cercano, y califico cada punto posible según cuántos residentes sin cobertura viven a menos de 8 km. Luego, una revisión real de tiempo de conducción para el ganador." },
       null,
@@ -1121,8 +1122,62 @@ window.SIM_I18N["es-ES"] = {
       { text: "**La mejor zona está justo al este de Centro, alrededor de 36,17°N, 115,06°O.** Un hub ahí pondría a **181k personas más** a menos de 15 minutos en coche, llevando la cobertura del 80% al 88,5%.\n\nLos 225k y los 181k miden cosas distintas. 225k son personas a más de 8 km en línea recta de cualquier hub que viven a menos de 8 km del sitio. 181k son personas dentro de la nueva área de 15 minutos en coche que no están ya dentro de una de las cinco existentes. (Las dos medidas tampoco coinciden hoy: 8 km en línea recta desde un hub cubren el 68%; las áreas de 15 minutos en coche, cerca del 80%.)" },
     ],
   },
+  "carto-data": {
+    h: "a93322ae",
+    events: [
+      null, null, null, null, null, null, null, null, null,
+      { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de secciones que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y comprueba la unión antes de depender de ella." },
+    ],
+  },
+  "carto-objective": {
+    h: "72da8369",
+    events: [
+      null,
+      null,
+      { summary: "Ganador de mayores ingresos · área de 15 min en coche (GeoJSON)" },
+      null,
+      { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36,17°N, 115,06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36,02°N, 115,02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nElegir por residentes conservaría solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios, mientras que las opciones por ingresos y por comercios conservan cada una el 92% de la otra.\n\nLa brecha también cambia: el 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sección censal, así que describe la zona y no a las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito." },
+    ],
+  },
+  "carto-explore": {
+    h: "c4d8376c",
+    events: [
+      null,
+      null,
+      { summary: "áreas de conducción y rutas activas · quedan 14.991 de 15.000 llamadas del servicio de ubicación" },
+      null,
+      null,
+      { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de conducción con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCombinado con Geotab, la gente suele empezar por una de tres cosas: dónde está la flota y dónde se agrupa, dónde ayudaría más un hub nuevo o si sus propios viajes pueden responderlo." },
+    ],
+  },
+  "carto-customers": {
+    h: "f6ec834e",
+    events: [
+      null, null, null, null, null, null,
+      { summary: "distancia media 5,72 km → 3,16 km con el mejor hub nuevo" },
+      null,
+      { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36,02°N, 115,08°O), reduce la distancia media que recorre un pedido de 5,72 km a 3,16 km, cerca de un 45% menos.** El mapa muestra por qué: tus cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2,5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos, así que tres objetivos independientes coinciden. Pero aquí es donde ya vendes. Para ver dónde podrías vender más, añadiría los datos demográficos." },
+    ],
+  },
+  "carto-potential": {
+    h: "96985ad7",
+    events: [
+      null,
+      { summary: "201.147 de 515.898 residentes de mayores ingresos (39%) están a más de 5 km de cualquier cliente" },
+      null,
+      null,
+      { text: "**Dos hubs distintos, y ambos sirven.** Green Valley, en Henderson, atiende a los clientes que ya tienes y acorta un 45% el viaje medio de un pedido. El suroeste del valle (36,03°N, 115,22°O) tiene unas 4 veces más residentes de mayores ingresos sin ningún cliente cerca (43.538 vs 10.987), así que ahí es donde crecerías.\n\nEl 39% de los residentes de mayores ingresos del área vive a más de 5 km de cualquier cuenta, así que hay espacio. Muchas flotas usan el primer hub para atender ahora y el segundo como base para una campaña de ventas." },
+    ],
+  },
+  "carto-map-sites": {
+    h: "a9fb9075",
+    events: [
+      null, null, null, null, null, null, null,
+      { text: "Lo guardé como un **mapa privado en Builder**. Las cinco opciones están coloreadas por objetivo (residentes, mayores ingresos, comercios, clientes y crecimiento), sobre tus hubs, tus cuentas con tamaño según los pedidos y el espacio sin atender sombreado por residentes de mayores ingresos. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo." },
+    ],
+  },
   "carto-map": {
-    h: "5eb14db9",
+    h: "97f4bae8",
     events: [
       null,
       null,
@@ -1131,7 +1186,7 @@ window.SIM_I18N["es-ES"] = {
       null,
       null,
       null,
-      { text: "Lo guardé como un **mapa privado en Builder**: los vehículos (azul en marcha, rojo aparcados), los cinco hubs más el sexto sitio propuesto, y la distancia al hub más cercano. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo.\n\nLas áreas de tiempo de conducción todavía no están. Sus polígonos son demasiado grandes para ponerlos en línea dentro del mapa (falla con \"URI too long\"), así que primero los guardaría en una tabla con `execute_query` y apuntaría el mapa a esa tabla." },
+      { text: "Lo guardé como un **mapa privado en Builder**: los vehículos (azul en marcha, rojo aparcados), los cinco hubs más el sexto sitio propuesto, y la distancia al hub más cercano. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo.\n\nEl siguiente paso es añadir las áreas de tiempo de conducción: las guardaría en una tabla con `execute_query` y apuntaría el mapa a esa tabla." },
     ],
   },
   "carto-caveats": {

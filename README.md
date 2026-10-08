@@ -59,6 +59,7 @@ themes** (plus a warehouse-building path — full map in
   a late-delivery dispute against a Salesforce case, a board snapshot across
   two fleets, and **Geotab + CARTO**: infer hubs from parked vehicles, profile
   their neighborhoods, measure 15-minute drive reach, pick a sixth hub and
+  weigh the next site by residents, income or shops (and see how the right dataset gets found),
   share it as a map — all from plain-English prompts, with no SQL written by hand.
 
 ## Get started with your real fleet

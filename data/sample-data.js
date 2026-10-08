@@ -498,5 +498,70 @@ window.SAMPLE_DATA = {
         { rank: 5, h3: "88298616c1fffff", lat: 36.1618, lon: -115.0724, uncovered8km: 221470 },
       ],
     },
+    /* REAL, from live calls on 8 Oct 2026 (~15:15 UTC): Geotab `demo_fh_vegas8`
+     * positions + CARTO `carto_dw`. The same site search as above with a different
+     * weight per cell. Residents are the same public Kontur table as the steps above
+     * (2,090 cells, 2,073,195 residents); shops + restaurants come from the public
+     * CARTO Spatial Features table; income = Kontur residents x the share of
+     * households earning $100k+ in their census tract (public ACS DP03, 2019
+     * 5-year, matched to the 2019 tract boundaries). "Uncovered" = more than 8 km
+     * in a straight line from every hub. For this simulation the five hubs are treated
+     * as the same ones as the first search. The 8 Oct run scored the residents cell
+     * 234,038 (225,133 in the first search, because the parked positions differ a
+     * little); the first-search figure is the one kept so the story reads as one
+     * session. */
+    objectives: {
+      snapshot: "8 Oct 2026, ~15:15 UTC", vehicles: 50, driving: 23, parked: 27, parkedAtHubs: 24,
+      study: { cells: 2090, residents: 2073195, income: 515898, poi: 32900 },
+      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 225133 },
+      income: { label: "Higher-income residents", uncoveredPct: 35.9, h3: "8829868c51fffff", lat: 36.0242, lon: -115.0237, score: 51457 },
+      poi:    { label: "Shops + restaurants",     uncoveredPct: 19.4, h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694 },
+      // each winner's score on the other goals, as a share of that goal's best (rounded)
+      cross: { peopleWinner: { income: 64, poi: 60 }, incomeWinner: { people: 70, poi: 92 }, poiWinner: { people: 78, income: 92 } },
+      // discovery step: share of residents matched to an ACS tract, by tract vintage
+      acsMatch: { y2019: 100 },
+    },
+    /* REAL, 8 Oct 2026: what the two servers report about themselves (discovery
+     * steps) and what this demo fleet's trips look like. */
+    /* ILLUSTRATIVE customers (fictional companies and order counts, standing in for a
+     * Salesforce query), run through REAL calls on 8 Oct 2026: CARTO geocode on the
+     * street addresses (all matched at confidence 1.0) and a CARTO query that finds
+     * the new hub cell minimising the order-weighted straight-line distance from
+     * customers to their nearest hub. dHubKm = distance to the nearest of today's
+     * five hubs. */
+    customers: {
+      orders: 953, baselineKm: 5.72, bestKm: 3.16, reductionPct: 45,
+      // label positions on assets/carto-customers.webp (percent, shared framing)
+      mapLabels: { hub: { x: 44, y: 86 }, cluster: { x: 40, y: 66 } },
+      best: { h3: "8829868e8bfffff", lat: 36.0219, lon: -115.0845 },
+      // real query over the illustrative customers: higher-income residents (ACS tract income x Kontur residents)
+      // living more than 5 km from every customer = "white space"; the new-hub score is the white space within 8 km
+      potential: {
+        hiIncome: 515898, whiteSpace: 201147, whiteSpacePct: 39, radiusKm: 5,
+        best: { h3: "88298684b7fffff", lat: 36.0302, lon: -115.2202, score: 43538 },
+        atCustomerPick: 10987,
+        // map positions (percent of assets/carto-potential.webp, shared framing)
+        serveXY: { x: 66, y: 82.5 }, growXY: { x: 41.5, y: 66.5 },
+      },
+      list: [
+        { name: "Paseo Verde Pharmacy Supply",   address: "2000 Paseo Verde Pkwy, Henderson, NV",     orders: 142, lat: 36.0181, lon: -115.0720, dHubKm: 8.1 },
+        { name: "Horizon Ridge Dental Group",    address: "1500 W Horizon Ridge Pkwy, Henderson, NV", orders: 96,  lat: 36.0194, lon: -115.0532, dHubKm: 9.6 },
+        { name: "Green Valley Hardware Co.",     address: "1301 N Green Valley Pkwy, Henderson, NV",  orders: 118, lat: 36.0284, lon: -115.0876, dHubKm: 6.4 },
+        { name: "Boulder Highway Auto Parts",    address: "4600 Boulder Hwy, Las Vegas, NV",          orders: 74,  lat: 36.1212, lon: -115.0742, dHubKm: 9.1 },
+        { name: "Eastern Ave Fresh Market",      address: "8905 S Eastern Ave, Las Vegas, NV",        orders: 131, lat: 36.0274, lon: -115.1186, dHubKm: 4.3 },
+        { name: "Sahara Office Interiors",       address: "2300 W Sahara Ave, Las Vegas, NV",         orders: 62,  lat: 36.1454, lon: -115.1743, dHubKm: 2.2 },
+        { name: "Summerlin Festival Catering",   address: "1980 Festival Plaza Dr, Las Vegas, NV",    orders: 88,  lat: 36.1509, lon: -115.3340, dHubKm: 2.4 },
+        { name: "Flamingo West Clinic",          address: "9500 W Flamingo Rd, Las Vegas, NV",        orders: 54,  lat: 36.1165, lon: -115.2993, dHubKm: 3.4 },
+        { name: "Fort Apache Fitness",           address: "7075 S Fort Apache Rd, Las Vegas, NV",     orders: 47,  lat: 36.0590, lon: -115.2977, dHubKm: 9.7 },
+        { name: "Tenaya Way Print Shop",         address: "3200 N Tenaya Way, Las Vegas, NV",         orders: 39,  lat: 36.2183, lon: -115.2512, dHubKm: 7.5 },
+        { name: "Fourth Street Coffee Roasters", address: "300 S 4th St, Las Vegas, NV",              orders: 58,  lat: 36.1669, lon: -115.1440, dHubKm: 1.7 },
+        { name: "Decatur Garden Center",         address: "6600 N Decatur Blvd, Las Vegas, NV",       orders: 44,  lat: 36.2804, lon: -115.2064, dHubKm: 0.6 },
+      ],
+    },
+    explore: {
+      quota: 15000, quotaUsed: 9, quotaLeft: 14991,   // calculate_isolines capabilities
+      publicDemographics: 151, premiumUsa: 172,       // Data Observatory, US
+      trips: { from: "2026-10-07T00:00:00Z", to: "2026-10-07T06:00:00Z", hours: 6, count: 534, places: 6 },
+    },
   },
 };

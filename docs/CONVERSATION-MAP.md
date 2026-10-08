@@ -68,6 +68,13 @@ flowchart TD
     hub -->|"📊 Board snapshot"| epX["Ep-Exec · Both fleets snapshot"]
 
     %% --- Spatial analytics (Geotab MCP + CARTO MCP) ---
+    hub -->|"🧭 What can CARTO do?"| cartoE["CARTO · What can I do with my fleet?"]
+    cartoE --> cartoF
+    cartoE --> cartoD["CARTO · Finding data to weight by"]
+    cartoE --> cartoT["CARTO · Use my own trips"]
+    cartoS -->|"🎯 other goals"| cartoD
+    cartoD --> cartoO["CARTO · Three goals compared"]
+    cartoO --> cartoT
     hub -->|"🗺️ Hubs + 15-min reach"| cartoF["CARTO · Where is my fleet?"]
     cartoF --> cartoH["CARTO · Parked vehicles → hubs (H3)"]
     cartoH --> cartoC["CARTO · What's around each hub"]
@@ -98,13 +105,13 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (100)
+## Nodes (107)
 
 | id | title | database | leads to |
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep-zonelife-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `carto-fleet`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
+| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep-zonelife-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `carto-explore`, `carto-fleet`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
 | `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-shape-viz`, `ep7-ace`, `hub` |
 | `ep1-shape-viz` | Ep1 · Shape it: chart the speeding | demo_fh_vegas4 | `ep1-shape-brief`, `hub` |
 | `ep1-shape-brief` | Ep1 · Shape it: the reshaped brief | — | `ep1-skill`, `hub` |
@@ -199,8 +206,15 @@ flowchart TD
 | `carto-hubs` | CARTO · Group parked vehicles into hubs | demo_fh_vegas8 | `carto-context`, `carto-what-is` |
 | `carto-context` | CARTO · What's around each hub? | — | `carto-reach` |
 | `carto-reach` | CARTO · 15-minute reach per hub | — | `carto-site` |
-| `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-caveats` |
+| `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-data`, `carto-caveats` |
+| `carto-explore` | CARTO · What can I do with my fleet? | demo_fh_vegas8 | `carto-fleet`, `carto-data`, `carto-trips`, `hub` |
+| `carto-trips` | CARTO · Use my own trips as the goal | demo_fh_vegas8 | `carto-customers`, `carto-data`, `carto-fleet`, `hub` |
+| `carto-customers` | CARTO · Use my Salesforce customers as the goal | demo_fh_vegas8 | `carto-potential`, `carto-map-sites`, `hub` |
+| `carto-potential` | CARTO · Where could I sell more? | demo_fh_vegas8 | `carto-map-sites`, `carto-caveats`, `hub` |
+| `carto-data` | CARTO · Finding data to weight by | — | `carto-objective`, `hub` |
+| `carto-objective` | CARTO · Optimize for something other than residents | demo_fh_vegas8 | `carto-map-sites`, `carto-trips`, `carto-caveats`, `hub` |
 | `carto-map` | CARTO · Put it on a map I can share | — | `carto-caveats`, `hub`, restart |
+| `carto-map-sites` | CARTO · Put the picks on a map I can share | — | `carto-caveats`, `hub`, restart |
 | `carto-caveats` | CARTO · What to double-check | — | `carto-map`, `hub`, restart |
 
 Episodes **cross-link** as well as branch to their own action node — e.g.
