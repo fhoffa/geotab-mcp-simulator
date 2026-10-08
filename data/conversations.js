@@ -5329,8 +5329,7 @@ window.CONVERSATIONS = {
           type: "system",
           text:
             "Two MCP servers connected: **Geotab** (database `" + C.database + "`, a 50-vehicle Las Vegas demo fleet) " +
-            "and **CARTO** (connection `" + C.connection + "`, with the Kontur Population and Spatial Features datasets " +
-            "already available on it).",
+            "and **CARTO** (connection `" + C.connection + "`, which can also query CARTO's public Kontur Population and Spatial Features datasets).",
         },
         { type: "assistant", text: "I'll check Geotab's query guidance first, then count the vehicles and get each one's latest position." },
         {
@@ -5701,8 +5700,107 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
-        { label: "🎯 Optimize for something other than residents", say: "What if I optimize for something other than residents?", next: "carto-objective" },
+        { label: "🎯 Optimize for something other than residents", say: "What if I optimize for something other than residents?", next: "carto-data" },
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+      ],
+    },
+
+    "carto-data": {
+      id: "carto-data",
+      title: "CARTO · Finding data to weight by",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Kontur only knows how many people live in each cell, so for income or shops I need other data. First I'll check what's already on your CARTO connection.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "explore_data",
+          args: { method: "search", connection_name: C.connection, query: "kontur" },
+          summary: "no match on this connection",
+          result: "// 0 results · searched 3 containers: organization data, Data Observatory subscriptions, demo data",
+        },
+        {
+          type: "assistant",
+          text:
+            "Nothing is subscribed on your account, but CARTO's public datasets can be queried directly, which is how the Kontur residents were read. " +
+            "Next I'll search the Data Observatory catalog by what I want to measure, not by dataset name.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "search_variables", body: { query: "households by income bracket, census block group", params: { countries: ["usa"] }, neighbors: 5 } },
+          summary: "5 matches · best: Households By Income Quintiles (Michael Bauer International)",
+          result:
+            "Households By Income Quintiles · Blockgroups · HH_I4: households in 4th income quintile\n" +
+            "Households By Income Quintiles · PC 5-digit · …\n" +
+            "Parcels · Regrid · census_blockgroup\n" +
+            "// 5 matches",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "get_dataset", id: "mbi_households__60466314" },
+          summary: "license: Premium data",
+          result: '{ "name": "Households By Income Quintiles - United States of America (Blockgroups)", "licenseName": "Premium data", … }\n// premium = needs a commercial arrangement',
+        },
+        {
+          type: "assistant",
+          text:
+            "That one is premium, so I can't use it here. The US Census Bureau's American Community Survey is public, so I'll look there:",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: {
+            method: "search_variables",
+            body: { query: "households with income $100,000 to $149,999 and $150,000 or more", params: { countries: ["usa"], providers: ["usa_acs"] }, neighbors: 5 },
+          },
+          summary: "ACS DP03 Selected Economic Characteristics · census tract · public",
+          result:
+            "DP03_0059E: households earning $100,000 to $149,999\n" +
+            "// also DP03_0060E ($150,000 to $199,999), DP03_0061E ($200,000 or more) and DP03_0051E (total households)\n" +
+            "// available by census tract, ZIP code area, county, state …",
+        },
+        {
+          type: "assistant",
+          text:
+            "Tracts are the finest level, and they are polygons, not hexagons, so each cell has to be matched to the tract it sits in. Before trusting that, I'll check how many cells actually match:",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "-- for each H3 cell: find its census tract (ST_CONTAINS on the cell center), then that tract's ACS row\n" +
+            "SELECT COUNT(*) AS cells, COUNTIF(a.geoid IS NOT NULL) AS with_acs, …\n" +
+            "FROM cells c LEFT JOIN tracts t ON ST_CONTAINS(t.geom, c.pt)\n" +
+            "LEFT JOIN `carto-do-public-data.usa_acs.demographics_dp3economic_usa_censustract_<year>_5year_<year>` a ON a.geoid = t.geoid"
+          ),
+          summary: "2023 data: " + O.acsMatch.y2023 + "% of residents matched · 2019 data: " + O.acsMatch.y2019 + "%",
+          result:
+            "2023 ACS · " + O.acsMatch.y2023 + "% of residents matched to a tract with income data\n" +
+            "2019 ACS · " + O.acsMatch.y2019 + "% matched\n" +
+            "// the 2019 tract boundaries on the connection are the same vintage as the 2019 ACS tables; the 2023 tables use newer tracts",
+        },
+        {
+          type: "assistant",
+          text:
+            "Good thing I checked. The newest income data uses newer tract boundaries than the ones on your connection, so about one in five residents would have had no income at all. " +
+            "The 2019 tables match every cell, so I'll use those.\n\n" +
+            "**How I found the data:** check what the connection already has, search the catalog by the measure I want, look at the license, pick the finest geography that fits, and test the join before relying on it. " +
+            "Shops and restaurants are already in CARTO's public Spatial Features table, which I'll join by cell.",
+        },
+      ],
+      choices: [
+        { label: "🎯 Run the three goals", say: "Run the search for all three goals.", next: "carto-objective" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
 
@@ -5715,9 +5813,8 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "The search is the same; only the weight on each cell changes. I'll try two goals besides residents: **higher-income residents** " +
-            "(a demographic) and **shops and restaurants** (a proxy for daytime foot traffic). To compare them fairly I'll run all three on one dataset, " +
-            "CARTO's Spatial Features (residents from WorldPop, places from Overture Maps), with a fresh look at where your parked vehicles are.",
+            "Now the same search with three weights: residents (as before), **higher-income residents** (a demographic) and **shops and restaurants** (a proxy for daytime foot traffic). " +
+            "First a fresh look at where your parked vehicles are.",
         },
         {
           type: "tool",
@@ -5740,11 +5837,11 @@ window.CONVERSATIONS = {
           name: "execute_query",
           args: cartoSql(
             "WITH hubs AS ( … ),   -- the five cells with 4+ parked vehicles\n" +
-            "cells AS (   -- H3 res 8 cells within " + C.coverage.rings + " rings of central Las Vegas\n" +
-            "  SELECT h3, population, retail + food_drink AS poi,\n" +
-            "         population * (hh_100k_plus / households) AS hi_income   -- ACS DP03, joined by census tract\n" +
-            "  FROM `carto-do-public-data.carto.derived_spatialfeatures_usa_h3res8_v1_yearly_v4` …\n" +
-            "  LEFT JOIN `carto-do-public-data.usa_acs.demographics_dp3economic_usa_censustract_2019_5year_2019` …\n" +
+            "cells AS (   -- the same " + O.study.cells.toLocaleString("en-US") + " populated cells as before\n" +
+            "  SELECT k.geoid AS h3, k.population,\n" +
+            "         sf.retail + sf.food_drink AS poi,                        -- Spatial Features\n" +
+            "         k.population * (hh_100k_plus / households) AS hi_income  -- ACS DP03 2019, by census tract\n" +
+            "  FROM … kontur … LEFT JOIN … spatialfeatures … LEFT JOIN … acs …\n" +
             "), uncovered AS (SELECT * FROM cells WHERE dist_to_nearest_hub > " + C.sixthHub.gapKm * 1000 + ")\n" +
             "-- for each candidate cell: SUM of each weight over uncovered cells within " + C.sixthHub.gapKm + " km; keep the top cell per goal"
           ),
@@ -5773,21 +5870,21 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "**The three goals agree on the area and differ on the exact spot.** All three best cells are in the south-east of the valley, toward Henderson, within about 5 km of each other.\n" +
-            "- **Residents:** " + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W.\n" +
-            "- **" + O.income.label + ":** " + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W, a bit further south-east.\n" +
-            "- **" + O.poi.label + ":** " + O.poi.lat.toFixed(2) + "°N, " + Math.abs(O.poi.lon).toFixed(2) + "°W, in between.\n\n" +
-            "Picking one goal costs little on the others: the residents winner keeps " + O.cross.peopleWinner.income + "% of the best income score and " +
-            O.cross.peopleWinner.poi + "% of the best shops score, and the income winner keeps " + O.cross.incomeWinner.people + "% and " + O.cross.incomeWinner.poi + "%.\n\n" +
-            "The gap itself differs by goal. " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm +
-            " km from every hub, against " + O.people.uncoveredPct + "% of all residents. Only " + O.poi.uncoveredPct + "% of shops and restaurants do, since your hubs already sit near the busy areas.",
+            "**The goal changes the answer.**\n" +
+            "- **Residents:** " + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W, just east of Central, the same cell as before.\n" +
+            "- **" + O.income.label + ":** " + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W, in the south-east of the valley toward Henderson, about 17 km from the residents pick.\n" +
+            "- **" + O.poi.label + ":** " + O.poi.lat.toFixed(2) + "°N, " + Math.abs(O.poi.lon).toFixed(2) + "°W, about 3 km from the income pick.\n\n" +
+            "Choosing residents costs a lot on the other goals: that cell keeps only " + O.cross.peopleWinner.income + "% of the best income score and " + O.cross.peopleWinner.poi +
+            "% of the best shops score. The income and shops picks are close to each other, and each keeps " + O.cross.incomeWinner.poi + "% and " + O.cross.poiWinner.income + "% of the other's best.\n\n" +
+            "The gap differs too. " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " + O.people.uncoveredPct +
+            "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants.",
         },
         {
           type: "assistant",
           text:
-            "Two caveats. This used **WorldPop** residents (" + O.study.residents.toLocaleString("en-US") + " in the area), where the earlier steps used Kontur " +
-            "(" + C.coverage.studyAreaResidents.toLocaleString("en-US") + "), so the residents winner here is not the same cell as before. " +
-            "And I ran only the straight-line shortlist, plus one 15-minute drive area for the income winner; the polygons are too big to inline in a query to count people inside them, so I'd save them to a table first. " +
+            "Two caveats. The residents score is a little different from the earlier step (" + O.people.score.toLocaleString("en-US") + " vs " + C.sixthHub.candidates[0].uncovered8km.toLocaleString("en-US") +
+            ") because I used today's parked positions, not 1 Oct's. And I ran only the straight-line shortlist, plus one 15-minute drive area for the income pick; " +
+            "the polygons are too big to inline in a query to count people inside them, so I'd save them to a table first. " +
             "Income is the ACS 2015–2019 figure for each census tract, an area average rather than the people your drivers will serve, and I left race and ethnicity out on purpose. " +
             "You can flip the goal for equity and ask where lower-income areas have the weakest coverage.",
         },

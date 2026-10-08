@@ -500,21 +500,23 @@ window.SAMPLE_DATA = {
     },
     /* REAL, from live calls on 8 Oct 2026 (~15:15 UTC): Geotab `demo_fh_vegas8`
      * positions + CARTO `carto_dw`. The same site search as above with a different
-     * weight per cell, run on ONE dataset so the goals compare like with like:
-     * CARTO Spatial Features (public, H3 res 8: WorldPop residents, Overture POIs).
-     * It counts 2.76M residents in the study area where Kontur counted 2.07M, so
-     * the residents winner here differs from the Kontur-based one above. Income =
-     * residents x share of households earning $100k+ in their census tract (ACS
-     * 5-year, 2019 vintage to match the 2019 tract boundaries). "Uncovered" =
-     * more than 8 km in a straight line from every hub. */
+     * weight per cell. Residents are the same public Kontur table as the steps above
+     * (2,090 cells, 2,073,195 residents); shops + restaurants come from the public
+     * CARTO Spatial Features table; income = Kontur residents x the share of
+     * households earning $100k+ in their census tract (public ACS DP03, 2019
+     * 5-year, matched to the 2019 tract boundaries). "Uncovered" = more than 8 km
+     * in a straight line from every hub. The residents score differs a little from
+     * the 1 Oct figure above because today's parked positions differ. */
     objectives: {
       snapshot: "8 Oct 2026, ~15:15 UTC", vehicles: 50, driving: 23, parked: 27, parkedAtHubs: 24,
-      study: { cells: 3130, residents: 2762028, income: 753713, poi: 32906 },
-      people: { label: "Residents",                uncoveredPct: 38.5, uncovered: 1063379, h3: "8829868ca9fffff", lat: 36.0850, lon: -115.0267, score: 336462 },
-      income: { label: "Higher-income residents",  uncoveredPct: 43.0, uncovered: 324077,  h3: "8829868c03fffff", lat: 36.0425, lon: -115.0057, score: 93413 },
-      poi:    { label: "Shops + restaurants",      uncoveredPct: 19.4, uncovered: 6400,    h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694 },
+      study: { cells: 2090, residents: 2073195, income: 515898, poi: 32900 },
+      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 234038 },
+      income: { label: "Higher-income residents", uncoveredPct: 35.9, h3: "8829868c51fffff", lat: 36.0242, lon: -115.0237, score: 51457 },
+      poi:    { label: "Shops + restaurants",     uncoveredPct: 19.4, h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694 },
       // each winner's score on the other goals, as a share of that goal's best (rounded)
-      cross: { peopleWinner: { income: 88, poi: 98 }, incomeWinner: { people: 91, poi: 92 }, poiWinner: { people: 91, income: 94 } },
+      cross: { peopleWinner: { income: 64, poi: 60 }, incomeWinner: { people: 70, poi: 92 }, poiWinner: { people: 78, income: 92 } },
+      // discovery step: share of residents matched to an ACS tract, by tract vintage
+      acsMatch: { y2023: 79, y2019: 100 },
     },
   },
 };

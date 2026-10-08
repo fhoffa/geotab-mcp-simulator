@@ -98,7 +98,7 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (101)
+## Nodes (102)
 
 | id | title | database | leads to |
 |---|---|---|---|
@@ -199,7 +199,8 @@ flowchart TD
 | `carto-hubs` | CARTO · Group parked vehicles into hubs | demo_fh_vegas8 | `carto-context`, `carto-what-is` |
 | `carto-context` | CARTO · What's around each hub? | — | `carto-reach` |
 | `carto-reach` | CARTO · 15-minute reach per hub | — | `carto-site` |
-| `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-objective`, `carto-caveats` |
+| `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-data`, `carto-caveats` |
+| `carto-data` | CARTO · Finding data to weight by | — | `carto-objective`, `hub` |
 | `carto-objective` | CARTO · Optimize for something other than residents | demo_fh_vegas8 | `carto-map`, `carto-caveats`, `hub` |
 | `carto-map` | CARTO · Put it on a map I can share | — | `carto-caveats`, `hub`, restart |
 | `carto-caveats` | CARTO · What to double-check | — | `carto-map`, `hub`, restart |

@@ -2261,9 +2261,9 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-fleet": {
-    h: "fd66bced",
+    h: "6fa38ebf",
     events: [
-      /*0 system*/ { text: "Dos servidores MCP conectados: **Geotab** (base de datos `demo_fh_vegas8`, una flota demo de 50 vehículos en Las Vegas) y **CARTO** (conexión `carto_dw`, con los datasets Kontur Population y Spatial Features ya disponibles en ella)." },
+      /*0 system*/ { text: "Dos servidores MCP conectados: **Geotab** (base de datos `demo_fh_vegas8`, una flota demo de 50 vehículos en Las Vegas) y **CARTO** (conexión `carto_dw`, que además puede consultar los datasets públicos Kontur Population y Spatial Features de CARTO)." },
       /*1 assistant*/ { text: "Primero reviso la guía de consultas de Geotab, luego cuento los vehículos y obtengo la última posición de cada uno." },
       /*2 tool*/ { summary: "guía de consultas seguras: contar primero, luego DeviceStatusInfo con un selector de propiedades" },
       /*3 tool*/ { summary: "50 vehículos" },
@@ -2397,22 +2397,43 @@ window.SIM_I18N["es-419"] = {
         say: "¿Qué debería verificar antes de actuar con esto?" },
     ],
   },
-  "carto-objective": {
-    h: "36d55bbc",
+  "carto-data": {
+    h: "d1d0fecb",
     events: [
-      /*0 assistant*/ { text: "La búsqueda es la misma; solo cambia el peso de cada celda. Probaré dos objetivos además de residentes: **residentes de mayores ingresos** (un dato demográfico) y **comercios y restaurantes** (un indicador del tránsito diurno). Para compararlos de forma justa, los corro todos sobre un mismo dataset, Spatial Features de CARTO (residentes de WorldPop, lugares de Overture Maps), con una mirada nueva a dónde están tus vehículos estacionados." },
+      /*0 assistant*/ { text: "Kontur solo sabe cuántas personas viven en cada celda, así que para ingresos o comercios necesito otros datos. Primero reviso qué hay ya en tu conexión de CARTO." },
+      /*1 tool*/ { summary: "sin coincidencias en esta conexión" },
+      /*2 assistant*/ { text: "No hay nada suscrito en tu cuenta, pero los datasets públicos de CARTO se pueden consultar directamente, que es como leí los residentes de Kontur. Ahora busco en el catálogo del Data Observatory por lo que quiero medir, no por nombre de dataset." },
+      /*3 tool*/ { summary: "5 coincidencias · la mejor: Households By Income Quintiles (Michael Bauer International)" },
+      /*4 tool*/ { summary: "licencia: Premium data" },
+      /*5 assistant*/ { text: "Ese es premium, así que no puedo usarlo aquí. La Encuesta sobre la Comunidad Estadounidense (ACS) de la Oficina del Censo es pública, así que busco ahí:" },
+      /*6 tool*/ { summary: "ACS DP03 Selected Economic Characteristics · sector censal · público" },
+      /*7 assistant*/ { text: "Los sectores censales son el nivel más fino, y son polígonos, no hexágonos, así que hay que asignar cada celda al sector donde cae. Antes de confiar en eso, reviso cuántas celdas coinciden realmente:" },
+      /*8 tool*/ { summary: "datos 2023: 79% de residentes con coincidencia · datos 2019: 100%" },
+      /*9 assistant*/ { text: "Qué bueno que lo revisé. Los datos de ingresos más recientes usan límites de sectores más nuevos que los de tu conexión, así que uno de cada cinco residentes se habría quedado sin ingresos. Las tablas de 2019 coinciden con todas las celdas, así que uso esas.\n\n**Cómo encontré los datos:** reviso qué tiene ya la conexión, busco en el catálogo por la medida que quiero, miro la licencia, elijo la geografía más fina que sirva y pruebo la unión antes de depender de ella. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, que uno por celda." },
+    ],
+    choices: [
+      { label: "🎯 Correr los tres objetivos",
+        say: "Corre la búsqueda para los tres objetivos." },
+      { label: "↩︎ Preguntar otra cosa",
+        say: "Muéstrame otra cosa." },
+    ],
+  },
+  "carto-objective": {
+    h: "bedc6208",
+    events: [
+      /*0 assistant*/ { text: "Ahora la misma búsqueda con tres pesos: residentes (como antes), **residentes de mayores ingresos** (un dato demográfico) y **comercios y restaurantes** (un indicador del tránsito diurno). Primero, una mirada nueva a dónde están tus vehículos estacionados." },
       /*1 tool*/ { summary: "50 posiciones · 23 en marcha · 27 estacionados · 24 en los mismos cinco hubs" },
       /*2 tool*/ { summary: "3 objetivos · la mejor celda de cada uno" },
       /*3 tool*/ { summary: "Ganador de mayores ingresos · área de 15 min en auto (GeoJSON)" },
       /*4 chart*/ { title: "Porcentaje a más de 8 km de todos los hubs hoy (%)",
         bars: ["Residentes", "Residentes de mayores ingresos", "Comercios + restaurantes"] },
-      /*5 assistant*/ { text: "**Los tres objetivos coinciden en la zona y difieren en el punto exacto.** Las tres mejores celdas están en el sureste del valle, hacia Henderson, a menos de unos 5 km entre sí.\n" +
-        "- **Residentes:** 36.09°N, 115.03°O.\n" +
-        "- **Residentes de mayores ingresos:** 36.04°N, 115.01°O, un poco más al sureste.\n" +
-        "- **Comercios + restaurantes:** 36.05°N, 115.03°O, en el medio.\n\n" +
-        "Elegir un objetivo cuesta poco en los demás: el ganador por residentes conserva el 88% del mejor puntaje de ingresos y el 98% del mejor puntaje de comercios, y el ganador por ingresos conserva el 91% y el 92%.\n\n" +
-        "La brecha en sí cambia según el objetivo. El 43% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 38.5% de todos los residentes. Solo el 19.4% de los comercios y restaurantes, porque tus hubs ya están cerca de las zonas más activas." },
-      /*6 assistant*/ { text: "Dos salvedades. Esto usó residentes de **WorldPop** (2,762,028 en el área), mientras que los pasos anteriores usaron Kontur (2,073,195), así que el ganador por residentes aquí no es la misma celda de antes. Y solo corrí la preselección en línea recta, más un área de 15 minutos en auto para el ganador por ingresos; los polígonos son demasiado grandes para ponerlos en línea en una consulta y contar a las personas dentro, así que primero los guardaría en una tabla. El ingreso es la cifra del ACS 2015–2019 de cada sector censal, un promedio de la zona y no las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
+      /*5 assistant*/ { text: "**El objetivo cambia la respuesta.**\n" +
+        "- **Residentes:** 36.17°N, 115.06°O, justo al este de Centro, la misma celda de antes.\n" +
+        "- **Residentes de mayores ingresos:** 36.02°N, 115.02°O, en el sureste del valle hacia Henderson, a unos 17 km de la opción por residentes.\n" +
+        "- **Comercios + restaurantes:** 36.05°N, 115.03°O, a unos 3 km de la opción por ingresos.\n\n" +
+        "Elegir residentes cuesta mucho en los otros objetivos: esa celda conserva solo el 64% del mejor puntaje de ingresos y el 60% del mejor puntaje de comercios. Las opciones por ingresos y por comercios están cerca una de la otra, y cada una conserva el 92% y el 92% de la mejor de la otra.\n\n" +
+        "La brecha también cambia. El 35.9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32.6% de todos los residentes y el 19.4% de los comercios y restaurantes." },
+      /*6 assistant*/ { text: "Dos salvedades. El puntaje de residentes es un poco distinto del paso anterior (234,038 vs 225,133) porque usé las posiciones de hoy y no las del 1 oct. Y solo corrí la preselección en línea recta, más un área de 15 minutos en auto para la opción por ingresos; los polígonos son demasiado grandes para ponerlos en línea en una consulta y contar a las personas dentro, así que primero los guardaría en una tabla. El ingreso es la cifra del ACS 2015–2019 de cada sector censal, un promedio de la zona y no las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
     ],
     choices: [
       { label: "🗺️ Ponerlo en un mapa que pueda compartir",
