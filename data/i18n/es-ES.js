@@ -1162,10 +1162,11 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-potential": {
-    h: "a3a94a86",
+    h: "1b978822",
     events: [
       null,
       { summary: "201.147 de 515.898 residentes de mayores ingresos (39%) están a más de 5 km de cualquier cliente" },
+      null,
       null,
       { text: "**Los dos objetivos señalan hubs distintos, y ambos sirven.**\n- **Atender a los clientes que ya tienes:** Green Valley, en Henderson, acorta un 45% el viaje medio de un pedido.\n- **Abrir terreno nuevo:** el suroeste del valle (36,03°N, 115,22°O) tiene unas 4 veces más residentes de mayores ingresos sin ningún cliente cerca (43.538 vs 10.987).\n\nEl 39% de los residentes de mayores ingresos del área vive a más de 5 km de cualquier cuenta, así que hay espacio para crecer. Muchas flotas usan el primer hub para mejorar el servicio ahora y el segundo como base para una campaña de ventas. Con tu lista completa de cuentas, esto se afina más." },
     ],

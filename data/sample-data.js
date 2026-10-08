@@ -535,6 +535,8 @@ window.SAMPLE_DATA = {
         hiIncome: 515898, whiteSpace: 201147, whiteSpacePct: 39, radiusKm: 5,
         best: { h3: "88298684b7fffff", lat: 36.0302, lon: -115.2202, score: 43538 },
         atCustomerPick: 10987,
+        // map positions (percent of assets/carto-potential.webp, shared framing)
+        serveXY: { x: 66, y: 82.5 }, growXY: { x: 41.5, y: 66.5 },
       },
       list: [
         { name: "Paseo Verde Pharmacy Supply",   address: "2000 Paseo Verde Pkwy, Henderson, NV",     orders: 142, lat: 36.0181, lon: -115.0720, dHubKm: 8.1 },

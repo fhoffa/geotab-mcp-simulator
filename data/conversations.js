@@ -5931,6 +5931,21 @@ window.CONVERSATIONS = {
             "best cell for a new hub · " + P.best.h3 + " · " + P.best.lat.toFixed(4) + ", " + P.best.lon.toFixed(4) + " · " + P.best.score.toLocaleString("en-US") + "\n" +
             "customers' pick (Green Valley) · " + Cu.best.h3 + " · " + P.atCustomerPick.toLocaleString("en-US"),
         },
+        cartoMap(
+          "carto-potential.webp",
+          "Where you sell today vs. where you could sell more",
+          "Orange = higher-income residents more than " + P.radiusKm + " km from any customer (darker = more) · green dots = customers (bigger = more orders) · blue = hubs · dashed rings = " +
+            C.sixthHub.gapKm + " km around each hub pick",
+          [
+            { label: "Serve · Green Valley", x: P.serveXY.x, y: P.serveXY.y },
+            { label: "Grow · South-west", x: P.growXY.x, y: P.growXY.y, flip: true },
+          ],
+          {
+            layer: "H3 res 8 · white space",
+            source: "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8) · income: ACS 2015–2019 by census tract · customers are illustrative",
+            note: "snapshot " + O.snapshot,
+          }
+        ),
         {
           type: "chart",
           title: "White-space higher-income residents within " + C.sixthHub.gapKm + " km of the hub",
