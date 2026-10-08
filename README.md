@@ -77,7 +77,7 @@ When you're done playing, the real thing takes three steps — the in-app
      [MyGeotab MCP listing](https://claude.ai/directory/mygeotab-mcp-prod?open_in_browser=1)
      and click **Connect to Claude**
      ([walkthrough](https://www.linkedin.com/feed/update/urn:li:activity:7498420900682153984/)).
-   - **ChatGPT:** **Plugins** → search "Geotab" → **Install plugin**
+   - **ChatGPT:** [**Plugins**](https://chatgpt.com/plugins) → search "Geotab" → **Install plugin**
      ([walkthrough](https://www.linkedin.com/feed/update/urn:li:activity:7508970838931435520/)).
    - **Any other client** (Microsoft Copilot, etc.): add a custom/remote MCP
      connector pointing at Geotab's official server URL,
