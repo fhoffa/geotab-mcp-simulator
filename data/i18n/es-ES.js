@@ -1121,6 +1121,18 @@ window.SIM_I18N["es-ES"] = {
       { text: "**La mejor zona está justo al este de Centro, alrededor de 36,17°N, 115,06°O.** Un hub ahí pondría a **181k personas más** a menos de 15 minutos en coche, llevando la cobertura del 80% al 88,5%.\n\nLos 225k y los 181k miden cosas distintas. 225k son personas a más de 8 km en línea recta de cualquier hub que viven a menos de 8 km del sitio. 181k son personas dentro de la nueva área de 15 minutos en coche que no están ya dentro de una de las cinco existentes. (Las dos medidas tampoco coinciden hoy: 8 km en línea recta desde un hub cubren el 68%; las áreas de 15 minutos en coche, cerca del 80%.)" },
     ],
   },
+  "carto-objective": {
+    h: "36d55bbc",
+    events: [
+      null,
+      null,
+      null,
+      { summary: "Ganador de mayores ingresos · área de 15 min en coche (GeoJSON)" },
+      null,
+      { text: "**Los tres objetivos coinciden en la zona y difieren en el punto exacto.** Las tres mejores celdas están en el sureste del valle, hacia Henderson, a menos de unos 5 km entre sí.\n- **Residentes:** 36,09°N, 115,03°O.\n- **Residentes de mayores ingresos:** 36,04°N, 115,01°O, un poco más al sureste.\n- **Comercios + restaurantes:** 36,05°N, 115,03°O, en el medio.\n\nElegir un objetivo cuesta poco en los demás: el ganador por residentes conserva el 88% de la mejor puntuación de ingresos y el 98% de la de comercios, y el ganador por ingresos conserva el 91% y el 92%.\n\nLa brecha en sí cambia según el objetivo. El 43% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 38,5% de todos los residentes. Solo el 19,4% de los comercios y restaurantes, porque tus hubs ya están cerca de las zonas más activas." },
+      { text: "Dos salvedades. Esto usó residentes de **WorldPop** (2.762.028 en el área), mientras que los pasos anteriores usaron Kontur (2.073.195), así que el ganador por residentes aquí no es la misma celda de antes. Y solo ejecuté la preselección en línea recta, más un área de 15 minutos en coche para el ganador por ingresos; los polígonos son demasiado grandes para ponerlos en línea en una consulta y contar a las personas dentro, así que primero los guardaría en una tabla. El ingreso es la cifra del ACS 2015–2019 de cada sección censal, un promedio de la zona y no las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
+    ],
+  },
   "carto-map": {
     h: "5eb14db9",
     events: [
