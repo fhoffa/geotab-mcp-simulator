@@ -242,6 +242,15 @@ on who the next hub should serve (residents, income or shops, customers) and
 each ends on its own shareable map. Keep it that way: a step should only quote
 results from steps every route into it has already shown.
 
+CARTO TODOs:
+- Map of trip end points for `carto-trips`. It needs a real `Get Trip` stopPoint
+  pull on `demo_fh_vegas8`; the 8 Oct coordinates weren't kept.
+- Keep the map render scripts and the cell-level query results in the repo (or
+  in a companion repo), so the `assets/carto-*.webp` files can be rebuilt.
+  Markers are placed with a lat/lon → pixel fit for the shared framing.
+- Street basemap under the non-fleet CARTO maps (open since #49).
+- Native-speaker review of the CARTO Spanish (es-419 and es-ES).
+
 The **Safety / Maintenance / Operations / Agentic** scenarios are anchored to
 the live demo accounts (API + Ace) — fleet sizes, vehicle mix, the fleet-wide
 speeding pattern, and the Sprinter fault cluster are all real — but the demo

@@ -5837,6 +5837,9 @@ window.CONVERSATIONS = {
       ],
     },
 
+    // TODO(carto): add a map of where the trips end (the hubs plus the sixth place) on the
+    // shared framing. Needs the real stop points: one `Get Trip` (stopPoint) pull on
+    // demo_fh_vegas8, stored in D.carto.explore.trips. Not invented here on purpose.
     "carto-trips": {
       id: "carto-trips",
       title: "CARTO · Use my own trips as the goal",
@@ -6182,6 +6185,9 @@ window.CONVERSATIONS = {
           "Higher-income winner · 15-min drive area (GeoJSON)",
           3
         ),
+        // TODO(carto): the higher-income winner's drive-time area above is never shown or
+        // counted. Either draw it on this map and report residents newly covered (as
+        // carto-site does), or drop the call.
         cartoMap(
           "carto-goals.webp",
           "Three goals, three different sixth hubs",

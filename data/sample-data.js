@@ -562,6 +562,8 @@ window.SAMPLE_DATA = {
     explore: {
       quota: 15000, quotaUsed: 9, quotaLeft: 14991,   // calculate_isolines capabilities
       publicDemographics: 151, premiumUsa: 172,       // Data Observatory, US
+      // TODO(carto): add the six end places (lat/lon, trips per place, which one isn't a hub)
+      // from a real pull, so carto-trips can show a map instead of only text
       trips: { from: "2026-10-07T00:00:00Z", to: "2026-10-07T06:00:00Z", hours: 6, count: 534, places: 6 },
     },
   },
