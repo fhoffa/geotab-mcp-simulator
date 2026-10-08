@@ -5795,7 +5795,7 @@ window.CONVERSATIONS = {
             resultsLimit: 2000,
           },
           summary: X.trips.count + " trips in " + X.trips.hours + " hours · each with its stop point",
-          result: '[ { "stopPoint": { "x": -115.28…, "y": 36.29… } }, { "stopPoint": { "x": -115.18…, "y": 36.09… } }, … ]\n// ' + X.trips.count + " records",
+          result: '[ { "stopPoint": { "x": -115.28…, "y": 36.29… } }, { "stopPoint": { "x": -115.18…, "y": 36.09… } }, … ]\n// ' + X.trips.count + " records (GetCountOf ignores date ranges, so I count by reading the records back with a limit)",
         },
         {
           type: "tool",
