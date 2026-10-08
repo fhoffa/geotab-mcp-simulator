@@ -90,6 +90,54 @@ function cartoIsoline(origin, summary, parts) {
 function cartoSql(sql) {
   return { connection_name: C.connection, sql: sql };
 }
+// CARTO's recommended map flow: validate_map schema → verify → create_map →
+// view_map → get_workspace_info, then the note on why the simulator can't show it
+function cartoSaveMap(bundle, verifySummary, verifyResult, note) {
+  return [
+    {
+      type: "tool",
+      server: "carto",
+      name: "validate_map",
+      args: { method: "schema" },
+      summary: "map format: datasets, layers, styling",
+      result: "// bundle schema: datasets (SQL or table, by connection), H3 datasets by index column + aggregation, Kepler layers referencing datasets by $ref, ordinal color maps …",
+    },
+    { type: "tool", server: "carto", name: "validate_map", args: { method: "verify", bundle: bundle }, summary: verifySummary, result: verifyResult },
+    {
+      type: "tool",
+      server: "carto",
+      name: "create_map",
+      args: { bundle: "<the verified bundle>" },
+      summary: "private Builder map created",
+      write: true,
+      result: '{ "mapId": "…", "privacy": "private" }',
+    },
+    {
+      type: "tool",
+      server: "carto",
+      name: "view_map",
+      args: { mapId: "…" },
+      summary: "interactive map in chat (MCP Apps hosts only)",
+      result: "// renders the map inline where the host supports MCP Apps; elsewhere, use the Builder link",
+    },
+    {
+      type: "tool",
+      server: "carto",
+      name: "get_workspace_info",
+      args: {},
+      summary: "workspace URL template for Builder links",
+      result:
+        '{ "workspaceUrl": "https://<your-carto-workspace>",\n' +
+        '  "urlTemplates": { "builderMap": { "template": "https://<your-carto-workspace>/builder/{mapId}" }, … } }',
+    },
+    {
+      type: "system",
+      text:
+        "`view_map` shows the interactive map in the chat only in apps that support MCP Apps; elsewhere you get the link. " +
+        "The map is private to the CARTO account that created it, so the simulator can't show it." + (note ? " " + note : ""),
+    },
+  ];
+}
 
 window.CONVERSATIONS = {
   meta: {
@@ -5459,11 +5507,18 @@ window.CONVERSATIONS = {
             "**Five hubs.** " + C.parkedAtHubs + " of the " + C.parked + " parked vehicles are in one of five spots; the other " +
             (C.parked - C.parkedAtHubs) + " are parked alone. I've named the hubs by where they sit on the map.\n\n" +
             "This is one snapshot at about 7 pm, though, so I can't be sure these are yards. Some could be a customer site " +
-            "or a shared lot. A few weeks of parking data, or your depot list, would settle it.",
+            "or a shared lot. A few weeks of parking data, or your depot list, would settle it.\n\n" +
+            "With the hubs in place we can plan the next one. I can start with what's around each hub and how many people " +
+            "each one reaches, or go straight to your customers.",
         },
       ],
       choices: [
         { label: "🏙️ What's around each hub?", say: "What's around each hub?", next: "carto-context" },
+        {
+          label: "🧾 Plan the next hub around my customers",
+          say: "Skip ahead: I want the next hub to serve my customers. Can my own trips show where they are?",
+          next: "carto-trips",
+        },
         { label: "❓ What is CARTO?", say: "What is CARTO, and what's it doing here?", next: "carto-what-is" },
       ],
     },
@@ -5704,12 +5759,23 @@ window.CONVERSATIONS = {
             C.sixthHub.gapKm + " km of the site. " + C.sixthHub.newlyCovered.replace("+", "") + " is people inside the new " +
             "15-minute drive area who aren't already inside one of the five existing ones. (The two yardsticks disagree today too: " +
             C.sixthHub.gapKm + " km in a straight line from a hub covers " + C.coverage.straightLine8kmPct + "%, the 15-minute " +
-            "drive areas about " + C.coverage.pct + "%.)",
+            "drive areas about " + C.coverage.pct + "%.)\n\n" +
+            "That's the answer if the new hub should serve the most residents. A different goal moves it: " +
+            "higher-income areas, busy shops and restaurants, or your own customers.",
         },
       ],
       choices: [
         { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
-        { label: "🎯 Optimize for something other than residents", say: "What if I optimize for something other than residents?", next: "carto-data" },
+        {
+          label: "💰 Weight it by income or shops instead",
+          say: "What if the new hub should serve higher-income areas, or busy shops and restaurants, instead of just the most people?",
+          next: "carto-data",
+        },
+        {
+          label: "🧾 Weight it by my customers instead",
+          say: "What if the new hub should serve my customers instead? Can my own trips show where they are?",
+          next: "carto-trips",
+        },
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
       ],
     },
@@ -5759,13 +5825,14 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "You have one CARTO connection that can run spatial SQL, a drive-time service with almost all of its yearly quota left, and a public catalog of about " + X.publicDemographics + " demographics datasets (plus premium ones if you buy them).\n\n" +
-            "Combined with Geotab, people usually start with one of three things: where the fleet is and where it clusters, where a new hub would help most, or whether their own trips can answer that.",
+            "With Geotab alongside it, the most common first project is **deciding where your next hub or depot should go**. It takes two steps:\n" +
+            "1. **Find your hubs:** where the fleet is right now, and where the parked vehicles gather.\n" +
+            "2. **Choose who the new hub should serve:** the most residents within a 15-minute drive, higher-income areas or busy shops and restaurants, or your own customers. Each goal puts the hub somewhere different.\n\n" +
+            "Let's start with step 1.",
         },
       ],
       choices: [
-        { label: "📍 Where is my fleet right now?", say: "Where is my fleet right now?", next: "carto-fleet" },
-        { label: "🎯 Where would a new hub help most?", say: "Where would a new hub help most, and what data could I weight it by?", next: "carto-data" },
-        { label: "🧭 Use my own trips instead", say: "Can I use my own trips instead of public data?", next: "carto-trips" },
+        { label: "📍 Start: where is my fleet right now?", say: "Let's start. Where is my fleet right now?", next: "carto-fleet" },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
@@ -5799,14 +5866,12 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "**Your trips confirm the hubs.** All " + X.trips.count + " stop points land on " + X.trips.places + " places: the five hubs we found from parked vehicles, plus one more, so they're real working locations.\n\n" +
-            "To plan the next hub I'd weight by demand, meaning where your customers are. That could come from zones in MyGeotab, a few weeks of trip history, or your CRM. " +
-            "Your customers are most likely in a CRM, so that's the quickest place to start.",
+            "They can't tell me who your customers are, though: a stop point is a place, not an account, and here they all end at your own sites. " +
+            "Customer sites saved as zones in MyGeotab would work, but the accounts and their orders are most likely in your CRM, so that's the quickest place to start.",
         },
       ],
       choices: [
         { label: "🧾 Pull my customers from Salesforce", say: "My customers are in Salesforce. Can you pull them and use those?", next: "carto-customers" },
-        { label: "🎯 Try public data instead", say: "Okay, what public data could I weight it by?", next: "carto-data" },
-        { label: "📍 Where is my fleet right now?", say: "Where is my fleet right now?", next: "carto-fleet" },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
@@ -5876,7 +5941,7 @@ window.CONVERSATIONS = {
         cartoMap(
           "carto-customers.webp",
           "Your accounts and the nearest hub",
-          "Orange = account more than 5 km from its nearest hub · green = within 5 km · dot size = orders · grey dashes = trip to the nearest hub today · navy lines = trip to the proposed hub",
+          "Red = account more than 5 km from its nearest hub · green = within 5 km · dot size = orders · grey dashes = trip to the nearest hub today · navy lines = trip to the proposed hub",
           [
             { label: "Henderson · 37% of orders", x: Cu.mapLabels.cluster.x, y: Cu.mapLabels.cluster.y },
             { label: "Proposed hub · Green Valley", x: Cu.mapLabels.hub.x, y: Cu.mapLabels.hub.y },
@@ -5893,13 +5958,12 @@ window.CONVERSATIONS = {
             "**A new hub near Green Valley in Henderson (" + Cu.best.lat.toFixed(2) + "°N, " + Math.abs(Cu.best.lon).toFixed(2) + "°W) cuts the average distance an order travels from " +
             Cu.baselineKm + " km to " + Cu.bestKm + " km, about " + Cu.reductionPct + "% less.** " +
             "The map shows why: your Henderson accounts are 37% of orders and sit 6 to 10 km from the nearest hub, while the downtown and Summerlin customers are already within about 2.5 km of one.\n\n" +
-            "That's also the corner of the valley the public data pointed to, so three independent goals agree. " +
-            "This is where you already sell, though. To see where you could sell more, I'd add the demographics.",
+            "This is where you already sell, though. To see where you could sell more, I'd compare it with where higher-income residents live.",
         },
       ],
       choices: [
         { label: "🔍 Where could I sell more?", say: "That's where I sell today. Where could I sell more?", next: "carto-potential" },
-        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map-sites" },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
@@ -5913,8 +5977,10 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Orders show where you already sell. To find where you could sell more, I'll take the higher-income residents from the Census data and keep only those who live more than " +
-            P.radiusKm + " km from any of your current customers. That's your white space. Then I'll score each possible hub by how much of it lies within " + C.sixthHub.gapKm + " km.",
+            "Orders show where you already sell. To find where you could sell more, I'll estimate the higher-income residents in each hexagon from two public datasets: " +
+            "Kontur's resident counts times the share of households earning $100k or more in that census tract (US Census, American Community Survey). " +
+            "Then I'll keep only those who live more than " + P.radiusKm + " km from any of your current customers. That's your white space. " +
+            "Finally I'll score each possible hub by how much of it lies within " + C.sixthHub.gapKm + " km.",
         },
         {
           type: "tool",
@@ -5922,7 +5988,7 @@ window.CONVERSATIONS = {
           name: "execute_query",
           args: cartoSql(
             "WITH cust AS ( … ),   -- the 12 geocoded accounts\n" +
-            "cells AS (   -- the same cells as before, with hi_income = residents * share of households earning $100k+\n" +
+            "cells AS (   -- populated Kontur cells within ~50 km of central Las Vegas, with hi_income = residents * tract share of households earning $100k+ (ACS DP03)\n" +
             "  SELECT h3, hi_income, pt, MIN(ST_DISTANCE(pt, cust.pt)) AS d_cust FROM … GROUP BY h3, hi_income, pt\n" +
             ")\n" +
             "-- for each candidate cell: SUM(hi_income) of cells within " + C.sixthHub.gapKm + " km that are more than " + P.radiusKm + " km from every customer\n" +
@@ -6063,11 +6129,16 @@ window.CONVERSATIONS = {
           text:
             "Every cell matches, since the 2019 tables use the same tract boundaries as the ones on your connection. " +
             "Shops and restaurants are already in CARTO's public Spatial Features table, so I'll join those by cell.\n\n" +
-            "A tip for next time: search the catalog by what you want to measure, check the license, and test the join before relying on it.",
+            "A tip for next time: search the catalog by what you want to measure, check the license, and test the join before relying on it.\n\n" +
+            "So now I can score the sixth hub three ways: by **residents** (as before), by **higher-income residents**, and by **shops and restaurants**.",
         },
       ],
       choices: [
-        { label: "🎯 Run the three goals", say: "Run the search for all three goals.", next: "carto-objective" },
+        {
+          label: "⚖️ Compare residents, income and shops",
+          say: "Run the sixth-hub search three ways (residents, higher-income residents, and shops and restaurants) and show me where each one lands.",
+          next: "carto-objective",
+        },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
@@ -6111,6 +6182,22 @@ window.CONVERSATIONS = {
           "Higher-income winner · 15-min drive area (GeoJSON)",
           3
         ),
+        cartoMap(
+          "carto-goals.webp",
+          "Three goals, three different sixth hubs",
+          "Red = populated cells more than " + C.sixthHub.gapKm + " km from every hub · diamonds = best new hub per goal: " +
+            "navy = residents, purple = shops + restaurants, orange = higher-income residents",
+          // labels sit left of each diamond; the two south-east ones are nudged apart so they don't touch on narrow screens
+          [
+            { label: O.people.label, x: O.people.x - 1.5, y: O.people.y, flip: true },
+            { label: O.poi.label, x: O.poi.x - 1.5, y: O.poi.y - 2.5, flip: true },
+            { label: O.income.label, x: O.income.x - 1.5, y: O.income.y + 2.5, flip: true },
+          ],
+          {
+            layer: "H3 res 8 · best cell per goal",
+            source: "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population · income: ACS 2015–2019 by census tract · shops: Spatial Features",
+          }
+        ),
         {
           type: "chart",
           title: "Share more than " + C.sixthHub.gapKm + " km from every hub today (%)",
@@ -6134,8 +6221,12 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map-sites" },
-        { label: "🧭 Use my own trips as the goal", say: "Can I use my own trips as the goal?", next: "carto-trips" },
+        { label: "🗺️ Put the three picks on a map I can share", say: "Put the three picks on a map I can share.", next: "carto-map-goals" },
+        {
+          label: "🧾 What about my actual customers?",
+          say: "Those are all public data. What if the hub should serve my actual customers? Can my own trips show where they are?",
+          next: "carto-trips",
+        },
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
@@ -6152,106 +6243,135 @@ window.CONVERSATIONS = {
             "I'll read CARTO's map format first rather than guess field names, check the map against it, then save it in " +
             "Builder. I'll keep it private so you can choose who to share it with.",
         },
-        {
-          type: "tool",
-          server: "carto",
-          name: "validate_map",
-          args: { method: "schema" },
-          summary: "map format: datasets, layers, styling",
-          result: "// bundle schema: datasets (SQL or table, by connection), H3 datasets by index column + aggregation, Kepler layers referencing datasets by $ref, ordinal color maps …",
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "validate_map",
-          args: {
-            method: "verify",
-            bundle: {
-              title: "Las Vegas fleet hubs",
-              privacy: "private",
-              datasets: [
-                {
-                  $ref: "vehicles", type: "query", connectionId: "…", geoColumn: "geom",
-                  source: "SELECT …, IF(isDriving, 'Driving', 'Parked') AS status FROM UNNEST([ … ])   -- " + C.vehicles + " positions",
-                },
-                {
-                  $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
-                  aggregationExp: "SUM(parked) AS parked",
-                  source: "SELECT h3, parked … -- the five hub cells + the proposed sixth site",
-                },
-                {
-                  $ref: "cell_scores", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
-                  aggregationExp: "SUM(population) AS population, AVG(dist_km_to_nearest_hub) AS dist_km_to_nearest_hub",
-                  source: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search",
-                },
-              ],
-              keplerMapConfig: {
-                config: {
-                  visState: {
-                    layers: [
-                      {
-                        type: "point",
-                        config: { dataId: "$ref:vehicles", visConfig: { colorRange: { colorMap: [["Driving", "#0A74D6"], ["Parked", "#E5303A"]] } } },
-                        visualChannels: { colorField: { name: "status", type: "string" }, colorScale: "ordinal" },
-                      },
-                      { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
-                      {
-                        type: "h3",
-                        config: { dataId: "$ref:cell_scores", columns: { hex: "h3" } },
-                        visualChannels: { colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
-                      },
-                    ],
-                  },
+      ].concat(
+        cartoSaveMap(
+          {
+            title: "Las Vegas fleet hubs",
+            privacy: "private",
+            datasets: [
+              {
+                $ref: "vehicles", type: "query", connectionId: "…", geoColumn: "geom",
+                source: "SELECT …, IF(isDriving, 'Driving', 'Parked') AS status FROM UNNEST([ … ])   -- " + C.vehicles + " positions",
+              },
+              {
+                $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(parked) AS parked",
+                source: "SELECT h3, parked … -- the five hub cells + the proposed sixth site",
+              },
+              {
+                $ref: "cell_scores", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(population) AS population, AVG(dist_km_to_nearest_hub) AS dist_km_to_nearest_hub",
+                source: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search",
+              },
+            ],
+            keplerMapConfig: {
+              config: {
+                visState: {
+                  layers: [
+                    {
+                      type: "point",
+                      config: { dataId: "$ref:vehicles", visConfig: { colorRange: { colorMap: [["Driving", "#0A74D6"], ["Parked", "#E5303A"]] } } },
+                      visualChannels: { colorField: { name: "status", type: "string" }, colorScale: "ordinal" },
+                    },
+                    { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                    {
+                      type: "h3",
+                      config: { dataId: "$ref:cell_scores", columns: { hex: "h3" } },
+                      visualChannels: { colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                    },
+                  ],
                 },
               },
             },
           },
-          summary: "bundle valid · 3 datasets · SQL dry-run OK",
-          result: '{ "valid": true, "datasets": [ { "name": "vehicles", "rows": ' + C.vehicles + ' }, … ] }',
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "create_map",
-          args: { bundle: "<the verified bundle>" },
-          summary: "private Builder map created",
-          write: true,
-          result: '{ "mapId": "…", "privacy": "private" }',
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "view_map",
-          args: { mapId: "…" },
-          summary: "interactive map in chat (MCP Apps hosts only)",
-          result: "// renders the map inline where the host supports MCP Apps; elsewhere, use the Builder link",
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "get_workspace_info",
-          args: {},
-          summary: "workspace URL template for Builder links",
-          result:
-            '{ "workspaceUrl": "https://<your-carto-workspace>",\n' +
-            '  "urlTemplates": { "builderMap": { "template": "https://<your-carto-workspace>/builder/{mapId}" }, … } }',
-        },
-        {
-          type: "system",
-          text:
-            "`view_map` shows the interactive map in the chat only in apps that support MCP Apps; elsewhere you get the link. " +
-            "The map is private to the CARTO account that created it, so the simulator can't show it.",
-        },
+          "bundle valid · 3 datasets · SQL dry-run OK",
+          '{ "valid": true, "datasets": [ { "name": "vehicles", "rows": ' + C.vehicles + ' }, … ] }'
+        ),
+        [
+          {
+            type: "assistant",
+            text:
+              "I've saved it as a **private map in Builder**: the vehicles (blue driving, red parked), the five hubs plus the " +
+              "proposed sixth site, and distance to the nearest hub. If it didn't appear above, open it from the link: " +
+              "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.\n\n" +
+              "The next step is adding the drive-time areas: I'd save them to a table with `execute_query` and point the map at that table.",
+          },
+          { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Plain-English questions in, a shareable map out. The assistant wrote the SQL."] },
+        ]
+      ),
+      choices: [
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "carto-map-goals": {
+      id: "carto-map-goals",
+      title: "CARTO · Put the three picks on a map I can share",
+      mode: "carto",
+      events: [
         {
           type: "assistant",
           text:
-            "I've saved it as a **private map in Builder**: the vehicles (blue driving, red parked), the five hubs plus the " +
-            "proposed sixth site, and distance to the nearest hub. If it didn't appear above, open it from the link: " +
-            "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.\n\n" +
-            "The next step is adding the drive-time areas: I'd save them to a table with `execute_query` and point the map at that table.",
+            "I'll put the three picks on one map, colored by goal, over your five hubs and every cell's distance to the nearest hub. " +
+            "I'll check it against CARTO's map format first, then save it privately in Builder.",
         },
-        { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Six plain-English questions. The assistant wrote the SQL."] },
-      ],
+      ].concat(
+        cartoSaveMap(
+          {
+            title: "Las Vegas sixth hub: residents vs higher-income vs shops",
+            privacy: "private",
+            datasets: [
+              {
+                $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(parked) AS parked",
+                source: "SELECT h3, parked … -- the five hub cells",
+              },
+              {
+                $ref: "picks", type: "query", connectionId: "…", geoColumn: "geom",
+                source: "SELECT goal, ST_GEOGPOINT(lon, lat) AS geom FROM UNNEST([ … ])   -- the best cell for residents, higher-income, shops",
+              },
+              {
+                $ref: "cells", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(population) AS population, SUM(hi_income) AS hi_income, SUM(poi) AS poi, AVG(dist_km_to_nearest_hub) AS dist_km_to_nearest_hub",
+                source: "SELECT h3, population, hi_income, poi, dist_km_to_nearest_hub … -- every cell, as in the three-goal search",
+              },
+            ],
+            keplerMapConfig: {
+              config: {
+                visState: {
+                  layers: [
+                    {
+                      type: "h3",
+                      config: { dataId: "$ref:cells", columns: { hex: "h3" } },
+                      visualChannels: { colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                    },
+                    { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                    {
+                      type: "point",
+                      config: { dataId: "$ref:picks", visConfig: { colorRange: { colorMap: [["Residents", "#18294F"], ["Higher-income", "#D9480F"], ["Shops", "#7048E8"]] } } },
+                      visualChannels: { colorField: { name: "goal", type: "string" }, colorScale: "ordinal" },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          "bundle valid · 3 datasets · SQL dry-run OK",
+          '{ "valid": true, "datasets": [ { "name": "picks", "rows": 3 }, { "name": "cells", "rows": ' + O.study.cells + " }, … ] }"
+        ),
+        [
+          {
+            type: "assistant",
+            text:
+              "I've saved it as a **private map in Builder**: the three picks colored by goal (navy residents, orange higher-income residents, purple shops and restaurants) " +
+              "over your hubs, with each cell shaded by its distance to the nearest hub. If it didn't appear above, open it from the link: " +
+              "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.",
+          },
+          { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Same question, three goals, three answers. The assistant wrote the SQL."] },
+        ]
+      ),
       choices: [
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
@@ -6261,123 +6381,80 @@ window.CONVERSATIONS = {
 
     "carto-map-sites": {
       id: "carto-map-sites",
-      title: "CARTO · Put the picks on a map I can share",
+      title: "CARTO · Put the serve and grow picks on a map I can share",
       mode: "carto",
       events: [
         {
           type: "assistant",
           text:
-            "I'll put every pick from this conversation on one map: the three goals, the customer-based hub in Henderson and the south-west growth area, " +
-            "with your accounts and the white space behind them. I'll check it against CARTO's map format first, then save it privately in Builder.",
+            "I'll put both picks on one map: the hub that serves your customers (Green Valley, Henderson) and the one that grows the market (the south-west), " +
+            "with your hubs, your accounts and the white space behind them. I'll check it against CARTO's map format first, then save it privately in Builder.",
         },
-        {
-          type: "tool",
-          server: "carto",
-          name: "validate_map",
-          args: { method: "schema" },
-          summary: "map format: datasets, layers, styling",
-          result: "// bundle schema: datasets (SQL or table, by connection), H3 datasets by index column + aggregation, Kepler layers referencing datasets by $ref, ordinal color maps …",
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "validate_map",
-          args: {
-            method: "verify",
-            bundle: {
-              title: "Las Vegas hub picks: residents, income, shops, customers, growth",
-              privacy: "private",
-              datasets: [
-                {
-                  $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
-                  aggregationExp: "SUM(parked) AS parked",
-                  source: "SELECT h3, parked … -- the five hub cells",
-                },
-                {
-                  $ref: "picks", type: "query", connectionId: "…", geoColumn: "geom",
-                  source: "SELECT goal, ST_GEOGPOINT(lon, lat) AS geom FROM UNNEST([ … ])   -- residents, higher-income, shops, customers, growth",
-                },
-                {
-                  $ref: "accounts", type: "query", connectionId: "…", geoColumn: "geom",
-                  source: "SELECT name, orders, dist_km_to_nearest_hub, geom FROM …   -- the geocoded accounts",
-                },
-                {
-                  $ref: "white_space", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
-                  aggregationExp: "SUM(hi_income) AS hi_income",
-                  source: "SELECT h3, hi_income FROM … WHERE dist_to_nearest_account > " + P.radiusKm * 1000 + "   -- higher-income residents far from any customer",
-                },
-              ],
-              keplerMapConfig: {
-                config: {
-                  visState: {
-                    layers: [
-                      {
-                        type: "h3",
-                        config: { dataId: "$ref:white_space", columns: { hex: "h3" } },
-                        visualChannels: { colorField: { name: "hi_income", type: "real" } },
-                      },
-                      { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
-                      {
-                        type: "point",
-                        config: { dataId: "$ref:accounts" },
-                        visualChannels: { sizeField: { name: "orders", type: "integer" }, colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
-                      },
-                      {
-                        type: "point",
-                        config: { dataId: "$ref:picks", visConfig: { colorRange: { colorMap: [["Residents", "#6B7A99"], ["Higher-income", "#D9480F"], ["Shops", "#F2A93B"], ["Customers", "#0F7B6C"], ["Growth", "#18294F"]] } } },
-                        visualChannels: { colorField: { name: "goal", type: "string" }, colorScale: "ordinal" },
-                      },
-                    ],
-                  },
+      ].concat(
+        cartoSaveMap(
+          {
+            title: "Las Vegas next hub: serve customers vs grow the market",
+            privacy: "private",
+            datasets: [
+              {
+                $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(parked) AS parked",
+                source: "SELECT h3, parked … -- the five hub cells",
+              },
+              {
+                $ref: "picks", type: "query", connectionId: "…", geoColumn: "geom",
+                source: "SELECT pick, ST_GEOGPOINT(lon, lat) AS geom FROM UNNEST([ … ])   -- serve (Green Valley), grow (south-west)",
+              },
+              {
+                $ref: "accounts", type: "query", connectionId: "…", geoColumn: "geom",
+                source: "SELECT name, orders, dist_km_to_nearest_hub, geom FROM …   -- the geocoded accounts",
+              },
+              {
+                $ref: "white_space", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(hi_income) AS hi_income",
+                source: "SELECT h3, hi_income FROM … WHERE dist_to_nearest_account > " + P.radiusKm * 1000 + "   -- higher-income residents far from any customer",
+              },
+            ],
+            keplerMapConfig: {
+              config: {
+                visState: {
+                  layers: [
+                    {
+                      type: "h3",
+                      config: { dataId: "$ref:white_space", columns: { hex: "h3" } },
+                      visualChannels: { colorField: { name: "hi_income", type: "real" } },
+                    },
+                    { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                    {
+                      type: "point",
+                      config: { dataId: "$ref:accounts" },
+                      visualChannels: { sizeField: { name: "orders", type: "integer" }, colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                    },
+                    {
+                      type: "point",
+                      config: { dataId: "$ref:picks", visConfig: { colorRange: { colorMap: [["Serve", "#0F7B6C"], ["Grow", "#D9480F"]] } } },
+                      visualChannels: { colorField: { name: "pick", type: "string" }, colorScale: "ordinal" },
+                    },
+                  ],
                 },
               },
             },
           },
-          summary: "bundle valid · 4 datasets · SQL dry-run OK",
-          result: '{ "valid": true, "datasets": [ { "name": "picks", "rows": 5 }, { "name": "accounts", "rows": ' + Cu.list.length + " }, … ] }",
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "create_map",
-          args: { bundle: "<the verified bundle>" },
-          summary: "private Builder map created",
-          write: true,
-          result: '{ "mapId": "…", "privacy": "private" }',
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "view_map",
-          args: { mapId: "…" },
-          summary: "interactive map in chat (MCP Apps hosts only)",
-          result: "// renders the map inline where the host supports MCP Apps; elsewhere, use the Builder link",
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "get_workspace_info",
-          args: {},
-          summary: "workspace URL template for Builder links",
-          result:
-            '{ "workspaceUrl": "https://<your-carto-workspace>",\n' +
-            '  "urlTemplates": { "builderMap": { "template": "https://<your-carto-workspace>/builder/{mapId}" }, … } }',
-        },
-        {
-          type: "system",
-          text:
-            "`view_map` shows the interactive map in the chat only in apps that support MCP Apps; elsewhere you get the link. " +
-            "The map is private to the CARTO account that created it, so the simulator can't show it. The accounts layer uses the illustrative customers.",
-        },
-        {
-          type: "assistant",
-          text:
-            "I've saved it as a **private map in Builder**. The five picks are colored by goal (residents, higher-income, shops, customers and growth), over your hubs, " +
-            "your accounts sized by orders, and the white space shaded by higher-income residents. If it didn't appear above, open it from the link: " +
-            "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.",
-        },
-        { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "From “where is my fleet?” to “where do I grow?” The assistant wrote the SQL."] },
-      ],
+          "bundle valid · 4 datasets · SQL dry-run OK",
+          '{ "valid": true, "datasets": [ { "name": "picks", "rows": 2 }, { "name": "accounts", "rows": ' + Cu.list.length + " }, … ] }",
+          "The accounts layer uses the illustrative customers."
+        ),
+        [
+          {
+            type: "assistant",
+            text:
+              "I've saved it as a **private map in Builder**: the serve pick in green and the grow pick in orange, over your hubs, " +
+              "your accounts sized by orders, and the white space shaded by higher-income residents. If it didn't appear above, open it from the link: " +
+              "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.",
+          },
+          { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "From “where is my fleet?” to “where do I grow?” The assistant wrote the SQL."] },
+        ]
+      ),
       choices: [
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
@@ -6395,15 +6472,15 @@ window.CONVERSATIONS = {
           text:
             "A few things, before anyone acts on it:\n" +
             "- **The hubs are inferred** from one evening snapshot, not your depot list.\n" +
-            "- **The sixth hub is a map-derived candidate, not a checked location.** Zoning, available yards and rent all still need a look.\n" +
-            "- **Only the winning cell got a drive-time check.** The other four are neighboring cells with almost the same score, so treat it as an area, not an address.\n" +
-            "- **Coverage counts residents, not customers.** If you have order or customer locations, use those instead.\n" +
-            "- **Coverage is counted by hexagon center.** A hexagon counts as covered if its center is inside a drive area, so edges are approximate.\n" +
-            "- **Drive times assume a car, 15 minutes and one time of day.** Traffic changes by hour, so rerun it for your busiest time.",
+            "- **Every pick is an area, not an address.** Neighboring cells score almost the same, and zoning, available yards and rent all still need a look.\n" +
+            "- **Most distances are straight lines.** Only a few spots got a drive-time check, so check drive times for your shortlist before deciding.\n" +
+            "- **Residents aren't demand.** Residents, income and shops describe the area; your own customers and orders are the better goal when you have them.\n" +
+            "- **Income, where used, is a census-tract average.** It describes the neighborhood, not the people your drivers will serve.\n" +
+            "- **Hexagons are counted by their center**, so edges are approximate.\n" +
+            "- **Drive times assume a car and one time of day.** Traffic changes by hour, so rerun them for your busiest time.",
         },
       ],
       choices: [
-        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],

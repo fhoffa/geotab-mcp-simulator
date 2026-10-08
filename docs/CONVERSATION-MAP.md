@@ -68,21 +68,31 @@ flowchart TD
     hub -->|"📊 Board snapshot"| epX["Ep-Exec · Both fleets snapshot"]
 
     %% --- Spatial analytics (Geotab MCP + CARTO MCP) ---
+    %% one spine (fleet → hubs), then "who should the next hub serve?"
     hub -->|"🧭 What can CARTO do?"| cartoE["CARTO · What can I do with my fleet?"]
     cartoE --> cartoF
-    cartoE --> cartoD["CARTO · Finding data to weight by"]
-    cartoE --> cartoT["CARTO · Use my own trips"]
-    cartoS -->|"🎯 other goals"| cartoD
-    cartoD --> cartoO["CARTO · Three goals compared"]
-    cartoO --> cartoT
     hub -->|"🗺️ Hubs + 15-min reach"| cartoF["CARTO · Where is my fleet?"]
     cartoF --> cartoH["CARTO · Parked vehicles → hubs (H3)"]
-    cartoH --> cartoC["CARTO · What's around each hub"]
+    cartoH -->|"👥 residents"| cartoC["CARTO · What's around each hub"]
     cartoC --> cartoR["CARTO · 15-min drive reach"]
-    cartoR --> cartoS["CARTO · Sixth-hub site"]
-    cartoS --> cartoM["CARTO · Shareable Builder map"]
+    cartoR --> cartoS["CARTO · Sixth-hub site (residents)"]
+    cartoS --> cartoM["CARTO · Shareable map (sixth hub)"]
+    cartoS -->|"💰 income or shops"| cartoD["CARTO · Finding data to weight by"]
+    cartoD --> cartoO["CARTO · Three goals compared"]
+    cartoO --> cartoMG["CARTO · Shareable map (three picks)"]
+    cartoH -->|"🧾 customers"| cartoT["CARTO · Trips confirm the hubs"]
+    cartoS -->|"🧾 customers"| cartoT
+    cartoO -->|"🧾 customers"| cartoT
+    cartoT --> cartoCu["CARTO · Salesforce customers → serve pick"]
+    cartoCu --> cartoP["CARTO · White space → grow pick"]
+    cartoP --> cartoMS["CARTO · Shareable map (serve + grow)"]
     cartoS --> cartoV["CARTO · What to double-check"]
+    cartoO --> cartoV
+    cartoCu --> cartoV
+    cartoP --> cartoV
     cartoM --> cartoV
+    cartoMG --> cartoV
+    cartoMS --> cartoV
 
     %% A few representative cross-links (full set in conversations.js)
     ep2 -->|"🔔 Flag it live"| ep2a["Ep2 · Create alert"]
@@ -105,7 +115,7 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (107)
+## Nodes (108)
 
 | id | title | database | leads to |
 |---|---|---|---|
@@ -203,19 +213,20 @@ flowchart TD
 | `ep-roi-send` | ROI · Send the business case | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
 | `carto-fleet` | CARTO · Where is my fleet right now? | demo_fh_vegas8 | `carto-hubs`, `carto-what-is`, `hub` |
 | `carto-what-is` | CARTO · What is CARTO? | — | `carto-hubs`, `hub` |
-| `carto-hubs` | CARTO · Group parked vehicles into hubs | demo_fh_vegas8 | `carto-context`, `carto-what-is` |
+| `carto-hubs` | CARTO · Group parked vehicles into hubs | demo_fh_vegas8 | `carto-context`, `carto-trips`, `carto-what-is` |
 | `carto-context` | CARTO · What's around each hub? | — | `carto-reach` |
 | `carto-reach` | CARTO · 15-minute reach per hub | — | `carto-site` |
-| `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-data`, `carto-caveats` |
-| `carto-explore` | CARTO · What can I do with my fleet? | demo_fh_vegas8 | `carto-fleet`, `carto-data`, `carto-trips`, `hub` |
-| `carto-trips` | CARTO · Use my own trips as the goal | demo_fh_vegas8 | `carto-customers`, `carto-data`, `carto-fleet`, `hub` |
-| `carto-customers` | CARTO · Use my Salesforce customers as the goal | demo_fh_vegas8 | `carto-potential`, `carto-map-sites`, `hub` |
+| `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-data`, `carto-trips`, `carto-caveats` |
+| `carto-explore` | CARTO · What can I do with my fleet? | demo_fh_vegas8 | `carto-fleet`, `hub` |
+| `carto-trips` | CARTO · Use my own trips as the goal | demo_fh_vegas8 | `carto-customers`, `hub` |
+| `carto-customers` | CARTO · Use my Salesforce customers as the goal | demo_fh_vegas8 | `carto-potential`, `carto-caveats`, `hub` |
 | `carto-potential` | CARTO · Where could I sell more? | demo_fh_vegas8 | `carto-map-sites`, `carto-caveats`, `hub` |
 | `carto-data` | CARTO · Finding data to weight by | — | `carto-objective`, `hub` |
-| `carto-objective` | CARTO · Optimize for something other than residents | demo_fh_vegas8 | `carto-map-sites`, `carto-trips`, `carto-caveats`, `hub` |
+| `carto-objective` | CARTO · Optimize for something other than residents | demo_fh_vegas8 | `carto-map-goals`, `carto-trips`, `carto-caveats`, `hub` |
 | `carto-map` | CARTO · Put it on a map I can share | — | `carto-caveats`, `hub`, restart |
-| `carto-map-sites` | CARTO · Put the picks on a map I can share | — | `carto-caveats`, `hub`, restart |
-| `carto-caveats` | CARTO · What to double-check | — | `carto-map`, `hub`, restart |
+| `carto-map-goals` | CARTO · Put the three picks on a map I can share | — | `carto-caveats`, `hub`, restart |
+| `carto-map-sites` | CARTO · Put the serve and grow picks on a map I can share | — | `carto-caveats`, `hub`, restart |
+| `carto-caveats` | CARTO · What to double-check | — | `hub`, restart |
 
 Episodes **cross-link** as well as branch to their own action node — e.g.
 maintenance → fleet composition → Valencia exposure, or speeding → posted-speed
@@ -224,7 +235,12 @@ maintenance → fleet composition → Valencia exposure, or speeding → posted-
 `carto-*` path replays a real two-server session (Geotab MCP on
 `demo_fh_vegas8` + CARTO MCP): its numbers live in `SAMPLE_DATA.carto` and its
 maps are the assistant's renders of that session's results; tool and argument
-names follow the real schemas, while SQL and values are simplified.
+names follow the real schemas, while SQL and values are simplified. Every
+CARTO branch starts from the same spine (fleet → hubs), so later steps can
+refer to "the five hubs" whichever way the user came; the branches then split
+on who the next hub should serve (residents, income or shops, customers) and
+each ends on its own shareable map. Keep it that way: a step should only quote
+results from steps every route into it has already shown.
 
 The **Safety / Maintenance / Operations / Agentic** scenarios are anchored to
 the live demo accounts (API + Ace) — fleet sizes, vehicle mix, the fleet-wide

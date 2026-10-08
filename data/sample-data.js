@@ -513,9 +513,10 @@ window.SAMPLE_DATA = {
     objectives: {
       snapshot: "8 Oct 2026, ~15:15 UTC", vehicles: 50, driving: 23, parked: 27, parkedAtHubs: 24,
       study: { cells: 2090, residents: 2073195, income: 515898, poi: 32900 },
-      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 225133 },
-      income: { label: "Higher-income residents", uncoveredPct: 35.9, h3: "8829868c51fffff", lat: 36.0242, lon: -115.0237, score: 51457 },
-      poi:    { label: "Shops + restaurants",     uncoveredPct: 19.4, h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694 },
+      // x/y: each best cell on assets/carto-goals.webp (percent, shared framing)
+      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 225133, x: 71.7, y: 41.3 },
+      income: { label: "Higher-income residents", uncoveredPct: 35.9, h3: "8829868c51fffff", lat: 36.0242, lon: -115.0237, score: 51457,  x: 77.8, y: 74.8 },
+      poi:    { label: "Shops + restaurants",     uncoveredPct: 19.4, h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694,   x: 76.6, y: 68.1 },
       // each winner's score on the other goals, as a share of that goal's best (rounded)
       cross: { peopleWinner: { income: 64, poi: 60 }, incomeWinner: { people: 70, poi: 92 }, poiWinner: { people: 78, income: 92 } },
       // discovery step: share of residents matched to an ACS tract, by tract vintage

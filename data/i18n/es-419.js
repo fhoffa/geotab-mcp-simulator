@@ -2299,7 +2299,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-hubs": {
-    h: "11900dcc",
+    h: "220a95ce",
     events: [
       /*0 assistant*/ { text: "Paso las 28 posiciones de estacionamiento directamente a una consulta en tu conexión de CARTO, agrupadas en hexágonos H3 de resolución 8 (unos 0.7 km² cada uno). Varios vehículos en un mismo hexágono suelen indicar un patio compartido." },
       /*1 tool*/ { summary: "5 celdas con varios vehículos · 25 de 28 vehículos estacionados" },
@@ -2310,11 +2310,15 @@ window.SIM_I18N["es-419"] = {
         pins: ["Oeste · 6", "Centro · 5", "Sureste · 5", "Sur · 4", "Norte · 5"] },
       /*3 assistant*/ { text: "**Cinco hubs.** 25 de los 28 vehículos estacionados están en uno de cinco puntos; los otros 3 están estacionados solos. Nombré los hubs según dónde quedan en el mapa.\n" +
         "\n" +
-        "Pero esto es una sola instantánea a eso de las 7 pm, así que no puedo asegurar que sean patios. Algunos podrían ser el sitio de un cliente o un estacionamiento compartido. Unas semanas de datos de estacionamiento, o tu lista de bases, lo resolverían." },
+        "Pero esto es una sola instantánea a eso de las 7 pm, así que no puedo asegurar que sean patios. Algunos podrían ser el sitio de un cliente o un estacionamiento compartido. Unas semanas de datos de estacionamiento, o tu lista de bases, lo resolverían.\n" +
+        "\n" +
+        "Con los hubs listos podemos planear el siguiente. Puedo empezar por lo que hay alrededor de cada hub y a cuántas personas llega cada uno, o ir directo a tus clientes." },
     ],
     choices: [
       { label: "🏙️ ¿Qué hay alrededor de cada hub?",
         say: "¿Qué hay alrededor de cada hub?" },
+      { label: "🧾 Planear el próximo hub según mis clientes",
+        say: "Adelantémonos: quiero que el próximo hub atienda a mis clientes. ¿Mis propios viajes pueden mostrar dónde están?" },
       { label: "❓ ¿Qué es CARTO?",
         say: "¿Qué es CARTO y qué hace aquí?" },
     ],
@@ -2363,7 +2367,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-site": {
-    h: "bd0d7b3f",
+    h: "e38a3167",
     events: [
       /*0 assistant*/ { text: "Revisar los tiempos de manejo de cada punto posible tomaría cientos de llamadas, así que lo hago en dos pasos. Primero, una preselección rápida por distancia en línea recta: considero sin cobertura un vecindario si está a más de 8 km del hub más cercano, y califico cada punto posible según cuántos residentes sin cobertura viven a menos de 8 km. Luego, una revisión real de tiempo de manejo para el ganador." },
       /*1 tool*/ { summary: "las 5 mejores celdas · 225k residentes sin cobertura a menos de 8 km de la #1" },
@@ -2389,19 +2393,23 @@ window.SIM_I18N["es-419"] = {
         pins: ["Hub 6"] },
       /*11 assistant*/ { text: "**La mejor zona está justo al este de Centro, alrededor de 36.17°N, 115.06°O.** Un hub ahí pondría a **181k personas más** a menos de 15 minutos en auto, llevando la cobertura del 80% al 88.5%.\n" +
         "\n" +
-        "Los 225k y los 181k miden cosas distintas. 225k son personas a más de 8 km en línea recta de cualquier hub que viven a menos de 8 km del sitio. 181k son personas dentro de la nueva área de 15 minutos en auto que no están ya dentro de una de las cinco existentes. (Las dos medidas tampoco coinciden hoy: 8 km en línea recta desde un hub cubren el 68%; las áreas de 15 minutos en auto, cerca del 80%.)" },
+        "Los 225k y los 181k miden cosas distintas. 225k son personas a más de 8 km en línea recta de cualquier hub que viven a menos de 8 km del sitio. 181k son personas dentro de la nueva área de 15 minutos en auto que no están ya dentro de una de las cinco existentes. (Las dos medidas tampoco coinciden hoy: 8 km en línea recta desde un hub cubren el 68%; las áreas de 15 minutos en auto, cerca del 80%.)\n" +
+        "\n" +
+        "Esa es la respuesta si el nuevo hub debe atender a la mayor cantidad de residentes. Otro objetivo lo mueve: zonas de mayores ingresos, zonas con muchos comercios y restaurantes, o tus propios clientes." },
     ],
     choices: [
       { label: "🗺️ Ponerlo en un mapa que pueda compartir",
         say: "Ponlo en un mapa que pueda compartir." },
-      { label: "🎯 Optimizar por algo distinto a residentes",
-        say: "¿Y si optimizo por algo distinto a residentes?" },
+      { label: "💰 Ponderarlo por ingresos o comercios",
+        say: "¿Y si el nuevo hub debe atender zonas de mayores ingresos, o con muchos comercios y restaurantes, en lugar de solo a la mayor cantidad de personas?" },
+      { label: "🧾 Ponderarlo por mis clientes",
+        say: "¿Y si el nuevo hub debe atender a mis clientes? ¿Mis propios viajes pueden mostrar dónde están?" },
       { label: "🧐 ¿Qué debería verificar?",
         say: "¿Qué debería verificar antes de actuar con esto?" },
     ],
   },
   "carto-data": {
-    h: "a93322ae",
+    h: "4e0db6e4",
     events: [
       /*0 assistant*/ { text: "Kontur solo cuenta residentes, así que para ingresos o comercios necesito otros datos. Primero reviso qué hay en tu conexión de CARTO." },
       /*1 tool*/ { summary: "sin coincidencias en esta conexión" },
@@ -2412,56 +2420,48 @@ window.SIM_I18N["es-419"] = {
       /*6 tool*/ { summary: "ACS DP03 Selected Economic Characteristics · sector censal · público" },
       /*7 assistant*/ { text: "Los sectores censales son el nivel más fino. Son polígonos, no hexágonos, así que cada celda toma el sector donde cae. Reviso qué tan bien coinciden:" },
       /*8 tool*/ { summary: "datos 2019: 100% de los residentes con coincidencia en un sector con datos de ingresos" },
-      /*9 assistant*/ { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de sectores que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y prueba la unión antes de depender de ella." },
+      /*9 assistant*/ { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de sectores que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y prueba la unión antes de depender de ella.\n\nAsí que ahora puedo calificar el sexto hub de tres formas: por **residentes** (como antes), por **residentes de mayores ingresos** y por **comercios y restaurantes**." },
     ],
     choices: [
-      { label: "🎯 Correr los tres objetivos",
-        say: "Corre la búsqueda para los tres objetivos." },
+      { label: "⚖️ Comparar residentes, ingresos y comercios",
+        say: "Corre la búsqueda del sexto hub de tres formas (residentes, residentes de mayores ingresos, y comercios y restaurantes) y muéstrame dónde cae cada una." },
       { label: "↩︎ Preguntar otra cosa",
         say: "Muéstrame otra cosa." },
     ],
   },
   "carto-explore": {
-    h: "c4d8376c",
+    h: "bda069ee",
     events: [
       /*0 assistant*/ { text: "Déjame ver qué te ofrece el lado de CARTO antes de sugerir nada." },
       /*1 tool*/ { summary: "1 conexión · carto_dw (BigQuery)" },
       /*2 tool*/ { summary: "áreas de manejo y rutas activas · quedan 14,991 de 15,000 llamadas del servicio de ubicación" },
       /*3 tool*/ { summary: "151 datasets demográficos públicos para EE. UU." },
       /*4 tool*/ { summary: "172 datasets premium para EE. UU. (todas las categorías)" },
-      /*5 assistant*/ { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de manejo con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCombinado con Geotab, la gente suele empezar por una de tres cosas: dónde está la flota y dónde se agrupa, dónde ayudaría más un hub nuevo o si sus propios viajes pueden responderlo." },
+      /*5 assistant*/ { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de manejo con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCon Geotab al lado, el primer proyecto más común es **decidir dónde debería ir tu próximo hub o base**. Son dos pasos:\n1. **Encontrar tus hubs:** dónde está la flota ahora mismo y dónde se juntan los vehículos estacionados.\n2. **Elegir a quién debe atender el nuevo hub:** a la mayor cantidad de residentes a 15 minutos en auto, a zonas de mayores ingresos o con muchos comercios y restaurantes, o a tus propios clientes. Cada objetivo pone el hub en un lugar distinto.\n\nEmpecemos por el paso 1." },
     ],
     choices: [
-      { label: "📍 ¿Dónde está mi flota ahora mismo?",
-        say: "¿Dónde está mi flota ahora mismo?" },
-      { label: "🎯 ¿Dónde ayudaría más un hub nuevo?",
-        say: "¿Dónde ayudaría más un hub nuevo y con qué datos podría ponderarlo?" },
-      { label: "🧭 Usar mis propios viajes",
-        say: "¿Puedo usar mis propios viajes en vez de datos públicos?" },
+      { label: "📍 Empezar: ¿dónde está mi flota ahora mismo?",
+        say: "Empecemos. ¿Dónde está mi flota ahora mismo?" },
       { label: "↩︎ Preguntar otra cosa",
         say: "Muéstrame otra cosa." },
     ],
   },
   "carto-trips": {
-    h: "b4d74b2c",
+    h: "e5fbef1f",
     events: [
       /*0 assistant*/ { text: "Dónde terminan tus propios viajes muestra lo que tus vehículos realmente hacen. Los viajes son de alto volumen, así que primero miro una ventana corta." },
       /*1 tool*/ { summary: "534 viajes en 6 horas · cada uno con su punto de parada" },
-      /*2 assistant*/ { text: "**Tus viajes confirman los hubs.** Los 534 puntos de parada caen en 6 lugares: los cinco hubs que encontramos con los vehículos estacionados, más uno. Así que los hubs son lugares de trabajo reales, no solo donde los vehículos se estacionaron.\n\nPara planear el próximo hub ponderaría por demanda, es decir, dónde están tus clientes. Puedes obtenerlo de sitios de clientes guardados como zonas en MyGeotab, de unas semanas de historial de viajes o de tu CRM. Lo más probable es que tus clientes estén en un CRM, así que ahí es lo más rápido empezar." },
+      /*2 assistant*/ { text: "**Tus viajes confirman los hubs.** Los 534 puntos de parada caen en 6 lugares: los cinco hubs que encontramos con los vehículos estacionados, más uno. Así que son lugares de trabajo reales.\n\nPero no me dicen quiénes son tus clientes: un punto de parada es un lugar, no una cuenta, y aquí todos terminan en tus propios sitios. Los sitios de clientes guardados como zonas en MyGeotab servirían, pero lo más probable es que las cuentas y sus pedidos estén en tu CRM, así que ahí es lo más rápido empezar." },
     ],
     choices: [
       { label: "🧾 Traer mis clientes desde Salesforce",
         say: "Mis clientes están en Salesforce. ¿Puedes traerlos y usar esos?" },
-      { label: "🎯 Probar con datos públicos",
-        say: "Está bien, ¿con qué datos públicos podría ponderarlo?" },
-      { label: "📍 ¿Dónde está mi flota ahora mismo?",
-        say: "¿Dónde está mi flota ahora mismo?" },
       { label: "↩︎ Preguntar otra cosa",
         say: "Muéstrame otra cosa." },
     ],
   },
   "carto-customers": {
-    h: "f6ec834e",
+    h: "f2094279",
     events: [
       /*0 assistant*/ { text: "Tus clientes viven en Salesforce, así que traigo la dirección de entrega de cada cuenta y cuántos pedidos hizo en los últimos 90 días." },
       /*1 tool*/ { summary: "12 cuentas · 953 pedidos en 90 días" },
@@ -2471,25 +2471,25 @@ window.SIM_I18N["es-419"] = {
       /*5 assistant*/ { text: "Ahora la misma búsqueda de sitio con los pedidos como objetivo. Mediré qué tan lejos está cada pedido del hub más cercano, luego probaré cada celda poblada como hub nuevo y me quedaré con la que más acorte esa distancia." },
       /*6 tool*/ { summary: "distancia promedio 5.72 km → 3.16 km con el mejor hub nuevo" },
       /*7 map*/ { title: "Tus cuentas y el hub más cercano",
-        summary: "Naranja = cuenta a más de 5 km de su hub más cercano · verde = a menos de 5 km · tamaño del punto = pedidos · guiones grises = viaje al hub más cercano hoy · líneas azul marino = viaje al hub propuesto",
+        summary: "Rojo = cuenta a más de 5 km de su hub más cercano · verde = a menos de 5 km · tamaño del punto = pedidos · guiones grises = viaje al hub más cercano hoy · líneas azul marino = viaje al hub propuesto",
         layerLabel: "Cuentas · distancia al hub más cercano",
         disclosure: "Dibujado por el asistente a partir de los resultados de consultas CARTO de esta sesión · los clientes son ilustrativos · distancias en línea recta",
         pins: ["Henderson · 37% de los pedidos", "Hub propuesto · Green Valley"] },
-      /*8 assistant*/ { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36.02°N, 115.08°O), reduce la distancia promedio que recorre un pedido de 5.72 km a 3.16 km, cerca de un 45% menos.** El mapa muestra por qué: tus cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2.5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos, así que tres objetivos independientes coinciden. Pero aquí es donde ya vendes. Para ver dónde podrías vender más, sumaría los datos demográficos." },
+      /*8 assistant*/ { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36.02°N, 115.08°O), reduce la distancia promedio que recorre un pedido de 5.72 km a 3.16 km, cerca de un 45% menos.** El mapa muestra por qué: tus cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2.5 km de uno.\n\nPero aquí es donde ya vendes. Para ver dónde podrías vender más, lo compararía con dónde viven los residentes de mayores ingresos." },
     ],
     choices: [
       { label: "🔍 ¿Dónde podría vender más?",
         say: "Ahí es donde vendo hoy. ¿Dónde podría vender más?" },
-      { label: "🗺️ Ponerlo en un mapa que pueda compartir",
-        say: "Ponlo en un mapa que pueda compartir." },
+      { label: "🧐 ¿Qué debería verificar?",
+        say: "¿Qué debería verificar antes de actuar con esto?" },
       { label: "↩︎ Preguntar otra cosa",
         say: "Muéstrame otra cosa." },
     ],
   },
   "carto-potential": {
-    h: "96985ad7",
+    h: "fa31a188",
     events: [
-      /*0 assistant*/ { text: "Los pedidos muestran dónde ya vendes. Para encontrar dónde podrías vender más, tomo a los residentes de mayores ingresos de los datos del Censo y me quedo solo con los que viven a más de 5 km de cualquiera de tus clientes actuales. Ese es tu espacio sin atender. Luego califico cada hub posible según cuánto de eso queda a menos de 8 km." },
+      /*0 assistant*/ { text: "Los pedidos muestran dónde ya vendes. Para encontrar dónde podrías vender más, estimo los residentes de mayores ingresos de cada hexágono con dos datasets públicos: los residentes de Kontur por la proporción de hogares que ganan $100k o más en ese sector censal (Encuesta sobre la Comunidad Estadounidense, ACS, de la Oficina del Censo). Luego me quedo solo con los que viven a más de 5 km de cualquiera de tus clientes actuales. Ese es tu espacio sin atender. Por último, califico cada hub posible según cuánto de eso queda a menos de 8 km." },
       /*1 tool*/ { summary: "201,147 de 515,898 residentes de mayores ingresos (39%) están a más de 5 km de cualquier cliente" },
       /*2 map*/ { title: "Dónde vendes hoy vs. dónde podrías vender más",
         summary: "Naranja = residentes de mayores ingresos a más de 5 km de cualquier cliente (más oscuro = más) · puntos verdes = clientes (más grande = más pedidos) · azul = hubs · anillos punteados = 8 km alrededor de cada opción de hub",
@@ -2510,37 +2510,63 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-objective": {
-    h: "72da8369",
+    h: "cbe067e2",
     events: [
       /*0 assistant*/ { text: "Corro la misma búsqueda con tres pesos distintos: residentes (como antes), **residentes de mayores ingresos** (un dato demográfico) y **comercios y restaurantes** (un indicador del tránsito diurno)." },
       /*1 tool*/ { summary: "3 objetivos · la mejor celda de cada uno" },
       /*2 tool*/ { summary: "Ganador de mayores ingresos · área de 15 min en auto (GeoJSON)" },
-      /*3 chart*/ { title: "Porcentaje a más de 8 km de todos los hubs hoy (%)",
+      /*3 map*/ { title: "Tres objetivos, tres sextos hubs distintos",
+        summary: "Rojo = celdas pobladas a más de 8 km de todos los hubs · rombos = mejor hub nuevo por objetivo: azul marino = residentes, morado = comercios + restaurantes, naranja = residentes de mayores ingresos",
+        layerLabel: "H3 res 8 · mejor celda por objetivo",
+        disclosure: "Dibujado por el asistente a partir de los resultados de consultas CARTO de esta sesión · residentes: Kontur Population · ingresos: ACS 2015–2019 por sector censal · comercios: Spatial Features · instantánea del 1 oct 2026, ~02:08 UTC",
+        pins: ["Residentes", "Comercios + restaurantes", "Mayores ingresos"] },
+      /*4 chart*/ { title: "Porcentaje a más de 8 km de todos los hubs hoy (%)",
         bars: ["Residentes", "Residentes de mayores ingresos", "Comercios + restaurantes"] },
-      /*4 assistant*/ { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36.17°N, 115.06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36.02°N, 115.02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nElegir por residentes conservaría solo el 64% del mejor puntaje de ingresos y el 60% del mejor puntaje de comercios, mientras que las opciones por ingresos y por comercios conservan cada una el 92% de la otra.\n\nLa brecha también cambia: el 35.9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32.6% de todos los residentes y el 19.4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sector censal, así que describe la zona y no a las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito." },
+      /*5 assistant*/ { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36.17°N, 115.06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36.02°N, 115.02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nElegir por residentes conservaría solo el 64% del mejor puntaje de ingresos y el 60% del mejor puntaje de comercios, mientras que las opciones por ingresos y por comercios conservan cada una el 92% de la otra.\n\nLa brecha también cambia: el 35.9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32.6% de todos los residentes y el 19.4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sector censal, así que describe la zona y no a las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito." },
     ],
     choices: [
-      { label: "🗺️ Ponerlo en un mapa que pueda compartir",
-        say: "Ponlo en un mapa que pueda compartir." },
-      { label: "🧭 Usar mis propios viajes como objetivo",
-        say: "¿Puedo usar mis propios viajes como objetivo?" },
+      { label: "🗺️ Poner las tres opciones en un mapa que pueda compartir",
+        say: "Pon las tres opciones en un mapa que pueda compartir." },
+      { label: "🧾 ¿Y mis clientes reales?",
+        say: "Todo eso son datos públicos. ¿Y si el hub debe atender a mis clientes reales? ¿Mis propios viajes pueden mostrar dónde están?" },
       { label: "🧐 ¿Qué debería verificar?",
         say: "¿Qué debería verificar antes de actuar con esto?" },
       { label: "↩︎ Preguntar otra cosa",
         say: "Muéstrame otra cosa." },
     ],
   },
-  "carto-map-sites": {
-    h: "a9fb9075",
+  "carto-map-goals": {
+    h: "641b7614",
     events: [
-      /*0 assistant*/ { text: "Pondré todas las opciones de esta conversación en un solo mapa: los tres objetivos, el hub según clientes en Henderson y la zona de crecimiento del suroeste, con tus cuentas y el espacio sin atender detrás. Primero lo reviso contra el formato de mapas de CARTO y luego lo guardo en privado en Builder." },
+      /*0 assistant*/ { text: "Pondré las tres opciones en un solo mapa, coloreadas por objetivo, sobre tus cinco hubs y la distancia de cada celda al hub más cercano. Primero lo reviso contra el formato de mapas de CARTO y luego lo guardo en privado en Builder." },
+      /*1 tool*/ { summary: "formato de mapa: datasets, capas, estilos" },
+      /*2 tool*/ { summary: "paquete válido · 3 datasets · prueba en seco del SQL OK" },
+      /*3 tool*/ { summary: "mapa privado de Builder creado" },
+      /*4 tool*/ { summary: "mapa interactivo en el chat (solo en hosts con MCP Apps)" },
+      /*5 tool*/ { summary: "plantilla de URL del workspace para enlaces de Builder" },
+      /*6 system*/ { text: "`view_map` muestra el mapa interactivo en el chat solo en apps compatibles con MCP Apps; en las demás recibes el enlace. El mapa es privado para la cuenta de CARTO que lo creó, así que el simulador no puede mostrarlo." },
+      /*7 assistant*/ { text: "Lo guardé como un **mapa privado en Builder**: las tres opciones coloreadas por objetivo (azul marino residentes, naranja residentes de mayores ingresos, morado comercios y restaurantes) sobre tus hubs, con cada celda sombreada según su distancia al hub más cercano. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo." },
+      /*8 endcard*/ { lines: ["Geotab MCP + CARTO MCP", "La misma pregunta, tres objetivos, tres respuestas. El asistente escribió el SQL."] },
+    ],
+    choices: [
+      { label: "🧐 ¿Qué debería verificar?",
+        say: "¿Qué debería verificar antes de actuar con esto?" },
+      { label: "⚡ Probar otro",
+        say: "Muéstrame otra cosa." },
+      { label: "↻ Reiniciar" },
+    ],
+  },
+  "carto-map-sites": {
+    h: "fb9b068e",
+    events: [
+      /*0 assistant*/ { text: "Pondré las dos opciones en un solo mapa: el hub que atiende a tus clientes (Green Valley, Henderson) y el que hace crecer el mercado (el suroeste), con tus hubs, tus cuentas y el espacio sin atender detrás. Primero lo reviso contra el formato de mapas de CARTO y luego lo guardo en privado en Builder." },
       /*1 tool*/ { summary: "formato de mapa: datasets, capas, estilos" },
       /*2 tool*/ { summary: "paquete válido · 4 datasets · prueba en seco del SQL OK" },
       /*3 tool*/ { summary: "mapa privado de Builder creado" },
       /*4 tool*/ { summary: "mapa interactivo en el chat (solo en hosts con MCP Apps)" },
       /*5 tool*/ { summary: "plantilla de URL del workspace para enlaces de Builder" },
       /*6 system*/ { text: "`view_map` muestra el mapa interactivo en el chat solo en apps compatibles con MCP Apps; en las demás recibes el enlace. El mapa es privado para la cuenta de CARTO que lo creó, así que el simulador no puede mostrarlo. La capa de cuentas usa los clientes ilustrativos." },
-      /*7 assistant*/ { text: "Lo guardé como un **mapa privado en Builder**. Las cinco opciones están coloreadas por objetivo (residentes, mayores ingresos, comercios, clientes y crecimiento), sobre tus hubs, tus cuentas con tamaño según los pedidos y el espacio sin atender sombreado por residentes de mayores ingresos. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo." },
+      /*7 assistant*/ { text: "Lo guardé como un **mapa privado en Builder**: la opción para atender en verde y la opción para crecer en naranja, sobre tus hubs, tus cuentas con tamaño según los pedidos y el espacio sin atender sombreado por residentes de mayores ingresos. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo." },
       /*8 endcard*/ { lines: ["Geotab MCP + CARTO MCP", "De “¿dónde está mi flota?” a “¿dónde crezco?”. El asistente escribió el SQL."] },
     ],
     choices: [
@@ -2552,7 +2578,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-map": {
-    h: "97f4bae8",
+    h: "b0ffb4cf",
     events: [
       /*0 assistant*/ { text: "Primero leo el formato de mapas de CARTO en lugar de adivinar nombres de campos, valido el mapa contra él y luego lo guardo en Builder. Lo dejo privado para que tú elijas con quién compartirlo." },
       /*1 tool*/ { summary: "formato de mapa: datasets, capas, estilos" },
@@ -2564,7 +2590,7 @@ window.SIM_I18N["es-419"] = {
       /*7 assistant*/ { text: "Lo guardé como un **mapa privado en Builder**: los vehículos (azul en marcha, rojo estacionados), los cinco hubs más el sexto sitio propuesto, y la distancia al hub más cercano. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo.\n" +
         "\n" +
         "El siguiente paso es agregar las áreas de tiempo de manejo: las guardaría en una tabla con `execute_query` y apuntaría el mapa a esa tabla." },
-      /*8 endcard*/ { lines: ["Geotab MCP + CARTO MCP", "Seis preguntas en lenguaje natural. El asistente escribió el SQL."] },
+      /*8 endcard*/ { lines: ["Geotab MCP + CARTO MCP", "Preguntas en lenguaje natural, un mapa para compartir. El asistente escribió el SQL."] },
     ],
     choices: [
       { label: "🧐 ¿Qué debería verificar?",
@@ -2575,19 +2601,18 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-caveats": {
-    h: "7e1f056e",
+    h: "4bcfb94a",
     events: [
       /*0 assistant*/ { text: "Algunas cosas, antes de que alguien actúe con esto:\n" +
         "- **Los hubs son inferidos** a partir de una sola instantánea nocturna, no de tu lista de bases.\n" +
-        "- **El sexto hub es un candidato derivado del mapa, no una ubicación verificada.** La zonificación, los patios disponibles y la renta todavía hay que revisarlos.\n" +
-        "- **Solo la celda ganadora pasó por una revisión de tiempo de manejo.** Las otras cuatro son celdas vecinas con casi el mismo puntaje, así que trátalo como una zona, no como una dirección.\n" +
-        "- **La cobertura cuenta residentes, no clientes.** Si tienes ubicaciones de pedidos o de clientes, usa esas.\n" +
-        "- **La cobertura se cuenta por el centro del hexágono.** Un hexágono cuenta como cubierto si su centro está dentro de un área de manejo, así que los bordes son aproximados.\n" +
-        "- **Los tiempos de manejo suponen un auto, 15 minutos y una sola hora del día.** El tráfico cambia según la hora, así que vuelve a correrlo para tu hora de más actividad." },
+        "- **Cada opción es una zona, no una dirección.** Las celdas vecinas tienen casi el mismo puntaje, y la zonificación, los patios disponibles y la renta todavía hay que revisarlos.\n" +
+        "- **La mayoría de las distancias son en línea recta.** Solo unos pocos puntos pasaron por una revisión de tiempo de manejo, así que revisa los tiempos de manejo de tu lista corta antes de decidir.\n" +
+        "- **Los residentes no son demanda.** Residentes, ingresos y comercios describen la zona; tus propios clientes y pedidos son un mejor objetivo cuando los tienes.\n" +
+        "- **El ingreso, donde se usó, es un promedio por sector censal.** Describe el vecindario, no a las personas que atenderán tus conductores.\n" +
+        "- **Los hexágonos se cuentan por su centro**, así que los bordes son aproximados.\n" +
+        "- **Los tiempos de manejo suponen un auto y una sola hora del día.** El tráfico cambia según la hora, así que vuelve a correrlos para tu hora de más actividad." },
     ],
     choices: [
-      { label: "🗺️ Ponerlo en un mapa que pueda compartir",
-        say: "Ponlo en un mapa que pueda compartir." },
       { label: "⚡ Probar otro",
         say: "Muéstrame otra cosa." },
       { label: "↻ Reiniciar" },
