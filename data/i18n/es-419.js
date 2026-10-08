@@ -2360,7 +2360,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-site": {
-    h: "13345b34",
+    h: "bd0d7b3f",
     events: [
       /*0 assistant*/ { text: "Revisar los tiempos de manejo de cada punto posible tomaría cientos de llamadas, así que lo hago en dos pasos. Primero, una preselección rápida por distancia en línea recta: considero sin cobertura un vecindario si está a más de 8 km del hub más cercano, y califico cada punto posible según cuántos residentes sin cobertura viven a menos de 8 km. Luego, una revisión real de tiempo de manejo para el ganador." },
       /*1 tool*/ { summary: "las 5 mejores celdas · 225k residentes sin cobertura a menos de 8 km de la #1" },
@@ -2391,8 +2391,35 @@ window.SIM_I18N["es-419"] = {
     choices: [
       { label: "🗺️ Ponerlo en un mapa que pueda compartir",
         say: "Ponlo en un mapa que pueda compartir." },
+      { label: "🎯 Optimizar por algo distinto a residentes",
+        say: "¿Y si optimizo por algo distinto a residentes?" },
       { label: "🧐 ¿Qué debería verificar?",
         say: "¿Qué debería verificar antes de actuar con esto?" },
+    ],
+  },
+  "carto-objective": {
+    h: "96ad8f45",
+    events: [
+      /*0 assistant*/ { text: "La búsqueda es la misma; solo cambia el peso de cada celda. En vez de contar residentes, puedo contar lo que le importa a tu negocio. Probaría dos: **hogares de mayores ingresos** (un dato demográfico) y **comercios y restaurantes** (un indicador del tránsito diurno). \"Sin cobertura\" sigue igual: a más de 8 km de todos los hubs." },
+      /*1 tool*/ { summary: "ilustrativo · mejor celda: 38k hogares con ingresos de $100k+ sin cobertura a menos de 8 km" },
+      /*2 tool*/ { summary: "ilustrativo · mejor celda: 2,900 POIs de comercio y comida y bebida sin cobertura a menos de 8 km" },
+      /*3 chart*/ { title: "Porcentaje fuera de las áreas de 15 min en auto hoy (%, ilustrativo)",
+        bars: ["Residentes", "Hogares de mayores ingresos", "Comercios + restaurantes"] },
+      /*4 assistant*/ { text: "**Tres objetivos, tres respuestas distintas.**\n" +
+        "- **Residentes:** justo al este de Centro.\n" +
+        "- **Hogares de mayores ingresos:** el extremo noroeste. 38k hogares con ingresos de $100k+ viven a más de 8 km de todos los hubs, y el 31% de ellos queda fuera de las áreas de 15 minutos, frente al 20% de los residentes. Tus hubs llegan peor a las zonas de mayores ingresos que al residente promedio.\n" +
+        "- **Comercios + restaurantes:** el suroeste, a lo largo del corredor de Enterprise. Solo el 12% está fuera hoy, así que hay menos que ganar.\n\n" +
+        "El ganador por residentes obtiene solo 9k en la medida de ingresos y 700 en la de comercios, así que la elección depende de para qué sirve el hub.\n\n" +
+        "Estas dos corridas son solo la preselección. Antes de decidir, haría la misma revisión de tiempo de manejo con cada ganador. Los ingresos y datos similares describen el promedio de una zona, no a las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
+      /*5 system*/ { text: "Los valores de esta página son **ilustrativos**: la sesión grabada solo corrió la búsqueda por residentes. Los nombres de herramientas, los argumentos y el método son reales." },
+    ],
+    choices: [
+      { label: "🗺️ Ponerlo en un mapa que pueda compartir",
+        say: "Ponlo en un mapa que pueda compartir." },
+      { label: "🧐 ¿Qué debería verificar?",
+        say: "¿Qué debería verificar antes de actuar con esto?" },
+      { label: "↩︎ Preguntar otra cosa",
+        say: "Muéstrame otra cosa." },
     ],
   },
   "carto-map": {

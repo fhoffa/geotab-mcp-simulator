@@ -48,6 +48,7 @@ function bars(list, labelKey, valueKey) {
  * labels points from D.carto by their x/y. opts: layer (chip text), source
  * (what the map was drawn from), note (replaces the snapshot line), scaleWidth
  * (for a map not on the shared framing). */
+var O = (D.carto && D.carto.objectives) || { income: {}, poi: {}, people: {} };
 var C = D.carto || { hubs: [], coverage: {}, sixthHub: { candidates: [] }, isoline: {} };
 function cartoMap(image, title, summary, labels, opts) {
   opts = opts || {};
@@ -5700,7 +5701,79 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
+        { label: "🎯 Optimize for something other than residents", say: "What if I optimize for something other than residents?", next: "carto-objective" },
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+      ],
+    },
+
+    "carto-objective": {
+      id: "carto-objective",
+      title: "CARTO · Optimize for something other than residents",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "The search is the same; only the weight on each cell changes. Instead of counting residents, I can count what matters to your business. " +
+            "Two I'd try: **higher-income households** (a demographic) and **shops and restaurants** (a proxy for daytime foot traffic). " +
+            "\"Uncovered\" stays the same: more than " + C.sixthHub.gapKm + " km from every hub.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hh AS (   -- census block groups spread onto H3 cells, weighted by Kontur population\n" +
+            "  SELECT h3, SUM(households * share_income_100k_plus) AS weight FROM acs_blockgroups_on_h3 GROUP BY h3\n" +
+            "), … -- hubs, study, uncovered: as in the site search, with weight in place of population\n" +
+            "SELECT c.h3, SUM(u.weight) AS uncovered_weight_within_8km FROM study c JOIN uncovered u\n" +
+            "  ON ST_DISTANCE(H3_CENTER(c.h3), H3_CENTER(u.h3)) <= " + C.sixthHub.gapKm * 1000 + "\n" +
+            "GROUP BY c.h3 ORDER BY 2 DESC LIMIT 5"
+          ),
+          summary: "illustrative · best cell: " + O.income.score + " uncovered " + O.income.unit + " within " + C.sixthHub.gapKm + " km",
+          result: "1 · <res-8 cell> · " + O.income.score + "\n// illustrative values · demographics need a census-style dataset on your CARTO connection",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "-- same query; weight = retail + food_drink from Spatial Features\n" +
+            "WITH poi AS (SELECT h3, retail + food_drink AS weight FROM spatial_features), …\n" +
+            "SELECT c.h3, SUM(u.weight) AS uncovered_weight_within_8km … LIMIT 5"
+          ),
+          summary: "illustrative · best cell: " + O.poi.score + " uncovered " + O.poi.unit + " within " + C.sixthHub.gapKm + " km",
+          result: "1 · <res-8 cell> · " + O.poi.score + "\n// illustrative values",
+        },
+        {
+          type: "chart",
+          title: "Share outside the 15-min drive areas today (%, illustrative)",
+          bars: [
+            { label: O.people.label, value: O.people.uncoveredPct },
+            { label: O.income.label, value: O.income.uncoveredPct },
+            { label: O.poi.label, value: O.poi.uncoveredPct },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "**Three goals, three different answers.**\n" +
+            "- **Residents:** " + O.people.site + ".\n" +
+            "- **" + O.income.label + ":** the " + O.income.site + ". " + O.income.score + " " + O.income.unit + " live more than " + C.sixthHub.gapKm +
+            " km from every hub, and " + O.income.uncoveredPct + "% of them sit outside the 15-minute areas, against " + O.people.uncoveredPct + "% of residents. " +
+            "Your hubs reach affluent areas less well than the average resident.\n" +
+            "- **" + O.poi.label + ":** " + O.poi.site + ". Only " + O.poi.uncoveredPct + "% of them are outside today, so there's less to gain.\n\n" +
+            "The residents winner scores only " + O.income.people + " on the income measure and " + O.poi.people + " on the shops measure, so the choice depends on what the hub is for.\n\n" +
+            "These two runs are the shortlist step only. I'd run the same drive-time check on each winner before deciding. " +
+            "Income and similar figures describe an area's average, not the people your drivers will serve, and I've left out race and ethnicity on purpose. " +
+            "You can flip the goal for equity instead and ask where lower-income areas have the weakest coverage.",
+        },
+        { type: "system", text: "The values on this page are **illustrative**: the recorded session only ran the residents search. Tool names, arguments and the method are real." },
+      ],
+      choices: [
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
 

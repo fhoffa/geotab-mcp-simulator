@@ -1105,7 +1105,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-site": {
-    h: "13345b34",
+    h: "bd0d7b3f",
     events: [
       { text: "Revisar los tiempos de conducción de cada punto posible tomaría cientos de llamadas, así que lo hago en dos pasos. Primero, una preselección rápida por distancia en línea recta: considero sin cobertura un vecindario si está a más de 8 km del hub más cercano, y califico cada punto posible según cuántos residentes sin cobertura viven a menos de 8 km. Luego, una revisión real de tiempo de conducción para el ganador." },
       null,
