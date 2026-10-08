@@ -5758,12 +5758,8 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Here's what you have. One CARTO connection that can run spatial SQL on its own, a drive-time service with almost all of its yearly quota left (location calls are metered; I'll use them sparingly), " +
-            "and a public catalog of about " + X.publicDemographics + " demographics datasets you can query without paying, plus premium ones if you buy them.\n\n" +
-            "Combined with Geotab, three things people usually try first:\n" +
-            "- **Where are my vehicles, and where do they cluster?** Group parked vehicles into hubs and see what's around them.\n" +
-            "- **Where would a new hub help most?** Reach by drive time, then a site search, weighted by what matters to you.\n" +
-            "- **Can my own trips tell me that?** Use where trips actually end instead of public data.",
+            "You have one CARTO connection that can run spatial SQL, a drive-time service with almost all of its yearly quota left, and a public catalog of about " + X.publicDemographics + " demographics datasets (plus premium ones if you buy them).\n\n" +
+            "Combined with Geotab, people usually start with one of three things: where the fleet is and where it clusters, where a new hub would help most, or whether their own trips can answer that.",
         },
       ],
       choices: [
@@ -5802,10 +5798,9 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "**Your trips confirm the hubs.** All " + X.trips.count + " stop points land on " + X.trips.places + " places: the five hubs we found from parked vehicles, plus one more. " +
-            "So the hubs are real working locations, not just where vehicles happened to park.\n\n" +
-            "To plan the next hub I'd weight by demand, meaning where your customers are. You can get that from customer sites saved as zones in MyGeotab, " +
-            "from a few weeks of trip history, or from your CRM. Your customers are most likely in a CRM, so that's the quickest place to start.",
+            "**Your trips confirm the hubs.** All " + X.trips.count + " stop points land on " + X.trips.places + " places: the five hubs we found from parked vehicles, plus one more, so they're real working locations.\n\n" +
+            "To plan the next hub I'd weight by demand, meaning where your customers are. That could come from zones in MyGeotab, a few weeks of trip history, or your CRM. " +
+            "Your customers are most likely in a CRM, so that's the quickest place to start.",
         },
       ],
       choices: [
@@ -5824,7 +5819,7 @@ window.CONVERSATIONS = {
       events: [
         {
           type: "assistant",
-          text: "Your customers live in Salesforce. I'll pull each account's delivery address and how many orders it placed in the last 90 days.",
+          text: "Your customers live in Salesforce, so I'll pull each account's delivery address and how many orders it placed in the last 90 days.",
         },
         {
           type: "tool",
@@ -5859,14 +5854,14 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Now the same site search with orders as the goal. For every order I measure how far it is from the nearest hub, then try each populated cell as a new hub and keep the one that shortens the order-weighted distance the most.",
+            "Now the same site search with orders as the goal. I'll measure how far each order is from the nearest hub, then try every populated cell as a new hub and keep the one that shortens that distance the most.",
         },
         {
           type: "tool",
           server: "carto",
           name: "execute_query",
           args: cartoSql(
-            "WITH hubs AS ( … ),   -- the five cells with 4+ parked vehicles\n" +
+            "WITH hubs AS ( … ),   -- the five hubs from before\n" +
             "cust AS (SELECT name, ST_GEOGPOINT(lon, lat) AS pt, orders FROM UNNEST([ … ]))   -- the geocoded accounts\n" +
             "-- baseline: SUM(orders * distance_to_nearest_hub) / SUM(orders)\n" +
             "-- for each candidate cell: the same, with LEAST(distance_to_nearest_hub, distance_to_candidate)\n" +
@@ -5878,19 +5873,28 @@ window.CONVERSATIONS = {
             "best new hub · " + Cu.best.h3 + " · " + Cu.best.lat.toFixed(4) + ", " + Cu.best.lon.toFixed(4) + " · " + Cu.bestKm + " km\n" +
             "// straight-line distance, not drive time",
         },
-        {
-          type: "chart",
-          title: "Distance to the nearest hub today (km)",
-          bars: Cu.list.slice().sort(function (a, b) { return b.dHubKm - a.dHubKm; }).slice(0, 6).map(function (c) { return { label: c.name, value: c.dHubKm }; }),
-        },
+        cartoMap(
+          "carto-customers.webp",
+          "Your accounts and the nearest hub",
+          "Orange = account more than 5 km from its nearest hub · green = within 5 km · dot size = orders · grey dashes = trip to the nearest hub today · navy lines = trip to the proposed hub",
+          [
+            { label: "Henderson · 37% of orders", x: Cu.mapLabels.cluster.x, y: Cu.mapLabels.cluster.y },
+            { label: "Proposed hub · Green Valley", x: Cu.mapLabels.hub.x, y: Cu.mapLabels.hub.y },
+          ],
+          {
+            layer: "Accounts · distance to nearest hub",
+            source: "Drawn by the assistant from this session's CARTO query results · customers are illustrative",
+            note: "straight-line distances",
+          }
+        ),
         {
           type: "assistant",
           text:
             "**A new hub near Green Valley in Henderson (" + Cu.best.lat.toFixed(2) + "°N, " + Math.abs(Cu.best.lon).toFixed(2) + "°W) cuts the average distance an order travels from " +
-            Cu.baselineKm + " km to " + Cu.bestKm + " km, about " + Cu.reductionPct + "% less.**\n\n" +
-            "The reason is clear in the list: your three Henderson accounts are 37% of orders and sit 6 to 10 km from the nearest hub, while the customers downtown and in Summerlin are already within about 2.5 km of one.\n\n" +
-            "That is also the corner of the valley the public data pointed to (income and shops), within about 5 to 6 km. Three independent goals agreeing is a stronger case than any one of them.\n\n" +
-            "This is where you already sell, so it's the right place to serve customers better. To see where you could sell more, I'd add the demographics. A real run would also use all of your accounts, and the drive-time check comes next.",
+            Cu.baselineKm + " km to " + Cu.bestKm + " km, about " + Cu.reductionPct + "% less.** " +
+            "The map shows why: your Henderson accounts are 37% of orders and sit 6 to 10 km from the nearest hub, while the downtown and Summerlin customers are already within about 2.5 km of one.\n\n" +
+            "That's also the corner of the valley the public data pointed to, so three independent goals agree. " +
+            "This is where you already sell, though. To see where you could sell more, I'd add the demographics.",
         },
       ],
       choices: [
@@ -5942,8 +5946,8 @@ window.CONVERSATIONS = {
           ],
           {
             layer: "H3 res 8 · white space",
-            source: "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8) · income: ACS 2015–2019 by census tract · customers are illustrative",
-            note: "snapshot " + O.snapshot,
+            source: "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8) · income: ACS 2015–2019 by census tract",
+            note: "customers are illustrative",
           }
         ),
         {
@@ -5957,12 +5961,11 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "**The two goals point to different hubs, and both are useful.**\n" +
-            "- **Serve the customers you have:** Green Valley in Henderson shortens the average order trip by " + Cu.reductionPct + "%.\n" +
-            "- **Open new ground:** the south-west side of the valley (" + P.best.lat.toFixed(2) + "°N, " + Math.abs(P.best.lon).toFixed(2) + "°W) has about " +
-            Math.round(P.best.score / P.atCustomerPick) + " times as many higher-income residents with no customer nearby (" + P.best.score.toLocaleString("en-US") + " vs " + P.atCustomerPick.toLocaleString("en-US") + ").\n\n" +
-            P.whiteSpacePct + "% of the higher-income residents in the area live more than " + P.radiusKm + " km from any account, so there is room to grow. " +
-            "Many fleets use the first hub to improve service now and the second as the base for a sales push. With your full account list, this gets sharper.",
+            "**Two different hubs, and both are useful.** Green Valley in Henderson serves the customers you have, cutting the average order trip by " + Cu.reductionPct + "%. " +
+            "The south-west side of the valley (" + P.best.lat.toFixed(2) + "°N, " + Math.abs(P.best.lon).toFixed(2) + "°W) has about " + Math.round(P.best.score / P.atCustomerPick) +
+            " times as many higher-income residents with no customer nearby (" + P.best.score.toLocaleString("en-US") + " vs " + P.atCustomerPick.toLocaleString("en-US") + "), so that's where you'd grow.\n\n" +
+            P.whiteSpacePct + "% of the higher-income residents in the area live more than " + P.radiusKm + " km from any account, so there's room. " +
+            "Many fleets use the first hub to serve now and the second as the base for a sales push.",
         },
       ],
       choices: [
@@ -5980,7 +5983,7 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Kontur only knows how many people live in each cell, so for income or shops I need other data. First I'll check what's already on your CARTO connection.",
+            "Kontur only counts residents, so for income or shops I need other data. Let me check what's on your CARTO connection first.",
         },
         {
           type: "tool",
@@ -5993,8 +5996,8 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Nothing is subscribed on your account, but CARTO's public datasets can be queried directly, which is how the Kontur residents were read. " +
-            "Next I'll search the Data Observatory catalog by what I want to measure, not by dataset name.",
+            "Nothing is subscribed on your account, but CARTO's public datasets can be queried directly, which is how I read the Kontur residents. " +
+            "Let me search the catalog for what I want to measure.",
         },
         {
           type: "tool",
@@ -6058,9 +6061,9 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Every cell matches, because the 2019 tables use the same tract boundaries as the ones on your connection.\n\n" +
-            "**How I found the data:** check what the connection already has, search the catalog by the measure I want, look at the license, pick the finest geography that fits, and test the join before relying on it. " +
-            "Shops and restaurants are already in CARTO's public Spatial Features table, which I'll join by cell.",
+            "Every cell matches, since the 2019 tables use the same tract boundaries as the ones on your connection. " +
+            "Shops and restaurants are already in CARTO's public Spatial Features table, so I'll join those by cell.\n\n" +
+            "A tip for next time: search the catalog by what you want to measure, check the license, and test the join before relying on it.",
         },
       ],
       choices: [
@@ -6078,31 +6081,16 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Now the same search with three weights: residents (as before), **higher-income residents** (a demographic) and **shops and restaurants** (a proxy for daytime foot traffic). " +
-            "First a fresh look at where your parked vehicles are.",
-        },
-        {
-          type: "tool",
-          server: "geotab",
-          name: "Get",
-          args: {
-            database: C.database,
-            typeName: "DeviceStatusInfo",
-            propertySelector: { fields: ["device", "latitude", "longitude", "isDriving", "dateTime", "isDeviceCommunicating"], isIncluded: true },
-            resultsLimit: 60,
-          },
-          summary: O.vehicles + " positions · " + O.driving + " driving · " + O.parked + " parked · " + O.parkedAtHubs + " at the same five hubs",
-          result:
-            "// " + O.vehicles + " records · isDriving: " + O.driving + " true / " + O.parked + " false · snapshot " + O.snapshot + "\n" +
-            "// parked: 5 + 5 + 5 + 5 + 4 at five spots, 3 alone",
+            "I'll run the same search with three different weights: residents (as before), **higher-income residents** (a demographic) and " +
+            "**shops and restaurants** (a stand-in for daytime foot traffic).",
         },
         {
           type: "tool",
           server: "carto",
           name: "execute_query",
           args: cartoSql(
-            "WITH hubs AS ( … ),   -- the five cells with 4+ parked vehicles\n" +
-            "cells AS (   -- the same " + O.study.cells.toLocaleString("en-US") + " populated cells as before\n" +
+            "WITH hubs AS ( … ),   -- the five hubs from before\n" +
+            "cells AS (   -- the same " + O.study.cells.toLocaleString("en-US") + " populated cells\n" +
             "  SELECT k.geoid AS h3, k.population,\n" +
             "         sf.retail + sf.food_drink AS poi,                        -- Spatial Features\n" +
             "         k.population * (hh_100k_plus / households) AS hi_income  -- ACS DP03 2019, by census tract\n" +
@@ -6112,7 +6100,7 @@ window.CONVERSATIONS = {
           ),
           summary: "3 goals · best cell for each",
           result:
-            "residents · " + O.people.h3 + " · " + O.people.lat.toFixed(4) + ", " + O.people.lon.toFixed(4) + " · " + O.people.score.toLocaleString("en-US") + "\n" +
+            "residents · " + O.people.h3 + " · " + O.people.lat.toFixed(4) + ", " + O.people.lon.toFixed(4) + " · same cell as the sixth-hub search\n" +
             "higher-income residents · " + O.income.h3 + " · " + O.income.lat.toFixed(4) + ", " + O.income.lon.toFixed(4) + " · " + O.income.score.toLocaleString("en-US") + "\n" +
             "shops + restaurants · " + O.poi.h3 + " · " + O.poi.lat.toFixed(4) + ", " + O.poi.lon.toFixed(4) + " · " + O.poi.score.toLocaleString("en-US") + "\n" +
             "// study area: " + O.study.cells.toLocaleString("en-US") + " populated cells · " + O.study.residents.toLocaleString("en-US") + " residents · " +
@@ -6135,22 +6123,14 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "**The goal changes the answer.**\n" +
-            "- **Residents:** " + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W, just east of Central, the same cell as before.\n" +
-            "- **" + O.income.label + ":** " + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W, in the south-east of the valley toward Henderson, about 17 km from the residents pick.\n" +
-            "- **" + O.poi.label + ":** " + O.poi.lat.toFixed(2) + "°N, " + Math.abs(O.poi.lon).toFixed(2) + "°W, about 3 km from the income pick.\n\n" +
-            "Choosing residents costs a lot on the other goals: that cell keeps only " + O.cross.peopleWinner.income + "% of the best income score and " + O.cross.peopleWinner.poi +
-            "% of the best shops score. The income and shops picks are close to each other, and each keeps " + O.cross.incomeWinner.poi + "% and " + O.cross.poiWinner.income + "% of the other's best.\n\n" +
-            "The gap differs too. " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " + O.people.uncoveredPct +
-            "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants.",
-        },
-        {
-          type: "assistant",
-          text:
-            "A few notes. The residents score is a little different from the earlier step (" + O.people.score.toLocaleString("en-US") + " vs " + C.sixthHub.candidates[0].uncovered8km.toLocaleString("en-US") +
-            ") because I used today's parked positions, not 1 Oct's. This is the straight-line shortlist, plus one 15-minute drive area for the income pick; the next step is the drive-time check on each pick. " +
-            "Income is the ACS 2015–2019 figure for each census tract, an area average rather than the people your drivers will serve, and I left race and ethnicity out on purpose. " +
-            "You can flip the goal for equity and ask where lower-income areas have the weakest coverage.",
+            "**The goal changes the answer.** For residents it's still just east of Central (" + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W). " +
+            "For higher-income residents it moves to the south-east of the valley, toward Henderson (" + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W), about 17 km away, " +
+            "and shops and restaurants land about 3 km from that.\n\n" +
+            "Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " + O.cross.peopleWinner.poi + "% of the best shops score, " +
+            "while the income and shops picks each keep " + O.cross.incomeWinner.poi + "% of the other's.\n\n" +
+            "The gap differs too: " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " + O.people.uncoveredPct +
+            "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants. " +
+            "One note: income is the average for each census tract, so it describes the area, not the people your drivers will serve, and I left race and ethnicity out on purpose.",
         },
       ],
       choices: [

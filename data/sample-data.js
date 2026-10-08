@@ -528,6 +528,8 @@ window.SAMPLE_DATA = {
      * five hubs. */
     customers: {
       orders: 953, baselineKm: 5.72, bestKm: 3.16, reductionPct: 45,
+      // label positions on assets/carto-customers.webp (percent, shared framing)
+      mapLabels: { hub: { x: 44, y: 86 }, cluster: { x: 40, y: 66 } },
       best: { h3: "8829868e8bfffff", lat: 36.0219, lon: -115.0845 },
       // real query over the illustrative customers: higher-income residents (ACS tract income x Kontur residents)
       // living more than 5 km from every customer = "white space"; the new-hub score is the white space within 8 km

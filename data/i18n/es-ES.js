@@ -1123,52 +1123,50 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-data": {
-    h: "a18ba0b5",
+    h: "a93322ae",
     events: [
       null, null, null, null, null, null, null, null, null,
-      { text: "Todas las celdas coinciden, porque las tablas de 2019 usan los mismos límites de secciones que los de tu conexión.\n\n**Cómo encontré los datos:** compruebo qué tiene ya la conexión, busco en el catálogo por la medida que quiero, miro la licencia, elijo la geografía más fina que sirva y pruebo la unión antes de depender de ella. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, que uno por celda." },
+      { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de secciones que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y comprueba la unión antes de depender de ella." },
     ],
   },
   "carto-objective": {
-    h: "6c173b7a",
+    h: "72da8369",
     events: [
-      null,
       null,
       null,
       { summary: "Ganador de mayores ingresos · área de 15 min en coche (GeoJSON)" },
       null,
-      { text: "**El objetivo cambia la respuesta.**\n- **Residentes:** 36,17°N, 115,06°O, justo al este de Centro, la misma celda de antes.\n- **Residentes de mayores ingresos:** 36,02°N, 115,02°O, en el sureste del valle hacia Henderson, a unos 17 km de la opción por residentes.\n- **Comercios + restaurantes:** 36,05°N, 115,03°O, a unos 3 km de la opción por ingresos.\n\nElegir residentes cuesta mucho en los otros objetivos: esa celda conserva solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios. Las opciones por ingresos y por comercios están cerca una de la otra, y cada una conserva el 92% y el 92% de la mejor de la otra.\n\nLa brecha también cambia. El 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes." },
-      { text: "Unas notas. La puntuación de residentes es un poco distinta del paso anterior (234.038 vs 225.133) porque usé las posiciones de hoy y no las del 1 oct. Esta es la preselección en línea recta, más un área de 15 minutos en coche para la opción por ingresos; el siguiente paso es la comprobación de tiempo de conducción de cada opción. El ingreso es la cifra del ACS 2015–2019 de cada sección censal, un promedio de la zona y no las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
+      { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36,17°N, 115,06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36,02°N, 115,02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nElegir por residentes conservaría solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios, mientras que las opciones por ingresos y por comercios conservan cada una el 92% de la otra.\n\nLa brecha también cambia: el 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sección censal, así que describe la zona y no a las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito." },
     ],
   },
   "carto-explore": {
-    h: "ca50a803",
+    h: "c4d8376c",
     events: [
       null,
       null,
       { summary: "áreas de conducción y rutas activas · quedan 14.991 de 15.000 llamadas del servicio de ubicación" },
       null,
       null,
-      { text: "Esto es lo que tienes. Una conexión de CARTO que puede ejecutar SQL espacial por sí sola, un servicio de tiempos de conducción con casi toda su cuota anual disponible (las llamadas de ubicación se miden; las usaré con moderación) y un catálogo público de unos 151 datasets demográficos que puedes consultar sin pagar, además de los premium si los compras.\n\nCombinado con Geotab, tres cosas que la gente suele probar primero:\n- **¿Dónde están mis vehículos y dónde se agrupan?** Agrupar los vehículos aparcados en hubs y ver qué hay alrededor.\n- **¿Dónde ayudaría más un hub nuevo?** Alcance por tiempo de conducción y luego una búsqueda de sitio, ponderada por lo que te importe.\n- **¿Pueden mis propios viajes decírmelo?** Usar dónde terminan realmente los viajes en vez de datos públicos." },
+      { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de conducción con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCombinado con Geotab, la gente suele empezar por una de tres cosas: dónde está la flota y dónde se agrupa, dónde ayudaría más un hub nuevo o si sus propios viajes pueden responderlo." },
     ],
   },
   "carto-customers": {
-    h: "51b3fb5a",
+    h: "f6ec834e",
     events: [
       null, null, null, null, null, null,
       { summary: "distancia media 5,72 km → 3,16 km con el mejor hub nuevo" },
       null,
-      { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36,02°N, 115,08°O), reduce la distancia media que recorre un pedido de 5,72 km a 3,16 km, cerca de un 45% menos.**\n\nEl motivo se ve en la lista: tus tres cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2,5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos (ingresos y comercios), a unos 5 a 6 km. Que tres objetivos independientes coincidan es un argumento más fuerte que cualquiera por separado.\n\nAquí es donde ya vendes, así que es el lugar correcto para atender mejor a tus clientes. Para ver dónde podrías vender más, añadiría los datos demográficos. Una ejecución real usaría además todas tus cuentas, y la comprobación de tiempo de conducción viene después." },
+      { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36,02°N, 115,08°O), reduce la distancia media que recorre un pedido de 5,72 km a 3,16 km, cerca de un 45% menos.** El mapa muestra por qué: tus cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2,5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos, así que tres objetivos independientes coinciden. Pero aquí es donde ya vendes. Para ver dónde podrías vender más, añadiría los datos demográficos." },
     ],
   },
   "carto-potential": {
-    h: "1b978822",
+    h: "96985ad7",
     events: [
       null,
       { summary: "201.147 de 515.898 residentes de mayores ingresos (39%) están a más de 5 km de cualquier cliente" },
       null,
       null,
-      { text: "**Los dos objetivos señalan hubs distintos, y ambos sirven.**\n- **Atender a los clientes que ya tienes:** Green Valley, en Henderson, acorta un 45% el viaje medio de un pedido.\n- **Abrir terreno nuevo:** el suroeste del valle (36,03°N, 115,22°O) tiene unas 4 veces más residentes de mayores ingresos sin ningún cliente cerca (43.538 vs 10.987).\n\nEl 39% de los residentes de mayores ingresos del área vive a más de 5 km de cualquier cuenta, así que hay espacio para crecer. Muchas flotas usan el primer hub para mejorar el servicio ahora y el segundo como base para una campaña de ventas. Con tu lista completa de cuentas, esto se afina más." },
+      { text: "**Dos hubs distintos, y ambos sirven.** Green Valley, en Henderson, atiende a los clientes que ya tienes y acorta un 45% el viaje medio de un pedido. El suroeste del valle (36,03°N, 115,22°O) tiene unas 4 veces más residentes de mayores ingresos sin ningún cliente cerca (43.538 vs 10.987), así que ahí es donde crecerías.\n\nEl 39% de los residentes de mayores ingresos del área vive a más de 5 km de cualquier cuenta, así que hay espacio. Muchas flotas usan el primer hub para atender ahora y el segundo como base para una campaña de ventas." },
     ],
   },
   "carto-map": {
