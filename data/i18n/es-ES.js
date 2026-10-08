@@ -42,7 +42,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "hub": {
-    h: "d48b31dd",
+    h: "11611b5a",
     choices: [
       { say: "Dame mi revisión semanal de la flota de los últimos 7 días: averías, ralentí y conducción brusca, infracciones de HOS, pendientes de DVIR y actividad de viajes. Que sea un resumen corto sobre el que pueda actuar." },
       null,
@@ -69,6 +69,7 @@ window.SIM_I18N["es-ES"] = {
       { say: "Empaqueta mi revisión semanal de la flota en una skill reutilizable para que yo, y cualquiera de mi equipo, pueda ejecutar exactamente la misma revisión con solo pedirla." },
       { say: "Tengo varias tareas de la flota pendientes: crear una geocerca para el depósito, una alerta de ralentí, borrar las averías de una furgoneta que ya pasó por servicio, agrupar mis vehículos de Valencia y enviar las alertas a un responsable." },
       { label: "🧑‍🏫 Redactar notas de coaching para un responsable", say: "Identifica a los conductores que necesitan coaching y redacta un resumen que pueda enviar a su responsable." },
+      null,
       null,
       null,
       null,
@@ -1129,7 +1130,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-objective": {
-    h: "bedc6208",
+    h: "d035eaf0",
     events: [
       null,
       null,
@@ -1138,6 +1139,17 @@ window.SIM_I18N["es-ES"] = {
       null,
       { text: "**El objetivo cambia la respuesta.**\n- **Residentes:** 36,17°N, 115,06°O, justo al este de Centro, la misma celda de antes.\n- **Residentes de mayores ingresos:** 36,02°N, 115,02°O, en el sureste del valle hacia Henderson, a unos 17 km de la opción por residentes.\n- **Comercios + restaurantes:** 36,05°N, 115,03°O, a unos 3 km de la opción por ingresos.\n\nElegir residentes cuesta mucho en los otros objetivos: esa celda conserva solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios. Las opciones por ingresos y por comercios están cerca una de la otra, y cada una conserva el 92% y el 92% de la mejor de la otra.\n\nLa brecha también cambia. El 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes." },
       { text: "Dos salvedades. La puntuación de residentes es un poco distinta del paso anterior (234.038 vs 225.133) porque usé las posiciones de hoy y no las del 1 oct. Y solo ejecuté la preselección en línea recta, más un área de 15 minutos en coche para la opción por ingresos; los polígonos son demasiado grandes para ponerlos en línea en una consulta y contar a las personas dentro, así que primero los guardaría en una tabla. El ingreso es la cifra del ACS 2015–2019 de cada sección censal, un promedio de la zona y no las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
+    ],
+  },
+  "carto-explore": {
+    h: "ca50a803",
+    events: [
+      null,
+      null,
+      { summary: "áreas de conducción y rutas activas · quedan 14.991 de 15.000 llamadas del servicio de ubicación" },
+      null,
+      null,
+      { text: "Esto es lo que tienes. Una conexión de CARTO que puede ejecutar SQL espacial por sí sola, un servicio de tiempos de conducción con casi toda su cuota anual disponible (las llamadas de ubicación se miden; las usaré con moderación) y un catálogo público de unos 151 datasets demográficos que puedes consultar sin pagar, además de los premium si los compras.\n\nCombinado con Geotab, tres cosas que la gente suele probar primero:\n- **¿Dónde están mis vehículos y dónde se agrupan?** Agrupar los vehículos aparcados en hubs y ver qué hay alrededor.\n- **¿Dónde ayudaría más un hub nuevo?** Alcance por tiempo de conducción y luego una búsqueda de sitio, ponderada por lo que te importe.\n- **¿Pueden mis propios viajes decírmelo?** Usar dónde terminan realmente los viajes en vez de datos públicos." },
     ],
   },
   "carto-map": {

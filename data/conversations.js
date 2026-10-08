@@ -48,6 +48,7 @@ function bars(list, labelKey, valueKey) {
  * labels points from D.carto by their x/y. opts: layer (chip text), source
  * (what the map was drawn from), note (replaces the snapshot line), scaleWidth
  * (for a map not on the shared framing). */
+var X = (D.carto && D.carto.explore) || { trips: {} };
 var O = (D.carto && D.carto.objectives) || { income: {}, poi: {}, people: {} };
 var C = D.carto || { hubs: [], coverage: {}, sixthHub: { candidates: [] }, isoline: {} };
 function cartoMap(image, title, summary, labels, opts) {
@@ -348,6 +349,12 @@ window.CONVERSATIONS = {
           next: "ep-agentic-coaching",
         },
 
+        {
+          group: "🚚 Cross-tool & exec",
+          label: "🧭 What can CARTO do with my fleet?",
+          say: "I have Geotab and CARTO connected. What can I do with them together?",
+          next: "carto-explore",
+        },
         {
           group: "🚚 Cross-tool & exec",
           label: "🗺️ Find my hubs + 15-min reach (CARTO)",
@@ -5705,6 +5712,118 @@ window.CONVERSATIONS = {
       ],
     },
 
+    "carto-explore": {
+      id: "carto-explore",
+      title: "CARTO · What can I do with my fleet?",
+      db: C.database,
+      mode: "carto",
+      events: [
+        { type: "assistant", text: "Let me see what the CARTO side gives you before I suggest anything." },
+        {
+          type: "tool",
+          server: "carto",
+          name: "explore_data",
+          args: { method: "list_connections" },
+          summary: "1 connection · " + C.connection + " (BigQuery)",
+          result: C.connection + " · BigQuery · spatial functions on · Data Observatory (US) attached",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "calculate_isolines",
+          args: { operation: "capabilities" },
+          summary: "drive-time areas and routing on · " + X.quotaLeft.toLocaleString("en-US") + " of " + X.quota.toLocaleString("en-US") + " location-service calls left",
+          result:
+            '{ "providers": { "geocoding": "tomtom", "isolines": "traveltime", "routing": "tomtom" },\n' +
+            '  "quota": { "annual_quota": ' + X.quota + ', "used_quota": ' + X.quotaUsed + ', "remaining_quota": ' + X.quotaLeft + " } }",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "list_datasets", countries: "usa", licenses: "public", categories: "demographics", limit: 1 },
+          summary: X.publicDemographics + " public demographics datasets for the US",
+          result: '{ "totalResults": ' + X.publicDemographics + ", … }",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "list_datasets", countries: "usa", licenses: "premium", limit: 1 },
+          summary: X.premiumUsa + " premium datasets for the US (all categories)",
+          result: '{ "totalResults": ' + X.premiumUsa + ", … }\n// premium needs a commercial arrangement",
+        },
+        {
+          type: "assistant",
+          text:
+            "Here's what you have. One CARTO connection that can run spatial SQL on its own, a drive-time service with almost all of its yearly quota left (location calls are metered; I'll use them sparingly), " +
+            "and a public catalog of about " + X.publicDemographics + " demographics datasets you can query without paying, plus premium ones if you buy them.\n\n" +
+            "Combined with Geotab, three things people usually try first:\n" +
+            "- **Where are my vehicles, and where do they cluster?** Group parked vehicles into hubs and see what's around them.\n" +
+            "- **Where would a new hub help most?** Reach by drive time, then a site search, weighted by what matters to you.\n" +
+            "- **Can my own trips tell me that?** Use where trips actually end instead of public data.",
+        },
+      ],
+      choices: [
+        { label: "📍 Where is my fleet right now?", say: "Where is my fleet right now?", next: "carto-fleet" },
+        { label: "🎯 Where would a new hub help most?", say: "Where would a new hub help most, and what data could I weight it by?", next: "carto-data" },
+        { label: "🧭 Use my own trips instead", say: "Can I use my own trips instead of public data?", next: "carto-trips" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-trips": {
+      id: "carto-trips",
+      title: "CARTO · Use my own trips as the goal",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Where your own trips end is the best demand signal you have. Trips are high-volume, so I'll look at a short window first.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: {
+            database: C.database,
+            typeName: "Trip",
+            search: { fromDate: X.trips.from, toDate: X.trips.to },
+            propertySelector: { fields: ["stopPoint"], isIncluded: true },
+            resultsLimit: 2000,
+          },
+          summary: X.trips.count + " trips in " + X.trips.hours + " hours · each with its stop point",
+          result: '[ { "stopPoint": { "x": -115.28…, "y": 36.29… } }, { "stopPoint": { "x": -115.18…, "y": 36.09… } }, … ]\n// ' + X.trips.count + " records",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: C.database, typeName: "Zone", propertySelector: { fields: ["name", "zoneTypes"], isIncluded: true }, resultsLimit: 10 },
+          summary: "no zones defined",
+          result: "[]\n// 0 records",
+        },
+        {
+          type: "assistant",
+          text:
+            "**This demo fleet can't answer that.** All " + X.trips.count + " stop points fall on just " + X.trips.places + " places, the five hubs and one more, and there are no customer sites saved as zones. " +
+            "Weighting by trips would only give you the hubs back.\n\n" +
+            "With a real fleet the same ask works, because trips end at customers. Your options, from least to most work:\n" +
+            "- **Zones you already have.** If customer sites are saved as zones in MyGeotab, read them and weight by visits.\n" +
+            "- **A list of customer addresses.** CARTO can turn addresses into points, and you weight by orders.\n" +
+            "- **Longer trip history.** A few weeks of stop points, grouped into hexagons, show where the real demand is.\n\n" +
+            "In every case it replaces the weight in the same site search, so the rest of the steps don't change.",
+        },
+      ],
+      choices: [
+        { label: "🎯 Try public data instead", say: "Okay, what public data could I weight it by?", next: "carto-data" },
+        { label: "📍 Where is my fleet right now?", say: "Where is my fleet right now?", next: "carto-fleet" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
     "carto-data": {
       id: "carto-data",
       title: "CARTO · Finding data to weight by",
@@ -5891,6 +6010,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
+        { label: "🧭 Use my own trips as the goal", say: "Can I use my own trips as the goal?", next: "carto-trips" },
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],

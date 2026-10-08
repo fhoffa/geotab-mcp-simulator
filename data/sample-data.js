@@ -518,5 +518,12 @@ window.SAMPLE_DATA = {
       // discovery step: share of residents matched to an ACS tract, by tract vintage
       acsMatch: { y2023: 79, y2019: 100 },
     },
+    /* REAL, 8 Oct 2026: what the two servers report about themselves (discovery
+     * steps) and what this demo fleet's trips look like. */
+    explore: {
+      quota: 15000, quotaUsed: 9, quotaLeft: 14991,   // calculate_isolines capabilities
+      publicDemographics: 151, premiumUsa: 172,       // Data Observatory, US
+      trips: { from: "2026-10-07T00:00:00Z", to: "2026-10-07T06:00:00Z", hours: 6, count: 534, places: 6 },
+    },
   },
 };

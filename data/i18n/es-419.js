@@ -165,7 +165,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "hub": {
-    h: "d48b31dd",
+    h: "11611b5a",
     events: [
       /*0 assistant*/ { text: "Ya estás conectado. ¿Qué quieres revisar?\n" +
         "\n" +
@@ -247,6 +247,9 @@ window.SIM_I18N["es-419"] = {
       { group: "🧠 Automatiza y comparte",
         label: "🧑‍🏫 Redactar notas de coaching para un gerente",
         say: "Identifica a los conductores que necesitan coaching y redacta un resumen que pueda enviar a su gerente." },
+      { group: "🚚 Otras herramientas y dirección",
+        label: "🧭 ¿Qué puede hacer CARTO con mi flota?",
+        say: "Tengo Geotab y CARTO conectados. ¿Qué puedo hacer con los dos juntos?" },
       { group: "🚚 Otras herramientas y dirección",
         label: "🗺️ Encontrar mis hubs + alcance de 15 min (CARTO)",
         say: "¿Dónde está mi flota ahora mismo?" },
@@ -2418,8 +2421,46 @@ window.SIM_I18N["es-419"] = {
         say: "Muéstrame otra cosa." },
     ],
   },
+  "carto-explore": {
+    h: "ca50a803",
+    events: [
+      /*0 assistant*/ { text: "Déjame ver qué te ofrece el lado de CARTO antes de sugerir nada." },
+      /*1 tool*/ { summary: "1 conexión · carto_dw (BigQuery)" },
+      /*2 tool*/ { summary: "áreas de manejo y rutas activas · quedan 14,991 de 15,000 llamadas del servicio de ubicación" },
+      /*3 tool*/ { summary: "151 datasets demográficos públicos para EE. UU." },
+      /*4 tool*/ { summary: "172 datasets premium para EE. UU. (todas las categorías)" },
+      /*5 assistant*/ { text: "Esto es lo que tienes. Una conexión de CARTO que puede ejecutar SQL espacial por sí sola, un servicio de tiempos de manejo con casi toda su cuota anual disponible (las llamadas de ubicación se miden; las usaré con moderación) y un catálogo público de unos 151 datasets demográficos que puedes consultar sin pagar, además de los premium si los compras.\n\nCombinado con Geotab, tres cosas que la gente suele probar primero:\n- **¿Dónde están mis vehículos y dónde se agrupan?** Agrupar los vehículos estacionados en hubs y ver qué hay alrededor.\n- **¿Dónde ayudaría más un hub nuevo?** Alcance por tiempo de manejo y luego una búsqueda de sitio, ponderada por lo que te importe.\n- **¿Pueden mis propios viajes decírmelo?** Usar dónde terminan realmente los viajes en vez de datos públicos." },
+    ],
+    choices: [
+      { label: "📍 ¿Dónde está mi flota ahora mismo?",
+        say: "¿Dónde está mi flota ahora mismo?" },
+      { label: "🎯 ¿Dónde ayudaría más un hub nuevo?",
+        say: "¿Dónde ayudaría más un hub nuevo y con qué datos podría ponderarlo?" },
+      { label: "🧭 Usar mis propios viajes",
+        say: "¿Puedo usar mis propios viajes en vez de datos públicos?" },
+      { label: "↩︎ Preguntar otra cosa",
+        say: "Muéstrame otra cosa." },
+    ],
+  },
+  "carto-trips": {
+    h: "de91dad7",
+    events: [
+      /*0 assistant*/ { text: "Dónde terminan tus propios viajes es la mejor señal de demanda que tienes. Los viajes son de alto volumen, así que primero miro una ventana corta." },
+      /*1 tool*/ { summary: "534 viajes en 6 horas · cada uno con su punto de parada" },
+      /*2 tool*/ { summary: "sin zonas definidas" },
+      /*3 assistant*/ { text: "**Esta flota demo no puede responder eso.** Los 534 puntos de parada caen en solo 6 lugares, los cinco hubs y uno más, y no hay sitios de clientes guardados como zonas. Ponderar por viajes solo te devolvería los hubs.\n\nCon una flota real la misma pregunta sí funciona, porque los viajes terminan en clientes. Tus opciones, de menos a más trabajo:\n- **Zonas que ya tienes.** Si los sitios de clientes están guardados como zonas en MyGeotab, léelas y pondera por visitas.\n- **Una lista de direcciones de clientes.** CARTO puede convertir direcciones en puntos, y ponderas por pedidos.\n- **Más historial de viajes.** Unas semanas de puntos de parada, agrupados en hexágonos, muestran dónde está la demanda real.\n\nEn todos los casos reemplaza el peso en la misma búsqueda de sitio, así que el resto de los pasos no cambia." },
+    ],
+    choices: [
+      { label: "🎯 Probar con datos públicos",
+        say: "Está bien, ¿con qué datos públicos podría ponderarlo?" },
+      { label: "📍 ¿Dónde está mi flota ahora mismo?",
+        say: "¿Dónde está mi flota ahora mismo?" },
+      { label: "↩︎ Preguntar otra cosa",
+        say: "Muéstrame otra cosa." },
+    ],
+  },
   "carto-objective": {
-    h: "bedc6208",
+    h: "d035eaf0",
     events: [
       /*0 assistant*/ { text: "Ahora la misma búsqueda con tres pesos: residentes (como antes), **residentes de mayores ingresos** (un dato demográfico) y **comercios y restaurantes** (un indicador del tránsito diurno). Primero, una mirada nueva a dónde están tus vehículos estacionados." },
       /*1 tool*/ { summary: "50 posiciones · 23 en marcha · 27 estacionados · 24 en los mismos cinco hubs" },
@@ -2438,6 +2479,8 @@ window.SIM_I18N["es-419"] = {
     choices: [
       { label: "🗺️ Ponerlo en un mapa que pueda compartir",
         say: "Ponlo en un mapa que pueda compartir." },
+      { label: "🧭 Usar mis propios viajes como objetivo",
+        say: "¿Puedo usar mis propios viajes como objetivo?" },
       { label: "🧐 ¿Qué debería verificar?",
         say: "¿Qué debería verificar antes de actuar con esto?" },
       { label: "↩︎ Preguntar otra cosa",
