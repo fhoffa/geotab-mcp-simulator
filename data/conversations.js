@@ -354,14 +354,8 @@ window.CONVERSATIONS = {
         {
           group: "🚚 Cross-tool & exec",
           label: "🧭 What can CARTO do with my fleet?",
-          say: "I have Geotab and CARTO connected. What can I do with them together?",
+          say: "I run deliveries around Las Vegas and I'm weighing a sixth depot. I have Geotab and CARTO connected. What can I do with them together?",
           next: "carto-explore",
-        },
-        {
-          group: "🚚 Cross-tool & exec",
-          label: "🗺️ Find my hubs + 15-min reach (CARTO)",
-          say: "Where is my fleet right now?",
-          next: "carto-fleet",
         },
         {
           group: "🚚 Cross-tool & exec",
@@ -5759,13 +5753,16 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "You have one CARTO connection that can run spatial SQL, a drive-time service with almost all of its yearly quota left, and a public catalog of about " + X.publicDemographics + " demographics datasets (plus premium ones if you buy them).\n\n" +
-            "Combined with Geotab, people usually start with one of three things: where the fleet is and where it clusters, where a new hub would help most, or whether their own trips can answer that.",
+            "For a depot decision there are three good ways in:\n\n" +
+            "**1. See where your fleet clusters.** Geotab positions on a map, grouped into hubs, with the people each hub reaches in 15 minutes.\n\n" +
+            "**2. Find the best spot for a new hub.** Search the map for the cell that adds the most reach, weighted by residents, income or shops.\n\n" +
+            "**3. Start from your customers.** Use your own trips and your CRM to see where you sell today and where you could sell more.",
         },
       ],
       choices: [
-        { label: "📍 Where is my fleet right now?", say: "Where is my fleet right now?", next: "carto-fleet" },
-        { label: "🎯 Where would a new hub help most?", say: "Where would a new hub help most, and what data could I weight it by?", next: "carto-data" },
-        { label: "🧭 Use my own trips instead", say: "Can I use my own trips instead of public data?", next: "carto-trips" },
+        { label: "📍 1 · See where my fleet clusters", say: "Start with where my fleet is right now and where it clusters.", next: "carto-fleet" },
+        { label: "🎯 2 · Find the best spot for a new hub", say: "Where would a new hub help most, and what data could I weight it by?", next: "carto-data" },
+        { label: "🧾 3 · Start from my customers", say: "I'd rather start from my customers. Can I use my own trips and my CRM?", next: "carto-trips" },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
@@ -5795,6 +5792,13 @@ window.CONVERSATIONS = {
           summary: X.trips.count + " trips in " + X.trips.hours + " hours · each with its stop point",
           result: '[ { "stopPoint": { "x": -115.28…, "y": 36.29… } }, { "stopPoint": { "x": -115.18…, "y": 36.09… } }, … ]\n// ' + X.trips.count + " records",
         },
+        cartoMap(
+          "carto-hubs.webp",
+          "Where your trips ended",
+          X.trips.count + " trip stops land on " + X.trips.places + " places: the five hubs (labelled) and one more",
+          cartoHubLabels(function (h) { return h.name; }),
+          { layer: "Hubs · trip stop points", note: "hubs from the " + C.snapshot + " snapshot" }
+        ),
         {
           type: "assistant",
           text:
@@ -6019,10 +6023,11 @@ window.CONVERSATIONS = {
           summary: "license: Premium data",
           result: '{ "name": "Households By Income Quintiles - United States of America (Blockgroups)", "licenseName": "Premium data", … }\n// premium = needs a commercial arrangement',
         },
+        { type: "user", text: "Premium is out of my budget. Is there something free I can use instead?" },
         {
           type: "assistant",
           text:
-            "That one is licensed premium data. The US Census Bureau's American Community Survey is public and free to use, so I'll go with that:",
+            "Yes. The US Census Bureau's American Community Survey is public and free to use, so I'll go with that:",
         },
         {
           type: "tool",
@@ -6067,7 +6072,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🎯 Run the three goals", say: "Run the search for all three goals.", next: "carto-objective" },
+        { label: "🎯 Run the three goals", say: "I care about income and foot traffic, not just residents. Run the search for all three goals.", next: "carto-objective" },
         { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
@@ -6111,6 +6116,22 @@ window.CONVERSATIONS = {
           "Higher-income winner · 15-min drive area (GeoJSON)",
           3
         ),
+        cartoMap(
+          "carto-goals.webp",
+          "Best new hub for each goal",
+          "Red = residents · orange = higher-income residents · teal = shops + restaurants · blue = today's hubs · pink = more than " + C.sixthHub.gapKm + " km from every hub · dashed rings = " + C.sixthHub.gapKm + " km around each pick",
+          [
+            { label: "Residents", x: O.mapXY.people.x, y: O.mapXY.people.y },
+            { label: "Shops", x: O.mapXY.poi.x, y: O.mapXY.poi.y },
+            { label: "Income", x: O.mapXY.income.x, y: O.mapXY.income.y },
+          ],
+          {
+            layer: "Best cell per goal · 8 km gap",
+            source: "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8) · income: ACS 2015–2019 by census tract · shops: CARTO Spatial Features",
+            note: "snapshot " + O.snapshot,
+            scaleWidth: "9.9%",
+          }
+        ),
         {
           type: "chart",
           title: "Share more than " + C.sixthHub.gapKm + " km from every hub today (%)",
@@ -6125,9 +6146,14 @@ window.CONVERSATIONS = {
           text:
             "**The goal changes the answer.** For residents it's still just east of Central (" + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W). " +
             "For higher-income residents it moves to the south-east of the valley, toward Henderson (" + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W), about 17 km away, " +
-            "and shops and restaurants land about 3 km from that.\n\n" +
-            "Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " + O.cross.peopleWinner.poi + "% of the best shops score, " +
-            "while the income and shops picks each keep " + O.cross.incomeWinner.poi + "% of the other's.\n\n" +
+            "and shops and restaurants land about 3 km from that.",
+        },
+        { type: "user", text: "So which one should I pick?" },
+        {
+          type: "assistant",
+          text:
+            "It depends on what the hub is for. Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " + O.cross.peopleWinner.poi + "% of the best shops score, " +
+            "while the income and shops picks each keep " + O.cross.incomeWinner.poi + "% of the other's. If you're unsure, the Henderson side is the safer choice for both.\n\n" +
             "The gap differs too: " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " + O.people.uncoveredPct +
             "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants. " +
             "One note: income is the average for each census tract, so it describes the area, not the people your drivers will serve, and I left race and ethnicity out on purpose.",

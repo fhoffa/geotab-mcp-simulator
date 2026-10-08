@@ -42,7 +42,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "hub": {
-    h: "11611b5a",
+    h: "1a1ee4b8",
     choices: [
       { say: "Dame mi revisión semanal de la flota de los últimos 7 días: averías, ralentí y conducción brusca, infracciones de HOS, pendientes de DVIR y actividad de viajes. Que sea un resumen corto sobre el que pueda actuar." },
       null,
@@ -69,7 +69,6 @@ window.SIM_I18N["es-ES"] = {
       { say: "Empaqueta mi revisión semanal de la flota en una skill reutilizable para que yo, y cualquiera de mi equipo, pueda ejecutar exactamente la misma revisión con solo pedirla." },
       { say: "Tengo varias tareas de la flota pendientes: crear una geocerca para el depósito, una alerta de ralentí, borrar las averías de una furgoneta que ya pasó por servicio, agrupar mis vehículos de Valencia y enviar las alertas a un responsable." },
       { label: "🧑‍🏫 Redactar notas de coaching para un responsable", say: "Identifica a los conductores que necesitan coaching y redacta un resumen que pueda enviar a su responsable." },
-      null,
       null,
       null,
       null,
@@ -1123,31 +1122,34 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-data": {
-    h: "a93322ae",
+    h: "f2414881",
     events: [
-      null, null, null, null, null, null, null, null, null,
+      null, null, null, null, null, null, null, null, null, null,
       { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de secciones que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y comprueba la unión antes de depender de ella." },
     ],
   },
   "carto-objective": {
-    h: "72da8369",
+    h: "72264e5a",
     events: [
       null,
       null,
       { summary: "Ganador de mayores ingresos · área de 15 min en coche (GeoJSON)" },
       null,
-      { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36,17°N, 115,06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36,02°N, 115,02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nElegir por residentes conservaría solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios, mientras que las opciones por ingresos y por comercios conservan cada una el 92% de la otra.\n\nLa brecha también cambia: el 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sección censal, así que describe la zona y no a las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito." },
+      null,
+      { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36,17°N, 115,06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36,02°N, 115,02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí." },
+      null,
+      { text: "Depende de para qué sea el hub. Elegir por residentes conservaría solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios, mientras que las opciones por ingresos y por comercios conservan cada una el 92% de la otra. Si dudas, el lado de Henderson es la opción más segura para ambos.\n\nLa brecha también cambia: el 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sección censal, así que describe la zona y no a las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito." },
     ],
   },
   "carto-explore": {
-    h: "c4d8376c",
+    h: "8d85f013",
     events: [
       null,
       null,
       { summary: "áreas de conducción y rutas activas · quedan 14.991 de 15.000 llamadas del servicio de ubicación" },
       null,
       null,
-      { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de conducción con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCombinado con Geotab, la gente suele empezar por una de tres cosas: dónde está la flota y dónde se agrupa, dónde ayudaría más un hub nuevo o si sus propios viajes pueden responderlo." },
+      { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de conducción con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nPara decidir un depósito hay tres buenas formas de empezar:\n\n**1. Ver dónde se agrupa tu flota.** Posiciones de Geotab en un mapa, agrupadas en hubs, con la gente que alcanza cada hub en 15 minutos.\n\n**2. Encontrar el mejor lugar para un hub nuevo.** Buscar en el mapa la celda que más alcance suma, ponderada por residentes, ingresos o comercios.\n\n**3. Partir de tus clientes.** Usar tus propios viajes y tu CRM para ver dónde vendes hoy y dónde podrías vender más." },
     ],
   },
   "carto-customers": {

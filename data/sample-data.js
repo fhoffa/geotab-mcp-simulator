@@ -520,6 +520,8 @@ window.SAMPLE_DATA = {
       cross: { peopleWinner: { income: 64, poi: 60 }, incomeWinner: { people: 70, poi: 92 }, poiWinner: { people: 78, income: 92 } },
       // discovery step: share of residents matched to an ACS tract, by tract vintage
       acsMatch: { y2019: 100 },
+      // label positions of each pick on assets/carto-goals.webp (percent, shared framing)
+      mapXY: { people: { x: 71.9, y: 41.3 }, income: { x: 77.9, y: 74.8 }, poi: { x: 76.6, y: 67.9 } },
     },
     /* REAL, 8 Oct 2026: what the two servers report about themselves (discovery
      * steps) and what this demo fleet's trips look like. */
