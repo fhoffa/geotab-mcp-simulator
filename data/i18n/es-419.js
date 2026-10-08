@@ -2401,18 +2401,18 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-data": {
-    h: "d1d0fecb",
+    h: "a18ba0b5",
     events: [
       /*0 assistant*/ { text: "Kontur solo sabe cuántas personas viven en cada celda, así que para ingresos o comercios necesito otros datos. Primero reviso qué hay ya en tu conexión de CARTO." },
       /*1 tool*/ { summary: "sin coincidencias en esta conexión" },
       /*2 assistant*/ { text: "No hay nada suscrito en tu cuenta, pero los datasets públicos de CARTO se pueden consultar directamente, que es como leí los residentes de Kontur. Ahora busco en el catálogo del Data Observatory por lo que quiero medir, no por nombre de dataset." },
       /*3 tool*/ { summary: "5 coincidencias · la mejor: Households By Income Quintiles (Michael Bauer International)" },
       /*4 tool*/ { summary: "licencia: Premium data" },
-      /*5 assistant*/ { text: "Ese es premium, así que no puedo usarlo aquí. La Encuesta sobre la Comunidad Estadounidense (ACS) de la Oficina del Censo es pública, así que busco ahí:" },
+      /*5 assistant*/ { text: "Ese es un dataset premium con licencia. La Encuesta sobre la Comunidad Estadounidense (ACS) de la Oficina del Censo es pública y gratuita, así que uso esa:" },
       /*6 tool*/ { summary: "ACS DP03 Selected Economic Characteristics · sector censal · público" },
-      /*7 assistant*/ { text: "Los sectores censales son el nivel más fino, y son polígonos, no hexágonos, así que hay que asignar cada celda al sector donde cae. Antes de confiar en eso, reviso cuántas celdas coinciden realmente:" },
-      /*8 tool*/ { summary: "datos 2023: 79% de residentes con coincidencia · datos 2019: 100%" },
-      /*9 assistant*/ { text: "Qué bueno que lo revisé. Los datos de ingresos más recientes usan límites de sectores más nuevos que los de tu conexión, así que uno de cada cinco residentes se habría quedado sin ingresos. Las tablas de 2019 coinciden con todas las celdas, así que uso esas.\n\n**Cómo encontré los datos:** reviso qué tiene ya la conexión, busco en el catálogo por la medida que quiero, miro la licencia, elijo la geografía más fina que sirva y pruebo la unión antes de depender de ella. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, que uno por celda." },
+      /*7 assistant*/ { text: "Los sectores censales son el nivel más fino. Son polígonos, no hexágonos, así que cada celda toma el sector donde cae. Reviso qué tan bien coinciden:" },
+      /*8 tool*/ { summary: "datos 2019: 100% de los residentes con coincidencia en un sector con datos de ingresos" },
+      /*9 assistant*/ { text: "Todas las celdas coinciden, porque las tablas de 2019 usan los mismos límites de sectores que los de tu conexión.\n\n**Cómo encontré los datos:** reviso qué tiene ya la conexión, busco en el catálogo por la medida que quiero, miro la licencia, elijo la geografía más fina que sirva y pruebo la unión antes de depender de ella. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, que uno por celda." },
     ],
     choices: [
       { label: "🎯 Correr los tres objetivos",
@@ -2443,14 +2443,11 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-trips": {
-    h: "ed86f020",
+    h: "f54b9785",
     events: [
-      /*0 assistant*/ { text: "Dónde terminan tus propios viajes es la mejor señal de demanda que tienes. Los viajes son de alto volumen, así que primero miro una ventana corta." },
+      /*0 assistant*/ { text: "Dónde terminan tus propios viajes muestra lo que tus vehículos realmente hacen. Los viajes son de alto volumen, así que primero miro una ventana corta." },
       /*1 tool*/ { summary: "534 viajes en 6 horas · cada uno con su punto de parada" },
-      /*2 tool*/ { summary: "sin zonas definidas" },
-      /*3 assistant*/ { text: "Una lista de direcciones de clientes es el siguiente paso más probable, así que pruebo el geocodificador de CARTO con algunas direcciones y nombres de lugares. Van en una sola llamada." },
-      /*4 tool*/ { summary: "4 direcciones · 1 coincidencia exacta de calle · 3 nombres de lugar con baja confianza (0.31–0.54)" },
-      /*5 assistant*/ { text: "**Esta flota demo no puede responder eso.** Los 534 puntos de parada caen en solo 6 lugares, los cinco hubs y uno más, y no hay sitios de clientes guardados como zonas. Ponderar por viajes solo te devolvería los hubs.\n\nCon una flota real la misma pregunta sí funciona, porque los viajes terminan en clientes. Tus opciones, de menos a más trabajo:\n- **Zonas que ya tienes.** Si los sitios de clientes están guardados como zonas en MyGeotab, léelas y pondera por visitas.\n- **Una lista de direcciones de clientes.** CARTO las convierte en puntos y ponderas por pedidos. Revisa primero la confianza de la coincidencia: la dirección completa coincidió exactamente (1.0), pero los nombres de lugar sacaron solo 0.31 a 0.54, y Allegiant Stadium apareció cerca del centro, que no es donde está. Usa direcciones de calle y descarta o revisa las coincidencias de baja confianza.\n- **Más historial de viajes.** Unas semanas de puntos de parada, agrupados en hexágonos, muestran dónde está la demanda real.\n\nEn todos los casos reemplaza el peso en la misma búsqueda de sitio, así que el resto de los pasos no cambia." },
+      /*2 assistant*/ { text: "**Tus viajes confirman los hubs.** Los 534 puntos de parada caen en 6 lugares: los cinco hubs que encontramos con los vehículos estacionados, más uno. Así que los hubs son lugares de trabajo reales, no solo donde los vehículos se estacionaron.\n\nPara planear el próximo hub ponderaría por demanda, es decir, dónde están tus clientes. Puedes obtenerlo de sitios de clientes guardados como zonas en MyGeotab, de unas semanas de historial de viajes o de tu CRM. Lo más probable es que tus clientes estén en un CRM, así que ahí es lo más rápido empezar." },
     ],
     choices: [
       { label: "🧾 Traer mis clientes desde Salesforce",
@@ -2486,7 +2483,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-objective": {
-    h: "d035eaf0",
+    h: "6c173b7a",
     events: [
       /*0 assistant*/ { text: "Ahora la misma búsqueda con tres pesos: residentes (como antes), **residentes de mayores ingresos** (un dato demográfico) y **comercios y restaurantes** (un indicador del tránsito diurno). Primero, una mirada nueva a dónde están tus vehículos estacionados." },
       /*1 tool*/ { summary: "50 posiciones · 23 en marcha · 27 estacionados · 24 en los mismos cinco hubs" },
@@ -2500,7 +2497,7 @@ window.SIM_I18N["es-419"] = {
         "- **Comercios + restaurantes:** 36.05°N, 115.03°O, a unos 3 km de la opción por ingresos.\n\n" +
         "Elegir residentes cuesta mucho en los otros objetivos: esa celda conserva solo el 64% del mejor puntaje de ingresos y el 60% del mejor puntaje de comercios. Las opciones por ingresos y por comercios están cerca una de la otra, y cada una conserva el 92% y el 92% de la mejor de la otra.\n\n" +
         "La brecha también cambia. El 35.9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32.6% de todos los residentes y el 19.4% de los comercios y restaurantes." },
-      /*6 assistant*/ { text: "Dos salvedades. El puntaje de residentes es un poco distinto del paso anterior (234,038 vs 225,133) porque usé las posiciones de hoy y no las del 1 oct. Y solo corrí la preselección en línea recta, más un área de 15 minutos en auto para la opción por ingresos; los polígonos son demasiado grandes para ponerlos en línea en una consulta y contar a las personas dentro, así que primero los guardaría en una tabla. El ingreso es la cifra del ACS 2015–2019 de cada sector censal, un promedio de la zona y no las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
+      /*6 assistant*/ { text: "Unas notas. El puntaje de residentes es un poco distinto del paso anterior (234,038 vs 225,133) porque usé las posiciones de hoy y no las del 1 oct. Esta es la preselección en línea recta, más un área de 15 minutos en auto para la opción por ingresos; el siguiente paso es la revisión de tiempo de manejo de cada opción. El ingreso es la cifra del ACS 2015–2019 de cada sector censal, un promedio de la zona y no las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
     ],
     choices: [
       { label: "🗺️ Ponerlo en un mapa que pueda compartir",
@@ -2514,7 +2511,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-map": {
-    h: "5eb14db9",
+    h: "97f4bae8",
     events: [
       /*0 assistant*/ { text: "Primero leo el formato de mapas de CARTO en lugar de adivinar nombres de campos, valido el mapa contra él y luego lo guardo en Builder. Lo dejo privado para que tú elijas con quién compartirlo." },
       /*1 tool*/ { summary: "formato de mapa: datasets, capas, estilos" },
@@ -2525,7 +2522,7 @@ window.SIM_I18N["es-419"] = {
       /*6 system*/ { text: "`view_map` muestra el mapa interactivo en el chat solo en apps compatibles con MCP Apps; en las demás recibes el enlace. El mapa es privado para la cuenta de CARTO que lo creó, así que el simulador no puede mostrarlo." },
       /*7 assistant*/ { text: "Lo guardé como un **mapa privado en Builder**: los vehículos (azul en marcha, rojo estacionados), los cinco hubs más el sexto sitio propuesto, y la distancia al hub más cercano. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo.\n" +
         "\n" +
-        "Las áreas de tiempo de manejo todavía no están. Sus polígonos son demasiado grandes para ponerlos en línea dentro del mapa (falla con \"URI too long\"), así que primero los guardaría en una tabla con `execute_query` y apuntaría el mapa a esa tabla." },
+        "El siguiente paso es agregar las áreas de tiempo de manejo: las guardaría en una tabla con `execute_query` y apuntaría el mapa a esa tabla." },
       /*8 endcard*/ { lines: ["Geotab MCP + CARTO MCP", "Seis preguntas en lenguaje natural. El asistente escribió el SQL."] },
     ],
     choices: [

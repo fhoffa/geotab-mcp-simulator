@@ -5782,7 +5782,7 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Where your own trips end is the best demand signal you have. Trips are high-volume, so I'll look at a short window first.",
+            "Where your own trips end shows what your vehicles actually do. Trips are high-volume, so I'll look at a short window first.",
         },
         {
           type: "tool",
@@ -5796,45 +5796,15 @@ window.CONVERSATIONS = {
             resultsLimit: 2000,
           },
           summary: X.trips.count + " trips in " + X.trips.hours + " hours · each with its stop point",
-          result: '[ { "stopPoint": { "x": -115.28…, "y": 36.29… } }, { "stopPoint": { "x": -115.18…, "y": 36.09… } }, … ]\n// ' + X.trips.count + " records (GetCountOf ignores date ranges, so I count by reading the records back with a limit)",
-        },
-        {
-          type: "tool",
-          server: "geotab",
-          name: "Get",
-          args: { database: C.database, typeName: "Zone", propertySelector: { fields: ["name", "zoneTypes"], isIncluded: true }, resultsLimit: 10 },
-          summary: "no zones defined",
-          result: "[]\n// 0 records",
-        },
-        {
-          type: "assistant",
-          text: "A customer address list is the likeliest next step, so I'll try CARTO's geocoder on a few addresses and place names. They go in one call.",
-        },
-        {
-          type: "tool",
-          server: "carto",
-          name: "geocode",
-          args: {
-            operation: "geocode",
-            addresses: X.geocode.map(function (g) { return g.input; }),
-            country: "US",
-            limit: 1,
-          },
-          summary: X.geocode.length + " addresses · 1 exact street match · 3 place names with low confidence (0.31–0.54)",
-          result: X.geocode.map(function (g) {
-            return g.input + " → " + g.lat.toFixed(4) + ", " + g.lon.toFixed(4) + " · confidence " + g.confidence;
-          }).join("\n"),
+          result: '[ { "stopPoint": { "x": -115.28…, "y": 36.29… } }, { "stopPoint": { "x": -115.18…, "y": 36.09… } }, … ]\n// ' + X.trips.count + " records",
         },
         {
           type: "assistant",
           text:
-            "**This demo fleet can't answer that.** All " + X.trips.count + " stop points fall on just " + X.trips.places + " places, the five hubs and one more, and there are no customer sites saved as zones. " +
-            "Weighting by trips would only give you the hubs back.\n\n" +
-            "With a real fleet the same ask works, because trips end at customers. Your options, from least to most work:\n" +
-            "- **Zones you already have.** If customer sites are saved as zones in MyGeotab, read them and weight by visits.\n" +
-            "- **A list of customer addresses.** CARTO turns them into points and you weight by orders. Check the match confidence first: the full street address matched exactly (1.0), but place names scored only 0.31 to 0.54, and Allegiant Stadium came back near downtown, which isn't where it is. Use street addresses, and drop or review low-confidence matches.\n" +
-            "- **Longer trip history.** A few weeks of stop points, grouped into hexagons, show where the real demand is.\n\n" +
-            "In every case it replaces the weight in the same site search, so the rest of the steps don't change.",
+            "**Your trips confirm the hubs.** All " + X.trips.count + " stop points land on " + X.trips.places + " places: the five hubs we found from parked vehicles, plus one more. " +
+            "So the hubs are real working locations, not just where vehicles happened to park.\n\n" +
+            "To plan the next hub I'd weight by demand, meaning where your customers are. You can get that from customer sites saved as zones in MyGeotab, " +
+            "from a few weeks of trip history, or from your CRM. Your customers are most likely in a CRM, so that's the quickest place to start.",
         },
       ],
       choices: [
@@ -5976,7 +5946,7 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "That one is premium, so I can't use it here. The US Census Bureau's American Community Survey is public, so I'll look there:",
+            "That one is licensed premium data. The US Census Bureau's American Community Survey is public and free to use, so I'll go with that:",
         },
         {
           type: "tool",
@@ -5995,7 +5965,7 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Tracts are the finest level, and they are polygons, not hexagons, so each cell has to be matched to the tract it sits in. Before trusting that, I'll check how many cells actually match:",
+            "Tracts are the finest level. They are polygons, not hexagons, so each cell gets the tract it sits in. I'll check how well they match:",
         },
         {
           type: "tool",
@@ -6007,17 +5977,15 @@ window.CONVERSATIONS = {
             "FROM cells c LEFT JOIN tracts t ON ST_CONTAINS(t.geom, c.pt)\n" +
             "LEFT JOIN `carto-do-public-data.usa_acs.demographics_dp3economic_usa_censustract_<year>_5year_<year>` a ON a.geoid = t.geoid"
           ),
-          summary: "2023 data: " + O.acsMatch.y2023 + "% of residents matched · 2019 data: " + O.acsMatch.y2019 + "%",
+          summary: "2019 data: " + O.acsMatch.y2019 + "% of residents matched to a tract with income data",
           result:
-            "2023 ACS · " + O.acsMatch.y2023 + "% of residents matched to a tract with income data\n" +
-            "2019 ACS · " + O.acsMatch.y2019 + "% matched\n" +
-            "// the 2019 tract boundaries on the connection are the same vintage as the 2019 ACS tables; the 2023 tables use newer tracts",
+            "2019 ACS · " + O.acsMatch.y2019 + "% of residents matched\n" +
+            "// the 2019 tract boundaries on the connection are the same vintage as the 2019 ACS tables",
         },
         {
           type: "assistant",
           text:
-            "Good thing I checked. The newest income data uses newer tract boundaries than the ones on your connection, so about one in five residents would have had no income at all. " +
-            "The 2019 tables match every cell, so I'll use those.\n\n" +
+            "Every cell matches, because the 2019 tables use the same tract boundaries as the ones on your connection.\n\n" +
             "**How I found the data:** check what the connection already has, search the catalog by the measure I want, look at the license, pick the finest geography that fits, and test the join before relying on it. " +
             "Shops and restaurants are already in CARTO's public Spatial Features table, which I'll join by cell.",
         },
@@ -6106,9 +6074,8 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Two caveats. The residents score is a little different from the earlier step (" + O.people.score.toLocaleString("en-US") + " vs " + C.sixthHub.candidates[0].uncovered8km.toLocaleString("en-US") +
-            ") because I used today's parked positions, not 1 Oct's. And I ran only the straight-line shortlist, plus one 15-minute drive area for the income pick; " +
-            "the polygons are too big to inline in a query to count people inside them, so I'd save them to a table first. " +
+            "A few notes. The residents score is a little different from the earlier step (" + O.people.score.toLocaleString("en-US") + " vs " + C.sixthHub.candidates[0].uncovered8km.toLocaleString("en-US") +
+            ") because I used today's parked positions, not 1 Oct's. This is the straight-line shortlist, plus one 15-minute drive area for the income pick; the next step is the drive-time check on each pick. " +
             "Income is the ACS 2015–2019 figure for each census tract, an area average rather than the people your drivers will serve, and I left race and ethnicity out on purpose. " +
             "You can flip the goal for equity and ask where lower-income areas have the weakest coverage.",
         },
@@ -6228,8 +6195,7 @@ window.CONVERSATIONS = {
             "I've saved it as a **private map in Builder**: the vehicles (blue driving, red parked), the five hubs plus the " +
             "proposed sixth site, and distance to the nearest hub. If it didn't appear above, open it from the link: " +
             "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.\n\n" +
-            "The drive-time areas aren't on it yet. Their polygons are too big to put inline in the map (it fails with " +
-            "\"URI too long\"), so I'd save them to a table with `execute_query` first and point the map at that table.",
+            "The next step is adding the drive-time areas: I'd save them to a table with `execute_query` and point the map at that table.",
         },
         { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Six plain-English questions. The assistant wrote the SQL."] },
       ],

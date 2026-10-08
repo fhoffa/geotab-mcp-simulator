@@ -1123,14 +1123,14 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-data": {
-    h: "d1d0fecb",
+    h: "a18ba0b5",
     events: [
       null, null, null, null, null, null, null, null, null,
-      { text: "Menos mal que lo comprobé. Los datos de ingresos más recientes usan límites de secciones más nuevos que los de tu conexión, así que uno de cada cinco residentes se habría quedado sin ingresos. Las tablas de 2019 coinciden con todas las celdas, así que uso esas.\n\n**Cómo encontré los datos:** compruebo qué tiene ya la conexión, busco en el catálogo por la medida que quiero, miro la licencia, elijo la geografía más fina que sirva y pruebo la unión antes de depender de ella. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, que uno por celda." },
+      { text: "Todas las celdas coinciden, porque las tablas de 2019 usan los mismos límites de secciones que los de tu conexión.\n\n**Cómo encontré los datos:** compruebo qué tiene ya la conexión, busco en el catálogo por la medida que quiero, miro la licencia, elijo la geografía más fina que sirva y pruebo la unión antes de depender de ella. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, que uno por celda." },
     ],
   },
   "carto-objective": {
-    h: "d035eaf0",
+    h: "6c173b7a",
     events: [
       null,
       null,
@@ -1138,7 +1138,7 @@ window.SIM_I18N["es-ES"] = {
       { summary: "Ganador de mayores ingresos · área de 15 min en coche (GeoJSON)" },
       null,
       { text: "**El objetivo cambia la respuesta.**\n- **Residentes:** 36,17°N, 115,06°O, justo al este de Centro, la misma celda de antes.\n- **Residentes de mayores ingresos:** 36,02°N, 115,02°O, en el sureste del valle hacia Henderson, a unos 17 km de la opción por residentes.\n- **Comercios + restaurantes:** 36,05°N, 115,03°O, a unos 3 km de la opción por ingresos.\n\nElegir residentes cuesta mucho en los otros objetivos: esa celda conserva solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios. Las opciones por ingresos y por comercios están cerca una de la otra, y cada una conserva el 92% y el 92% de la mejor de la otra.\n\nLa brecha también cambia. El 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes." },
-      { text: "Dos salvedades. La puntuación de residentes es un poco distinta del paso anterior (234.038 vs 225.133) porque usé las posiciones de hoy y no las del 1 oct. Y solo ejecuté la preselección en línea recta, más un área de 15 minutos en coche para la opción por ingresos; los polígonos son demasiado grandes para ponerlos en línea en una consulta y contar a las personas dentro, así que primero los guardaría en una tabla. El ingreso es la cifra del ACS 2015–2019 de cada sección censal, un promedio de la zona y no las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
+      { text: "Unas notas. La puntuación de residentes es un poco distinta del paso anterior (234.038 vs 225.133) porque usé las posiciones de hoy y no las del 1 oct. Esta es la preselección en línea recta, más un área de 15 minutos en coche para la opción por ingresos; el siguiente paso es la comprobación de tiempo de conducción de cada opción. El ingreso es la cifra del ACS 2015–2019 de cada sección censal, un promedio de la zona y no las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito. También puedes invertir el objetivo por equidad y preguntar dónde tienen la peor cobertura las zonas de menores ingresos." },
     ],
   },
   "carto-explore": {
@@ -1162,7 +1162,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-map": {
-    h: "5eb14db9",
+    h: "97f4bae8",
     events: [
       null,
       null,
@@ -1171,7 +1171,7 @@ window.SIM_I18N["es-ES"] = {
       null,
       null,
       null,
-      { text: "Lo guardé como un **mapa privado en Builder**: los vehículos (azul en marcha, rojo aparcados), los cinco hubs más el sexto sitio propuesto, y la distancia al hub más cercano. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo.\n\nLas áreas de tiempo de conducción todavía no están. Sus polígonos son demasiado grandes para ponerlos en línea dentro del mapa (falla con \"URI too long\"), así que primero los guardaría en una tabla con `execute_query` y apuntaría el mapa a esa tabla." },
+      { text: "Lo guardé como un **mapa privado en Builder**: los vehículos (azul en marcha, rojo aparcados), los cinco hubs más el sexto sitio propuesto, y la distancia al hub más cercano. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo.\n\nEl siguiente paso es añadir las áreas de tiempo de conducción: las guardaría en una tabla con `execute_query` y apuntaría el mapa a esa tabla." },
     ],
   },
   "carto-caveats": {
