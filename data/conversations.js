@@ -48,6 +48,10 @@ function bars(list, labelKey, valueKey) {
  * labels points from D.carto by their x/y. opts: layer (chip text), source
  * (what the map was drawn from), note (replaces the snapshot line), scaleWidth
  * (for a map not on the shared framing). */
+var Cu = (D.carto && D.carto.customers) || { list: [], best: {}, potential: { best: {} } };
+var P = Cu.potential || { best: {} };
+var X = (D.carto && D.carto.explore) || { trips: {} };
+var O = (D.carto && D.carto.objectives) || { income: {}, poi: {}, people: {} };
 var C = D.carto || { hubs: [], coverage: {}, sixthHub: { candidates: [] }, isoline: {} };
 function cartoMap(image, title, summary, labels, opts) {
   opts = opts || {};
@@ -347,6 +351,12 @@ window.CONVERSATIONS = {
           next: "ep-agentic-coaching",
         },
 
+        {
+          group: "🚚 Cross-tool & exec",
+          label: "🧭 What can CARTO do with my fleet?",
+          say: "I have Geotab and CARTO connected. What can I do with them together?",
+          next: "carto-explore",
+        },
         {
           group: "🚚 Cross-tool & exec",
           label: "🗺️ Find my hubs + 15-min reach (CARTO)",
@@ -5328,8 +5338,7 @@ window.CONVERSATIONS = {
           type: "system",
           text:
             "Two MCP servers connected: **Geotab** (database `" + C.database + "`, a 50-vehicle Las Vegas demo fleet) " +
-            "and **CARTO** (connection `" + C.connection + "`, with the Kontur Population and Spatial Features datasets " +
-            "already available on it).",
+            "and **CARTO** (connection `" + C.connection + "`, which can also query CARTO's public Kontur Population and Spatial Features datasets).",
         },
         { type: "assistant", text: "I'll check Geotab's query guidance first, then count the vehicles and get each one's latest position." },
         {
@@ -5700,7 +5709,435 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
+        { label: "🎯 Optimize for something other than residents", say: "What if I optimize for something other than residents?", next: "carto-data" },
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+      ],
+    },
+
+    "carto-explore": {
+      id: "carto-explore",
+      title: "CARTO · What can I do with my fleet?",
+      db: C.database,
+      mode: "carto",
+      events: [
+        { type: "assistant", text: "Let me see what the CARTO side gives you before I suggest anything." },
+        {
+          type: "tool",
+          server: "carto",
+          name: "explore_data",
+          args: { method: "list_connections" },
+          summary: "1 connection · " + C.connection + " (BigQuery)",
+          result: C.connection + " · BigQuery · spatial functions on · Data Observatory (US) attached",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "calculate_isolines",
+          args: { operation: "capabilities" },
+          summary: "drive-time areas and routing on · " + X.quotaLeft.toLocaleString("en-US") + " of " + X.quota.toLocaleString("en-US") + " location-service calls left",
+          result:
+            '{ "providers": { "geocoding": "tomtom", "isolines": "traveltime", "routing": "tomtom" },\n' +
+            '  "quota": { "annual_quota": ' + X.quota + ', "used_quota": ' + X.quotaUsed + ', "remaining_quota": ' + X.quotaLeft + " } }",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "list_datasets", countries: "usa", licenses: "public", categories: "demographics", limit: 1 },
+          summary: X.publicDemographics + " public demographics datasets for the US",
+          result: '{ "totalResults": ' + X.publicDemographics + ", … }",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "list_datasets", countries: "usa", licenses: "premium", limit: 1 },
+          summary: X.premiumUsa + " premium datasets for the US (all categories)",
+          result: '{ "totalResults": ' + X.premiumUsa + ", … }\n// premium needs a commercial arrangement",
+        },
+        {
+          type: "assistant",
+          text:
+            "You have one CARTO connection that can run spatial SQL, a drive-time service with almost all of its yearly quota left, and a public catalog of about " + X.publicDemographics + " demographics datasets (plus premium ones if you buy them).\n\n" +
+            "Combined with Geotab, people usually start with one of three things: where the fleet is and where it clusters, where a new hub would help most, or whether their own trips can answer that.",
+        },
+      ],
+      choices: [
+        { label: "📍 Where is my fleet right now?", say: "Where is my fleet right now?", next: "carto-fleet" },
+        { label: "🎯 Where would a new hub help most?", say: "Where would a new hub help most, and what data could I weight it by?", next: "carto-data" },
+        { label: "🧭 Use my own trips instead", say: "Can I use my own trips instead of public data?", next: "carto-trips" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-trips": {
+      id: "carto-trips",
+      title: "CARTO · Use my own trips as the goal",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Where your own trips end shows what your vehicles actually do. Trips are high-volume, so I'll look at a short window first.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: {
+            database: C.database,
+            typeName: "Trip",
+            search: { fromDate: X.trips.from, toDate: X.trips.to },
+            propertySelector: { fields: ["stopPoint"], isIncluded: true },
+            resultsLimit: 2000,
+          },
+          summary: X.trips.count + " trips in " + X.trips.hours + " hours · each with its stop point",
+          result: '[ { "stopPoint": { "x": -115.28…, "y": 36.29… } }, { "stopPoint": { "x": -115.18…, "y": 36.09… } }, … ]\n// ' + X.trips.count + " records",
+        },
+        {
+          type: "assistant",
+          text:
+            "**Your trips confirm the hubs.** All " + X.trips.count + " stop points land on " + X.trips.places + " places: the five hubs we found from parked vehicles, plus one more, so they're real working locations.\n\n" +
+            "To plan the next hub I'd weight by demand, meaning where your customers are. That could come from zones in MyGeotab, a few weeks of trip history, or your CRM. " +
+            "Your customers are most likely in a CRM, so that's the quickest place to start.",
+        },
+      ],
+      choices: [
+        { label: "🧾 Pull my customers from Salesforce", say: "My customers are in Salesforce. Can you pull them and use those?", next: "carto-customers" },
+        { label: "🎯 Try public data instead", say: "Okay, what public data could I weight it by?", next: "carto-data" },
+        { label: "📍 Where is my fleet right now?", say: "Where is my fleet right now?", next: "carto-fleet" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-customers": {
+      id: "carto-customers",
+      title: "CARTO · Use my Salesforce customers as the goal",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text: "Your customers live in Salesforce, so I'll pull each account's delivery address and how many orders it placed in the last 90 days.",
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "query",
+          args: {
+            soql:
+              "SELECT Account.Name, Account.ShippingStreet, Account.ShippingCity, Account.ShippingState, COUNT(Id) orders\n" +
+              "FROM Order WHERE EffectiveDate = LAST_N_DAYS:90\n" +
+              "GROUP BY Account.Name, Account.ShippingStreet, Account.ShippingCity, Account.ShippingState ORDER BY COUNT(Id) DESC",
+          },
+          summary: Cu.list.length + " accounts · " + Cu.orders + " orders in 90 days",
+          result: Cu.list.slice().sort(function (a, b) { return b.orders - a.orders; }).slice(0, 4).map(function (c) {
+            return c.name + " · " + c.address + " · " + c.orders;
+          }).join("\n") + "\n// … " + (Cu.list.length - 4) + " more",
+        },
+        {
+          type: "system",
+          text: "The Salesforce call and these customers are **illustrative**: made-up companies and order counts, standing in for your CRM. The geocoding and the site search below ran for real against CARTO.",
+        },
+        { type: "assistant", text: "Addresses are just text, so I'll turn them into coordinates in one call." },
+        {
+          type: "tool",
+          server: "carto",
+          name: "geocode",
+          args: { operation: "geocode", addresses: Cu.list.map(function (c) { return c.address; }), country: "US", limit: 1 },
+          summary: Cu.list.length + " of " + Cu.list.length + " matched · all at street level (confidence 1.0)",
+          result: Cu.list.slice(0, 3).map(function (c) {
+            return c.address + " → " + c.lat.toFixed(4) + ", " + c.lon.toFixed(4) + " · confidence 1";
+          }).join("\n") + "\n// … " + (Cu.list.length - 3) + " more, all confidence 1",
+        },
+        {
+          type: "assistant",
+          text:
+            "Now the same site search with orders as the goal. I'll measure how far each order is from the nearest hub, then try every populated cell as a new hub and keep the one that shortens that distance the most.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ),   -- the five hubs from before\n" +
+            "cust AS (SELECT name, ST_GEOGPOINT(lon, lat) AS pt, orders FROM UNNEST([ … ]))   -- the geocoded accounts\n" +
+            "-- baseline: SUM(orders * distance_to_nearest_hub) / SUM(orders)\n" +
+            "-- for each candidate cell: the same, with LEAST(distance_to_nearest_hub, distance_to_candidate)\n" +
+            "SELECT … ORDER BY new_avg_km LIMIT 3"
+          ),
+          summary: "average distance " + Cu.baselineKm + " km → " + Cu.bestKm + " km with the best new hub",
+          result:
+            "baseline · " + Cu.baselineKm + " km (order-weighted, " + Cu.orders + " orders)\n" +
+            "best new hub · " + Cu.best.h3 + " · " + Cu.best.lat.toFixed(4) + ", " + Cu.best.lon.toFixed(4) + " · " + Cu.bestKm + " km\n" +
+            "// straight-line distance, not drive time",
+        },
+        cartoMap(
+          "carto-customers.webp",
+          "Your accounts and the nearest hub",
+          "Orange = account more than 5 km from its nearest hub · green = within 5 km · dot size = orders · grey dashes = trip to the nearest hub today · navy lines = trip to the proposed hub",
+          [
+            { label: "Henderson · 37% of orders", x: Cu.mapLabels.cluster.x, y: Cu.mapLabels.cluster.y },
+            { label: "Proposed hub · Green Valley", x: Cu.mapLabels.hub.x, y: Cu.mapLabels.hub.y },
+          ],
+          {
+            layer: "Accounts · distance to nearest hub",
+            source: "Drawn by the assistant from this session's CARTO query results · customers are illustrative",
+            note: "straight-line distances",
+          }
+        ),
+        {
+          type: "assistant",
+          text:
+            "**A new hub near Green Valley in Henderson (" + Cu.best.lat.toFixed(2) + "°N, " + Math.abs(Cu.best.lon).toFixed(2) + "°W) cuts the average distance an order travels from " +
+            Cu.baselineKm + " km to " + Cu.bestKm + " km, about " + Cu.reductionPct + "% less.** " +
+            "The map shows why: your Henderson accounts are 37% of orders and sit 6 to 10 km from the nearest hub, while the downtown and Summerlin customers are already within about 2.5 km of one.\n\n" +
+            "That's also the corner of the valley the public data pointed to, so three independent goals agree. " +
+            "This is where you already sell, though. To see where you could sell more, I'd add the demographics.",
+        },
+      ],
+      choices: [
+        { label: "🔍 Where could I sell more?", say: "That's where I sell today. Where could I sell more?", next: "carto-potential" },
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map-sites" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-potential": {
+      id: "carto-potential",
+      title: "CARTO · Where could I sell more?",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Orders show where you already sell. To find where you could sell more, I'll take the higher-income residents from the Census data and keep only those who live more than " +
+            P.radiusKm + " km from any of your current customers. That's your white space. Then I'll score each possible hub by how much of it lies within " + C.sixthHub.gapKm + " km.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH cust AS ( … ),   -- the 12 geocoded accounts\n" +
+            "cells AS (   -- the same cells as before, with hi_income = residents * share of households earning $100k+\n" +
+            "  SELECT h3, hi_income, pt, MIN(ST_DISTANCE(pt, cust.pt)) AS d_cust FROM … GROUP BY h3, hi_income, pt\n" +
+            ")\n" +
+            "-- for each candidate cell: SUM(hi_income) of cells within " + C.sixthHub.gapKm + " km that are more than " + P.radiusKm + " km from every customer\n" +
+            "SELECT h3, white_space FROM … ORDER BY white_space DESC LIMIT 3"
+          ),
+          summary: P.whiteSpace.toLocaleString("en-US") + " of " + P.hiIncome.toLocaleString("en-US") + " higher-income residents (" + P.whiteSpacePct + "%) are more than " + P.radiusKm + " km from any customer",
+          result:
+            "higher-income residents · " + P.hiIncome.toLocaleString("en-US") + "\n" +
+            "more than " + P.radiusKm + " km from any customer · " + P.whiteSpace.toLocaleString("en-US") + " (" + P.whiteSpacePct + "%)\n" +
+            "best cell for a new hub · " + P.best.h3 + " · " + P.best.lat.toFixed(4) + ", " + P.best.lon.toFixed(4) + " · " + P.best.score.toLocaleString("en-US") + "\n" +
+            "customers' pick (Green Valley) · " + Cu.best.h3 + " · " + P.atCustomerPick.toLocaleString("en-US"),
+        },
+        cartoMap(
+          "carto-potential.webp",
+          "Where you sell today vs. where you could sell more",
+          "Orange = higher-income residents more than " + P.radiusKm + " km from any customer (darker = more) · green dots = customers (bigger = more orders) · blue = hubs · dashed rings = " +
+            C.sixthHub.gapKm + " km around each hub pick",
+          [
+            { label: "Serve · Green Valley", x: P.serveXY.x, y: P.serveXY.y },
+            { label: "Grow · South-west", x: P.growXY.x, y: P.growXY.y, flip: true },
+          ],
+          {
+            layer: "H3 res 8 · white space",
+            source: "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8) · income: ACS 2015–2019 by census tract",
+            note: "customers are illustrative",
+          }
+        ),
+        {
+          type: "chart",
+          title: "White-space higher-income residents within " + C.sixthHub.gapKm + " km of the hub",
+          bars: [
+            { label: "Customers' pick (Henderson)", value: P.atCustomerPick },
+            { label: "White-space pick (south-west)", value: P.best.score },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "**Two different hubs, and both are useful.** Green Valley in Henderson serves the customers you have, cutting the average order trip by " + Cu.reductionPct + "%. " +
+            "The south-west side of the valley (" + P.best.lat.toFixed(2) + "°N, " + Math.abs(P.best.lon).toFixed(2) + "°W) has about " + Math.round(P.best.score / P.atCustomerPick) +
+            " times as many higher-income residents with no customer nearby (" + P.best.score.toLocaleString("en-US") + " vs " + P.atCustomerPick.toLocaleString("en-US") + "), so that's where you'd grow.\n\n" +
+            P.whiteSpacePct + "% of the higher-income residents in the area live more than " + P.radiusKm + " km from any account, so there's room. " +
+            "Many fleets use the first hub to serve now and the second as the base for a sales push.",
+        },
+      ],
+      choices: [
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map-sites" },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-data": {
+      id: "carto-data",
+      title: "CARTO · Finding data to weight by",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Kontur only counts residents, so for income or shops I need other data. Let me check what's on your CARTO connection first.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "explore_data",
+          args: { method: "search", connection_name: C.connection, query: "kontur" },
+          summary: "no match on this connection",
+          result: "// 0 results · searched 3 containers: organization data, Data Observatory subscriptions, demo data",
+        },
+        {
+          type: "assistant",
+          text:
+            "Nothing is subscribed on your account, but CARTO's public datasets can be queried directly, which is how I read the Kontur residents. " +
+            "Let me search the catalog for what I want to measure.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "search_variables", body: { query: "households by income bracket, census block group", params: { countries: ["usa"] }, neighbors: 5 } },
+          summary: "5 matches · best: Households By Income Quintiles (Michael Bauer International)",
+          result:
+            "Households By Income Quintiles · Blockgroups · HH_I4: households in 4th income quintile\n" +
+            "Households By Income Quintiles · PC 5-digit · …\n" +
+            "Parcels · Regrid · census_blockgroup\n" +
+            "// 5 matches",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "get_dataset", id: "mbi_households__60466314" },
+          summary: "license: Premium data",
+          result: '{ "name": "Households By Income Quintiles - United States of America (Blockgroups)", "licenseName": "Premium data", … }\n// premium = needs a commercial arrangement',
+        },
+        {
+          type: "assistant",
+          text:
+            "That one is licensed premium data. The US Census Bureau's American Community Survey is public and free to use, so I'll go with that:",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: {
+            method: "search_variables",
+            body: { query: "households with income $100,000 to $149,999 and $150,000 or more", params: { countries: ["usa"], providers: ["usa_acs"] }, neighbors: 5 },
+          },
+          summary: "ACS DP03 Selected Economic Characteristics · census tract · public",
+          result:
+            "DP03_0059E: households earning $100,000 to $149,999\n" +
+            "// also DP03_0060E ($150,000 to $199,999), DP03_0061E ($200,000 or more) and DP03_0051E (total households)\n" +
+            "// available by census tract, ZIP code area, county, state …",
+        },
+        {
+          type: "assistant",
+          text:
+            "Tracts are the finest level. They are polygons, not hexagons, so each cell gets the tract it sits in. I'll check how well they match:",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "-- for each H3 cell: find its census tract (ST_CONTAINS on the cell center), then that tract's ACS row\n" +
+            "SELECT COUNT(*) AS cells, COUNTIF(a.geoid IS NOT NULL) AS with_acs, …\n" +
+            "FROM cells c LEFT JOIN tracts t ON ST_CONTAINS(t.geom, c.pt)\n" +
+            "LEFT JOIN `carto-do-public-data.usa_acs.demographics_dp3economic_usa_censustract_<year>_5year_<year>` a ON a.geoid = t.geoid"
+          ),
+          summary: "2019 data: " + O.acsMatch.y2019 + "% of residents matched to a tract with income data",
+          result:
+            "2019 ACS · " + O.acsMatch.y2019 + "% of residents matched\n" +
+            "// the 2019 tract boundaries on the connection are the same vintage as the 2019 ACS tables",
+        },
+        {
+          type: "assistant",
+          text:
+            "Every cell matches, since the 2019 tables use the same tract boundaries as the ones on your connection. " +
+            "Shops and restaurants are already in CARTO's public Spatial Features table, so I'll join those by cell.\n\n" +
+            "A tip for next time: search the catalog by what you want to measure, check the license, and test the join before relying on it.",
+        },
+      ],
+      choices: [
+        { label: "🎯 Run the three goals", say: "Run the search for all three goals.", next: "carto-objective" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-objective": {
+      id: "carto-objective",
+      title: "CARTO · Optimize for something other than residents",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll run the same search with three different weights: residents (as before), **higher-income residents** (a demographic) and " +
+            "**shops and restaurants** (a stand-in for daytime foot traffic).",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ),   -- the five hubs from before\n" +
+            "cells AS (   -- the same " + O.study.cells.toLocaleString("en-US") + " populated cells\n" +
+            "  SELECT k.geoid AS h3, k.population,\n" +
+            "         sf.retail + sf.food_drink AS poi,                        -- Spatial Features\n" +
+            "         k.population * (hh_100k_plus / households) AS hi_income  -- ACS DP03 2019, by census tract\n" +
+            "  FROM … kontur … LEFT JOIN … spatialfeatures … LEFT JOIN … acs …\n" +
+            "), uncovered AS (SELECT * FROM cells WHERE dist_to_nearest_hub > " + C.sixthHub.gapKm * 1000 + ")\n" +
+            "-- for each candidate cell: SUM of each weight over uncovered cells within " + C.sixthHub.gapKm + " km; keep the top cell per goal"
+          ),
+          summary: "3 goals · best cell for each",
+          result:
+            "residents · " + O.people.h3 + " · " + O.people.lat.toFixed(4) + ", " + O.people.lon.toFixed(4) + " · same cell as the sixth-hub search\n" +
+            "higher-income residents · " + O.income.h3 + " · " + O.income.lat.toFixed(4) + ", " + O.income.lon.toFixed(4) + " · " + O.income.score.toLocaleString("en-US") + "\n" +
+            "shops + restaurants · " + O.poi.h3 + " · " + O.poi.lat.toFixed(4) + ", " + O.poi.lon.toFixed(4) + " · " + O.poi.score.toLocaleString("en-US") + "\n" +
+            "// study area: " + O.study.cells.toLocaleString("en-US") + " populated cells · " + O.study.residents.toLocaleString("en-US") + " residents · " +
+            O.study.poi.toLocaleString("en-US") + " shops and restaurants",
+        },
+        cartoIsoline(
+          O.income.lon.toFixed(4) + "," + O.income.lat.toFixed(4),
+          "Higher-income winner · 15-min drive area (GeoJSON)",
+          3
+        ),
+        {
+          type: "chart",
+          title: "Share more than " + C.sixthHub.gapKm + " km from every hub today (%)",
+          bars: [
+            { label: O.people.label, value: O.people.uncoveredPct },
+            { label: O.income.label, value: O.income.uncoveredPct },
+            { label: O.poi.label, value: O.poi.uncoveredPct },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "**The goal changes the answer.** For residents it's still just east of Central (" + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W). " +
+            "For higher-income residents it moves to the south-east of the valley, toward Henderson (" + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W), about 17 km away, " +
+            "and shops and restaurants land about 3 km from that.\n\n" +
+            "Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " + O.cross.peopleWinner.poi + "% of the best shops score, " +
+            "while the income and shops picks each keep " + O.cross.incomeWinner.poi + "% of the other's.\n\n" +
+            "The gap differs too: " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " + O.people.uncoveredPct +
+            "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants. " +
+            "One note: income is the average for each census tract, so it describes the area, not the people your drivers will serve, and I left race and ethnicity out on purpose.",
+        },
+      ],
+      choices: [
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map-sites" },
+        { label: "🧭 Use my own trips as the goal", say: "Can I use my own trips as the goal?", next: "carto-trips" },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
       ],
     },
 
@@ -5811,10 +6248,135 @@ window.CONVERSATIONS = {
             "I've saved it as a **private map in Builder**: the vehicles (blue driving, red parked), the five hubs plus the " +
             "proposed sixth site, and distance to the nearest hub. If it didn't appear above, open it from the link: " +
             "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.\n\n" +
-            "The drive-time areas aren't on it yet. Their polygons are too big to put inline in the map (it fails with " +
-            "\"URI too long\"), so I'd save them to a table with `execute_query` first and point the map at that table.",
+            "The next step is adding the drive-time areas: I'd save them to a table with `execute_query` and point the map at that table.",
         },
         { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Six plain-English questions. The assistant wrote the SQL."] },
+      ],
+      choices: [
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "carto-map-sites": {
+      id: "carto-map-sites",
+      title: "CARTO · Put the picks on a map I can share",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll put every pick from this conversation on one map: the three goals, the customer-based hub in Henderson and the south-west growth area, " +
+            "with your accounts and the white space behind them. I'll check it against CARTO's map format first, then save it privately in Builder.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "validate_map",
+          args: { method: "schema" },
+          summary: "map format: datasets, layers, styling",
+          result: "// bundle schema: datasets (SQL or table, by connection), H3 datasets by index column + aggregation, Kepler layers referencing datasets by $ref, ordinal color maps …",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "validate_map",
+          args: {
+            method: "verify",
+            bundle: {
+              title: "Las Vegas hub picks: residents, income, shops, customers, growth",
+              privacy: "private",
+              datasets: [
+                {
+                  $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                  aggregationExp: "SUM(parked) AS parked",
+                  source: "SELECT h3, parked … -- the five hub cells",
+                },
+                {
+                  $ref: "picks", type: "query", connectionId: "…", geoColumn: "geom",
+                  source: "SELECT goal, ST_GEOGPOINT(lon, lat) AS geom FROM UNNEST([ … ])   -- residents, higher-income, shops, customers, growth",
+                },
+                {
+                  $ref: "accounts", type: "query", connectionId: "…", geoColumn: "geom",
+                  source: "SELECT name, orders, dist_km_to_nearest_hub, geom FROM …   -- the geocoded accounts",
+                },
+                {
+                  $ref: "white_space", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                  aggregationExp: "SUM(hi_income) AS hi_income",
+                  source: "SELECT h3, hi_income FROM … WHERE dist_to_nearest_account > " + P.radiusKm * 1000 + "   -- higher-income residents far from any customer",
+                },
+              ],
+              keplerMapConfig: {
+                config: {
+                  visState: {
+                    layers: [
+                      {
+                        type: "h3",
+                        config: { dataId: "$ref:white_space", columns: { hex: "h3" } },
+                        visualChannels: { colorField: { name: "hi_income", type: "real" } },
+                      },
+                      { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                      {
+                        type: "point",
+                        config: { dataId: "$ref:accounts" },
+                        visualChannels: { sizeField: { name: "orders", type: "integer" }, colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                      },
+                      {
+                        type: "point",
+                        config: { dataId: "$ref:picks", visConfig: { colorRange: { colorMap: [["Residents", "#6B7A99"], ["Higher-income", "#D9480F"], ["Shops", "#F2A93B"], ["Customers", "#0F7B6C"], ["Growth", "#18294F"]] } } },
+                        visualChannels: { colorField: { name: "goal", type: "string" }, colorScale: "ordinal" },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+          summary: "bundle valid · 4 datasets · SQL dry-run OK",
+          result: '{ "valid": true, "datasets": [ { "name": "picks", "rows": 5 }, { "name": "accounts", "rows": ' + Cu.list.length + " }, … ] }",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "create_map",
+          args: { bundle: "<the verified bundle>" },
+          summary: "private Builder map created",
+          write: true,
+          result: '{ "mapId": "…", "privacy": "private" }',
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "view_map",
+          args: { mapId: "…" },
+          summary: "interactive map in chat (MCP Apps hosts only)",
+          result: "// renders the map inline where the host supports MCP Apps; elsewhere, use the Builder link",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "get_workspace_info",
+          args: {},
+          summary: "workspace URL template for Builder links",
+          result:
+            '{ "workspaceUrl": "https://<your-carto-workspace>",\n' +
+            '  "urlTemplates": { "builderMap": { "template": "https://<your-carto-workspace>/builder/{mapId}" }, … } }',
+        },
+        {
+          type: "system",
+          text:
+            "`view_map` shows the interactive map in the chat only in apps that support MCP Apps; elsewhere you get the link. " +
+            "The map is private to the CARTO account that created it, so the simulator can't show it. The accounts layer uses the illustrative customers.",
+        },
+        {
+          type: "assistant",
+          text:
+            "I've saved it as a **private map in Builder**. The five picks are colored by goal (residents, higher-income, shops, customers and growth), over your hubs, " +
+            "your accounts sized by orders, and the white space shaded by higher-income residents. If it didn't appear above, open it from the link: " +
+            "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.",
+        },
+        { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "From “where is my fleet?” to “where do I grow?” The assistant wrote the SQL."] },
       ],
       choices: [
         { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
