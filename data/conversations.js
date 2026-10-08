@@ -5807,12 +5807,31 @@ window.CONVERSATIONS = {
         },
         {
           type: "assistant",
+          text: "A customer address list is the likeliest next step, so I'll try CARTO's geocoder on a few addresses and place names. They go in one call.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "geocode",
+          args: {
+            operation: "geocode",
+            addresses: X.geocode.map(function (g) { return g.input; }),
+            country: "US",
+            limit: 1,
+          },
+          summary: X.geocode.length + " addresses · 1 exact street match · 3 place names with low confidence (0.31–0.54)",
+          result: X.geocode.map(function (g) {
+            return g.input + " → " + g.lat.toFixed(4) + ", " + g.lon.toFixed(4) + " · confidence " + g.confidence;
+          }).join("\n"),
+        },
+        {
+          type: "assistant",
           text:
             "**This demo fleet can't answer that.** All " + X.trips.count + " stop points fall on just " + X.trips.places + " places, the five hubs and one more, and there are no customer sites saved as zones. " +
             "Weighting by trips would only give you the hubs back.\n\n" +
             "With a real fleet the same ask works, because trips end at customers. Your options, from least to most work:\n" +
             "- **Zones you already have.** If customer sites are saved as zones in MyGeotab, read them and weight by visits.\n" +
-            "- **A list of customer addresses.** CARTO can turn addresses into points, and you weight by orders.\n" +
+            "- **A list of customer addresses.** CARTO turns them into points and you weight by orders. Check the match confidence first: the full street address matched exactly (1.0), but place names scored only 0.31 to 0.54, and Allegiant Stadium came back near downtown, which isn't where it is. Use street addresses, and drop or review low-confidence matches.\n" +
             "- **Longer trip history.** A few weeks of stop points, grouped into hexagons, show where the real demand is.\n\n" +
             "In every case it replaces the weight in the same site search, so the rest of the steps don't change.",
         },

@@ -2443,12 +2443,14 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-trips": {
-    h: "de91dad7",
+    h: "a91a533f",
     events: [
       /*0 assistant*/ { text: "Dónde terminan tus propios viajes es la mejor señal de demanda que tienes. Los viajes son de alto volumen, así que primero miro una ventana corta." },
       /*1 tool*/ { summary: "534 viajes en 6 horas · cada uno con su punto de parada" },
       /*2 tool*/ { summary: "sin zonas definidas" },
-      /*3 assistant*/ { text: "**Esta flota demo no puede responder eso.** Los 534 puntos de parada caen en solo 6 lugares, los cinco hubs y uno más, y no hay sitios de clientes guardados como zonas. Ponderar por viajes solo te devolvería los hubs.\n\nCon una flota real la misma pregunta sí funciona, porque los viajes terminan en clientes. Tus opciones, de menos a más trabajo:\n- **Zonas que ya tienes.** Si los sitios de clientes están guardados como zonas en MyGeotab, léelas y pondera por visitas.\n- **Una lista de direcciones de clientes.** CARTO puede convertir direcciones en puntos, y ponderas por pedidos.\n- **Más historial de viajes.** Unas semanas de puntos de parada, agrupados en hexágonos, muestran dónde está la demanda real.\n\nEn todos los casos reemplaza el peso en la misma búsqueda de sitio, así que el resto de los pasos no cambia." },
+      /*3 assistant*/ { text: "Una lista de direcciones de clientes es el siguiente paso más probable, así que pruebo el geocodificador de CARTO con algunas direcciones y nombres de lugares. Van en una sola llamada." },
+      /*4 tool*/ { summary: "4 direcciones · 1 coincidencia exacta de calle · 3 nombres de lugar con baja confianza (0.31–0.54)" },
+      /*5 assistant*/ { text: "**Esta flota demo no puede responder eso.** Los 534 puntos de parada caen en solo 6 lugares, los cinco hubs y uno más, y no hay sitios de clientes guardados como zonas. Ponderar por viajes solo te devolvería los hubs.\n\nCon una flota real la misma pregunta sí funciona, porque los viajes terminan en clientes. Tus opciones, de menos a más trabajo:\n- **Zonas que ya tienes.** Si los sitios de clientes están guardados como zonas en MyGeotab, léelas y pondera por visitas.\n- **Una lista de direcciones de clientes.** CARTO las convierte en puntos y ponderas por pedidos. Revisa primero la confianza de la coincidencia: la dirección completa coincidió exactamente (1.0), pero los nombres de lugar sacaron solo 0.31 a 0.54, y Allegiant Stadium apareció cerca del centro, que no es donde está. Usa direcciones de calle y descarta o revisa las coincidencias de baja confianza.\n- **Más historial de viajes.** Unas semanas de puntos de parada, agrupados en hexágonos, muestran dónde está la demanda real.\n\nEn todos los casos reemplaza el peso en la misma búsqueda de sitio, así que el resto de los pasos no cambia." },
     ],
     choices: [
       { label: "🎯 Probar con datos públicos",
