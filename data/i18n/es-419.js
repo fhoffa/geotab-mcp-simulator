@@ -2530,6 +2530,27 @@ window.SIM_I18N["es-419"] = {
         say: "Muéstrame otra cosa." },
     ],
   },
+  "carto-map-sites": {
+    h: "a9fb9075",
+    events: [
+      /*0 assistant*/ { text: "Pondré todas las opciones de esta conversación en un solo mapa: los tres objetivos, el hub según clientes en Henderson y la zona de crecimiento del suroeste, con tus cuentas y el espacio sin atender detrás. Primero lo reviso contra el formato de mapas de CARTO y luego lo guardo en privado en Builder." },
+      /*1 tool*/ { summary: "formato de mapa: datasets, capas, estilos" },
+      /*2 tool*/ { summary: "paquete válido · 4 datasets · prueba en seco del SQL OK" },
+      /*3 tool*/ { summary: "mapa privado de Builder creado" },
+      /*4 tool*/ { summary: "mapa interactivo en el chat (solo en hosts con MCP Apps)" },
+      /*5 tool*/ { summary: "plantilla de URL del workspace para enlaces de Builder" },
+      /*6 system*/ { text: "`view_map` muestra el mapa interactivo en el chat solo en apps compatibles con MCP Apps; en las demás recibes el enlace. El mapa es privado para la cuenta de CARTO que lo creó, así que el simulador no puede mostrarlo. La capa de cuentas usa los clientes ilustrativos." },
+      /*7 assistant*/ { text: "Lo guardé como un **mapa privado en Builder**. Las cinco opciones están coloreadas por objetivo (residentes, mayores ingresos, comercios, clientes y crecimiento), sobre tus hubs, tus cuentas con tamaño según los pedidos y el espacio sin atender sombreado por residentes de mayores ingresos. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo." },
+      /*8 endcard*/ { lines: ["Geotab MCP + CARTO MCP", "De “¿dónde está mi flota?” a “¿dónde crezco?”. El asistente escribió el SQL."] },
+    ],
+    choices: [
+      { label: "🧐 ¿Qué debería verificar?",
+        say: "¿Qué debería verificar antes de actuar con esto?" },
+      { label: "⚡ Probar otro",
+        say: "Muéstrame otra cosa." },
+      { label: "↻ Reiniciar" },
+    ],
+  },
   "carto-map": {
     h: "97f4bae8",
     events: [

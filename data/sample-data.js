@@ -505,12 +505,15 @@ window.SAMPLE_DATA = {
      * CARTO Spatial Features table; income = Kontur residents x the share of
      * households earning $100k+ in their census tract (public ACS DP03, 2019
      * 5-year, matched to the 2019 tract boundaries). "Uncovered" = more than 8 km
-     * in a straight line from every hub. The residents score differs a little from
-     * the 1 Oct figure above because today's parked positions differ. */
+     * in a straight line from every hub. For this simulation the five hubs are treated
+     * as the same ones as the first search. The 8 Oct run scored the residents cell
+     * 234,038 (225,133 in the first search, because the parked positions differ a
+     * little); the first-search figure is the one kept so the story reads as one
+     * session. */
     objectives: {
       snapshot: "8 Oct 2026, ~15:15 UTC", vehicles: 50, driving: 23, parked: 27, parkedAtHubs: 24,
       study: { cells: 2090, residents: 2073195, income: 515898, poi: 32900 },
-      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 234038 },
+      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 225133 },
       income: { label: "Higher-income residents", uncoveredPct: 35.9, h3: "8829868c51fffff", lat: 36.0242, lon: -115.0237, score: 51457 },
       poi:    { label: "Shops + restaurants",     uncoveredPct: 19.4, h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694 },
       // each winner's score on the other goals, as a share of that goal's best (rounded)

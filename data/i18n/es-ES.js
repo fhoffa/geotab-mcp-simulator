@@ -1169,6 +1169,13 @@ window.SIM_I18N["es-ES"] = {
       { text: "**Dos hubs distintos, y ambos sirven.** Green Valley, en Henderson, atiende a los clientes que ya tienes y acorta un 45% el viaje medio de un pedido. El suroeste del valle (36,03°N, 115,22°O) tiene unas 4 veces más residentes de mayores ingresos sin ningún cliente cerca (43.538 vs 10.987), así que ahí es donde crecerías.\n\nEl 39% de los residentes de mayores ingresos del área vive a más de 5 km de cualquier cuenta, así que hay espacio. Muchas flotas usan el primer hub para atender ahora y el segundo como base para una campaña de ventas." },
     ],
   },
+  "carto-map-sites": {
+    h: "a9fb9075",
+    events: [
+      null, null, null, null, null, null, null,
+      { text: "Lo guardé como un **mapa privado en Builder**. Las cinco opciones están coloreadas por objetivo (residentes, mayores ingresos, comercios, clientes y crecimiento), sobre tus hubs, tus cuentas con tamaño según los pedidos y el espacio sin atender sombreado por residentes de mayores ingresos. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo." },
+    ],
+  },
   "carto-map": {
     h: "97f4bae8",
     events: [
