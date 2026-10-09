@@ -1100,6 +1100,13 @@
         if (myToken !== playToken) return;
         var prose = addBubbleShell("assistant");
         if (!(await streamProse(prose, ev.text, myToken))) return;
+      } else if (ev.type === "user") {
+        // a scripted follow-up the user types mid-node, the same way a chosen prompt is typed
+        toolContainer = null;
+        await wait(timedDelay("gap"));
+        if (myToken !== playToken) return;
+        var userProse = addBubbleShell("user");
+        if (!(await typeUserText(userProse, ev.text, myToken))) return;
       } else if (ev.type === "system") {
         toolContainer = null;
         await wait(timedDelay("system"));
@@ -1240,6 +1247,7 @@
       }
       toolContainer = null;
       if (ev.type === "assistant") addBubble("assistant", ev.text);
+      else if (ev.type === "user") addBubble("user", ev.text);
       else if (ev.type === "system") addSystem(ev.text);
       else if (ev.type === "warehouse") addWarehousePane(ev);
       else if (ev.type === "chart") addChart(ev);

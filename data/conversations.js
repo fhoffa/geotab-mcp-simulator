@@ -402,14 +402,8 @@ window.CONVERSATIONS = {
         {
           group: "🚚 Cross-tool & exec",
           label: "🧭 What can CARTO do with my fleet?",
-          say: "I have Geotab and CARTO connected. What can I do with them together?",
+          say: "I run deliveries around Las Vegas and I'm thinking about adding another depot. I have Geotab and CARTO connected. What can I do with them together?",
           next: "carto-explore",
-        },
-        {
-          group: "🚚 Cross-tool & exec",
-          label: "🗺️ Find my hubs + 15-min reach (CARTO)",
-          say: "Where is my fleet right now?",
-          next: "carto-fleet",
         },
         {
           group: "🚚 Cross-tool & exec",
@@ -5825,7 +5819,7 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "You have one CARTO connection that can run spatial SQL, a drive-time service with almost all of its yearly quota left, and a public catalog of about " + X.publicDemographics + " demographics datasets (plus premium ones if you buy them).\n\n" +
-            "With Geotab alongside it, the most common first project is **deciding where your next hub or depot should go**. It takes two steps:\n" +
+            "With Geotab alongside it, that's exactly the right first question: **where should the new depot go?** It takes two steps:\n" +
             "1. **Find your hubs:** where the fleet is right now, and where the parked vehicles gather.\n" +
             "2. **Choose who the new hub should serve:** the most residents within a 15-minute drive, higher-income areas or busy shops and restaurants, or your own customers. Each goal puts the hub somewhere different.\n\n" +
             "Let's start with step 1.",
@@ -6088,10 +6082,11 @@ window.CONVERSATIONS = {
           summary: "license: Premium data",
           result: '{ "name": "Households By Income Quintiles - United States of America (Blockgroups)", "licenseName": "Premium data", … }\n// premium = needs a commercial arrangement',
         },
+        { type: "assistant", text: "That one is licensed premium data, so it needs a commercial arrangement with CARTO." },
+        { type: "user", text: "Premium is out of my budget. Is there something free I can use instead?" },
         {
           type: "assistant",
-          text:
-            "That one is licensed premium data. The US Census Bureau's American Community Survey is public and free to use, so I'll go with that:",
+          text: "Yes. The US Census Bureau's American Community Survey is public and free to use, so I'll go with that:",
         },
         {
           type: "tool",
@@ -6218,9 +6213,15 @@ window.CONVERSATIONS = {
           text:
             "**The goal changes the answer.** For residents it's still just east of Central (" + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W). " +
             "For higher-income residents it moves to the south-east of the valley, toward Henderson (" + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W), about 17 km away, " +
-            "and shops and restaurants land about 3 km from that.\n\n" +
-            "Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " + O.cross.peopleWinner.poi + "% of the best shops score, " +
-            "while the income and shops picks each keep " + O.cross.incomeWinner.poi + "% of the other's.\n\n" +
+            "and shops and restaurants land about 3 km from that.",
+        },
+        { type: "user", text: "So which one should I pick?" },
+        {
+          type: "assistant",
+          text:
+            "It depends on what the hub is for, but the scores help. Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " +
+            O.cross.peopleWinner.poi + "% of the best shops score. The shops-and-restaurants pick holds up best: it keeps " + O.cross.poiWinner.people + "% of the best residents score and " +
+            O.cross.poiWinner.income + "% of the best income score, so if you can't decide, it's the strongest all-rounder, on the Henderson side next to the income pick.\n\n" +
             "The gap differs too: " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " + O.people.uncoveredPct +
             "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants. " +
             "One note: income is the average for each census tract, so it describes the area, not the people your drivers will serve, and I left race and ethnicity out on purpose.",

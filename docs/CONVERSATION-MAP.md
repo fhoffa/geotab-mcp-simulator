@@ -70,8 +70,7 @@ flowchart TD
     %% --- Spatial analytics (Geotab MCP + CARTO MCP) ---
     %% one spine (fleet → hubs), then "who should the next hub serve?"
     hub -->|"🧭 What can CARTO do?"| cartoE["CARTO · What can I do with my fleet?"]
-    cartoE --> cartoF
-    hub -->|"🗺️ Hubs + 15-min reach"| cartoF["CARTO · Where is my fleet?"]
+    cartoE --> cartoF["CARTO · Where is my fleet?"]
     cartoF --> cartoH["CARTO · Parked vehicles → hubs (H3)"]
     cartoH -->|"👥 residents"| cartoC["CARTO · What's around each hub"]
     cartoC --> cartoR["CARTO · 15-min drive reach"]
@@ -121,7 +120,7 @@ flowchart TD
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep-zonelife-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `carto-explore`, `carto-fleet`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
+| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep-zonelife-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `carto-explore`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
 | `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-shape-viz`, `ep7-ace`, `hub` |
 | `ep1-shape-viz` | Ep1 · Shape it: chart the speeding | demo_fh_vegas4 | `ep1-shape-brief`, `hub` |
 | `ep1-shape-brief` | Ep1 · Shape it: the reshaped brief | — | `ep1-skill`, `hub` |

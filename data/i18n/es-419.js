@@ -165,7 +165,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "hub": {
-    h: "11611b5a",
+    h: "8b78d3bc",
     events: [
       /*0 assistant*/ { text: "Ya estás conectado. ¿Qué quieres revisar?\n" +
         "\n" +
@@ -249,10 +249,7 @@ window.SIM_I18N["es-419"] = {
         say: "Identifica a los conductores que necesitan coaching y redacta un resumen que pueda enviar a su gerente." },
       { group: "🚚 Otras herramientas y dirección",
         label: "🧭 ¿Qué puede hacer CARTO con mi flota?",
-        say: "Tengo Geotab y CARTO conectados. ¿Qué puedo hacer con los dos juntos?" },
-      { group: "🚚 Otras herramientas y dirección",
-        label: "🗺️ Encontrar mis hubs + alcance de 15 min (CARTO)",
-        say: "¿Dónde está mi flota ahora mismo?" },
+        say: "Hago entregas en Las Vegas y estoy pensando en sumar otra base. Tengo Geotab y CARTO conectados. ¿Qué puedo hacer con los dos juntos?" },
       { group: "🚚 Otras herramientas y dirección",
         label: "🚐 ¿Quién está más cerca y libre ahora mismo?",
         say: "Acaba de entrar un trabajo cerca del centro de Las Vegas. ¿Qué vehículo está más cerca y realmente disponible ahora mismo?" },
@@ -2409,18 +2406,20 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-data": {
-    h: "4e0db6e4",
+    h: "2e51131e",
     events: [
       /*0 assistant*/ { text: "Kontur solo cuenta residentes, así que para ingresos o comercios necesito otros datos. Primero reviso qué hay en tu conexión de CARTO." },
       /*1 tool*/ { summary: "sin coincidencias en esta conexión" },
       /*2 assistant*/ { text: "No hay nada suscrito en tu cuenta, pero los datasets públicos de CARTO se pueden consultar directamente, que es como leí los residentes de Kontur. Busco en el catálogo lo que quiero medir." },
       /*3 tool*/ { summary: "5 coincidencias · la mejor: Households By Income Quintiles (Michael Bauer International)" },
       /*4 tool*/ { summary: "licencia: Premium data" },
-      /*5 assistant*/ { text: "Ese es un dataset premium con licencia. La Encuesta sobre la Comunidad Estadounidense (ACS) de la Oficina del Censo es pública y gratuita, así que uso esa:" },
-      /*6 tool*/ { summary: "ACS DP03 Selected Economic Characteristics · sector censal · público" },
-      /*7 assistant*/ { text: "Los sectores censales son el nivel más fino. Son polígonos, no hexágonos, así que cada celda toma el sector donde cae. Reviso qué tan bien coinciden:" },
-      /*8 tool*/ { summary: "datos 2019: 100% de los residentes con coincidencia en un sector con datos de ingresos" },
-      /*9 assistant*/ { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de sectores que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y prueba la unión antes de depender de ella.\n\nAsí que ahora puedo calificar el sexto hub de tres formas: por **residentes** (como antes), por **residentes de mayores ingresos** y por **comercios y restaurantes**." },
+      /*5 assistant*/ { text: "Ese es un dataset premium con licencia, así que requiere un acuerdo comercial con CARTO." },
+      /*6 user*/ { text: "El premium no me entra en el presupuesto. ¿Hay algo gratis que pueda usar?" },
+      /*7 assistant*/ { text: "Sí. La Encuesta sobre la Comunidad Estadounidense (ACS) de la Oficina del Censo es pública y gratuita, así que uso esa:" },
+      /*8 tool*/ { summary: "ACS DP03 Selected Economic Characteristics · sector censal · público" },
+      /*9 assistant*/ { text: "Los sectores censales son el nivel más fino. Son polígonos, no hexágonos, así que cada celda toma el sector donde cae. Reviso qué tan bien coinciden:" },
+      /*10 tool*/ { summary: "datos 2019: 100% de los residentes con coincidencia en un sector con datos de ingresos" },
+      /*11 assistant*/ { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de sectores que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y prueba la unión antes de depender de ella.\n\nAsí que ahora puedo calificar el sexto hub de tres formas: por **residentes** (como antes), por **residentes de mayores ingresos** y por **comercios y restaurantes**." },
     ],
     choices: [
       { label: "⚖️ Comparar residentes, ingresos y comercios",
@@ -2430,14 +2429,14 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-explore": {
-    h: "bda069ee",
+    h: "352caea7",
     events: [
       /*0 assistant*/ { text: "Déjame ver qué te ofrece el lado de CARTO antes de sugerir nada." },
       /*1 tool*/ { summary: "1 conexión · carto_dw (BigQuery)" },
       /*2 tool*/ { summary: "áreas de manejo y rutas activas · quedan 14,991 de 15,000 llamadas del servicio de ubicación" },
       /*3 tool*/ { summary: "151 datasets demográficos públicos para EE. UU." },
       /*4 tool*/ { summary: "172 datasets premium para EE. UU. (todas las categorías)" },
-      /*5 assistant*/ { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de manejo con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCon Geotab al lado, el primer proyecto más común es **decidir dónde debería ir tu próximo hub o base**. Son dos pasos:\n1. **Encontrar tus hubs:** dónde está la flota ahora mismo y dónde se juntan los vehículos estacionados.\n2. **Elegir a quién debe atender el nuevo hub:** a la mayor cantidad de residentes a 15 minutos en auto, a zonas de mayores ingresos o con muchos comercios y restaurantes, o a tus propios clientes. Cada objetivo pone el hub en un lugar distinto.\n\nEmpecemos por el paso 1." },
+      /*5 assistant*/ { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de manejo con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCon Geotab al lado, esa es justo la primera pregunta correcta: **¿dónde debería ir la nueva base?** Son dos pasos:\n1. **Encontrar tus hubs:** dónde está la flota ahora mismo y dónde se juntan los vehículos estacionados.\n2. **Elegir a quién debe atender el nuevo hub:** a la mayor cantidad de residentes a 15 minutos en auto, a zonas de mayores ingresos o con muchos comercios y restaurantes, o a tus propios clientes. Cada objetivo pone el hub en un lugar distinto.\n\nEmpecemos por el paso 1." },
     ],
     choices: [
       { label: "📍 Empezar: ¿dónde está mi flota ahora mismo?",
@@ -2510,7 +2509,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-objective": {
-    h: "cbe067e2",
+    h: "9f02c11d",
     events: [
       /*0 assistant*/ { text: "Corro la misma búsqueda con tres pesos distintos: residentes (como antes), **residentes de mayores ingresos** (un dato demográfico) y **comercios y restaurantes** (un indicador del tránsito diurno)." },
       /*1 tool*/ { summary: "3 objetivos · la mejor celda de cada uno" },
@@ -2522,7 +2521,9 @@ window.SIM_I18N["es-419"] = {
         pins: ["Residentes", "Comercios + restaurantes", "Mayores ingresos"] },
       /*4 chart*/ { title: "Porcentaje a más de 8 km de todos los hubs hoy (%)",
         bars: ["Residentes", "Residentes de mayores ingresos", "Comercios + restaurantes"] },
-      /*5 assistant*/ { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36.17°N, 115.06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36.02°N, 115.02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nElegir por residentes conservaría solo el 64% del mejor puntaje de ingresos y el 60% del mejor puntaje de comercios, mientras que las opciones por ingresos y por comercios conservan cada una el 92% de la otra.\n\nLa brecha también cambia: el 35.9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32.6% de todos los residentes y el 19.4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sector censal, así que describe la zona y no a las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito." },
+      /*5 assistant*/ { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36.17°N, 115.06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36.02°N, 115.02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí." },
+      /*6 user*/ { text: "¿Entonces cuál debería elegir?" },
+      /*7 assistant*/ { text: "Depende de para qué sea el hub, pero los puntajes ayudan. Elegir por residentes conservaría solo el 64% del mejor puntaje de ingresos y el 60% del mejor puntaje de comercios. La opción por comercios y restaurantes es la que mejor aguanta: conserva el 78% del mejor puntaje de residentes y el 92% del mejor puntaje de ingresos, así que si no te decides, es la más equilibrada, del lado de Henderson junto a la opción por ingresos.\n\nLa brecha también cambia: el 35.9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32.6% de todos los residentes y el 19.4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sector censal, así que describe la zona y no a las personas que atenderán tus conductores, y dejé fuera raza y etnia a propósito." },
     ],
     choices: [
       { label: "🗺️ Poner las tres opciones en un mapa que pueda compartir",
