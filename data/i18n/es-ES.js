@@ -42,7 +42,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "hub": {
-    h: "11611b5a",
+    h: "8b78d3bc",
     choices: [
       { say: "Dame mi revisión semanal de la flota de los últimos 7 días: averías, ralentí y conducción brusca, infracciones de HOS, pendientes de DVIR y actividad de viajes. Que sea un resumen corto sobre el que pueda actuar." },
       null,
@@ -69,8 +69,7 @@ window.SIM_I18N["es-ES"] = {
       { say: "Empaqueta mi revisión semanal de la flota en una skill reutilizable para que yo, y cualquiera de mi equipo, pueda ejecutar exactamente la misma revisión con solo pedirla." },
       { say: "Tengo varias tareas de la flota pendientes: crear una geocerca para el depósito, una alerta de ralentí, borrar las averías de una furgoneta que ya pasó por servicio, agrupar mis vehículos de Valencia y enviar las alertas a un responsable." },
       { label: "🧑‍🏫 Redactar notas de coaching para un responsable", say: "Identifica a los conductores que necesitan coaching y redacta un resumen que pueda enviar a su responsable." },
-      null,
-      null,
+      { say: "Hago repartos en Las Vegas y estoy pensando en añadir otra base. Tengo Geotab y CARTO conectados. ¿Qué puedo hacer con los dos juntos?" },
       null,
       null,
       { label: "📊 Dame un resumen para la dirección, ambas flotas", say: "Dame un resumen a nivel de dirección de ambas flotas (utilización, seguridad, mantenimiento y sostenibilidad) en cinco números." },
@@ -1065,22 +1064,26 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-hubs": {
-    h: "11900dcc",
+    h: "220a95ce",
     events: [
       { text: "Paso las 28 posiciones de aparcamiento directamente a una consulta en tu conexión de CARTO, agrupadas en hexágonos H3 de resolución 8 (unos 0,7 km² cada uno). Varios vehículos en un mismo hexágono suelen indicar una campa compartida." },
       { summary: "5 celdas con varios vehículos · 25 de 28 vehículos aparcados" },
       { title: "Cinco hubs · vehículos aparcados por celda H3", summary: "25 de 28 vehículos aparcados están en cinco celdas" },
-      { text: "**Cinco hubs.** 25 de los 28 vehículos aparcados están en uno de cinco puntos; los otros 3 están aparcados solos. Nombré los hubs según dónde quedan en el mapa.\n\nPero esto es una sola instantánea a eso de las 7 pm, así que no puedo asegurar que sean campas. Algunos podrían ser el sitio de un cliente o un aparcamiento compartido. Unas semanas de datos de aparcamiento, o tu lista de bases, lo resolverían." },
+      { text: "**Cinco hubs.** 25 de los 28 vehículos aparcados están en uno de cinco puntos; los otros 3 están aparcados solos. Nombré los hubs según dónde quedan en el mapa.\n\nPero esto es una sola instantánea a eso de las 7 pm, así que no puedo asegurar que sean campas. Algunos podrían ser el sitio de un cliente o un aparcamiento compartido. Unas semanas de datos de aparcamiento, o tu lista de bases, lo resolverían.\n\nCon los hubs listos podemos planificar el siguiente. Puedo empezar por lo que hay alrededor de cada hub y a cuántas personas llega cada uno, o ir directo a tus clientes." },
+    ],
+    choices: [
+      null,
+      { label: "🧾 Planificar el próximo hub según mis clientes" },
     ],
   },
   "carto-context": {
-    h: "c0dac835",
+    h: "d7f83539",
     events: [
       { text: "Voy a contar residentes (Kontur Population) más tiendas, restaurantes, turismo y luz nocturna (Spatial Features) dentro de 3 anillos de hexágonos alrededor de cada hub, unos 2,5 km a la redonda." },
       null,
-      null,
-      null,
-      { text: "**Sur** es el núcleo comercial: la menor cantidad de residentes (~14k) pero la mayor de tiendas (2.140), lugares para comer (1.758), turismo y luz nocturna. **Norte** es lo opuesto, con ~55k residentes y solo 158 tiendas, la menor de todos los hubs. **Oeste** tiene la mayor cantidad de residentes (~70k) y unas cuatro veces el comercio de Norte. Centro (~58k residentes, 1.582 tiendas) está activo en ambos frentes, y Sureste queda en medio." },
+      { summary: "Hexágonos más oscuros = más residentes · etiquetas = qué predomina a ~2,5 km de cada hub: viviendas, comercios y restaurantes, o una mezcla" },
+      { title: "Viviendas en el norte y el oeste, comercio y vida nocturna en el sur · a ~2,5 km de cada hub" },
+      { text: "**Cada hub está en un tipo de lugar distinto.** **Sur** es el núcleo comercial: 271 comercios y restaurantes por cada 1.000 residentes, además de la mayor actividad turística y luz nocturna. **Norte** y **Oeste** son sobre todo viviendas: ~55k y ~70k residentes cerca, pero solo 5 y 16 comercios y restaurantes por cada 1.000 de ellos. Centro y Sureste son una mezcla.\n\nEso define para qué sirve cada hub: los residenciales, para repartos a domicilio; Sur, para repartos a comercios, restaurantes y hoteles." },
     ],
     choices: [
       { say: "¿A cuántas personas puede llegar cada hub en 15 minutos en coche?" },
@@ -1106,7 +1109,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-site": {
-    h: "bd0d7b3f",
+    h: "e38a3167",
     events: [
       { text: "Revisar los tiempos de conducción de cada punto posible tomaría cientos de llamadas, así que lo hago en dos pasos. Primero, una preselección rápida por distancia en línea recta: considero sin cobertura un vecindario si está a más de 8 km del hub más cercano, y califico cada punto posible según cuántos residentes sin cobertura viven a menos de 8 km. Luego, una revisión real de tiempo de conducción para el ganador." },
       null,
@@ -1119,65 +1122,77 @@ window.SIM_I18N["es-ES"] = {
       { summary: "Mejor celda · área de 15 min en coche (GeoJSON)" },
       { summary: "+181k residentes con nueva cobertura · cobertura 80% → 88,5%" },
       { title: "Sexto hub propuesto · área de 15 minutos en coche", summary: "+181k residentes nuevos a 15 min · cobertura → 88,5%", disclosure: "Dibujado por el asistente a partir de los resultados de consultas CARTO de esta sesión · residentes: Kontur Population (H3 res 8) · áreas de conducción simplificadas · instantánea del 1 oct 2026, ~02:08 UTC" },
-      { text: "**La mejor zona está justo al este de Centro, alrededor de 36,17°N, 115,06°O.** Un hub ahí pondría a **181k personas más** a menos de 15 minutos en coche, llevando la cobertura del 80% al 88,5%.\n\nLos 225k y los 181k miden cosas distintas. 225k son personas a más de 8 km en línea recta de cualquier hub que viven a menos de 8 km del sitio. 181k son personas dentro de la nueva área de 15 minutos en coche que no están ya dentro de una de las cinco existentes. (Las dos medidas tampoco coinciden hoy: 8 km en línea recta desde un hub cubren el 68%; las áreas de 15 minutos en coche, cerca del 80%.)" },
-    ],
-  },
-  "carto-data": {
-    h: "a93322ae",
-    events: [
-      null, null, null, null, null, null, null, null, null,
-      { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de secciones que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y comprueba la unión antes de depender de ella." },
+      { text: "**La mejor zona está justo al este de Centro, alrededor de 36,17°N, 115,06°O.** Un hub ahí pondría a **181k personas más** a menos de 15 minutos en coche, llevando la cobertura del 80% al 88,5%.\n\nLos 225k y los 181k miden cosas distintas. 225k son personas a más de 8 km en línea recta de cualquier hub que viven a menos de 8 km del sitio. 181k son personas dentro de la nueva área de 15 minutos en coche que no están ya dentro de una de las cinco existentes. (Las dos medidas tampoco coinciden hoy: 8 km en línea recta desde un hub cubren el 68%; las áreas de 15 minutos en coche, cerca del 80%.)\n\nEsa es la respuesta si el nuevo hub debe atender a la mayor cantidad de residentes. Otro objetivo lo mueve: zonas de mayores ingresos, zonas con muchos comercios y restaurantes, o tus propios clientes." },
     ],
   },
   "carto-objective": {
-    h: "72da8369",
+    h: "d878749d",
     events: [
       null,
       null,
       { summary: "Ganador de mayores ingresos · área de 15 min en coche (GeoJSON)" },
+      { disclosure: "Dibujado por el asistente a partir de los resultados de consultas CARTO de esta sesión · residentes: Kontur Population · ingresos: ACS 2015–2019 por sección censal · comercios: Spatial Features · instantánea del 1 oct 2026, ~02:08 UTC" },
+      { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36,17°N, 115,06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36,02°N, 115,02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nUna nota: el ingreso es el promedio de cada sección censal, así que describe la zona y no a las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito." },
+    ],
+  },
+  "carto-data-free": {
+    h: "d42bfceb",
+    events: [
+      null, null, null, null,
+      { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de secciones que los de tu conexión, y uno por celda los comercios y restaurantes de Spatial Features.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y comprueba la unión antes de depender de ella.\n\nAsí que ahora puedo puntuar el sexto hub de tres formas: por **residentes** (como antes), por **residentes de mayores ingresos** y por **comercios y restaurantes**." },
+    ],
+    choices: [
+      { say: "Ejecuta la búsqueda del sexto hub de tres formas (residentes, residentes de mayores ingresos, y comercios y restaurantes) y muéstrame dónde cae cada una." },
+    ],
+  },
+  "carto-objective-pick": {
+    h: "a2212f3e",
+    events: [
+      { text: "Depende de para qué sea el hub, pero las puntuaciones ayudan. Elegir por residentes conservaría solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios. La opción por comercios y restaurantes es la que mejor aguanta: conserva el 78% de la mejor puntuación de residentes y el 92% de la de ingresos, así que si no te decides, es la más equilibrada, del lado de Henderson junto a la opción por ingresos." },
       null,
-      { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36,17°N, 115,06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36,02°N, 115,02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nElegir por residentes conservaría solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios, mientras que las opciones por ingresos y por comercios conservan cada una el 92% de la otra.\n\nLa brecha también cambia: el 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sección censal, así que describe la zona y no a las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito." },
+      { text: "La brecha apunta en la misma dirección: el 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes. Un hub del lado de Henderson cierra la brecha más grande." },
     ],
   },
   "carto-explore": {
-    h: "c4d8376c",
+    h: "352caea7",
     events: [
       null,
       null,
       { summary: "áreas de conducción y rutas activas · quedan 14.991 de 15.000 llamadas del servicio de ubicación" },
       null,
       null,
-      { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de conducción con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCombinado con Geotab, la gente suele empezar por una de tres cosas: dónde está la flota y dónde se agrupa, dónde ayudaría más un hub nuevo o si sus propios viajes pueden responderlo." },
+      { text: "Tienes una conexión de CARTO que puede ejecutar SQL espacial, un servicio de tiempos de conducción con casi toda su cuota anual disponible y un catálogo público de unos 151 datasets demográficos (más los premium, si los compras).\n\nCon Geotab al lado, esa es justo la primera pregunta correcta: **¿dónde debería ir la nueva base?** Son dos pasos:\n1. **Encontrar tus hubs:** dónde está la flota ahora mismo y dónde se juntan los vehículos aparcados.\n2. **Elegir a quién debe atender el nuevo hub:** a la mayor cantidad de residentes a 15 minutos en coche, a zonas de mayores ingresos o con muchos comercios y restaurantes, o a tus propios clientes. Cada objetivo pone el hub en un sitio distinto.\n\nEmpecemos por el paso 1." },
     ],
   },
   "carto-customers": {
-    h: "f6ec834e",
+    h: "f2094279",
     events: [
       null, null, null, null, null, null,
       { summary: "distancia media 5,72 km → 3,16 km con el mejor hub nuevo" },
       null,
-      { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36,02°N, 115,08°O), reduce la distancia media que recorre un pedido de 5,72 km a 3,16 km, cerca de un 45% menos.** El mapa muestra por qué: tus cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2,5 km de uno.\n\nEsa es también la esquina del valle que señalaron los datos públicos, así que tres objetivos independientes coinciden. Pero aquí es donde ya vendes. Para ver dónde podrías vender más, añadiría los datos demográficos." },
+      { text: "**Un hub nuevo cerca de Green Valley, en Henderson (36,02°N, 115,08°O), reduce la distancia media que recorre un pedido de 5,72 km a 3,16 km, cerca de un 45% menos.** El mapa muestra por qué: tus cuentas de Henderson son el 37% de los pedidos y están a 6 a 10 km del hub más cercano, mientras que los clientes del centro y de Summerlin ya están a unos 2,5 km de uno.\n\nPero aquí es donde ya vendes. Para ver dónde podrías vender más, lo compararía con dónde viven los residentes de mayores ingresos." },
     ],
   },
   "carto-potential": {
-    h: "96985ad7",
+    h: "fa31a188",
     events: [
-      null,
+      { text: "Los pedidos muestran dónde ya vendes. Para encontrar dónde podrías vender más, estimo los residentes de mayores ingresos de cada hexágono con dos datasets públicos: los residentes de Kontur por la proporción de hogares que ganan 100.000 $ o más en esa sección censal (Encuesta sobre la Comunidad Estadounidense, ACS, de la Oficina del Censo). Luego me quedo solo con los que viven a más de 5 km de cualquiera de tus clientes actuales. Ese es tu espacio sin atender. Por último, puntúo cada hub posible según cuánto de eso queda a menos de 8 km." },
       { summary: "201.147 de 515.898 residentes de mayores ingresos (39%) están a más de 5 km de cualquier cliente" },
-      null,
+      { disclosure: "Dibujado por el asistente a partir de los resultados de consultas CARTO de esta sesión · residentes: Kontur Population (H3 res 8) · ingresos: ACS 2015–2019 por sección censal · los clientes son ilustrativos" },
       null,
       { text: "**Dos hubs distintos, y ambos sirven.** Green Valley, en Henderson, atiende a los clientes que ya tienes y acorta un 45% el viaje medio de un pedido. El suroeste del valle (36,03°N, 115,22°O) tiene unas 4 veces más residentes de mayores ingresos sin ningún cliente cerca (43.538 vs 10.987), así que ahí es donde crecerías.\n\nEl 39% de los residentes de mayores ingresos del área vive a más de 5 km de cualquier cuenta, así que hay espacio. Muchas flotas usan el primer hub para atender ahora y el segundo como base para una campaña de ventas." },
     ],
   },
-  "carto-map-sites": {
-    h: "a9fb9075",
+  "carto-trips": {
+    h: "e5fbef1f",
     events: [
-      null, null, null, null, null, null, null,
-      { text: "Lo guardé como un **mapa privado en Builder**. Las cinco opciones están coloreadas por objetivo (residentes, mayores ingresos, comercios, clientes y crecimiento), sobre tus hubs, tus cuentas con tamaño según los pedidos y el espacio sin atender sombreado por residentes de mayores ingresos. Si no apareció arriba, ábrelo desde el enlace: `https://<your-carto-workspace>/builder/<mapId>`. Compártelo desde ahí cuando estés listo." },
+      null,
+      null,
+      { text: "**Tus viajes confirman los hubs.** Los 534 puntos de parada caen en 6 lugares: los cinco hubs que encontramos con los vehículos aparcados, más uno. Así que son lugares de trabajo reales.\n\nPero no me dicen quiénes son tus clientes: un punto de parada es un lugar, no una cuenta, y aquí todos terminan en tus propios sitios. Los sitios de clientes guardados como zonas en MyGeotab servirían, pero lo más probable es que las cuentas y sus pedidos estén en tu CRM, así que lo más rápido es empezar por ahí." },
     ],
   },
   "carto-map": {
-    h: "97f4bae8",
+    h: "b0ffb4cf",
     events: [
       null,
       null,
@@ -1190,9 +1205,9 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-caveats": {
-    h: "7e1f056e",
+    h: "4bcfb94a",
     events: [
-      { text: "Algunas cosas, antes de que alguien actúe con esto:\n- **Los hubs son inferidos** a partir de una sola instantánea nocturna, no de tu lista de bases.\n- **El sexto hub es un candidato derivado del mapa, no una ubicación verificada.** La zonificación, las campas disponibles y el alquiler todavía hay que revisarlos.\n- **Solo la celda ganadora pasó por una revisión de tiempo de conducción.** Las otras cuatro son celdas vecinas con casi la misma puntuación, así que trátalo como una zona, no como una dirección.\n- **La cobertura cuenta residentes, no clientes.** Si tienes ubicaciones de pedidos o de clientes, usa esas.\n- **La cobertura se cuenta por el centro del hexágono.** Un hexágono cuenta como cubierto si su centro está dentro de un área de conducción, así que los bordes son aproximados.\n- **Los tiempos de conducción suponen un coche, 15 minutos y una sola hora del día.** El tráfico cambia según la hora, así que vuelve a ejecutarlo para tu hora de más actividad." },
+      { text: "Algunas cosas, antes de que alguien actúe con esto:\n- **Los hubs son inferidos** a partir de una sola instantánea nocturna, no de tu lista de bases.\n- **Cada opción es una zona, no una dirección.** Las celdas vecinas tienen casi la misma puntuación, y la zonificación, las campas disponibles y el alquiler todavía hay que revisarlos.\n- **La mayoría de las distancias son en línea recta.** Solo unos pocos puntos pasaron por una revisión de tiempo de conducción, así que revisa los tiempos de conducción de tu lista corta antes de decidir.\n- **Los residentes no son demanda.** Residentes, ingresos y comercios describen la zona; tus propios clientes y pedidos son un mejor objetivo cuando los tienes.\n- **El ingreso, donde se usó, es un promedio por sección censal.** Describe el barrio, no a las personas que atenderán tus conductores.\n- **Los hexágonos se cuentan por su centro**, así que los bordes son aproximados.\n- **Los tiempos de conducción suponen un coche y una sola hora del día.** El tráfico cambia según la hora, así que vuelve a ejecutarlos para tu hora de más actividad." },
     ],
   },
   },

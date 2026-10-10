@@ -185,7 +185,7 @@ var EVENT_FIELDS = {
   system: { all: ["text"], req: ["text"] },
   endcard: { all: ["lines"], req: ["lines"] },
   tool: { all: ["summary"], req: ["summary"] },
-  chart: { all: ["title", "bars"], req: ["title"] },
+  chart: { all: ["title", "bars", "columns", "rows", "note"], req: ["title"] },
   map: { all: ["title", "summary", "layerLabel", "disclosure", "zone", "pins"], req: ["title", "summary"] },
   media: { all: ["caption", "fallbackText"], req: ["caption", "fallbackText"] },
   confirm: { all: ["changes"], req: ["changes"] },
@@ -202,7 +202,7 @@ function englishOf(n) {
     spec.all.forEach(function (k) {
       var v = ev[k];
       if (v == null) return;
-      if (k === "bars" || k === "pins") v = v.map(function (x) { return x.label; });
+      if (k === "bars" || k === "pins" || k === "rows") v = v.map(function (x) { return x.label; });
       else if (k === "zone") v = v.label;
       else if (k === "stages") v = v.map(function (st) {
         return [st.name].concat((st.tables || []).map(function (t) { return t.note || ""; }));
