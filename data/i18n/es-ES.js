@@ -1077,12 +1077,12 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-context": {
-    h: "5ae3b258",
+    h: "d7f83539",
     events: [
       { text: "Voy a contar residentes (Kontur Population) más tiendas, restaurantes, turismo y luz nocturna (Spatial Features) dentro de 3 anillos de hexágonos alrededor de cada hub, unos 2,5 km a la redonda." },
       null,
       { summary: "Hexágonos más oscuros = más residentes · etiquetas = qué predomina a ~2,5 km de cada hub: viviendas, comercios y restaurantes, o una mezcla" },
-      { title: "Sur es comercio, Norte es vivienda · comercios + restaurantes por cada 1.000 residentes a ~2,5 km" },
+      { title: "Viviendas en el norte y el oeste, comercio y vida nocturna en el sur · a ~2,5 km de cada hub" },
       { text: "**Cada hub está en un tipo de lugar distinto.** **Sur** es el núcleo comercial: 271 comercios y restaurantes por cada 1.000 residentes, además de la mayor actividad turística y luz nocturna. **Norte** y **Oeste** son sobre todo viviendas: ~55k y ~70k residentes cerca, pero solo 5 y 16 comercios y restaurantes por cada 1.000 de ellos. Centro y Sureste son una mezcla.\n\nEso define para qué sirve cada hub: los residenciales, para repartos a domicilio; Sur, para repartos a comercios, restaurantes y hoteles." },
     ],
     choices: [

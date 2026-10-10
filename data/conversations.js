@@ -5565,9 +5565,14 @@ window.CONVERSATIONS = {
         ),
         {
           type: "chart",
-          title: "South is shops, North is homes · shops + restaurants per 1,000 residents within ~2.5 km",
-          bars: C.hubs.slice().sort(function (a, b) { return shopsPerK(b) - shopsPerK(a); })
-            .map(function (h) { return { label: h.name, value: shopsPerK(h) }; }),
+          title: "Homes in the north and west, shops and nightlife in the south · within ~2.5 km of each hub",
+          columns: ["Residents (k)", "Shops", "Restaurants", "Tourism", "Night light"],
+          // homes → shops, so the pattern reads as a diagonal
+          rows: ["North", "West", "Central", "South-east", "South"].map(function (name) {
+            var h = hub(name);
+            return { label: h.name, values: [Math.round(h.residentsK), h.retail, h.food, h.tourism, h.nightLight] };
+          }),
+          note: "Darker = higher than the other hubs on that measure · tourism = tourism places · night light = satellite brightness index",
         },
         {
           type: "assistant",

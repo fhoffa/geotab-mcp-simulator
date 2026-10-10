@@ -2321,7 +2321,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-context": {
-    h: "5ae3b258",
+    h: "d7f83539",
     events: [
       /*0 assistant*/ { text: "Voy a contar residentes (Kontur Population) más tiendas, restaurantes, turismo y luz nocturna (Spatial Features) dentro de 3 anillos de hexágonos alrededor de cada hub, unos 2.5 km a la redonda." },
       /*1 tool*/ { summary: "5 hubs × residentes, comercio, comida y bebida, turismo, luz nocturna" },
@@ -2330,8 +2330,10 @@ window.SIM_I18N["es-419"] = {
         layerLabel: "H3 res 8 · residentes",
         disclosure: "Dibujado por el asistente a partir de los resultados de consultas CARTO de esta sesión · residentes: Kontur Population (H3 res 8) · instantánea del 1 oct 2026, ~02:08 UTC",
         pins: ["Oeste · viviendas", "Centro · mixto", "Sureste · mixto", "Sur · comercios", "Norte · viviendas"] },
-      /*3 chart*/ { title: "Sur es comercio, Norte es vivienda · comercios + restaurantes por cada 1,000 residentes a ~2.5 km",
-        bars: ["Sur", "Centro", "Sureste", "Oeste", "Norte"] },
+      /*3 chart*/ { title: "Viviendas en el norte y el oeste, comercio y vida nocturna en el sur · a ~2.5 km de cada hub",
+        columns: ["Residentes (k)", "Comercios", "Restaurantes", "Turismo", "Luz nocturna"],
+        rows: ["Norte", "Oeste", "Centro", "Sureste", "Sur"],
+        note: "Más oscuro = más alto que los otros hubs en esa medida · turismo = lugares turísticos · luz nocturna = índice de brillo satelital" },
       /*4 assistant*/ { text: "**Cada hub está en un tipo de lugar distinto.** **Sur** es el núcleo comercial: 271 comercios y restaurantes por cada 1,000 residentes, además de la mayor actividad turística y luz nocturna. **Norte** y **Oeste** son sobre todo viviendas: ~55k y ~70k residentes cerca, pero solo 5 y 16 comercios y restaurantes por cada 1,000 de ellos. Centro y Sureste son una mezcla.\n\nEso define para qué sirve cada hub: los residenciales, para entregas a domicilio; Sur, para entregas a comercios, restaurantes y hoteles." },
     ],
     choices: [
