@@ -460,8 +460,11 @@ window.SAMPLE_DATA = {
    * retail/food/tourism/night light are CARTO Spatial Features. Kontur hub
    * counts were reported in thousands, so they're kept that way. `x`/`y` place
    * points on the assets/carto-*.webp renders (percent of the image), which all
-   * share one framing. `sixthHub.candidates` is the real top-5 site-search
-   * result: neighboring cells within ~2 km of each other, scores within 2%.
+   * share one framing. `kind` is the assistant's one-word read of each hub's
+   * surroundings, from shops + restaurants per 1,000 residents (South ~270,
+   * Central ~48, South-east ~40, West ~16, North ~5). `sixthHub.candidates` is
+   * the real top-5 site-search result: neighboring cells within ~2 km of each
+   * other, scores within 2%.
    */
   carto: {
     database: "demo_fh_vegas8",
@@ -475,11 +478,11 @@ window.SAMPLE_DATA = {
     h3Res: 8,
     contextRings: 3,               // H3_KRING radius around each hub cell (~2.5 km at res 8)
     hubs: [
-      { name: "West",       parked: 6, residentsK: 69.6, retail: 617,  food: 489,  tourism: 112, nightLight: 74,  reach15k: 419, x: 26.1, y: 47.6 },
-      { name: "Central",    parked: 5, residentsK: 58.3, retail: 1582, food: 1193, tourism: 530, nightLight: 171, reach15k: 680, x: 53.8, y: 42.8 },
-      { name: "South-east", parked: 5, residentsK: 33.0, retail: 840,  food: 465,  tourism: 126, nightLight: 77,  reach15k: 492, x: 56.2, y: 67.6 },
-      { name: "South",      parked: 4, residentsK: 14.4, retail: 2140, food: 1758, tourism: 629, nightLight: 325, reach15k: 438, x: 49.3, y: 59.9 },
-      { name: "North",      parked: 5, residentsK: 55.3, retail: 158,  food: 125,  tourism: 30,  nightLight: 45,  reach15k: 405, x: 44.8, y: 17.6 },
+      { name: "West",       parked: 6, residentsK: 69.6, retail: 617,  food: 489,  tourism: 112, nightLight: 74,  reach15k: 419, x: 26.1, y: 47.6, kind: "homes" },
+      { name: "Central",    parked: 5, residentsK: 58.3, retail: 1582, food: 1193, tourism: 530, nightLight: 171, reach15k: 680, x: 53.8, y: 42.8, kind: "mixed" },
+      { name: "South-east", parked: 5, residentsK: 33.0, retail: 840,  food: 465,  tourism: 126, nightLight: 77,  reach15k: 492, x: 56.2, y: 67.6, kind: "mixed" },
+      { name: "South",      parked: 4, residentsK: 14.4, retail: 2140, food: 1758, tourism: 629, nightLight: 325, reach15k: 438, x: 49.3, y: 59.9, kind: "shops" },
+      { name: "North",      parked: 5, residentsK: 55.3, retail: 158,  food: 125,  tourism: 30,  nightLight: 45,  reach15k: 405, x: 44.8, y: 17.6, kind: "homes" },
     ],
     isoline: { operation: "isolines", range: "900", rangeType: "time" },   // calculate_isolines args; provider TravelTime, car
     coverage: {

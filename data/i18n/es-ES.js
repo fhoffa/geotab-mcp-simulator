@@ -1077,13 +1077,13 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-context": {
-    h: "c0dac835",
+    h: "5ae3b258",
     events: [
       { text: "Voy a contar residentes (Kontur Population) más tiendas, restaurantes, turismo y luz nocturna (Spatial Features) dentro de 3 anillos de hexágonos alrededor de cada hub, unos 2,5 km a la redonda." },
       null,
-      null,
-      null,
-      { text: "**Sur** es el núcleo comercial: la menor cantidad de residentes (~14k) pero la mayor de tiendas (2.140), lugares para comer (1.758), turismo y luz nocturna. **Norte** es lo opuesto, con ~55k residentes y solo 158 tiendas, la menor de todos los hubs. **Oeste** tiene la mayor cantidad de residentes (~70k) y unas cuatro veces el comercio de Norte. Centro (~58k residentes, 1.582 tiendas) está activo en ambos frentes, y Sureste queda en medio." },
+      { summary: "Hexágonos más oscuros = más residentes · etiquetas = qué predomina a ~2,5 km de cada hub: viviendas, comercios y restaurantes, o una mezcla" },
+      { title: "Sur es comercio, Norte es vivienda · comercios + restaurantes por cada 1.000 residentes a ~2,5 km" },
+      { text: "**Cada hub está en un tipo de lugar distinto.** **Sur** es el núcleo comercial: 271 comercios y restaurantes por cada 1.000 residentes, además de la mayor actividad turística y luz nocturna. **Norte** y **Oeste** son sobre todo viviendas: ~55k y ~70k residentes cerca, pero solo 5 y 16 comercios y restaurantes por cada 1.000 de ellos. Centro y Sureste son una mezcla.\n\nEso define para qué sirve cada hub: los residenciales, para repartos a domicilio; Sur, para repartos a comercios, restaurantes y hoteles." },
     ],
     choices: [
       { say: "¿A cuántas personas puede llegar cada hub en 15 minutos en coche?" },
@@ -1125,27 +1125,32 @@ window.SIM_I18N["es-ES"] = {
       { text: "**La mejor zona está justo al este de Centro, alrededor de 36,17°N, 115,06°O.** Un hub ahí pondría a **181k personas más** a menos de 15 minutos en coche, llevando la cobertura del 80% al 88,5%.\n\nLos 225k y los 181k miden cosas distintas. 225k son personas a más de 8 km en línea recta de cualquier hub que viven a menos de 8 km del sitio. 181k son personas dentro de la nueva área de 15 minutos en coche que no están ya dentro de una de las cinco existentes. (Las dos medidas tampoco coinciden hoy: 8 km en línea recta desde un hub cubren el 68%; las áreas de 15 minutos en coche, cerca del 80%.)\n\nEsa es la respuesta si el nuevo hub debe atender a la mayor cantidad de residentes. Otro objetivo lo mueve: zonas de mayores ingresos, zonas con muchos comercios y restaurantes, o tus propios clientes." },
     ],
   },
-  "carto-data": {
-    h: "2e51131e",
-    events: [
-      null, null, null, null, null, null, null, null, null, null, null,
-      { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de secciones que los de tu conexión. Los comercios y restaurantes ya están en la tabla pública Spatial Features de CARTO, así que los uno por celda.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y comprueba la unión antes de depender de ella.\n\nAsí que ahora puedo puntuar el sexto hub de tres formas: por **residentes** (como antes), por **residentes de mayores ingresos** y por **comercios y restaurantes**." },
-    ],
-    choices: [
-      { say: "Ejecuta la búsqueda del sexto hub de tres formas (residentes, residentes de mayores ingresos, y comercios y restaurantes) y muéstrame dónde cae cada una." },
-    ],
-  },
   "carto-objective": {
-    h: "9f02c11d",
+    h: "d878749d",
     events: [
       null,
       null,
       { summary: "Ganador de mayores ingresos · área de 15 min en coche (GeoJSON)" },
       { disclosure: "Dibujado por el asistente a partir de los resultados de consultas CARTO de esta sesión · residentes: Kontur Population · ingresos: ACS 2015–2019 por sección censal · comercios: Spatial Features · instantánea del 1 oct 2026, ~02:08 UTC" },
+      { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36,17°N, 115,06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36,02°N, 115,02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí.\n\nUna nota: el ingreso es el promedio de cada sección censal, así que describe la zona y no a las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito." },
+    ],
+  },
+  "carto-data-free": {
+    h: "d42bfceb",
+    events: [
+      null, null, null, null,
+      { text: "Todas las celdas coinciden, ya que las tablas de 2019 usan los mismos límites de secciones que los de tu conexión, y uno por celda los comercios y restaurantes de Spatial Features.\n\nUn consejo para la próxima: busca en el catálogo por lo que quieres medir, revisa la licencia y comprueba la unión antes de depender de ella.\n\nAsí que ahora puedo puntuar el sexto hub de tres formas: por **residentes** (como antes), por **residentes de mayores ingresos** y por **comercios y restaurantes**." },
+    ],
+    choices: [
+      { say: "Ejecuta la búsqueda del sexto hub de tres formas (residentes, residentes de mayores ingresos, y comercios y restaurantes) y muéstrame dónde cae cada una." },
+    ],
+  },
+  "carto-objective-pick": {
+    h: "a2212f3e",
+    events: [
+      { text: "Depende de para qué sea el hub, pero las puntuaciones ayudan. Elegir por residentes conservaría solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios. La opción por comercios y restaurantes es la que mejor aguanta: conserva el 78% de la mejor puntuación de residentes y el 92% de la de ingresos, así que si no te decides, es la más equilibrada, del lado de Henderson junto a la opción por ingresos." },
       null,
-      { text: "**El objetivo cambia la respuesta.** Para residentes sigue siendo justo al este de Centro (36,17°N, 115,06°O). Para residentes de mayores ingresos se mueve al sureste del valle, hacia Henderson (36,02°N, 115,02°O), a unos 17 km, y los comercios y restaurantes caen a unos 3 km de ahí." },
-      null,
-      { text: "Depende de para qué sea el hub, pero las puntuaciones ayudan. Elegir por residentes conservaría solo el 64% de la mejor puntuación de ingresos y el 60% de la de comercios. La opción por comercios y restaurantes es la que mejor aguanta: conserva el 78% de la mejor puntuación de residentes y el 92% de la de ingresos, así que si no te decides, es la más equilibrada, del lado de Henderson junto a la opción por ingresos.\n\nLa brecha también cambia: el 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes. Una nota: el ingreso es el promedio de cada sección censal, así que describe la zona y no a las personas que atenderán tus conductores, y he dejado fuera raza y etnia a propósito." },
+      { text: "La brecha apunta en la misma dirección: el 35,9% de los residentes de mayores ingresos vive a más de 8 km de todos los hubs, frente al 32,6% de todos los residentes y el 19,4% de los comercios y restaurantes. Un hub del lado de Henderson cierra la brecha más grande." },
     ],
   },
   "carto-explore": {

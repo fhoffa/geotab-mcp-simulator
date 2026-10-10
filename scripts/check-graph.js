@@ -23,8 +23,6 @@ var NODES = GRAPH.nodes;
 var problems = [];
 var VALID_EVENT_TYPES = {
   assistant: true,
-  user: true, // a scripted follow-up typed mid-node
-
   system: true,
   endcard: true,
   tool: true,
@@ -62,8 +60,8 @@ Object.keys(NODES).forEach(function (id) {
     if (ev.type === "tool" && (!ev.name || !ev.server)) {
       problems.push(where + " → tool event needs both 'name' and 'server'");
     }
-    if ((ev.type === "assistant" || ev.type === "user") && !(ev.text && ev.text.trim())) {
-      problems.push(where + " → " + ev.type + " event needs non-empty 'text'");
+    if (ev.type === "assistant" && !(ev.text && ev.text.trim())) {
+      problems.push(where + " → assistant event needs non-empty 'text'");
     }
     if (ev.type === "endcard" && !(Array.isArray(ev.lines) && ev.lines.length)) {
       problems.push(where + " → endcard needs a non-empty 'lines' array");
@@ -184,7 +182,6 @@ var BASE_LOCALE = "es-419"; // must translate every node and every UI key
 // ids, styling) never changes with the language.
 var EVENT_FIELDS = {
   assistant: { all: ["text"], req: ["text"] },
-  user: { all: ["text"], req: ["text"] },
   system: { all: ["text"], req: ["text"] },
   endcard: { all: ["lines"], req: ["lines"] },
   tool: { all: ["summary"], req: ["summary"] },

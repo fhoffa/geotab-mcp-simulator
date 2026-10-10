@@ -77,8 +77,13 @@ flowchart TD
     cartoR --> cartoS["CARTO · Sixth-hub site (residents)"]
     cartoS --> cartoM["CARTO · Shareable map (sixth hub)"]
     cartoS -->|"💰 income or shops"| cartoD["CARTO · Finding data to weight by"]
-    cartoD --> cartoO["CARTO · Three goals compared"]
+    cartoD -->|"💸 free income data?"| cartoDF["CARTO · Free Census income data"]
+    cartoDF --> cartoO["CARTO · Three goals compared"]
+    cartoO -->|"🤔 which one?"| cartoOP["CARTO · Which goal to pick"]
     cartoO --> cartoMG["CARTO · Shareable map (three picks)"]
+    cartoOP --> cartoMG
+    cartoOP --> cartoT
+    cartoOP --> cartoV
     cartoH -->|"🧾 customers"| cartoT["CARTO · Trips confirm the hubs"]
     cartoS -->|"🧾 customers"| cartoT
     cartoO -->|"🧾 customers"| cartoT
@@ -114,7 +119,7 @@ flowchart TD
     hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (108)
+## Nodes (110)
 
 | id | title | database | leads to |
 |---|---|---|---|
@@ -220,8 +225,10 @@ flowchart TD
 | `carto-trips` | CARTO · Use my own trips as the goal | demo_fh_vegas8 | `carto-customers`, `hub` |
 | `carto-customers` | CARTO · Use my Salesforce customers as the goal | demo_fh_vegas8 | `carto-potential`, `carto-caveats`, `hub` |
 | `carto-potential` | CARTO · Where could I sell more? | demo_fh_vegas8 | `carto-map-sites`, `carto-caveats`, `hub` |
-| `carto-data` | CARTO · Finding data to weight by | — | `carto-objective`, `hub` |
-| `carto-objective` | CARTO · Optimize for something other than residents | demo_fh_vegas8 | `carto-map-goals`, `carto-trips`, `carto-caveats`, `hub` |
+| `carto-data` | CARTO · Finding data to weight by | — | `carto-data-free`, `hub` |
+| `carto-data-free` | CARTO · Free income data from the Census | — | `carto-objective`, `hub` |
+| `carto-objective` | CARTO · Optimize for something other than residents | demo_fh_vegas8 | `carto-objective-pick`, `carto-map-goals`, `carto-trips`, `carto-caveats` |
+| `carto-objective-pick` | CARTO · Which goal should I pick? | — | `carto-map-goals`, `carto-trips`, `carto-caveats`, `hub` |
 | `carto-map` | CARTO · Put it on a map I can share | — | `carto-caveats`, `hub`, restart |
 | `carto-map-goals` | CARTO · Put the three picks on a map I can share | — | `carto-caveats`, `hub`, restart |
 | `carto-map-sites` | CARTO · Put the serve and grow picks on a map I can share | — | `carto-caveats`, `hub`, restart |

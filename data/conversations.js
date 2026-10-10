@@ -70,6 +70,9 @@ function cartoMap(image, title, summary, labels, opts) {
       " · " + (opts.note || "snapshot " + C.snapshot),
   };
 }
+// shops + restaurants per 1,000 residents within the context rings: one number for "homes or shops?"
+function shopsPerK(h) { return Math.round((h.retail + h.food) / h.residentsK); }
+function hub(name) { return C.hubs.filter(function (h) { return h.name === name; })[0]; }
 // hub labels sit right of their point; South's sits left so it clears South-east just below it on narrow screens
 function cartoHubLabels(text) {
   return C.hubs.map(function (h) { return { label: text(h), x: h.x, y: h.y, flip: h.name === "South" }; });
@@ -5549,19 +5552,31 @@ window.CONVERSATIONS = {
               " · food " + h.food.toLocaleString("en-US") + " · tourism " + h.tourism + " · night light " + h.nightLight;
           }).join("\n"),
         },
+        cartoMap(
+          "carto-hubs.webp",
+          "What kind of place each hub is",
+          "Darker hexagons = more residents · labels = what mostly surrounds each hub within ~2.5 km: homes, shops and restaurants, or a mix",
+          // these labels are longer than the other hub maps', so they get their own nudges to stay apart at phone widths:
+          // Central up, West and South down, and South-east lower still, on the left of its point
+          C.hubs.map(function (h) {
+            var nudge = { West: [0, 1.4, false], Central: [0, -5.5, false], South: [0, 1, true], "South-east": [0, 3.6, true] }[h.name] || [0, 0, false];
+            return { label: h.name + " · " + h.kind, x: h.x + nudge[0], y: h.y + nudge[1], flip: nudge[2] };
+          })
+        ),
         {
           type: "chart",
-          title: "Residents within 3 rings (thousands)",
-          bars: bars(C.hubs, "name", "residentsK"),
+          title: "South is shops, North is homes · shops + restaurants per 1,000 residents within ~2.5 km",
+          bars: C.hubs.slice().sort(function (a, b) { return shopsPerK(b) - shopsPerK(a); })
+            .map(function (h) { return { label: h.name, value: shopsPerK(h) }; }),
         },
-        { type: "chart", title: "Retail POIs within 3 rings", bars: bars(C.hubs, "name", "retail") },
         {
           type: "assistant",
           text:
-            "**South** is the commercial core: the fewest residents (~14k) but the most shops (2,140), places to eat (1,758), " +
-            "tourism and night light. **North** is the opposite, with ~55k residents and only 158 shops, the fewest of any hub. " +
-            "**West** has the most residents (~70k) and about four times North's retail. Central (~58k residents, 1,582 shops) " +
-            "is busy on both counts, and South-east sits in between.",
+            "**Each hub sits in a different kind of place.** **South** is the commercial core: " + shopsPerK(hub("South")) +
+            " shops and restaurants for every 1,000 residents, plus the most tourism and night-time light. **North** and **West** are mostly homes: " +
+            "~" + Math.round(hub("North").residentsK) + "k and ~" + Math.round(hub("West").residentsK) + "k residents nearby, but only " +
+            shopsPerK(hub("North")) + " and " + shopsPerK(hub("West")) + " shops and restaurants per 1,000 of them. Central and South-east are a mix.\n\n" +
+            "That shapes what each hub is good for: the residential ones for home deliveries, South for drops to shops, restaurants and hotels.",
         },
       ],
       choices: [
@@ -6082,8 +6097,26 @@ window.CONVERSATIONS = {
           summary: "license: Premium data",
           result: '{ "name": "Households By Income Quintiles - United States of America (Blockgroups)", "licenseName": "Premium data", … }\n// premium = needs a commercial arrangement',
         },
-        { type: "assistant", text: "That one is licensed premium data, so it needs a commercial arrangement with CARTO." },
-        { type: "user", text: "Premium is out of my budget. Is there something free I can use instead?" },
+        {
+          type: "assistant",
+          text: "The best match is licensed premium data, so it needs a commercial arrangement with CARTO. Shops and restaurants are free: they're in CARTO's public Spatial Features table.",
+        },
+      ],
+      choices: [
+        {
+          label: "💸 Is there free income data?",
+          say: "Premium is out of my budget. Is there something free I can use for income instead?",
+          next: "carto-data-free",
+        },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-data-free": {
+      id: "carto-data-free",
+      title: "CARTO · Free income data from the Census",
+      mode: "carto",
+      events: [
         {
           type: "assistant",
           text: "Yes. The US Census Bureau's American Community Survey is public and free to use, so I'll go with that:",
@@ -6125,8 +6158,8 @@ window.CONVERSATIONS = {
         {
           type: "assistant",
           text:
-            "Every cell matches, since the 2019 tables use the same tract boundaries as the ones on your connection. " +
-            "Shops and restaurants are already in CARTO's public Spatial Features table, so I'll join those by cell.\n\n" +
+            "Every cell matches, since the 2019 tables use the same tract boundaries as the ones on your connection, " +
+            "and I'll join the shops and restaurants from Spatial Features by cell.\n\n" +
             "A tip for next time: search the catalog by what you want to measure, check the license, and test the join before relying on it.\n\n" +
             "So now I can score the sixth hub three ways: by **residents** (as before), by **higher-income residents**, and by **shops and restaurants**.",
         },
@@ -6200,31 +6233,52 @@ window.CONVERSATIONS = {
           }
         ),
         {
+          type: "assistant",
+          text:
+            "**The goal changes the answer.** For residents it's still just east of Central (" + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W). " +
+            "For higher-income residents it moves to the south-east of the valley, toward Henderson (" + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W), about 17 km away, " +
+            "and shops and restaurants land about 3 km from that.\n\n" +
+            "One note: income is the average for each census tract, so it describes the area, not the people your drivers will serve, and I left race and ethnicity out on purpose.",
+        },
+      ],
+      choices: [
+        { label: "🤔 So which one should I pick?", say: "So which one should I pick?", next: "carto-objective-pick" },
+        { label: "🗺️ Put the three picks on a map I can share", say: "Put the three picks on a map I can share.", next: "carto-map-goals" },
+        {
+          label: "🧾 What about my actual customers?",
+          say: "Those are all public data. What if the hub should serve my actual customers? Can my own trips show where they are?",
+          next: "carto-trips",
+        },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+      ],
+    },
+
+    "carto-objective-pick": {
+      id: "carto-objective-pick",
+      title: "CARTO · Which goal should I pick?",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "It depends on what the hub is for, but the scores help. Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " +
+            O.cross.peopleWinner.poi + "% of the best shops score. The shops-and-restaurants pick holds up best: it keeps " + O.cross.poiWinner.people + "% of the best residents score and " +
+            O.cross.poiWinner.income + "% of the best income score, so if you can't decide, it's the strongest all-rounder, on the Henderson side next to the income pick.",
+        },
+        {
           type: "chart",
-          title: "Share more than " + C.sixthHub.gapKm + " km from every hub today (%)",
+          title: "Higher-income residents are the most often far from today's hubs · share more than " + C.sixthHub.gapKm + " km from every hub (%)",
           bars: [
-            { label: O.people.label, value: O.people.uncoveredPct },
             { label: O.income.label, value: O.income.uncoveredPct },
+            { label: O.people.label, value: O.people.uncoveredPct },
             { label: O.poi.label, value: O.poi.uncoveredPct },
           ],
         },
         {
           type: "assistant",
           text:
-            "**The goal changes the answer.** For residents it's still just east of Central (" + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W). " +
-            "For higher-income residents it moves to the south-east of the valley, toward Henderson (" + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W), about 17 km away, " +
-            "and shops and restaurants land about 3 km from that.",
-        },
-        { type: "user", text: "So which one should I pick?" },
-        {
-          type: "assistant",
-          text:
-            "It depends on what the hub is for, but the scores help. Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " +
-            O.cross.peopleWinner.poi + "% of the best shops score. The shops-and-restaurants pick holds up best: it keeps " + O.cross.poiWinner.people + "% of the best residents score and " +
-            O.cross.poiWinner.income + "% of the best income score, so if you can't decide, it's the strongest all-rounder, on the Henderson side next to the income pick.\n\n" +
-            "The gap differs too: " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " + O.people.uncoveredPct +
-            "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants. " +
-            "One note: income is the average for each census tract, so it describes the area, not the people your drivers will serve, and I left race and ethnicity out on purpose.",
+            "The gap points the same way: " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " +
+            O.people.uncoveredPct + "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants. A hub on the Henderson side closes the biggest gap.",
         },
       ],
       choices: [
