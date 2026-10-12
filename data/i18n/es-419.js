@@ -1895,13 +1895,13 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "warehouse-operational": {
-    h: "b6cf89d8",
+    h: "afb4f1fb",
     events: [
       /*0 assistant*/ { text: "Exacto: el GPS demuestra que la tubería funciona, pero un almacén operativo también necesita las otras superficies de Geotab. La regla práctica de la skill es simple: **hechos con timestamp vía Ace hacia bronze**, y **listas de consulta vía Get hacia dimensiones**.\n" +
         "\n" +
         "Así que agregamos viajes, asignaciones de conductores, datos de estado/motor, eventos de excepción de seguridad y fallas como hechos. Luego agregamos usuarios/conductores, reglas, diagnósticos, grupos y zonas como dimensiones para que las filas de hechos sean legibles. El conductor es una trampa de Geotab: no existe el typeName `Driver`; los conductores son filas de `User` donde `isDriver=true`." },
       /*1 tool*/ { summary: "52 tipos de entidad disponibles" },
-      /*2 tool*/ { summary: "4 extracciones masivas de hechos en cola" },
+      /*2 tool*/ { summary: "5 extracciones masivas de hechos en cola" },
       /*3 tool*/ { summary: "instantáneas de dimensiones devueltas" },
       /*4 tool*/ { summary: "espejo operativo cargado" },
       /*5 assistant*/ { text: "Cargado: el almacén ahora tiene **6 familias de hechos y 6 dimensiones**. El panel de arriba las muestra todas; los hechos ya se pueden unir con nombres legibles a través de las dimensiones." },

@@ -663,76 +663,8 @@
     scrollDown();
   }
 
-  function tableHasRows(t) {
-    var rows = String((t && t.rows) || "").toLowerCase();
-    return !!rows && !/^\s*(0|0\s+rows|empty|none)\s*$/.test(rows);
-  }
-
-  function fallbackWarehouseSample(t) {
-    if (!tableHasRows(t)) return [];
-    var name = String(t.name || "table");
-    var base = { sample_key: "demo", rows: String(t.rows || "") };
-    if (/gps|pings/.test(name)) return [
-      { device: "Demo - 02", event_time: "2026-06-30 08:14:22", speed: "48 km/h", lat: "39.4699", lon: "-0.3763" },
-      { device: "Demo - 14", event_time: "2026-06-30 08:14:25", speed: "0 km/h", lat: "39.4731", lon: "-0.3808" }
-    ];
-    if (/trip/.test(name)) return [
-      { device: "Demo - 08", trip_start: "2026-06-30 07:10", driver_id: "u_demo_17", distance_km: "18.4", duration_min: "31" }
-    ];
-    if (/driver_assignment|driver_assignments|driver_changes/.test(name)) return [
-      { device: "Demo - 08", driver_id: "u_demo_17", active_from: "2026-06-30 07:06", source: "DriverChange" },
-      { device: "Demo - 14", driver_id: "UnknownDriverId", active_from: "2026-06-30 08:00", source: "unassigned" }
-    ];
-    if (/status_data/.test(name)) return [
-      { device: "Demo - 21", diagnostic: "EngineSpeed", event_time: "2026-06-30 08:12", value: "1420" }
-    ];
-    if (/exception/.test(name)) return [
-      { device: "Demo - 31", rule: "Posted speed", event_time: "2026-06-30 08:03", severity: "review" }
-    ];
-    if (/fault/.test(name)) return [
-      { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-29 21:44", fault_state: "active" }
-    ];
-    if (/dim_user/.test(name)) return [
-      { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" }
-    ];
-    if (/dim_rule/.test(name)) return [
-      { rule_id: "r_posted_speed", name: "Posted speed", active: "true" }
-    ];
-    if (/dim_diagnostic/.test(name)) return [
-      { diagnostic_id: "d_engine_speed", name: "EngineSpeed", unit: "rpm" }
-    ];
-    if (/daily_device_km/.test(name)) return [
-      { date: "2026-06-30", device: "Demo - 02", km: "142.8" }
-    ];
-    if (/driver_safety_score|coaching/.test(name)) return [
-      { driver: "Driver 31", score: "72", reason: "speed exceptions per km" }
-    ];
-    if (/maintenance|shop_worklist/.test(name)) return [
-      { device: "Demo - 08", priority: "P2", reason: "fault cluster + downtime" }
-    ];
-    if (/idling/.test(name)) return [
-      { date: "2026-06-30", group: "Valencia", estimated_cost_usd: "38" }
-    ];
-    if (/freshness/.test(name)) return [
-      { table_name: "silver.planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" }
-    ];
-    if (/coverage/.test(name)) return [
-      { device: "Demo - 02", gps_seen: "true", expected_today: "true" }
-    ];
-    if (/anomal/.test(name)) return [
-      { check_name: "returned_sql_filter", severity: "warn", status: "needs review" }
-    ];
-    if (/fleet_ops_overview/.test(name)) return [
-      { vehicles: "50", active_today: "26", open_faults: "9", coaching_queue: "14" }
-    ];
-    if (/storage|compute|refresh|query_cost|load_runs|row_counts|cost/.test(name)) return [
-      { measure: name, value: String(t.rows || ""), source: "measured/estimated" }
-    ];
-    return [base];
-  }
-
   function renderWarehouseSample(t) {
-    var rows = (t.sample && t.sample.length) ? t.sample : fallbackWarehouseSample(t);
+    var rows = t.sample || []; // from SAMPLE_DATA.warehouse.samples; none when nothing in the flow builds the table
     if (!rows.length) return null;
     var details = el("details", "warehouse-sample");
     details.appendChild(el("summary", "warehouse-sample-toggle", tr("warehouse.sample")));

@@ -885,7 +885,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "warehouse-operational": {
-    h: "b6cf89d8",
+    h: "afb4f1fb",
     events: [
       { text: "Exacto: el GPS demuestra que la tubería funciona, pero un almacén operativo también necesita las otras superficies de Geotab. La regla práctica de la skill es simple: **hechos con timestamp vía Ace hacia bronze**, y **listas de consulta vía Get hacia dimensiones**.\n\nAsí que añadimos viajes, asignaciones de conductores, datos de estado/motor, eventos de excepción de seguridad y averías como hechos. Luego añadimos usuarios/conductores, reglas, diagnósticos, grupos y zonas como dimensiones para que las filas de hechos sean legibles. El conductor es una trampa de Geotab: no existe el typeName `Driver`; los conductores son filas de `User` donde `isDriver=true`." },
       null,
