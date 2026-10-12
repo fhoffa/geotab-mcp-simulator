@@ -2,9 +2,9 @@
 name: geotab-weekly-review
 description: >-
   Produce a manager-ready weekly fleet review from a Geotab MCP connection —
-  fleet size, faults, speeding/harsh driving, HOS, DVIR, and trip activity — as a
-  short written brief. Encodes Geotab data quirks and a strict no-PII default so
-  the answer is correct and repeatable for anyone on the team.
+  a one-line headline, one whole-fleet ranking chart, and at most three
+  bullets. Encodes Geotab data quirks and a strict no-PII default so the
+  answer is correct and repeatable for anyone on the team.
 ---
 
 # Geotab Weekly Fleet Review
@@ -19,9 +19,9 @@ otherwise assume**, so it doesn't fall into the common traps below.
 When the user asks for a weekly/periodic fleet review, a "Monday morning"
 summary, or "how did the fleet do this week." Default window: **last 7 days**.
 
-## What to produce
+## What to check
 
-A short **written brief** (no dashboard), in this order:
+Six areas, every week:
 
 1. **Fleet size** — how many devices are reporting.
 2. **Faults / maintenance** — active faults in the window.
@@ -31,8 +31,19 @@ A short **written brief** (no dashboard), in this order:
 5. **DVIR** — inspection logs / defects in the window.
 6. **Trip activity** — qualitative (see trip-count note).
 
-End with a **headline**, a short **needs-attention** list, and **2–3 recommended
-actions**. Keep it scannable.
+## Output format
+
+This shape was **settled in conversation with the fleet manager** — reshape it
+for yours; that back-and-forth is the whole point of writing a skill:
+
+- **Headline first** — one line with the week's verdict.
+- **One chart** — top vehicles from a whole-window aggregate, never from a
+  capped raw list (see the grounding rules). Managers skim on Monday; the
+  chart carries the argument the paragraphs were making.
+- **Three bullets max**, then stop. The brief gets forwarded, so it must read
+  as-is: plain language, no jargon, no raw JSON.
+- **Chart only what has signal.** A clean section is a sentence ("zero active
+  faults — clean maintenance week"), not a chart of zeros.
 
 ## Grounding rules (avoid these traps)
 
@@ -47,8 +58,8 @@ These are real Geotab behaviours that an assistant gets wrong without context:
 - **Don't infer outliers from a capped list.** `Get` on `ExceptionEvent` returns
   the newest rows up to `resultsLimit` (often 200). The first page can make one
   vehicle look like a lone offender when the issue is fleet-wide. To rank
-  vehicles, **aggregate the whole window** (e.g. via Geotab Ace) — don't rank
-  from the first page.
+  vehicles — and to chart them — **aggregate the whole window** (e.g. via
+  Geotab Ace), never the first page.
 - **A clean section is a finding, not a gap.** Zero active faults or zero DVIRs in
   the window is normal for many fleets — report "clean week," never invent data.
 - **Summarize repeating demo data.** Demo databases repeat events on a fixed
@@ -76,14 +87,15 @@ data; this skill deliberately stays asset-level so a routine review never does.
 
 1. `GetCountOf` `Device` → fleet size.
 2. `GetCountOf` / `Get` `FaultData` (with `fromDate`/`toDate`) → faults.
-3. `Get` `ExceptionEvent` for the window; to rank offenders, prefer
-   `GetAceResults` ("top N vehicles by speeding events, last 7 days") over the
-   capped raw list.
+3. `Get` `ExceptionEvent` for the window; for the ranking chart, use
+   `GetAceResults` ("top N vehicles by speeding events, last 7 days") — the
+   capped raw list can't be charted honestly.
 4. HOS: spot-check `DutyStatusViolation` with a `userSearch` for a few drivers.
 5. `Get` `DVIRLog` for the window.
 6. Trips: bounded `Get` on `Trip`, or describe activity qualitatively.
 
 ## Output style
 
-Plain language, short sentences, manager-ready. No jargon, no raw JSON, no PII.
-Lead with the single most important thing the manager should do this week.
+Plain language, short sentences, manager-ready and forwardable. No jargon, no
+raw JSON, no PII. Lead with the single most important thing the manager should
+do this week.

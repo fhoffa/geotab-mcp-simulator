@@ -6,6 +6,10 @@ readable version for GitHub. The numbers/drivers the newer scenarios quote live
 in `data/sample-data.js` (the sample-data store); conversation nodes ground
 their charts and results on it.
 
+The node table below is **machine-written**: CI regenerates and commits it on
+every PR (locally: `node scripts/check-graph.js --fix-map`). The Mermaid
+diagram and the prose are curated by hand — edit those freely.
+
 ```mermaid
 flowchart TD
     connect["🔌 Connect the connector"] --> authorize["Authorize"]
@@ -13,6 +17,8 @@ flowchart TD
 
     %% --- Productivity ---
     hub -->|"📋 Weekly review"| ep1["Ep1 · Weekly review"]
+    hub -->|"🛠️ weekly review as a skill"| ep1sf["Ep1 · Run it once first"]
+    ep1sf -->|auto| ep1
     hub -->|"⚡ 5 fleet chores"| ep4["Ep4 · Five actions"]
 
     %% --- Safety ---
@@ -61,6 +67,37 @@ flowchart TD
     hub -->|"💼 Salesforce dispute"| ep13["Ep13 · Geotab + Salesforce"]
     hub -->|"📊 Board snapshot"| epX["Ep-Exec · Both fleets snapshot"]
 
+    %% --- Spatial analytics (Geotab MCP + CARTO MCP) ---
+    %% one spine (fleet → hubs), then "who should the next hub serve?"
+    hub -->|"🧭 What can CARTO do?"| cartoE["CARTO · What can I do with my fleet?"]
+    cartoE --> cartoF["CARTO · Where is my fleet?"]
+    cartoF --> cartoH["CARTO · Parked vehicles → hubs (H3)"]
+    cartoH -->|"👥 residents"| cartoC["CARTO · What's around each hub"]
+    cartoC --> cartoR["CARTO · 15-min drive reach"]
+    cartoR --> cartoS["CARTO · Sixth-hub site (residents)"]
+    cartoS --> cartoM["CARTO · Shareable map (sixth hub)"]
+    cartoS -->|"💰 income or shops"| cartoD["CARTO · Finding data to weight by"]
+    cartoD -->|"💸 free income data?"| cartoDF["CARTO · Free Census income data"]
+    cartoDF --> cartoO["CARTO · Three goals compared"]
+    cartoO -->|"🤔 which one?"| cartoOP["CARTO · Which goal to pick"]
+    cartoO --> cartoMG["CARTO · Shareable map (three picks)"]
+    cartoOP --> cartoMG
+    cartoOP --> cartoT
+    cartoOP --> cartoV
+    cartoH -->|"🧾 customers"| cartoT["CARTO · Trips confirm the hubs"]
+    cartoS -->|"🧾 customers"| cartoT
+    cartoO -->|"🧾 customers"| cartoT
+    cartoT --> cartoCu["CARTO · Salesforce customers → serve pick"]
+    cartoCu --> cartoP["CARTO · White space → grow pick"]
+    cartoP --> cartoMS["CARTO · Shareable map (serve + grow)"]
+    cartoS --> cartoV["CARTO · What to double-check"]
+    cartoO --> cartoV
+    cartoCu --> cartoV
+    cartoP --> cartoV
+    cartoM --> cartoV
+    cartoMG --> cartoV
+    cartoMS --> cartoV
+
     %% A few representative cross-links (full set in conversations.js)
     ep2 -->|"🔔 Flag it live"| ep2a["Ep2 · Create alert"]
     epSR -->|"🧑‍🏫 Coach"| epAC
@@ -69,17 +106,34 @@ flowchart TD
     epMS --> ep12
     epMD --> ep12
     epOF --> epEVv
+
+    %% --- Package-as-a-skill beats (Ep1 shapes the review in conversation first) ---
+    ep1 -->|"📊 chart the speeding"| ep1v["Ep1 · Shape: chart it"]
+    ep1v -->|"🧾 headline + 3 bullets"| ep1b["Ep1 · Shape: reshaped brief"]
+    ep1b -->|"🛠️ freeze the shaped review"| ep1s["Ep1 · Weekly-review skill"]
+    epSR -->|"🛠️ skill"| epSRs["Skill · Safety scorecard"]
+    ep8 -->|"🛠️ skill"| ep8s["Skill · Maintenance triage"]
+    epROI -->|"🛠️ skill"| epROIsk["Skill · Quarterly ROI case"]
+
+    %% --- Warehouse (MotherDuck teaching path) ---
+    hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
 ```
 
-## Nodes (60)
+## Nodes (110)
 
 | id | title | database | leads to |
 |---|---|---|---|
 | `connect` | Connect the connector | — | `authorize` |
 | `authorize` | Authorize | — | `hub` (auto) |
-| `hub` | Pick a question (hub) | — | every scenario entry point |
-| `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-skill`, `ep7-ace`, `hub` |
+| `hub` | Pick a question (hub) | — | `ep1-answer`, `ep-agentic-safety`, `warehouse-intro`, `ep-roi`, `ep-safety-risk`, `ep-safety-harsh`, `ep-safety-schoolzone`, `ep2-answer`, `ep10-postedspeed`, `ep7-ace`, `ep8-maintenance`, `ep-maint-overdue`, `ep-maint-severity`, `ep-maint-downtime`, `ep12-investigate`, `ep5-answer`, `ep-ops-fuel`, `ep-ops-idle`, `ep9-ev-vegas`, `ep9-fleet-hub`, `ep3-answer`, `ep-zonelife-answer`, `ep1-skill-first`, `ep4-answer`, `ep-agentic-coaching`, `carto-explore`, `ep-dispatch`, `ep13-salesforce`, `ep-exec` |
+| `ep1-answer` | Ep1 · Weekly review | demo_fh_vegas4 | `ep1-shape-viz`, `ep7-ace`, `hub` |
+| `ep1-shape-viz` | Ep1 · Shape it: chart the speeding | demo_fh_vegas4 | `ep1-shape-brief`, `hub` |
+| `ep1-shape-brief` | Ep1 · Shape it: the reshaped brief | — | `ep1-skill`, `hub` |
+| `ep1-skill-first` | Ep1 · Run it once before packaging | — | `ep1-answer` (auto) |
 | `ep1-skill` | Ep1 · Package as a skill | — | `ep9-fleet`, `hub`, restart |
+| `ep-safety-skill` | Skill · Package the safety scorecard | — | `ep-safety-risk`, `ep-agentic-coaching`, `hub`, restart |
+| `ep-maint-skill` | Skill · Package the maintenance triage | — | `ep8-maintenance`, `ep-maint-overdue`, `hub`, restart |
+| `ep-roi-skill` | Skill · Package the quarterly ROI case | — | `ep-roi-onepager`, `ep-roi`, `hub`, restart |
 | `ep2-answer` | Ep2 · Ask why | demo_fh_vegas4 | `ep2-action`, `ep10-postedspeed`, `hub` |
 | `ep2-action` | Ep2 · Create alert | demo_fh_vegas4 | `ep8-maintenance`, `hub`, restart |
 | `ep3-answer` | Ep3 · Zone from the news | demo_fh4 | `ep3-prefs`, `ep9-fleet-23-31`, `hub` |
@@ -87,6 +141,12 @@ flowchart TD
 | `ep3-action` | Ep3 · Create zone + rule | demo_fh4 | `ep3-map`, `hub`, restart |
 | `ep3-action-wide` | Ep3 · Create zone + rule (entry+exit, group) | demo_fh4 | `ep3-map`, `hub`, restart |
 | `ep3-map` | Ep3 · ZBE zone on a map | — | `ep9-fleet-23-31`, `hub`, restart |
+| `ep-zonelife-answer` | Ops · Zone & rule lifecycle test | demo_fh_vegas4 | `ep-zonelife-create`, `hub` |
+| `ep-zonelife-create` | Ops · Create test zone + rule | demo_fh_vegas4 | `ep-zonelife-delete` |
+| `ep-zonelife-delete` | Ops · Delete + verify zone/rule | demo_fh_vegas4 | `ep-zonelife-safety`, `ep-zonelife-cascade`, `hub`, restart |
+| `ep-zonelife-safety` | Ops · What deleting a rule clears (and how to check first) | demo_fh_vegas4 | `ep-zonelife-skill`, `ep-zonelife-cascade`, `hub`, restart |
+| `ep-zonelife-skill` | Skill · Package the pre-delete safety check | demo_fh_vegas4 | `hub`, restart |
+| `ep-zonelife-cascade` | Ops · Delete order — zone before rule | demo_fh_vegas4 | `hub`, restart |
 | `ep4-answer` | Ep4 · Five actions | demo_fh4 | `ep8-maintenance`, `ep9-fleet-23-31`, `hub`, restart |
 | `ep5-answer` | Ep5 · Geotab + Gmail + Calendar | demo_fh4 | `ep5-send`, `ep5-hold` |
 | `ep5-send` | Ep5 · Send the draft | demo_fh4 | `ep9-fleet-06`, `hub`, restart |
@@ -96,7 +156,7 @@ flowchart TD
 | `ep13-leaveopen` | Ep13 · Leave the case open | demo_fh4 | `ep9-fleet-12`, `hub`, restart |
 | `ep7-ace` | Ep7 · Ask Geotab Ace | demo_fh_vegas4 | `ep7-reasoning`, `ep2-action`, `hub` |
 | `ep7-reasoning` | Ep7 · Ace reasoning | demo_fh_vegas4 | `ep8-maintenance`, `ep1-answer`, `hub`, restart |
-| `ep8-maintenance` | Ep8 · Triage the worklist | demo_fh4 | `ep9-fleet-08`, `ep12-investigate`, `ep5-answer`, `hub` |
+| `ep8-maintenance` | Ep8 · Triage the worklist | demo_fh4 | `ep-maint-skill`, `ep9-fleet-08`, `ep12-investigate`, `ep5-answer`, `hub` |
 | `ep9-fleet-08` | Ep9 · What is Demo - 08 | demo_fh4 | `ep12-investigate`, `ep5-answer`, `ep9-fleet`, `hub` |
 | `ep9-fleet-06` | Ep9 · What is Demo - 06 | demo_fh4 | `ep9-fleet`, `hub`, restart |
 | `ep9-fleet-12` | Ep9 · What is Demo - 12 | demo_fh4 | `ep9-fleet`, `hub`, restart |
@@ -115,34 +175,87 @@ flowchart TD
 | `ep-dispatch-send-50` | Ep-Dispatch · Dispatch Demo - 50 | demo_fh_vegas4 | `hub`, restart |
 | `ep-dispatch-map` | Ep-Dispatch · Live positions map | — | `ep-dispatch-send-45`, `hub`, restart |
 | `ep-dispatch-chart` | Ep-Dispatch · Distance chart | — | `ep-dispatch-send-50`, `hub`, restart |
-| `ep-exec` | Ep-Exec · Board snapshot, both fleets | cross-DB | `ep-roi`, `ep-exec-chart`, `ep2-answer`, `ep8-maintenance`, `hub`, restart |
+| `ep-exec` | Ep-Exec · Board snapshot, both fleets | — | `ep-roi`, `ep-exec-chart`, `ep2-answer`, `ep8-maintenance`, `hub`, restart |
 | `ep-exec-chart` | Ep-Exec · Utilization & exceptions charts | — | `ep2-answer`, `ep8-maintenance`, `hub`, restart |
 | `ep-dashcam` | Ep-Dashcam · Pull the clip (illustrative) | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
-| `ep-safety-risk` | Safety · Driver safety scorecard | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-harsh`, `ep2-action`, `hub` |
+| `ep-safety-risk` | Safety · Riskiest drivers this week | demo_fh_vegas4 | `ep-safety-skill`, `ep-agentic-coaching`, `ep-safety-harsh`, `ep2-action`, `hub` |
 | `ep-safety-harsh` | Safety · Harsh braking by driver | demo_fh_vegas4 | `ep-safety-harsh-spain`, `ep-agentic-coaching`, `ep-safety-risk`, `hub` |
 | `ep-safety-harsh-spain` | Safety · Harsh-braking hotspot | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-risk`, `hub`, restart |
 | `ep-safety-schoolzone` | Safety · Speeding in school zones | demo_fh_vegas4 | `ep-safety-schoolzone-create`, `ep-agentic-coaching`, `ep-safety-postedspeed-08`, `hub` |
 | `ep-safety-schoolzone-create` | Safety · Create school-zone alert | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-risk`, `hub`, restart |
 | `ep-safety-postedspeed-08` | Safety · Posted-speed truth-check (Demo - 08) | demo_fh_vegas4 | `ep-agentic-coaching`, `ep-safety-schoolzone-create`, `hub` |
 | `ep-maint-overdue` | Maintenance · Overdue for service | demo_fh4 | `ep-maint-overdue-book`, `ep-maint-severity`, `ep-maint-downtime`, `hub` |
-| `ep-maint-overdue-book` | Maintenance · Book the overdue ITV (Demo - 25) | demo_fh4 | `ep-maint-severity`, `ep-maint-downtime`, `hub`, restart |
 | `ep-maint-severity` | Maintenance · Fault codes + severity | demo_fh4 | `ep-maint-severity-book`, `ep12-investigate`, `ep-maint-downtime`, `hub` |
+| `ep-maint-overdue-book` | Maintenance · Book the overdue ITV (Demo - 25) | demo_fh4 | `ep-maint-severity`, `ep-maint-downtime`, `hub`, restart |
 | `ep-maint-severity-book` | Maintenance · Book the 3 red-lamp units | demo_fh4 | `ep12-investigate`, `ep-maint-overdue`, `hub`, restart |
-| `ep-maint-downtime` | Maintenance · Unplanned downtime | demo_fh4 | `ep12-investigate`, `ep-maint-severity`, `hub` |
+| `ep-maint-downtime` | Maintenance · Unplanned downtime | demo_fh4 | `ep12-investigate`, `ep-maint-severity`, `ep-maint-overdue`, `hub` |
 | `ep-ops-fuel` | Operations · Fuel economy by type | demo_fh_vegas4 | `ep9-ev-vegas`, `ep-ops-idle`, `ep2-action`, `ep-roi`, `hub` |
 | `ep-ops-idle` | Operations · Longest idle times | demo_fh_vegas4 | `ep-ops-idle-alert`, `ep-ops-fuel`, `hub` |
 | `ep-ops-idle-alert` | Operations · Create idling alert | demo_fh_vegas4 | `ep-ops-fuel`, `hub`, restart |
 | `ep-agentic-safety` | Agentic · Top 3 safety risks + fixes | demo_fh_vegas4 | `ep2-action`, `ep-agentic-coaching`, `ep-safety-schoolzone-create`, `ep-roi`, `ep-safety-risk`, `hub` |
 | `ep-agentic-coaching` | Agentic · Draft coaching summary | demo_fh_vegas4 | `ep-coaching-send`, `ep-agentic-safety`, `ep2-action`, `hub` |
 | `ep-coaching-send` | Agentic · Send coaching summary | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
-| `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep2-action`, `ep-agentic-coaching`, `hub` |
+| `warehouse-intro` | Warehouse · simplest path | — | `warehouse-setup`, `warehouse-geotab-recommendation`, `warehouse-what-is`, `hub` |
+| `warehouse-geotab-recommendation` | Warehouse · Geotab recommendation? | — | `warehouse-setup`, `warehouse-freshness`, `warehouse-what-is`, `warehouse-intro` |
+| `warehouse-what-is` | Warehouse · what is MotherDuck | — | `warehouse-setup`, `warehouse-intro`, `hub` |
+| `warehouse-setup` | Warehouse · get many points | — | `warehouse-first-load`, `hub` |
+| `warehouse-first-load` | Warehouse · one-table load | — | `warehouse-layering`, `hub` |
+| `warehouse-layering` | Warehouse · why layers appear | — | `warehouse-incremental`, `hub` |
+| `warehouse-incremental` | Warehouse · incremental refresh | — | `warehouse-operational`, `warehouse-freshness`, `warehouse-backfill`, `warehouse-intro`, `hub`, restart |
+| `warehouse-operational` | Warehouse · operational mirror | — | `warehouse-restated`, `warehouse-enrichment`, `warehouse-deletions`, `hub` |
+| `warehouse-restated` | Warehouse · trips aren't append-only | — | `warehouse-quality`, `warehouse-operational`, `hub` |
+| `warehouse-quality` | Warehouse · quality and gaps | — | `warehouse-costs`, `warehouse-answers`, `warehouse-backfill`, `warehouse-restated`, `hub` |
+| `warehouse-costs` | Warehouse · cost estimate | — | `warehouse-downsample`, `warehouse-answers`, `warehouse-quality`, `hub` |
+| `warehouse-answers` | Warehouse · answer-ready marts | — | `warehouse-enrichment`, `warehouse-quality`, `warehouse-intro`, `hub` |
+| `warehouse-freshness` | Warehouse · why watermarks, not GetFeed | — | `warehouse-backfill`, `warehouse-setup`, `warehouse-incremental`, `hub` |
+| `warehouse-backfill` | Warehouse · falling behind, and noticing | — | `warehouse-quality`, `warehouse-freshness`, `warehouse-incremental`, `hub` |
+| `warehouse-enrichment` | Warehouse · faults get coordinates | — | `warehouse-answers`, `warehouse-quality`, `warehouse-operational`, `hub` |
+| `warehouse-deletions` | Warehouse · deletions & mutability | — | `warehouse-restated`, `warehouse-quality`, `warehouse-operational`, `hub` |
+| `warehouse-downsample` | Warehouse · downsample, never at ingest | — | `warehouse-answers`, `warehouse-costs`, `hub` |
+| `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep-roi-skill`, `ep2-action`, `ep-agentic-coaching`, `hub` |
 | `ep-roi-onepager` | ROI · Draft the business case | demo_fh_vegas4 | `ep-roi-send`, `ep2-action`, `hub` |
 | `ep-roi-send` | ROI · Send the business case | demo_fh_vegas4 | `ep2-action`, `hub`, restart |
+| `carto-fleet` | CARTO · Where is my fleet right now? | demo_fh_vegas8 | `carto-hubs`, `carto-what-is`, `hub` |
+| `carto-what-is` | CARTO · What is CARTO? | — | `carto-hubs`, `hub` |
+| `carto-hubs` | CARTO · Group parked vehicles into hubs | demo_fh_vegas8 | `carto-context`, `carto-trips`, `carto-what-is` |
+| `carto-context` | CARTO · What's around each hub? | — | `carto-reach` |
+| `carto-reach` | CARTO · 15-minute reach per hub | — | `carto-site` |
+| `carto-site` | CARTO · Where would a sixth hub add the most reach? | — | `carto-map`, `carto-data`, `carto-trips`, `carto-caveats` |
+| `carto-explore` | CARTO · What can I do with my fleet? | demo_fh_vegas8 | `carto-fleet`, `hub` |
+| `carto-trips` | CARTO · Use my own trips as the goal | demo_fh_vegas8 | `carto-customers`, `hub` |
+| `carto-customers` | CARTO · Use my Salesforce customers as the goal | demo_fh_vegas8 | `carto-potential`, `carto-caveats`, `hub` |
+| `carto-potential` | CARTO · Where could I sell more? | demo_fh_vegas8 | `carto-map-sites`, `carto-caveats`, `hub` |
+| `carto-data` | CARTO · Finding data to weight by | — | `carto-data-free`, `hub` |
+| `carto-data-free` | CARTO · Free income data from the Census | — | `carto-objective`, `hub` |
+| `carto-objective` | CARTO · Optimize for something other than residents | demo_fh_vegas8 | `carto-objective-pick`, `carto-map-goals`, `carto-trips`, `carto-caveats` |
+| `carto-objective-pick` | CARTO · Which goal should I pick? | — | `carto-map-goals`, `carto-trips`, `carto-caveats`, `hub` |
+| `carto-map` | CARTO · Put it on a map I can share | — | `carto-caveats`, `hub`, restart |
+| `carto-map-goals` | CARTO · Put the three picks on a map I can share | — | `carto-caveats`, `hub`, restart |
+| `carto-map-sites` | CARTO · Put the serve and grow picks on a map I can share | — | `carto-caveats`, `hub`, restart |
+| `carto-caveats` | CARTO · What to double-check | — | back to the previous step, `hub`, restart |
 
 Episodes **cross-link** as well as branch to their own action node — e.g.
 maintenance → fleet composition → Valencia exposure, or speeding → posted-speed
 → live alert → dashcam — so the same entry points open many distinct paths.
-`ep-dispatch` and `ep-exec` are grounded entirely from live MCP calls.
+`ep-dispatch` and `ep-exec` are grounded entirely from live MCP calls. The
+`carto-*` path replays a real two-server session (Geotab MCP on
+`demo_fh_vegas8` + CARTO MCP): its numbers live in `SAMPLE_DATA.carto` and its
+maps are the assistant's renders of that session's results; tool and argument
+names follow the real schemas, while SQL and values are simplified. Every
+CARTO branch starts from the same spine (fleet → hubs), so later steps can
+refer to "the five hubs" whichever way the user came; the branches then split
+on who the next hub should serve (residents, income or shops, customers) and
+each ends on its own shareable map. Keep it that way: a step should only quote
+results from steps every route into it has already shown.
+
+CARTO TODOs:
+- Map of trip end points for `carto-trips`. It needs a real `Get Trip` stopPoint
+  pull on `demo_fh_vegas8`; the 8 Oct coordinates weren't kept.
+- Keep the map render scripts and the cell-level query results in the repo (or
+  in a companion repo), so the `assets/carto-*.webp` files can be rebuilt.
+  Markers are placed with a lat/lon → pixel fit for the shared framing.
+- Street basemap under the non-fleet CARTO maps (open since #49).
+- Native-speaker review of the CARTO Spanish (es-419 and es-ES).
 
 The **Safety / Maintenance / Operations / Agentic** scenarios are anchored to
 the live demo accounts (API + Ace) — fleet sizes, vehicle mix, the fleet-wide

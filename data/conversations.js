@@ -29,7 +29,7 @@
  *               - label : chip text
  *               - say   : what shows as the user's message (defaults to label)
  *               - next  : node id to go to
- *               - action: "restart" | "map" (engine-handled, no node needed)
+ *               - action: "restart" | "video" (engine-handled, no node needed)
  *   next    : auto-advance to this node id (used when there are no choices)
  */
 /* ------------------------------------------- Grounding on the sample-data store
@@ -41,6 +41,105 @@
 var D = (typeof window !== "undefined" && window.SAMPLE_DATA) ? window.SAMPLE_DATA : {};
 function bars(list, labelKey, valueKey) {
   return (list || []).map(function (o) { return { label: o[labelKey], value: o[valueKey] }; });
+}
+
+/* The CARTO path's maps are the assistant's renders of this session's results
+ * (assets/carto-*.webp, one shared framing); `cartoMap` adds the chrome and
+ * labels points from D.carto by their x/y. opts: layer (chip text), source
+ * (what the map was drawn from), note (replaces the snapshot line), scaleWidth
+ * (for a map not on the shared framing). */
+var Cu = (D.carto && D.carto.customers) || { list: [], best: {}, potential: { best: {} } };
+var P = Cu.potential || { best: {} };
+var X = (D.carto && D.carto.explore) || { trips: {} };
+var O = (D.carto && D.carto.objectives) || { income: {}, poi: {}, people: {} };
+var C = D.carto || { hubs: [], coverage: {}, sixthHub: { candidates: [] }, isoline: {} };
+function cartoMap(image, title, summary, labels, opts) {
+  opts = opts || {};
+  return {
+    type: "map",
+    mapStyle: "carto",
+    image: "assets/" + image,
+    title: title,
+    summary: summary,
+    layerLabel: opts.layer || "H3 res 8 · residents",
+    scale: "5 km",
+    scaleWidth: opts.scaleWidth || "10%",
+    pins: (labels || []).map(function (p) { return { label: p.label, x: p.x, y: p.y, status: "label", flip: !!p.flip }; }),
+    disclosure:
+      (opts.source || "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8)") +
+      " · " + (opts.note || "snapshot " + C.snapshot),
+  };
+}
+// shops + restaurants per 1,000 residents within the context rings: one number for "homes or shops?"
+function shopsPerK(h) { return Math.round((h.retail + h.food) / h.residentsK); }
+function hub(name) { return C.hubs.filter(function (h) { return h.name === name; })[0]; }
+// hub labels sit right of their point; South's sits left so it clears South-east just below it on narrow screens
+function cartoHubLabels(text) {
+  return C.hubs.map(function (h) { return { label: text(h), x: h.x, y: h.y, flip: h.name === "South" }; });
+}
+// calculate_isolines returns GeoJSON in the response, not a table
+function cartoIsoline(origin, summary, parts) {
+  return {
+    type: "tool",
+    server: "carto",
+    name: "calculate_isolines",
+    args: { operation: C.isoline.operation, origin: origin, range: C.isoline.range, range_type: C.isoline.rangeType },
+    summary: summary,
+    result:
+      '{ "type": "MultiPolygon", "coordinates": [ [ [ [-115.2…, 36.1…], [-115.2…, 36.1…], … ] ], … ] }\n' +
+      "// " + (parts || 1) + (parts > 1 ? " parts" : " part") + " · 15-minute drive by car (" + C.isoline.range + " s)",
+  };
+}
+function cartoSql(sql) {
+  return { connection_name: C.connection, sql: sql };
+}
+// CARTO's recommended map flow: validate_map schema → verify → create_map →
+// view_map → get_workspace_info, then the note on why the simulator can't show it
+function cartoSaveMap(bundle, verifySummary, verifyResult, note) {
+  return [
+    {
+      type: "tool",
+      server: "carto",
+      name: "validate_map",
+      args: { method: "schema" },
+      summary: "map format: datasets, layers, styling",
+      result: "// bundle schema: datasets (SQL or table, by connection), H3 datasets by index column + aggregation, Kepler layers referencing datasets by $ref, ordinal color maps …",
+    },
+    { type: "tool", server: "carto", name: "validate_map", args: { method: "verify", bundle: bundle }, summary: verifySummary, result: verifyResult },
+    {
+      type: "tool",
+      server: "carto",
+      name: "create_map",
+      args: { bundle: "<the verified bundle>" },
+      summary: "private Builder map created",
+      write: true,
+      result: '{ "mapId": "…", "privacy": "private" }',
+    },
+    {
+      type: "tool",
+      server: "carto",
+      name: "view_map",
+      args: { mapId: "…" },
+      summary: "interactive map in chat (MCP Apps hosts only)",
+      result: "// renders the map inline where the host supports MCP Apps; elsewhere, use the Builder link",
+    },
+    {
+      type: "tool",
+      server: "carto",
+      name: "get_workspace_info",
+      args: {},
+      summary: "workspace URL template for Builder links",
+      result:
+        '{ "workspaceUrl": "https://<your-carto-workspace>",\n' +
+        '  "urlTemplates": { "builderMap": { "template": "https://<your-carto-workspace>/builder/{mapId}" }, … } }',
+    },
+    {
+      type: "system",
+      text:
+        "`view_map` shows the interactive map in the chat only in apps that support MCP Apps; elsewhere you get the link. " +
+        "The map is private to the CARTO account that created it, so the simulator can't show it." + (note ? " " + note : ""),
+    },
+  ];
 }
 
 window.CONVERSATIONS = {
@@ -66,8 +165,10 @@ window.CONVERSATIONS = {
           text:
             "Hi, I'm an assistant. Once you connect the Geotab MCP connector, I can read live data from your fleet " +
             "and take actions on it, right here in chat — no separate dashboard.\n\n" +
-            "(Worth knowing: the connector itself is just an open MCP server. Copilot, ChatGPT, Claude — anything " +
-            "that speaks MCP can plug into the same one. No single assistant is special here.)\n\n" +
+            "(Worth knowing: MCP is the *Model Context Protocol* — an open standard for connecting AI assistants " +
+            "to tools — and the connector is just an open MCP server. Copilot, ChatGPT, Claude — anything " +
+            "that speaks MCP can plug into the same one. No single assistant is special here: Claude and ChatGPT " +
+            "already list it in their directories, and any other client can add it by URL.)\n\n" +
             "One practical detail: the MCP server does not automatically know or enumerate every database your " +
             "account can access. You need to know the database name you want, then ask the assistant to use it.\n\n" +
             "This particular page is a simulator, so you'll click suggested questions instead of typing and " +
@@ -77,6 +178,7 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔌 Connect the Geotab MCP connector", say: "Connect the Geotab MCP connector.", next: "authorize" },
+        { label: "🎥 Watch the 2-minute demo video first", action: "video" },
       ],
     },
 
@@ -115,7 +217,9 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "You're connected. What do you want to look at?\n\n" +
-            "(In the real connector you'd just type this — here, pick one of the options below.)",
+            "(In the real connector you'd just type this — here, pick one of the options below. " +
+            "Don't overthink the choice: every answer offers natural follow-ups, so any door leads to the " +
+            "others. **⭐ Start here** is the fastest tour.)",
         },
       ],
       choices: [
@@ -265,6 +369,15 @@ window.CONVERSATIONS = {
             "whether my fleet drives through that zone and what a non-compliant entry would cost us.",
           next: "ep3-answer",
         },
+        {
+          group: "🚀 Operations",
+          label: "🧪 Test creating & deleting a zone/rule",
+          say:
+            "Before I automate anything with zones and rules, walk me through creating a disposable test " +
+            "zone and rule, verifying they exist, then deleting both and confirming they're actually gone " +
+            "— not just deactivated.",
+          next: "ep-zonelife-answer",
+        },
 
         {
           group: "🧠 Automate & share",
@@ -272,7 +385,7 @@ window.CONVERSATIONS = {
           say:
             "Package my weekly fleet review into a reusable skill so I — and anyone on my team — " +
             "can run the identical review just by asking for it.",
-          next: "ep1-skill",
+          next: "ep1-skill-first",
         },
         {
           group: "🧠 Automate & share",
@@ -289,6 +402,12 @@ window.CONVERSATIONS = {
           next: "ep-agentic-coaching",
         },
 
+        {
+          group: "🚚 Cross-tool & exec",
+          label: "🧭 What can CARTO do with my fleet?",
+          say: "I run deliveries around Las Vegas and I'm thinking about adding another depot. I have Geotab and CARTO connected. What can I do with them together?",
+          next: "carto-explore",
+        },
         {
           group: "🚚 Cross-tool & exec",
           label: "🚐 Who's closest and free right now?",
@@ -392,20 +511,149 @@ window.CONVERSATIONS = {
             "worth a sanity check on your end.\n\n" +
             "(Didn't put trip count in here — the raw all-time counter isn't a meaningful weekly number, so I left it out rather than report something misleading.)\n\n" +
             "That's the version of this brief that used to mean pulling four reports and cross-checking them by hand — " +
-            "probably 30–45 minutes on a Monday. This was one ask.",
+            "probably 30–45 minutes on a Monday. This was one ask.\n\n" +
+            "One thing before you file it, though: that's *my* default shape — several paragraphs of prose. If this " +
+            "is about to become your Monday ritual, push back now. Too wordy? Wrong order? Want it visual? Whatever " +
+            "we settle on together is what we can later freeze into a skill for your whole team.",
         },
       ],
       choices: [
         {
-          label: "🛠️ Turn this into a reusable skill",
+          label: "📊 Too much prose — chart the speeding",
           say:
-            "This is exactly my weekly routine. Turn it into a reusable skill so I — and anyone on my team — " +
-            "can run the identical review just by asking for it.",
-          next: "ep1-skill",
+            "Useful, but honestly Monday-me won't read five paragraphs. Make it visual — chart the speeding " +
+            "so I can see the top vehicles at a glance.",
+          next: "ep1-shape-viz",
         },
         { label: "🤖 Double-check the speeding with Ace", say: "Double-check that speeding read with Geotab Ace.", next: "ep7-ace" },
         { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
       ],
+    },
+
+    /* ------------------------------------- ep1 · shaping the review together */
+    /* The user pushes back on the default brief and the review gets reshaped
+     * in conversation — first the visualization, then the format. Whatever gets
+     * settled here is exactly what ep1-skill freezes: conversations first,
+     * skills second, demonstrated rather than told. */
+    "ep1-shape-viz": {
+      id: "ep1-shape-viz",
+      title: "Ep1 · Shape it: chart the speeding",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Fair — and this is exactly the moment to say so, while we're still shaping the thing.\n\n" +
+            "One catch first: I won't chart the raw pull. It's capped at the newest ~200 rows, so a chart of it " +
+            "would just be a prettier version of a paging artifact. Let me have Ace aggregate the whole week " +
+            "across the whole fleet, then chart the real ranking.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: { database: "demo_fh_vegas4", prompt: "Top 5 vehicles by speeding events, last 7 days?", new_chat: true },
+          summary: "whole-fleet aggregate → top 5 cluster 118–142",
+          result:
+            '{ "answer": "1. Demo-16: 142  2. Demo-01: 134  3. Demo-08: 129  4. Demo-15: 121  5. Demo-04: 118" }',
+        },
+        {
+          type: "chart",
+          title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
+          bars: [
+            { label: "Demo - 16", value: 142 },
+            { label: "Demo - 01", value: 134 },
+            { label: "Demo - 08", value: 129 },
+            { label: "Demo - 15", value: 121 },
+            { label: "Demo - 04", value: 118 },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "There's the picture — and notice it carries the argument the paragraph was making. One bad vehicle " +
+            "would look like a single long bar and a cliff; this is a plateau, five vehicles within about 20 events " +
+            "of each other. \"Fleet-wide problem, fix it with policy\" — now at a glance instead of in a sentence.\n\n" +
+            "(I'd skip charting the maintenance side this week: every bar would be zero. When a chart has nothing " +
+            "to say, the sentence \"zero active faults\" says it better.)\n\n" +
+            "Keep shaping — what about the words around it? Same six sections, or tighter?",
+        },
+      ],
+      choices: [
+        {
+          label: "🧾 Headline, chart, three bullets — it gets forwarded",
+          say:
+            "Tighter. Headline on top, then the chart, then three bullets max. And it gets forwarded to my " +
+            "ops manager, so keep it plain and keep driver names out of it.",
+          next: "ep1-shape-brief",
+        },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep1-shape-brief": {
+      id: "ep1-shape-brief",
+      title: "Ep1 · Shape it: the reshaped brief",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Deal. Same week, reshaped — this is what your Monday brief looks like from now on:\n\n" +
+            "**Clean trucks, heavy right feet — speeding is a fleet problem this week, not a driver problem.**",
+        },
+        {
+          type: "chart",
+          title: "Top 5 vehicles by speeding events · last 7 days (via Ace)",
+          bars: [
+            { label: "Demo - 16", value: 142 },
+            { label: "Demo - 01", value: 134 },
+            { label: "Demo - 08", value: 129 },
+            { label: "Demo - 15", value: 121 },
+            { label: "Demo - 04", value: 118 },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "- All 50 vehicles reporting, **zero active faults** — a genuinely clean maintenance week.\n" +
+            "- **Speeding is fleet-wide** — the top five sit within 118–142 events, nobody running away with it. " +
+            "The fix is a policy plus a live alert, not one conversation.\n" +
+            "- **HOS spot-checked clean; DVIR silent** — HOS is per-driver only, so confirm crews are filing " +
+            "rather than assuming.\n\n" +
+            "That's the whole thing — forwardable as-is, vehicles not people, and the chart does the arguing.\n\n" +
+            "Worth noticing what just happened: this shape didn't come from me, it came out of the conversation. " +
+            "You said Monday-you won't read paragraphs, so the chart leads. You said it gets forwarded, so it's " +
+            "plain and names no drivers. That's exactly what makes it worth freezing — want me to package *this*, " +
+            "format and all the data traps I had to dodge, into a skill anyone on your team can run?",
+        },
+      ],
+      choices: [
+        {
+          label: "🛠️ Freeze it — make this the team skill",
+          say:
+            "Freeze it. Package exactly this into a reusable skill so anyone on my team gets the same brief " +
+            "just by asking for it.",
+          next: "ep1-skill",
+        },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    /* Entry from the hub's "turn my weekly review into a team skill" ask:
+     * don't package a guess — run the review once and shape it first. */
+    "ep1-skill-first": {
+      id: "ep1-skill-first",
+      title: "Ep1 · Run it once before packaging",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Happy to — but I don't want to package a guess. A skill is only as good as the conversation it's " +
+            "frozen from, so here's the plan: I run your review once, you tell me what's wrong with it — too " +
+            "long, wrong shape, missing things — and whatever we settle on together is what I save. Running it now.",
+        },
+      ],
+      next: "ep1-answer",
     },
 
     "ep1-skill": {
@@ -417,7 +665,7 @@ window.CONVERSATIONS = {
           server: "assistant",
           name: "Create skill",
           args: { name: "geotab-weekly-review" },
-          summary: "SKILL.md written — 90 lines, grounding rules + no-PII default included",
+          summary: "SKILL.md written — shaped format (headline → chart → 3 bullets), grounding rules + no-PII default",
           write: true,
           openByDefault: true,
           result:
@@ -425,17 +673,21 @@ window.CONVERSATIONS = {
             "name: geotab-weekly-review\n" +
             "description: >-\n" +
             "  Produce a manager-ready weekly fleet review from a Geotab MCP connection —\n" +
-            "  fleet size, faults, speeding/harsh driving, HOS, DVIR, and trip activity — as a\n" +
-            "  short written brief. Encodes Geotab data quirks and a strict no-PII default so\n" +
-            "  the answer is correct and repeatable for anyone on the team.\n" +
+            "  a one-line headline, one whole-fleet ranking chart, and at most three\n" +
+            "  bullets. Encodes Geotab data quirks and a strict no-PII default so the\n" +
+            "  answer is correct and repeatable for anyone on the team.\n" +
             "---\n\n" +
             "# Geotab Weekly Fleet Review\n\n" +
             "## When to use\n" +
             "When the user asks for a weekly/periodic fleet review, a \"Monday morning\" summary, " +
             "or \"how did the fleet do this week.\" Default window: last 7 days.\n\n" +
-            "## What to produce\n" +
-            "1. Fleet size  2. Faults/maintenance  3. Driving exceptions  4. HOS  5. DVIR  6. Trip activity\n" +
-            "End with a headline, a needs-attention list, and 2–3 recommended actions.\n\n" +
+            "## What to check\n" +
+            "1. Fleet size  2. Faults/maintenance  3. Driving exceptions  4. HOS  5. DVIR  6. Trip activity\n\n" +
+            "## Output format (shaped in conversation — reshape for your fleet)\n" +
+            "- Headline first: one line with the week's verdict.\n" +
+            "- One chart: top vehicles from a whole-window aggregate — never from a capped raw list.\n" +
+            "- Three bullets max, then stop. Forwardable as-is: plain language, no driver names.\n" +
+            "- Chart only what has signal — a clean section is a sentence (\"zero active faults\"), not a chart of zeros.\n\n" +
             "## Grounding rules (avoid these traps)\n" +
             "- Never report a raw Trip count — GetCountOf on Trip ignores the date window.\n" +
             "- HOS is per-driver — DutyStatusViolation needs a userSearch; treat as a spot-check.\n" +
@@ -447,21 +699,30 @@ window.CONVERSATIONS = {
             "- Watch the name field itself — some device names encode a person; fall back to make/model + a non-identifying id.\n" +
             "- Never return emails, phone numbers, employee numbers, or per-person location histories.\n\n" +
             "## Suggested tool flow\n" +
-            "GetCountOf Device → Get/GetCountOf FaultData → Get ExceptionEvent (or GetAceResults to rank) → " +
+            "GetCountOf Device → Get/GetCountOf FaultData → GetAceResults to rank exceptions for the chart → " +
             "spot-check DutyStatusViolation → Get DVIRLog → bounded Get Trip.\n\n" +
-            "## Output style\n" +
-            "Plain language, short sentences, manager-ready. No jargon, no raw JSON, no PII.\n\n" +
-            "(90 lines total — this is the trimmed preview.)",
+            "(~100 lines total — this is the trimmed preview.)",
         },
         {
           type: "assistant",
           text:
             "Packaged it as geotab-weekly-review — open the card above if you want to see what's actually in it. " +
-            "It's not just a shortcut that replays these same steps; I wrote in the gotchas too (the ExceptionEvent " +
-            "page cap, HOS being per-driver, the Trip-count trap) plus a strict no-PII default, so whoever runs it " +
-            "gets the careful version every time, not just a faster version.\n\n" +
-            "Drop it in your team's shared skills and anyone can just say \"run my weekly review\" and get this same brief, " +
-            "without re-explaining any of this to them first.",
+            "Every line of it traces back to something that happened in this conversation:\n\n" +
+            "- The **chart-first format** is in there because you said Monday-you won't read paragraphs.\n" +
+            "- The **three-bullet cap** and the **no-driver-names rule** are in there because you said the brief " +
+            "gets forwarded.\n" +
+            "- The **\"aggregate the whole window, never rank from a capped list\"** rule is in there because the " +
+            "raw pull would have told the wrong story before Ace corrected it.\n" +
+            "- Plus the traps you never saw me dodge: the Trip counter that ignores dates, HOS being per-driver only.\n\n" +
+            "Drop it in your team's shared skills and anyone can just say \"run my weekly review\" and get exactly " +
+            "the brief we shaped — the careful version every time, without re-litigating any of this first.\n\n" +
+            "That's the pattern worth stealing from this whole demo: **conversations first, skills second.** Don't " +
+            "write a skill from a blank page — run the review by hand, argue with it the way you just did, then " +
+            "freeze what you settle on. The one above stays public in this project as a worked example — " +
+            "[skills/geotab-weekly-review/SKILL.md](https://github.com/fhoffa/geotab-mcp-simulator/blob/main/skills/geotab-weekly-review/SKILL.md) — " +
+            "not something to install as-is, because the rules that make a skill valuable come out of *your* fleet's " +
+            "conversations. (For ready-to-follow shared skills — like the MotherDuck warehouse one this simulator's " +
+            "warehouse path uses — see the companion [geotab-vibe-guide](https://github.com/fhoffa/geotab-vibe-guide).)",
         },
         {
           type: "endcard",
@@ -1068,6 +1329,508 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🚐 What make and model are these?", say: "What make and model are Demo - 23 and Demo - 31, exactly?", next: "ep9-fleet-23-31" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* --------------------------------------------- ep-zonelife · zone/rule lifecycle */
+    // Grounded 20 Jul 2026 against the live MCP (real database, disposable test
+    // entities, cleaned up after). Verdicts below are from real calls, not
+    // guesses — see docs/ROADMAP.md's grounding-pass log for the raw transcript.
+    "ep-zonelife-answer": {
+      id: "ep-zonelife-answer",
+      title: "Ops · Zone & rule lifecycle test",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Before I build anything you'd rely on, let's prove the whole lifecycle actually works — create a zone " +
+            "and a rule, confirm they're really there, then delete both and confirm they're *really* gone, not just " +
+            "deactivated. Checking the current baseline first.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Zone" },
+          summary: "0 zones currently on this database",
+          result: '{ "result": 0 }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Rule" },
+          summary: "17 rules — the stock set (Speeding, Harsh Braking, Collision, Seatbelt, …)",
+          result: '{ "result": 17 }',
+        },
+        {
+          type: "assistant",
+          text:
+            "No zones yet, 17 stock rules already in place, no custom zone-based ones. I'll create a throwaway pair — " +
+            "named unmistakably as test data — verify them, then tear both down and confirm the counts land back on " +
+            "0 and 17.",
+        },
+      ],
+      choices: [
+        {
+          label: "🧪 Go ahead — create the test zone + rule",
+          say: "Go ahead — create a disposable test zone and rule so we can verify the full lifecycle including deletion.",
+          next: "ep-zonelife-create",
+        },
+        { label: "↩︎ Ask something else", say: "Let me try something else.", next: "hub" },
+      ],
+    },
+
+    "ep-zonelife-create": {
+      id: "ep-zonelife-create",
+      title: "Ops · Create test zone + rule",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text: "Creating the zone first — a small closed polygon, named so it can't be mistaken for real fleet config.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Zone",
+            entity: {
+              name: "ZTEST-DELETE-ME-2026-07-20",
+              points: [
+                { x: -115.14, y: 36.17 }, { x: -115.139, y: 36.17 },
+                { x: -115.139, y: 36.169 }, { x: -115.14, y: 36.169 }, { x: -115.14, y: 36.17 },
+              ],
+            },
+          },
+          summary: "Zone created",
+          write: true,
+          result: '{ "result": "Zoneb…ztest-2026-07-20" }',
+        },
+        {
+          type: "assistant",
+          text: "Zone's in — verifying it's actually retrievable before building on it, then adding the rule tied to it.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Rule",
+            entity: {
+              name: "RTEST-DELETE-ME-2026-07-20",
+              baseType: "ZoneStop",
+              condition: { conditionType: "ZoneStop", zone: { id: "Zoneb…ztest-2026-07-20" } },
+            },
+          },
+          summary: "rejected — Groups required",
+          write: true,
+          result: 'Error: Undefined or empty ExceptionRule.Groups',
+        },
+        {
+          type: "assistant",
+          text:
+            "First attempt bounced: `Undefined or empty ExceptionRule.Groups`. The schema lists `groups` as optional, " +
+            "but the live API disagrees — every real rule on this database carries `groups: [{ id: \"GroupCompanyId\" }]`, " +
+            "so I'll add that and retry rather than guess further.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Rule",
+            entity: {
+              name: "RTEST-DELETE-ME-2026-07-20",
+              baseType: "ZoneStop",
+              groups: [{ id: "GroupCompanyId" }],
+              condition: { conditionType: "ZoneStop", zone: { id: "Zoneb…ztest-2026-07-20" } },
+            },
+          },
+          summary: "Rule created and tied to the zone",
+          write: true,
+          result: '{ "result": "Ruleb…rtest-2026-07-20" }',
+        },
+        {
+          type: "assistant",
+          text: "Both created. Pulling them back by id to confirm the zone reference actually persisted, not just accepted.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", search: { id: "Ruleb…rtest-2026-07-20" } },
+          summary: "confirmed — condition.zone.id matches the test zone",
+          result: '[{ "id": "Ruleb…rtest-2026-07-20", "name": "RTEST-DELETE-ME-2026-07-20", "condition": { "zone": { "id": "Zoneb…ztest-2026-07-20" } } }]',
+        },
+        {
+          type: "confirm",
+          changes: [
+            "Zone \"ZTEST-DELETE-ME-2026-07-20\" created on demo_fh_vegas4",
+            "Rule \"RTEST-DELETE-ME-2026-07-20\" created and tied to that zone",
+          ],
+        },
+      ],
+      choices: [
+        {
+          label: "🗑️ Now delete both, rule first",
+          say: "Good — now delete the rule, then the zone, and confirm both are actually gone.",
+          next: "ep-zonelife-delete",
+        },
+      ],
+    },
+
+    "ep-zonelife-delete": {
+      id: "ep-zonelife-delete",
+      title: "Ops · Delete + verify zone/rule",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text: "Removing the rule first, then the zone — the safer, most portable order regardless of what the API happens to allow.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Remove",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", entity: { id: "Ruleb…rtest-2026-07-20" } },
+          summary: "removed",
+          write: true,
+          result: "{}",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Remove",
+          args: { database: "demo_fh_vegas4", typeName: "Zone", entity: { id: "Zoneb…ztest-2026-07-20" } },
+          summary: "removed",
+          write: true,
+          result: "{}",
+        },
+        {
+          type: "assistant",
+          text: "Both calls returned clean. Confirming they're actually gone rather than trusting a success response — checking `Get` by id, not just `activeTo`.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Zone", search: { id: "Zoneb…ztest-2026-07-20" } },
+          summary: "empty — hard-deleted, not retired",
+          result: "[]",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", search: { id: "Ruleb…rtest-2026-07-20" } },
+          summary: "empty — hard-deleted, not retired",
+          result: "[]",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Zone" },
+          summary: "back to 0",
+          result: '{ "result": 0 }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Rule" },
+          summary: "back to 17",
+          result: '{ "result": 17 }',
+        },
+        {
+          type: "assistant",
+          text:
+            "Confirmed: `Remove` genuinely deletes on this API — the follow-up `Get` came back empty, not a record " +
+            "with `activeTo` set to a past date. That matters, because `activeFrom`/`activeTo` exist on both entities " +
+            "for scheduling and could easily be mistaken for the delete mechanism; they're not. Counts are back to " +
+            "baseline — 0 zones, 17 rules — so nothing test-related is left behind.",
+        },
+        {
+          type: "confirm",
+          changes: [
+            "Rule removed and confirmed gone (Get returns empty, not a retired record)",
+            "Zone removed and confirmed gone (Get returns empty, not a retired record)",
+            "Zone & Rule counts back to baseline (0 zones / 17 rules)",
+          ],
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Tested end-to-end — create, verify, delete, verify. Nothing left behind."] },
+      ],
+      choices: [
+        {
+          label: "⚠️ Does deleting a rule wipe its exception history?",
+          say:
+            "Wait — would that Remove call have also wiped out this rule's historical exceptions? Native MyGeotab " +
+            "shows a warning popup before you delete a rule. Does the MCP connector warn about that too?",
+          next: "ep-zonelife-safety",
+        },
+        {
+          label: "🔀 What if I delete the zone first?",
+          say: "What happens if I delete the zone before the rule — does it error, or does the rule get orphaned?",
+          next: "ep-zonelife-cascade",
+        },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-zonelife-safety": {
+      id: "ep-zonelife-safety",
+      title: "Ops · What deleting a rule clears (and how to check first)",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Good instinct to check — let me look at this properly instead of guessing, without touching any real rule " +
+            "or its history. Two things: how much history a real rule actually carries, and what the documentation " +
+            "says happens to it on delete.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "ExceptionEvent", search: { ruleSearch: { id: "RuleSpeedingId" } } },
+          summary: "518 historical exception events tied to the stock Speeding rule — read-only, nothing touched",
+          result: '{ "result": 518 }',
+        },
+        {
+          type: "tool",
+          server: "web",
+          name: "web_search",
+          args: { query: "Geotab MyGeotab rule deletion exception history behavior" },
+          summary: "MyGeotab docs & support content: editing or removing a rule invalidates the exceptions it generated",
+          result:
+            'geotab.com/support · community.geotab.com\n' +
+            '"Editing, removing, or reprocessing a rule invalidates the exceptions it previously generated, since an ' +
+            'exception tied to a rule definition that no longer exists — or no longer matches — isn\'t a meaningful ' +
+            'record to keep. This is treated as part of normal rule maintenance rather than a separate event: the ' +
+            'audit log captures the rule change itself, not a running list of which exception rows were invalidated ' +
+            'underneath it."',
+        },
+        {
+          type: "assistant",
+          text:
+            "So: yes. Editing or removing a rule invalidates its attached `ExceptionEvent` history — that's expected " +
+            "behavior given how rules work, not a malfunction. The thing worth being deliberate about is that this " +
+            "isn't a separate audit-log event: the log records the rule change itself, not an inventory of what got " +
+            "invalidated underneath it, so there's nothing built-in that tells you afterward how much history a given " +
+            "change actually cleared.\n\n" +
+            "Native MyGeotab shows a warning popup before a delete like this — exactly the kind of moment where a " +
+            "human should pause. The `Remove` calls I ran earlier in this test went straight through, no prompt, " +
+            "because that test rule was fresh with zero exceptions attached, so there was nothing at stake. But the " +
+            "real stock \"Speeding\" rule on this same database carries **518** historical exception events. Anyone " +
+            "calling `Remove` on a rule like that through this connector should know going in that it carries the " +
+            "same weight as the native delete — the MCP layer just doesn't pause to ask first.\n\n" +
+            "Practical habit worth building into any real automation: before calling `Remove` on a real `Rule`, " +
+            "check `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:...}})` first. `ExceptionEvent` only carries " +
+            "a rule id, not a zone id, so there's no direct filter for a `Zone` — find the rule(s) that reference " +
+            "it first (`Get(Rule)`, matching `condition.zone.id`), then run the same count for each. Surface " +
+            "whatever you find to a human, and get explicit sign-off if it isn't zero. Don't rely on the MCP tool " +
+            "to stop you — it won't.",
+        },
+      ],
+      choices: [
+        {
+          label: "🛠️ Turn this into a reusable safety-check skill",
+          say:
+            "Should I wait for Geotab to build a guardrail like this into the connector, or can we just package " +
+            "this check into a skill ourselves right now?",
+          next: "ep-zonelife-skill",
+        },
+        {
+          label: "🔀 What if I delete the zone first?",
+          say: "What happens if I delete the zone before the rule — does it error, or does the rule get orphaned?",
+          next: "ep-zonelife-cascade",
+        },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-zonelife-skill": {
+      id: "ep-zonelife-skill",
+      title: "Skill · Package the pre-delete safety check",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Good question to end on, and you don't have to pick one — but there's no reason to sit and wait. The " +
+            "gap we just found came from testing the real behavior in this exact conversation, which is the same raw " +
+            "material every skill in this project gets built from. Packaging it now.",
+        },
+        {
+          type: "tool",
+          server: "assistant",
+          name: "Create skill",
+          args: { name: "geotab-safe-delete" },
+          summary: "SKILL.md written — pre-delete ExceptionEvent check, human sign-off on any non-zero count",
+          write: true,
+          openByDefault: true,
+          result:
+            "---\n" +
+            "name: geotab-safe-delete\n" +
+            "description: >-\n" +
+            "  Guardrail for removing a MyGeotab Rule or Zone through the MCP connector.\n" +
+            "  Checks how much ExceptionEvent history is attached before calling Remove,\n" +
+            "  and pauses for human sign-off on anything that isn't disposable test data —\n" +
+            "  since native MyGeotab warns about this and the connector doesn't.\n" +
+            "---\n\n" +
+            "# Safe Delete for Rules & Zones\n\n" +
+            "## When to use\n" +
+            "Before calling `Remove` on a `Rule` or `Zone` through the MCP connector — any time the target isn't " +
+            "obviously disposable test data.\n\n" +
+            "## What to check first\n" +
+            "1. Deleting a `Rule`: `GetCountOf(ExceptionEvent, search:{ruleSearch:{id:<ruleId>}})` — read-only, " +
+            "safe to run on anything.\n" +
+            "2. Deleting a `Zone`: `ExceptionEvent` has no zone filter, only `ruleSearch`/`deviceSearch`. Find the " +
+            "rule(s) that reference the zone first (`Get(Rule)`, matching `condition.zone.id`), then run the same " +
+            "count for each rule id found.\n" +
+            "3. Count is 0 (across all matching rules) → proceed, it's genuinely disposable.\n" +
+            "4. Count is anything else → stop. Tell the human the number and what it means (historical exceptions " +
+            "that get invalidated, not archived), and wait for explicit go-ahead before calling `Remove`.\n\n" +
+            "## Why this exists\n" +
+            "Editing or removing a Rule invalidates the exceptions it generated — expected behavior, not a " +
+            "malfunction — but it isn't logged as its own audit event, and native MyGeotab's warning dialog before " +
+            "a rule delete doesn't extend to the MCP connector. This skill puts that pause back in.\n\n" +
+            "## Suggested tool flow\n" +
+            "If deleting a Zone: Get(Rule) to find the rule(s) referencing it (condition.zone.id) → " +
+            "GetCountOf(ExceptionEvent, ruleSearch:{id:...}) per rule found → report the total → wait for " +
+            "sign-off if non-zero → Remove(Rule) → Remove(Zone) → Get by id to confirm a hard delete, not a " +
+            "retire.\n\n" +
+            "(41 lines total — trimmed preview.)",
+        },
+        {
+          type: "assistant",
+          text:
+            "Packaged it as geotab-safe-delete — open the card to see what's in it. It's small on purpose: one " +
+            "check, one rule for what to do with the result. Same caveat as the weekly-review skill earlier in " +
+            "this demo: this stays here as a **worked example**, not something to install as-is — package your " +
+            "own version from a real conversation on your own fleet, since that's where a skill actually worth " +
+            "trusting comes from.\n\n" +
+            "On waiting versus building: if Geotab ships an equivalent confirmation at the API or connector level " +
+            "later, that's strictly better — a first-party guardrail beats a client-side one, and a skill like " +
+            "this would retire in its favor. But that's not a reason to sit on the gap in the meantime. This one " +
+            "came from testing the real behavior right here, same pattern as every skill in this project — " +
+            "conversations first, skills second. You don't need a vendor roadmap to fix something you can just " +
+            "fix; you just shouldn't mistake a demo artifact for a deployed guardrail.",
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Ask once. Automate it. Share it with your whole team."] },
+      ],
+      choices: [
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "ep-zonelife-cascade": {
+      id: "ep-zonelife-cascade",
+      title: "Ops · Delete order — zone before rule",
+      db: "demo_fh_vegas4",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Good question — I recommended rule-then-zone as the safe default, but let's actually test the reverse: " +
+            "a second disposable pair, then remove the zone while the rule still references it.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Zone",
+            entity: {
+              name: "ZTEST-ORDERCHECK-2026-07-20",
+              points: [
+                { x: -115.145, y: 36.175 }, { x: -115.144, y: 36.175 },
+                { x: -115.144, y: 36.174 }, { x: -115.145, y: 36.174 }, { x: -115.145, y: 36.175 },
+              ],
+            },
+          },
+          summary: "second test zone created",
+          write: true,
+          result: '{ "result": "Zoneb…ordercheck" }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Add",
+          args: {
+            database: "demo_fh_vegas4",
+            typeName: "Rule",
+            entity: {
+              name: "RTEST-ORDERCHECK-2026-07-20",
+              baseType: "ZoneStop",
+              groups: [{ id: "GroupCompanyId" }],
+              condition: { conditionType: "ZoneStop", zone: { id: "Zoneb…ordercheck" } },
+            },
+          },
+          summary: "second test rule created, tied to the zone",
+          write: true,
+          result: '{ "result": "Ruleb…ordercheck" }',
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Remove",
+          args: { database: "demo_fh_vegas4", typeName: "Zone", entity: { id: "Zoneb…ordercheck" } },
+          summary: "removed the zone while the rule still referenced it — no error",
+          write: true,
+          result: "{}",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: { database: "demo_fh_vegas4", typeName: "Rule", search: { id: "Ruleb…ordercheck" } },
+          summary: "empty — the rule is gone too",
+          result: "[]",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: "demo_fh_vegas4", typeName: "Rule" },
+          summary: "back to 17 — not just hidden, actually gone",
+          result: '{ "result": 17 }',
+        },
+        {
+          type: "assistant",
+          text:
+            "No referential-integrity error, and the rule didn't get orphaned — it cascade-deleted along with the " +
+            "zone it depended on. Rule count went straight back to the 17-rule baseline without me ever calling " +
+            "`Remove(Rule)` on it directly.\n\n" +
+            "Useful to know, but I still wouldn't script around it: cascade behavior like this isn't documented, and " +
+            "there's no guarantee every rule `baseType`/`conditionType` combination behaves the same way. Delete the " +
+            "rule explicitly before the zone in anything you automate — it's the assumption that stays correct even " +
+            "if this particular cascade doesn't.",
+        },
+        {
+          type: "confirm",
+          changes: [
+            "Confirmed: removing a referenced zone does not error, even with a dependent rule still attached",
+            "The dependent ZoneStop rule cascade-deleted along with its zone (Get + count both confirm)",
+            "Counts back to baseline after both orderings — no orphans in either test",
+          ],
+        },
+        { type: "endcard", lines: ["Geotab MCP Connector", "Verified, not assumed — the delete path actually deletes."] },
+      ],
+      choices: [
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
@@ -3593,7 +4356,7 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "**Is this even a good idea? Yes — once your questions get bigger than a single API call.**\n\n" +
-            "The live MCP connector is great at point questions about current state. A warehouse is for the analytical ones: **joining trips + faults + exceptions + GPS together**, joining all of that **against your own data** — fuel cards, maintenance ERP, payroll, weather — aggregating the **whole fleet at once**, slicing by group or vehicle type, and yes, trends over time too. You ask them **repeatedly and cheaply** without re-pulling from the live API, on data you **own and control**, so you can hang dashboards, scheduled briefs and agent skills off it. The connector is the access layer; MotherDuck is the durable memory layer.\n\n" +
+            "The live MCP connector is great at point questions about current state. A warehouse is for the analytical ones: **joining trips + faults + exceptions + GPS together**, joining all of that **against your own data** — fuel cards, maintenance ERP, payroll, weather — aggregating the **whole fleet at once**, slicing by group or vehicle type, and yes, trends over time too. You ask them **repeatedly and cheaply** without re-pulling from the live API, on data you **own and control**, so you can hang dashboards, scheduled briefs and agent skills off it. The connector is the access layer; MotherDuck is the durable memory layer. (If you want the battle-tested, non-MCP route instead, Geotab's open-source **MyGeotab API Adapter** has replicated fleet data into Postgres/SQL Server for years — ask *“Is this what Geotab recommends?”* below.)\n\n" +
             "Here's the genuinely cool part: **the assistant orchestrates the entire pipeline with MCP calls** — no ETL service, no Airflow, no glue code. It asks Geotab (MCP) for the data and tells MotherDuck (MCP) to load, transform and schedule it. Extract, load, transform, refresh — all just tool calls in this chat. Geotab Ace even hands back a **signed CSV URL** that MotherDuck reads *directly*, so nothing is ever downloaded.\n\n" +
             "And we pick **MotherDuck specifically for its free tier**: a 50-vehicle fleet runs at **$0** for years, so you can stand this whole thing up without a budget conversation.\n\n" +
             "So here's the plan: one concrete loop first — ask for raw GPS rows, load the signed CSV into `gps_points`, query it. Once that works, the reason for bronze/silver/gold becomes obvious: repeatable loads, typed rows, dedup, provenance, quality checks, and cost controls.",
@@ -3630,11 +4393,13 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "Not as an official recommendation. This MCP-orchestrated Geotab → MotherDuck warehouse path is a **proof of concept**: new, interesting in this MCP world, and not yet tested at scale. The assistant can coordinate both sides — ask Geotab for rows, then ask MotherDuck to load and transform them — without a separate ETL service.\n\n" +
-            "We should treat it as a proof of concept, not a replacement for proven production patterns. We'll update this node with alternatives that Geotab customers have used for years to replicate fleet data into their own warehouses.",
+            "The proven pattern Geotab customers have used for years is the open-source **[MyGeotab API Adapter](https://github.com/Geotab/mygeotab-api-adapter/blob/master/MyGeotabAPIAdapter/README.md)** — a mature .NET service (no MCP involved) that replicates your fleet data into your own **PostgreSQL or SQL Server** database. It pulls incrementally through MyGeotab data feeds (GPS logs, trips, faults, and more), keeps device/user/zone reference data cached, and ships with production plumbing: retries, transactions, partition maintenance. Standing it up is a classic, well-documented data engineering project — you run the service once and your database fills itself.\n\n" +
+            "So the honest framing: **MyGeotab API Adapter** for battle-tested replication into Postgres/SQL Server you operate yourself; **this MCP + MotherDuck path** for a lightweight, conversation-driven warehouse you can stand up in a chat at $0. We'll keep updating this node as the MCP approach matures.",
         },
       ],
       choices: [
         { label: "🦆 Continue with GPS rows", say: "Understood. Continue with the experimental MCP path and start with GPS rows.", next: "warehouse-setup" },
+        { label: "⏱ How fresh can the MCP path get?", say: "The adapter polls every few seconds. How fresh can this MCP warehouse actually be?", next: "warehouse-freshness" },
         { label: "❓ What is MotherDuck?", say: "Before we start — what actually is MotherDuck?", next: "warehouse-what-is" },
         { label: "↩︎ Back to the warehouse intro", say: "Go back to the warehouse intro.", next: "warehouse-intro" },
       ],
@@ -3873,6 +4638,8 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🧩 Add trips, faults, status and dimensions", say: "This is useful, but GPS points alone are not a warehouse. Add trips, faults, status data, exceptions and the dimensions that make them readable.", next: "warehouse-operational" },
+        { label: "⏱ How fresh is this, really?", say: "How fresh is this warehouse, really? Geotab's own adapter polls every few seconds — why aren't we using its feed?", next: "warehouse-freshness" },
+        { label: "🩺 What if it falls behind?", say: "What happens if the warehouse falls behind — a paused schedule, a vacation, an outage? How would I even notice?", next: "warehouse-backfill" },
         { label: "🧱 Replay from setup", say: "Replay the MotherDuck setup from the beginning.", next: "warehouse-intro" },
         { label: "⚡ Try fleet questions", say: "Take me back to the fleet simulator.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
@@ -3958,6 +4725,8 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "⚠️ Why trips & drivers can't just append", say: "Wait — trips and driver assignments aren't append-only like GPS. Show me what breaks and how to reconcile it.", next: "warehouse-restated" },
+        { label: "📍 Faults have no location?", say: "Hold on — fault and status rows don't include GPS coordinates? How would I put faults on a map?", next: "warehouse-enrichment" },
+        { label: "🗑 What about deletions?", say: "What happens when someone deletes a zone or deactivates a driver in Geotab? Does my warehouse notice?", next: "warehouse-deletions" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
     },
@@ -4099,6 +4868,7 @@ window.CONVERSATIONS = {
       choices: [
         { label: "💵 Estimate run cost", say: "Estimate what this warehouse costs to run and how we'd track it.", next: "warehouse-costs" },
         { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "🩺 Add a warehouse health view", say: "One thing is missing: how do I notice when a table quietly falls behind?", next: "warehouse-backfill" },
         { label: "🧩 How trips re-split", say: "Remind me why trips and driver assignments aren't append-only.", next: "warehouse-restated" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
       ],
@@ -4149,6 +4919,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "📉 Can I downsample to stay free?", say: "The big table is status_data. Can I sample or downsample it to stay on the free tier?", next: "warehouse-downsample" },
         { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
         { label: "✅ Review quality checks", say: "Show the warehouse quality checks again.", next: "warehouse-quality" },
         { label: "↩︎ Back to main simulator", say: "Take me back to the fleet simulator.", next: "hub" },
@@ -4198,9 +4969,243 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "📍 Put faults on the map", say: "Can I put faults on a map? I don't remember fault rows having coordinates.", next: "warehouse-enrichment" },
         { label: "✅ Review quality checks again", say: "Show the warehouse quality checks again.", next: "warehouse-quality" },
         { label: "🧱 Replay from setup", say: "Replay the MotherDuck warehouse story from setup.", next: "warehouse-intro" },
         { label: "⚡ Try fleet questions", say: "Take me back to the fleet simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-freshness": {
+      id: "warehouse-freshness",
+      title: "Warehouse · why watermarks, not GetFeed",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Fair question — and it's the honest architectural difference between this path and Geotab's own adapter.\n\n" +
+            "The MyGeotab API Adapter syncs with **`GetFeed`**: an official API that returns a **version cursor** per entity type, so the service can poll every few seconds (configurable down to 2s) and never miss or re-fetch a row, even across restarts. **The MCP connector doesn't expose `GetFeed`** — the skill audited all 20 MCP tools, and none accepts a feed token.\n\n" +
+            "So this warehouse uses the MCP-compatible substitute: **watermark + natural-key dedup**. Ask for rows newer than the latest timestamp already stored, and let the dedup absorb the boundary overlap (remember: Ace only honors boundaries to the second). It's the same idea as a feed cursor, rebuilt from what MCP does offer.\n\n" +
+            "What that trade buys and costs:\n" +
+            "- **Cadence:** this warehouse refreshes when an agent runs — on demand or on a schedule, typically minutes to daily. The adapter is a 24/7 service refreshing in seconds.\n" +
+            "- **Correctness:** equivalent for immutable events (dedup handles the overlap); trips need their reconcile pass on either path.\n" +
+            "- **The line to respect:** analytics, dashboards, scheduled briefs — this path is enough. Live dispatch or alerting on seconds-old data — that's a job for the live connector itself, or the adapter.\n\n" +
+            "The skill keeps a full side-by-side of the two: **[MCP → MotherDuck vs GetFeed → API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MCP_TO_MOTHERDUCK_VS_GETFEED_API_ADAPTER.md)** — including the graduation path: prototype here with zero infrastructure, move to the adapter if sub-minute freshness ever becomes the requirement. The concepts transfer directly; both mirror the same entities.",
+        },
+      ],
+      choices: [
+        { label: "🩺 What if it falls behind?", say: "So if refreshes only run when an agent runs — what happens when the warehouse falls behind? How would I even notice?", next: "warehouse-backfill" },
+        { label: "🦆 Start the build (GPS rows)", say: "Good enough for analytics. Build the warehouse, starting with GPS points.", next: "warehouse-setup" },
+        { label: "↩︎ Back to the refresh loop", say: "Go back to the incremental refresh step.", next: "warehouse-incremental" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-backfill": {
+      id: "warehouse-backfill",
+      title: "Warehouse · falling behind, and noticing",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Two separate problems hide in that question: **noticing you're behind** and **catching up safely**. Most people only think about the second one.\n\n" +
+            "Noticing is a job for the warehouse itself. The adapter tracks per-service cursors in a health table; ours is one view — per fact table, the newest event time, the lag against now, and the last load:",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE OR REPLACE VIEW main.warehouse_health AS SELECT 'planet_gps_pings' AS table_name, max(gps_datetime_utc) AS max_event_time, date_diff('minute', max(gps_datetime_utc), now()) AS lag_minutes, count(*) AS row_count FROM silver.planet_gps_pings UNION ALL SELECT 'trips', max(trip_end_utc), date_diff('minute', max(trip_end_utc), now()), count(*) FROM silver.trips UNION ALL SELECT 'status_data', max(status_datetime_utc), date_diff('minute', max(status_datetime_utc), now()), count(*) FROM silver.status_data UNION ALL SELECT 'exception_events', max(active_from_utc), date_diff('minute', max(active_from_utc), now()), count(*) FROM silver.exception_events UNION ALL SELECT 'fault_data', max(fault_datetime_utc), date_diff('minute', max(fault_datetime_utc), now()), count(*) FROM silver.fault_data; SELECT * FROM main.warehouse_health ORDER BY lag_minutes DESC;" },
+          summary: "one view answers 'is anything behind?'",
+          result: "status_data lag 194 min ⚠️ · fault_data 55 min · trips 41 min · exception_events 38 min · planet_gps_pings 2 min — one table is quietly 3+ hours behind",
+        },
+        {
+          type: "assistant",
+          text:
+            "There it is — **`status_data` is 3.2 hours behind** and nothing errored. Yesterday's status pull returned *exactly* the page limit, and the loop treated a full page as 'done'. That's the trap the adapter's pacing heuristic exists for:\n\n" +
+            "**If a window's pull returns rows right up to the upper bound — or fills the page limit — you are still behind: pull again immediately. Only a partial window means you're current.** No guessing, no fixed sleeps.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetAceResults",
+          args: {
+            database: "demo_fh4",
+            new_chat: true,
+            prompt: "List every StatusData record after 2026-06-30 04:12:00 UTC in windows, exact warehouse columns, UTC. Keep pulling while a window comes back full; stop on the first partial window.",
+          },
+          summary: "catch-up paced by the stop rule",
+          result: "window 1: full page (still behind) · window 2: full page (still behind) · window 3: partial (current) — 3 CSVs landed in bronze, silver deduped, status_data lag now 2 min",
+        },
+        {
+          type: "assistant",
+          text:
+            "Caught up in three windows, and the third window's partial result is the *proof* we're current — the loop earns its own stop condition.\n\n" +
+            "One more operational rule from the adapter, which enforces it with a machine-name guard; we adopt it as discipline: **one writer per warehouse**. Two agent sessions refreshing the same tables will interleave loads and corrupt each other's watermarks. One session owns the refresh; everything else reads.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Health + catch-up",
+          subtitle: "The health view makes 'is anything behind?' a one-query question; the stop rule makes catch-up self-pacing.",
+          metrics: [
+            { label: "Health view", value: "warehouse_health" },
+            { label: "Caught behind", value: "status_data 3.2h" },
+            { label: "Stop rule", value: "partial = current" },
+            { label: "Writers", value: "exactly 1" },
+          ],
+          stages: D.warehouse.stages.quality,
+          note: "Run the health view at the start of every refresh — it's the difference between finding a gap now and finding it in next month's report.",
+        },
+      ],
+      choices: [
+        { label: "✅ Continue to quality checks", say: "Good. Now add the quality checks and gap detection.", next: "warehouse-quality" },
+        { label: "⏱ Why watermarks, not GetFeed?", say: "Back up — why is this warehouse on watermarks instead of Geotab's official feed API?", next: "warehouse-freshness" },
+        { label: "↩︎ Back to the refresh loop", say: "Go back to the incremental refresh step.", next: "warehouse-incremental" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-enrichment": {
+      id: "warehouse-enrichment",
+      title: "Warehouse · faults get coordinates",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Sharp catch — **`FaultData` and `StatusData` carry no coordinates**. In Geotab's model, location lives in `LogRecord`; a fault only knows its device and timestamp. The API Adapter dedicates **two entire background services** to interpolating lat/lon/speed/bearing from surrounding LogRecords into fault and status rows.\n\n" +
+            "In a columnar warehouse that's one query. DuckDB's **`ASOF JOIN`** takes, for each fault, the nearest GPS ping at-or-before the fault's timestamp, per device:",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE OR REPLACE TABLE gold.fault_locations AS SELECT f.*, g.latitude AS lat, g.longitude AS lon, g.speed AS speed_at_fault, date_diff('second', g.gps_datetime_utc, f.fault_datetime_utc) AS gps_gap_s FROM silver.fault_data f ASOF JOIN silver.planet_gps_pings g ON f.DeviceId = g.DeviceId AND g.gps_datetime_utc <= f.fault_datetime_utc;" },
+          summary: "every fault located in one query",
+          result: "gold.fault_locations: 4,912 faults · 100% matched · median gap to nearest ping 2 s · p95 23 s",
+        },
+        {
+          type: "assistant",
+          text:
+            "All **4,912 faults picked up coordinates**, and the gap distribution says the match is honest: median 2 seconds from the nearest ping, p95 23 seconds. (The skill validated this exact pattern live at **822,203 events, 100% matched** — it holds at scale.)\n\n" +
+            "One trap, and it's the same late-data lesson trips taught: **GPS arrives late too**. A fault logged 30 seconds ago may not have its bracketing pings in silver yet, so the join would grab a ping minutes stale. Either **only enrich events older than a small buffer**, or simply **rebuild this mart on every refresh** — at this size the rebuild is cheap, so that's what we schedule.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Faults located",
+          subtitle: "An ASOF JOIN gives every fault the nearest prior GPS ping — location, speed and an honesty metric (the gap) in one pass.",
+          metrics: [
+            { label: "Faults located", value: "4,912 · 100%" },
+            { label: "Median gap", value: "2 s" },
+            { label: "p95 gap", value: "23 s" },
+            { label: "Method", value: "ASOF JOIN" },
+          ],
+          stages: D.warehouse.stages.enriched,
+          note: "The adapter needs two dedicated interpolation services for this; the warehouse does it in one query. This is the clearest 'why a warehouse' moment in the whole build.",
+        },
+      ],
+      choices: [
+        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "✅ Add quality checks", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
+        { label: "↩︎ Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-deletions": {
+      id: "warehouse-deletions",
+      title: "Warehouse · deletions & mutability",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Not by itself — and this is one of the quietest traps in incremental replication. **A deletion never shows up in an incremental pull.** A deleted zone doesn't arrive marked 'deleted'; it just stops appearing. Watermark loops only see *new* rows, so `dim_zone` would happily keep serving a zone that no longer exists.\n\n" +
+            "The adapter's answer — which this warehouse already follows without having said why — is that **dimensions get a periodic full snapshot, never an incremental one**. That's why every dim here is `Get` → `CREATE OR REPLACE`: no bronze, no watermark. Each refresh replaces the roster wholesale, so a disappearance *is* the signal. It's also why **dimensions load before facts**: fact rows should never arrive ahead of the rows that decode them.\n\n" +
+            "Two refinements:\n" +
+            "- Geotab often **retires instead of deletes**: `activeFrom`/`activeTo` on Users and similar. Keep retired rows with their dates — history still joins to them.\n" +
+            "- The subset shortcut inherits the rule: if you keep only the ~56 diagnostics your faults actually reference (out of 65K), that subset must also be **fully re-derived** each refresh, or a newly-referenced diagnostic never appears.",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query",
+          args: { sql: "SELECT 'trips → dim_device' AS ref, count(DISTINCT t.DeviceId) FILTER (WHERE d.id IS NULL) AS orphans FROM silver.trips t LEFT JOIN silver.dim_device d ON d.id = t.DeviceId UNION ALL SELECT 'exceptions → dim_rule', count(DISTINCT e.RuleId) FILTER (WHERE r.id IS NULL) FROM silver.exception_events e LEFT JOIN silver.dim_rule r ON r.id = e.RuleId UNION ALL SELECT 'faults → dim_diagnostic', count(DISTINCT f.DiagnosticId) FILTER (WHERE g.id IS NULL) FROM silver.fault_data f LEFT JOIN silver.dim_diagnostic g ON g.id = f.DiagnosticId;" },
+          summary: "orphan check: facts pointing at missing dimension rows",
+          result: "0 orphans across all three joins — but only because every refresh re-snapshots the dims. Skip the dim refresh for a week and this number starts lying to you.",
+        },
+        {
+          type: "assistant",
+          text:
+            "The general habit the adapter teaches: before loading any new entity, ask **\"does this row mutate after creation?\"**\n\n" +
+            "- **Never** (GPS, status, exceptions, faults, `DriverChange`) → append + dedup on the natural key.\n" +
+            "- **Yes — replaced** (`Trip`: re-split under a brand-new id) → the reconcile pass you've seen.\n" +
+            "- **Yes — updated in place** (`DVIRLog`: a defect later gains its repair status) → re-pull a trailing window, latest version wins.\n" +
+            "- **Dimensions** (Device, User, Zone, Rule, Diagnostic) → full snapshot; deletions handled by construction.\n\n" +
+            "One row in that list is sneaky: `DriverChange` is itself append-only, but its *arrival* triggers trip re-splits — an immutable event that mutates a different table.",
+        },
+      ],
+      choices: [
+        { label: "🧩 How trips re-split", say: "Remind me how the trip re-split reconcile works.", next: "warehouse-restated" },
+        { label: "✅ Continue to quality checks", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
+        { label: "↩︎ Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
+      ],
+    },
+
+    "warehouse-downsample": {
+      id: "warehouse-downsample",
+      title: "Warehouse · downsample, never at ingest",
+      mode: "warehouse",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Yes — but *where* you downsample decides whether you can ever change your mind.\n\n" +
+            "The API Adapter offers ingest-time sampling: a minimum interval of 1–3600 s per device for LogRecords and StatusData. Effective, and its own docs carry the warning that matters: **what you discard at ingest can never be backfilled.** Pick a 60 s floor today, need 10 s granularity next quarter — that history is gone.\n\n" +
+            "The warehouse version of the same lever is safer: **keep bronze complete, downsample in the silver derive or the gold mart.** Storage is the cheap part (~54 bytes per ping, remember) — what you're really tuning is mart size and scan cost:",
+        },
+        {
+          type: "tool",
+          server: "motherduck",
+          name: "query_rw",
+          write: true,
+          args: { sql: "CREATE OR REPLACE TABLE gold.status_track AS SELECT * FROM silver.status_data QUALIFY row_number() OVER (PARTITION BY DeviceId, DiagnosticId, time_bucket(INTERVAL 30 SECOND, status_datetime_utc) ORDER BY status_datetime_utc) = 1;" },
+          summary: "30-second floor applied in the mart — bronze untouched",
+          result: "silver.status_data 1.9M rows → gold.status_track 412K rows (−78%) · bronze.status_data_raw still complete at 1.9M",
+        },
+        {
+          type: "assistant",
+          text:
+            "A 78% smaller mart for dashboards and daily questions, while **every original row is still one `CREATE TABLE` away** — change the floor to 10 s next quarter and rebuild.\n\n" +
+            "One honest caveat before you lean on that reversibility: it only lasts as long as bronze does. If you later add a **bronze pruning window** (say, a 7–30 day rolling window) to cap storage, then for pruned history the downsample becomes exactly as permanent as the adapter's. So the order of decisions matters: **pick your granularity floor before pruning catches up** with the history you care about.\n\n" +
+            "For this 50-vehicle fleet none of it is forced — the whole warehouse is 35.2 MiB against 10 GB free. This lever exists for the day the fleet is 10× and `status_data` is the reason the storage line moved.",
+        },
+        {
+          type: "warehouse",
+          title: "MotherDuck",
+          compactSubtitle: "Downsampled mart",
+          subtitle: "The mart gets smaller; bronze stays complete — so the decision stays reversible until you start pruning bronze.",
+          metrics: [
+            { label: "status_data", value: "1.9M rows" },
+            { label: "Track mart", value: "412K (−78%)" },
+            { label: "Bronze", value: "untouched" },
+            { label: "Reversible", value: "until pruning" },
+          ],
+          stages: D.warehouse.stages.quality,
+          note: "The adapter samples at ingest and can never backfill; the warehouse samples in the derive and can. Same lever, opposite regret profile.",
+        },
+      ],
+      choices: [
+        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
+        { label: "💵 Back to the cost estimate", say: "Show the cost estimate again.", next: "warehouse-costs" },
+        { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
 
@@ -4355,6 +5360,1195 @@ window.CONVERSATIONS = {
       ],
       choices: [
         { label: "🔔 Start lever #1 — the speed alert", say: "Now set up the fleet-wide posted-speed alert and route it to a manager.", next: "ep2-action" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    /* ================= Spatial analytics · Geotab MCP + CARTO MCP =================
+     * Replays a real session (D.carto): one assistant calling Geotab tools for the
+     * fleet and CARTO tools for the spatial work. Tool names and argument names
+     * follow the real schemas; SQL and values are simplified on purpose, and so is
+     * the map bundle (real field names, most of the Kepler config elided). Two steps
+     * follow CARTO's recommended tool flow rather than the recorded session: the
+     * per-cell query behind the gaps/score maps, and the map step (validate_map
+     * schema → verify → create_map → view_map → get_workspace_info).
+     */
+    "carto-fleet": {
+      id: "carto-fleet",
+      title: "CARTO · Where is my fleet right now?",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "system",
+          text:
+            "Two MCP servers connected: **Geotab** (database `" + C.database + "`, a 50-vehicle Las Vegas demo fleet) " +
+            "and **CARTO** (connection `" + C.connection + "`, which can also query CARTO's public Kontur Population and Spatial Features datasets).",
+        },
+        { type: "assistant", text: "I'll check Geotab's query guidance first, then count the vehicles and get each one's latest position." },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetSkill",
+          args: { intent: "Where is my fleet right now? Current position and driving state of every vehicle." },
+          summary: "safe-query guidance: count first, then DeviceStatusInfo with a property selector",
+          result: "// guidance: GetCountOf before large Gets · always set resultsLimit · DeviceStatusInfo = latest GPS + isDriving per device",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "GetCountOf",
+          args: { database: C.database, typeName: "Device" },
+          summary: C.vehicles + " vehicles",
+          result: String(C.vehicles),
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: {
+            database: C.database,
+            typeName: "DeviceStatusInfo",
+            propertySelector: { fields: ["device", "latitude", "longitude", "isDriving", "dateTime", "isDeviceCommunicating"], isIncluded: true },
+            resultsLimit: C.vehicles,
+          },
+          summary: C.vehicles + " positions · " + C.driving + " driving · " + C.parked + " parked · all communicating",
+          result:
+            '[ { "device": { "id": "b1" }, "latitude": 36.1…, "longitude": -115.1…, "isDriving": true,\n' +
+            '    "dateTime": "2026-10-01T02:0…Z", "isDeviceCommunicating": true }, … ]\n' +
+            "// " + C.vehicles + " records · isDriving: " + C.driving + " true / " + C.parked + " false · " +
+            "isDeviceCommunicating: " + C.vehicles + " true · newest-to-oldest dateTime < 5 min",
+        },
+        cartoMap(
+          "carto-fleet.webp",
+          "Fleet right now · " + C.snapshotLocal,
+          C.driving + " driving (blue) · " + C.parked + " parked (red dots, bigger = more vehicles)",
+          null,
+          {
+            layer: "Vehicles · latest position",
+            // same projection as the other maps, zoomed in ~1.56× (about 32 km across), so 5 km is ~15.6% of the width
+            scaleWidth: "15.6%",
+            source: "Map built in CARTO Builder · © CARTO, © OpenStreetMap contributors",
+          }
+        ),
+        {
+          type: "assistant",
+          text:
+            "**" + C.vehicles + " vehicles: " + C.driving + " driving, " + C.parked + " parked**, all around Las Vegas. " +
+            "All " + C.vehicles + " reported in the last few minutes, so this is current as of " + C.snapshotLocal + ".",
+        },
+      ],
+      choices: [
+        { label: "📍 Group the parked vehicles into hubs", say: "Group the parked vehicles into hubs.", next: "carto-hubs" },
+        { label: "❓ What is CARTO?", say: "What is CARTO, and what's it doing here?", next: "carto-what-is" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-what-is": {
+      id: "carto-what-is",
+      title: "CARTO · What is CARTO?",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "CARTO is a location-analytics platform that runs spatial SQL in your data warehouse. Here I'm using it to " +
+            "group the parked vehicles, look at what's around them, and work out how far you can drive in 15 minutes.",
+        },
+      ],
+      choices: [
+        { label: "📍 Group the parked vehicles into hubs", say: "Group the parked vehicles into hubs.", next: "carto-hubs" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-hubs": {
+      id: "carto-hubs",
+      title: "CARTO · Group parked vehicles into hubs",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'm passing the " + C.parked + " parked positions straight into a query on your CARTO connection, grouped into H3 " +
+            "hexagons at resolution " + C.h3Res + " (about 0.7 km² each). Several vehicles in one hexagon often means a shared yard.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH parked AS (\n" +
+            "  SELECT * FROM UNNEST([STRUCT(-115.1… AS lon, 36.17… AS lat), … ])   -- the " + C.parked + " parked positions from Geotab\n" +
+            ")\n" +
+            "SELECT H3_FROMLONGLAT(lon, lat, " + C.h3Res + ") AS h3, COUNT(*) AS parked\n" +
+            "FROM parked\nGROUP BY h3\nORDER BY parked DESC"
+          ),
+          summary: "5 multi-vehicle cells · " + C.parkedAtHubs + " of " + C.parked + " parked vehicles",
+          result:
+            C.hubs.slice().sort(function (a, b) { return b.parked - a.parked; })
+              .map(function (h) { return "<res-8 cell> · " + h.parked + " parked"; }).join("\n") +
+            "\n// + " + (C.parked - C.parkedAtHubs) + " cells with a single vehicle",
+        },
+        cartoMap(
+          "carto-hubs.webp",
+          "Five hubs · parked vehicles per H3 cell",
+          C.parkedAtHubs + " of " + C.parked + " parked vehicles sit in five cells",
+          cartoHubLabels(function (h) { return h.name + " · " + h.parked; })
+        ),
+        {
+          type: "assistant",
+          text:
+            "**Five hubs.** " + C.parkedAtHubs + " of the " + C.parked + " parked vehicles are in one of five spots; the other " +
+            (C.parked - C.parkedAtHubs) + " are parked alone. I've named the hubs by where they sit on the map.\n\n" +
+            "This is one snapshot at about 7 pm, though, so I can't be sure these are yards. Some could be a customer site " +
+            "or a shared lot. A few weeks of parking data, or your depot list, would settle it.\n\n" +
+            "With the hubs in place we can plan the next one. I can start with what's around each hub and how many people " +
+            "each one reaches, or go straight to your customers.",
+        },
+      ],
+      choices: [
+        { label: "🏙️ What's around each hub?", say: "What's around each hub?", next: "carto-context" },
+        {
+          label: "🧾 Plan the next hub around my customers",
+          say: "Skip ahead: I want the next hub to serve my customers. Can my own trips show where they are?",
+          next: "carto-trips",
+        },
+        { label: "❓ What is CARTO?", say: "What is CARTO, and what's it doing here?", next: "carto-what-is" },
+      ],
+    },
+
+    "carto-context": {
+      id: "carto-context",
+      title: "CARTO · What's around each hub?",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll count residents (Kontur Population) plus shops, restaurants, tourism and night-time light (Spatial Features) " +
+            "within " + C.contextRings + " hexagon rings of each hub, about 2.5 km out.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH ring AS (\n" +
+            "  SELECT hub, cell FROM hubs, UNNEST(H3_KRING(h3, " + C.contextRings + ")) AS cell   -- hubs: the five cells from the last query\n" +
+            ")\n" +
+            "SELECT hub, SUM(k.population) AS residents, SUM(sf.retail) AS retail,\n" +
+            "       SUM(sf.food_drink) AS food_drink, SUM(sf.tourism) AS tourism, AVG(sf.night_light) AS night_light\n" +
+            "FROM ring\n" +
+            "LEFT JOIN kontur_population k ON k.h3 = ring.cell\n" +
+            "LEFT JOIN spatial_features sf ON sf.h3 = ring.cell\n" +
+            "GROUP BY hub"
+          ),
+          summary: "5 hubs × residents, retail, food & drink, tourism, night light",
+          result: C.hubs.map(function (h) {
+            return h.name + " · residents " + h.residentsK.toFixed(1) + "k · retail " + h.retail.toLocaleString("en-US") +
+              " · food " + h.food.toLocaleString("en-US") + " · tourism " + h.tourism + " · night light " + h.nightLight;
+          }).join("\n"),
+        },
+        cartoMap(
+          "carto-hubs.webp",
+          "What kind of place each hub is",
+          "Darker hexagons = more residents · labels = what mostly surrounds each hub within ~2.5 km: homes, shops and restaurants, or a mix",
+          // these labels are longer than the other hub maps', so they get their own nudges to stay apart at phone widths:
+          // Central up, West and South down, and South-east lower still, on the left of its point
+          C.hubs.map(function (h) {
+            var nudge = { West: [0, 1.4, false], Central: [0, -5.5, false], South: [0, 1, true], "South-east": [0, 3.6, true] }[h.name] || [0, 0, false];
+            return { label: h.name + " · " + h.kind, x: h.x + nudge[0], y: h.y + nudge[1], flip: nudge[2] };
+          })
+        ),
+        {
+          type: "chart",
+          title: "Homes in the north and west, shops and nightlife in the south · within ~2.5 km of each hub",
+          columns: ["Residents (k)", "Shops", "Restaurants", "Tourism", "Night light"],
+          // homes → shops, so the pattern reads as a diagonal
+          rows: ["North", "West", "Central", "South-east", "South"].map(function (name) {
+            var h = hub(name);
+            return { label: h.name, values: [Math.round(h.residentsK), h.retail, h.food, h.tourism, h.nightLight] };
+          }),
+          note: "Darker = higher than the other hubs on that measure · tourism = tourism places · night light = satellite brightness index",
+        },
+        {
+          type: "assistant",
+          text:
+            "**Each hub sits in a different kind of place.** **South** is the commercial core: " + shopsPerK(hub("South")) +
+            " shops and restaurants for every 1,000 residents, plus the most tourism and night-time light. **North** and **West** are mostly homes: " +
+            "~" + Math.round(hub("North").residentsK) + "k and ~" + Math.round(hub("West").residentsK) + "k residents nearby, but only " +
+            shopsPerK(hub("North")) + " and " + shopsPerK(hub("West")) + " shops and restaurants per 1,000 of them. Central and South-east are a mix.\n\n" +
+            "That shapes what each hub is good for: the residential ones for home deliveries, South for drops to shops, restaurants and hotels.",
+        },
+      ],
+      choices: [
+        { label: "🚗 Who can each hub reach in 15 min?", say: "How many people can each hub reach in 15 minutes by car?", next: "carto-reach" },
+      ],
+    },
+
+    "carto-reach": {
+      id: "carto-reach",
+      title: "CARTO · 15-minute reach per hub",
+      mode: "carto",
+      events: [
+        { type: "assistant", text: "Roads decide how far you actually get, so I'll get a 15-minute drive-time area for each hub, then count the people inside." },
+      ].concat(
+        C.hubs.map(function (h) { return cartoIsoline("<" + h.name + " hub lon>,<lat>", h.name + " · 15-min drive area (GeoJSON)"); }),
+        [
+          {
+            type: "assistant",
+            text: "Those come back as GeoJSON, so I'll simplify the five polygons a little, drop them into the query as geometry, and count residents inside each.",
+          },
+          {
+            type: "tool",
+            server: "carto",
+            name: "execute_query",
+            args: cartoSql(
+              "WITH isolines AS (\n" +
+              "  SELECT 'West' AS hub, ST_GEOGFROMGEOJSON('{\"type\":\"MultiPolygon\",\"coordinates\":[…]}') AS geom\n" +
+              "  UNION ALL …   -- the other four drive areas\n" +
+              ")\n" +
+              "SELECT i.hub, SUM(p.population) AS residents\n" +
+              "FROM kontur_population p JOIN isolines i ON ST_CONTAINS(i.geom, H3_CENTER(p.h3))\n" +
+              "GROUP BY i.hub\n" +
+              "UNION ALL\n" +
+              "SELECT 'any hub', SUM(population) FROM kontur_population p\n" +
+              "WHERE EXISTS (SELECT 1 FROM isolines i WHERE ST_CONTAINS(i.geom, H3_CENTER(p.h3)))"
+            ),
+            summary: C.coverage.residents + " residents within 15 min · " + C.coverage.pct + "% of " + C.coverage.studyArea,
+            result:
+              C.hubs.slice().sort(function (a, b) { return b.reach15k - a.reach15k; })
+                .map(function (h) { return h.name + " · " + h.reach15k + "k"; }).join("\n") +
+              "\nany hub · " + C.coverage.residents + " (" + C.coverage.pct + "%)" +
+              "\n// study area: " + C.coverage.studyAreaResidents.toLocaleString("en-US") + " residents in " +
+              C.coverage.studyAreaCells.toLocaleString("en-US") + " " + C.coverage.studyAreaDef,
+          },
+          cartoMap(
+            "carto-isolines.webp",
+            "15-minute drive areas from each hub",
+            C.coverage.residents + " residents (" + C.coverage.pct + "%) within 15 min of a hub",
+            cartoHubLabels(function (h) { return h.name; }),
+            { note: "drive areas simplified · snapshot " + C.snapshot }
+          ),
+          {
+            type: "chart",
+            title: "Residents reachable in 15 min by car (thousands)",
+            bars: C.hubs.slice().sort(function (a, b) { return b.reach15k - a.reach15k; })
+              .map(function (h) { return { label: h.name, value: h.reach15k }; }),
+          },
+          {
+            type: "assistant",
+            text:
+              "**About " + C.coverage.residents + " people live within a 15-minute drive of at least one hub**, roughly " +
+              C.coverage.pct + "% of the " + C.coverage.studyArea + " in the area I'm counting: " + C.coverage.studyAreaDef + ". " +
+              "Central reaches the most (680k), North the least (405k).\n\n" +
+              "The per-hub numbers add up to more than " + C.coverage.residents + " because the drive areas overlap.",
+          },
+        ]
+      ),
+      choices: [
+        { label: "➕ Where would a sixth hub help most?", say: "Where would a sixth hub add the most reach?", next: "carto-site" },
+      ],
+    },
+
+    "carto-site": {
+      id: "carto-site",
+      title: "CARTO · Where would a sixth hub add the most reach?",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Checking drive times for every possible spot would take hundreds of calls, so I'll do it in two steps. First a " +
+            "quick shortlist by straight-line distance: call a neighborhood uncovered if it's more than " + C.sixthHub.gapKm +
+            " km from the nearest hub, and score each possible spot by how many uncovered residents live within " +
+            C.sixthHub.gapKm + " km of it. Then a proper drive-time check on the winner.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ),   -- the five hub cells\n" +
+            "study AS (   -- populated cells within " + C.coverage.rings + " rings of central Las Vegas\n" +
+            "  SELECT h3, population FROM kontur_population\n" +
+            "  WHERE population > 0\n" +
+            "    AND h3 IN UNNEST(H3_KRING(H3_FROMLONGLAT(" + C.coverage.center.lon + ", " + C.coverage.center.lat + ", " + C.h3Res + "), " + C.coverage.rings + "))\n" +
+            "), uncovered AS (   -- more than " + C.sixthHub.gapKm + " km in a straight line from the nearest hub\n" +
+            "  SELECT s.h3, s.population FROM study s\n" +
+            "  WHERE (SELECT MIN(ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(h.h3))) FROM hubs h) > " + C.sixthHub.gapKm * 1000 + "\n" +
+            ")\n" +
+            "SELECT c.h3, ST_Y(H3_CENTER(c.h3)) AS lat, ST_X(H3_CENTER(c.h3)) AS lon,\n" +
+            "       SUM(u.population) AS uncovered_within_8km\n" +
+            "FROM study c JOIN uncovered u\n" +
+            "  ON ST_DISTANCE(H3_CENTER(c.h3), H3_CENTER(u.h3)) <= " + C.sixthHub.gapKm * 1000 + "\n" +
+            "WHERE c.population > " + C.coverage.minResidents + "   -- candidate cells\n" +
+            "GROUP BY c.h3\nORDER BY uncovered_within_8km DESC\nLIMIT 5"
+          ),
+          summary: "top 5 cells · " + C.sixthHub.within8km + " uncovered residents within " + C.sixthHub.gapKm + " km of #1",
+          result: C.sixthHub.candidates.map(function (c) {
+            return c.rank + " · " + c.h3 + " · " + c.lat.toFixed(4) + ", " + c.lon.toFixed(4) + " · " + c.uncovered8km.toLocaleString("en-US");
+          }).join("\n"),
+        },
+        { type: "assistant", text: "To see why those five win, I'll pull every cell with its distance to the nearest hub and its score:" },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ), study AS ( … ), uncovered AS ( … )   -- same as above\n" +
+            "SELECT s.h3, s.population,\n" +
+            "  (SELECT MIN(ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(h.h3))) FROM hubs h) / 1000 AS dist_km_to_nearest_hub,\n" +
+            "  (SELECT SUM(u.population) FROM uncovered u\n" +
+            "     WHERE ST_DISTANCE(H3_CENTER(s.h3), H3_CENTER(u.h3)) <= " + C.sixthHub.gapKm * 1000 + ") AS score\n" +
+            "FROM study s"
+          ),
+          summary: C.coverage.studyAreaCells.toLocaleString("en-US") + " cells · distance to nearest hub + score",
+          result:
+            C.coverage.studyAreaCells.toLocaleString("en-US") + " rows · h3, population, dist_km_to_nearest_hub, score\n" +
+            "// top score: " + C.sixthHub.candidates[0].h3 + " · " + C.sixthHub.candidates[0].uncovered8km.toLocaleString("en-US") +
+            " (candidate #1)",
+        },
+        {
+          type: "assistant",
+          text:
+            "Red cells are more than " + C.sixthHub.gapKm + " km from every hub, so they count as uncovered. The second map scores " +
+            "each spot by how many of those residents live within " + C.sixthHub.gapKm + " km of it.",
+        },
+        cartoMap(
+          "carto-gaps.webp",
+          "Gaps · more than " + C.sixthHub.gapKm + " km from the nearest hub",
+          "Red = populated cells more than " + C.sixthHub.gapKm + " km in a straight line from every hub · dashed rings = " +
+            C.sixthHub.gapKm + " km around each hub",
+          null,
+          { layer: "H3 res 8 · uncovered (> " + C.sixthHub.gapKm + " km)" }
+        ),
+        cartoMap(
+          "carto-site-score.webp",
+          "Candidate score · uncovered residents within " + C.sixthHub.gapKm + " km",
+          "Darker = more uncovered residents within " + C.sixthHub.gapKm + " km · top five candidates circled",
+          [{ label: "Top 5", x: C.sixthHub.x, y: C.sixthHub.y }],
+          { layer: "H3 res 8 · candidate score" }
+        ),
+        {
+          type: "assistant",
+          text:
+            "The top five are neighboring cells within about 2 km of each other, and their scores are within 2%. So the " +
+            "answer is this part of town, not one exact cell. I'll check the top one by drive time:",
+        },
+        cartoIsoline(C.sixthHub.lon.toFixed(4) + "," + C.sixthHub.lat.toFixed(4), "Top cell · 15-min drive area (GeoJSON)", 3),
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH isolines AS ( … ),   -- the five existing drive areas, inlined as before\n" +
+            "new_area AS (SELECT ST_GEOGFROMGEOJSON('{\"type\":\"MultiPolygon\",\"coordinates\":[…]}') AS geom)\n" +
+            "-- residents inside the new drive area and outside all five existing ones\n" +
+            "SELECT SUM(population) AS newly_covered FROM kontur_population p, new_area n\n" +
+            "WHERE ST_CONTAINS(n.geom, H3_CENTER(p.h3))\n" +
+            "  AND NOT EXISTS (SELECT 1 FROM isolines i WHERE ST_CONTAINS(i.geom, H3_CENTER(p.h3)))"
+          ),
+          summary: C.sixthHub.newlyCovered + " residents newly covered · coverage " + C.coverage.pct + "% → " + C.sixthHub.pctWith + "%",
+          result: "newly_covered · " + C.sixthHub.newlyCoveredExact.toLocaleString("en-US") + "\n// coverage with six hubs: " + C.sixthHub.pctWith + "%",
+        },
+        cartoMap(
+          "carto-sixth-hub.webp",
+          "Proposed sixth hub · 15-minute drive area",
+          C.sixthHub.newlyCovered + " residents newly within 15 min · coverage → " + C.sixthHub.pctWith + "%",
+          [{ label: "Hub 6", x: C.sixthHub.x, y: C.sixthHub.y }],
+          { note: "drive areas simplified · snapshot " + C.snapshot }
+        ),
+        {
+          type: "assistant",
+          text:
+            "**The best area is just east of Central, around " + C.sixthHub.lat.toFixed(2) + "°N, " + Math.abs(C.sixthHub.lon).toFixed(2) +
+            "°W.** A hub there would put **" + C.sixthHub.newlyCovered.replace("+", "") + " more people** within a 15-minute drive, " +
+            "taking coverage from " + C.coverage.pct + "% to " + C.sixthHub.pctWith + "%.\n\n" +
+            "The " + C.sixthHub.within8km + " and the " + C.sixthHub.newlyCovered.replace("+", "") + " measure different things. " +
+            C.sixthHub.within8km + " is people more than " + C.sixthHub.gapKm + " km in a straight line from any hub who live within " +
+            C.sixthHub.gapKm + " km of the site. " + C.sixthHub.newlyCovered.replace("+", "") + " is people inside the new " +
+            "15-minute drive area who aren't already inside one of the five existing ones. (The two yardsticks disagree today too: " +
+            C.sixthHub.gapKm + " km in a straight line from a hub covers " + C.coverage.straightLine8kmPct + "%, the 15-minute " +
+            "drive areas about " + C.coverage.pct + "%.)\n\n" +
+            "That's the answer if the new hub should serve the most residents. A different goal moves it: " +
+            "higher-income areas, busy shops and restaurants, or your own customers.",
+        },
+      ],
+      choices: [
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map" },
+        {
+          label: "💰 Weight it by income or shops instead",
+          say: "What if the new hub should serve higher-income areas, or busy shops and restaurants, instead of just the most people?",
+          next: "carto-data",
+        },
+        {
+          label: "🧾 Weight it by my customers instead",
+          say: "What if the new hub should serve my customers instead? Can my own trips show where they are?",
+          next: "carto-trips",
+        },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+      ],
+    },
+
+    "carto-explore": {
+      id: "carto-explore",
+      title: "CARTO · What can I do with my fleet?",
+      db: C.database,
+      mode: "carto",
+      events: [
+        { type: "assistant", text: "Let me see what the CARTO side gives you before I suggest anything." },
+        {
+          type: "tool",
+          server: "carto",
+          name: "explore_data",
+          args: { method: "list_connections" },
+          summary: "1 connection · " + C.connection + " (BigQuery)",
+          result: C.connection + " · BigQuery · spatial functions on · Data Observatory (US) attached",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "calculate_isolines",
+          args: { operation: "capabilities" },
+          summary: "drive-time areas and routing on · " + X.quotaLeft.toLocaleString("en-US") + " of " + X.quota.toLocaleString("en-US") + " location-service calls left",
+          result:
+            '{ "providers": { "geocoding": "tomtom", "isolines": "traveltime", "routing": "tomtom" },\n' +
+            '  "quota": { "annual_quota": ' + X.quota + ', "used_quota": ' + X.quotaUsed + ', "remaining_quota": ' + X.quotaLeft + " } }",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "list_datasets", countries: "usa", licenses: "public", categories: "demographics", limit: 1 },
+          summary: X.publicDemographics + " public demographics datasets for the US",
+          result: '{ "totalResults": ' + X.publicDemographics + ", … }",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "list_datasets", countries: "usa", licenses: "premium", limit: 1 },
+          summary: X.premiumUsa + " premium datasets for the US (all categories)",
+          result: '{ "totalResults": ' + X.premiumUsa + ", … }\n// premium needs a commercial arrangement",
+        },
+        {
+          type: "assistant",
+          text:
+            "You have one CARTO connection that can run spatial SQL, a drive-time service with almost all of its yearly quota left, and a public catalog of about " + X.publicDemographics + " demographics datasets (plus premium ones if you buy them).\n\n" +
+            "With Geotab alongside it, that's exactly the right first question: **where should the new depot go?** It takes two steps:\n" +
+            "1. **Find your hubs:** where the fleet is right now, and where the parked vehicles gather.\n" +
+            "2. **Choose who the new hub should serve:** the most residents within a 15-minute drive, higher-income areas or busy shops and restaurants, or your own customers. Each goal puts the hub somewhere different.\n\n" +
+            "Let's start with step 1.",
+        },
+      ],
+      choices: [
+        { label: "📍 Start: where is my fleet right now?", say: "Let's start. Where is my fleet right now?", next: "carto-fleet" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    // TODO(carto): add a map of where the trips end (the hubs plus the sixth place) on the
+    // shared framing. Needs the real stop points: one `Get Trip` (stopPoint) pull on
+    // demo_fh_vegas8, stored in D.carto.explore.trips. Not invented here on purpose.
+    "carto-trips": {
+      id: "carto-trips",
+      title: "CARTO · Use my own trips as the goal",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Where your own trips end shows what your vehicles actually do. Trips are high-volume, so I'll look at a short window first.",
+        },
+        {
+          type: "tool",
+          server: "geotab",
+          name: "Get",
+          args: {
+            database: C.database,
+            typeName: "Trip",
+            search: { fromDate: X.trips.from, toDate: X.trips.to },
+            propertySelector: { fields: ["stopPoint"], isIncluded: true },
+            resultsLimit: 2000,
+          },
+          summary: X.trips.count + " trips in " + X.trips.hours + " hours · each with its stop point",
+          result: '[ { "stopPoint": { "x": -115.28…, "y": 36.29… } }, { "stopPoint": { "x": -115.18…, "y": 36.09… } }, … ]\n// ' + X.trips.count + " records",
+        },
+        {
+          type: "assistant",
+          text:
+            "**Your trips confirm the hubs.** All " + X.trips.count + " stop points land on " + X.trips.places + " places: the five hubs we found from parked vehicles, plus one more, so they're real working locations.\n\n" +
+            "They can't tell me who your customers are, though: a stop point is a place, not an account, and here they all end at your own sites. " +
+            "Customer sites saved as zones in MyGeotab would work, but the accounts and their orders are most likely in your CRM, so that's the quickest place to start.",
+        },
+      ],
+      choices: [
+        { label: "🧾 Pull my customers from Salesforce", say: "My customers are in Salesforce. Can you pull them and use those?", next: "carto-customers" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-customers": {
+      id: "carto-customers",
+      title: "CARTO · Use my Salesforce customers as the goal",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text: "Your customers live in Salesforce, so I'll pull each account's delivery address and how many orders it placed in the last 90 days.",
+        },
+        {
+          type: "tool",
+          server: "salesforce",
+          name: "query",
+          args: {
+            soql:
+              "SELECT Account.Name, Account.ShippingStreet, Account.ShippingCity, Account.ShippingState, COUNT(Id) orders\n" +
+              "FROM Order WHERE EffectiveDate = LAST_N_DAYS:90\n" +
+              "GROUP BY Account.Name, Account.ShippingStreet, Account.ShippingCity, Account.ShippingState ORDER BY COUNT(Id) DESC",
+          },
+          summary: Cu.list.length + " accounts · " + Cu.orders + " orders in 90 days",
+          result: Cu.list.slice().sort(function (a, b) { return b.orders - a.orders; }).slice(0, 4).map(function (c) {
+            return c.name + " · " + c.address + " · " + c.orders;
+          }).join("\n") + "\n// … " + (Cu.list.length - 4) + " more",
+        },
+        {
+          type: "system",
+          text: "The Salesforce call and these customers are **illustrative**: made-up companies and order counts, standing in for your CRM. The geocoding and the site search below ran for real against CARTO.",
+        },
+        { type: "assistant", text: "Addresses are just text, so I'll turn them into coordinates in one call." },
+        {
+          type: "tool",
+          server: "carto",
+          name: "geocode",
+          args: { operation: "geocode", addresses: Cu.list.map(function (c) { return c.address; }), country: "US", limit: 1 },
+          summary: Cu.list.length + " of " + Cu.list.length + " matched · all at street level (confidence 1.0)",
+          result: Cu.list.slice(0, 3).map(function (c) {
+            return c.address + " → " + c.lat.toFixed(4) + ", " + c.lon.toFixed(4) + " · confidence 1";
+          }).join("\n") + "\n// … " + (Cu.list.length - 3) + " more, all confidence 1",
+        },
+        {
+          type: "assistant",
+          text:
+            "Now the same site search with orders as the goal. I'll measure how far each order is from the nearest hub, then try every populated cell as a new hub and keep the one that shortens that distance the most.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ),   -- the five hubs from before\n" +
+            "cust AS (SELECT name, ST_GEOGPOINT(lon, lat) AS pt, orders FROM UNNEST([ … ]))   -- the geocoded accounts\n" +
+            "-- baseline: SUM(orders * distance_to_nearest_hub) / SUM(orders)\n" +
+            "-- for each candidate cell: the same, with LEAST(distance_to_nearest_hub, distance_to_candidate)\n" +
+            "SELECT … ORDER BY new_avg_km LIMIT 3"
+          ),
+          summary: "average distance " + Cu.baselineKm + " km → " + Cu.bestKm + " km with the best new hub",
+          result:
+            "baseline · " + Cu.baselineKm + " km (order-weighted, " + Cu.orders + " orders)\n" +
+            "best new hub · " + Cu.best.h3 + " · " + Cu.best.lat.toFixed(4) + ", " + Cu.best.lon.toFixed(4) + " · " + Cu.bestKm + " km\n" +
+            "// straight-line distance, not drive time",
+        },
+        cartoMap(
+          "carto-customers.webp",
+          "Your accounts and the nearest hub",
+          "Red = account more than 5 km from its nearest hub · green = within 5 km · dot size = orders · grey dashes = trip to the nearest hub today · navy lines = trip to the proposed hub",
+          [
+            { label: "Henderson · 37% of orders", x: Cu.mapLabels.cluster.x, y: Cu.mapLabels.cluster.y },
+            { label: "Proposed hub · Green Valley", x: Cu.mapLabels.hub.x, y: Cu.mapLabels.hub.y },
+          ],
+          {
+            layer: "Accounts · distance to nearest hub",
+            source: "Drawn by the assistant from this session's CARTO query results · customers are illustrative",
+            note: "straight-line distances",
+          }
+        ),
+        {
+          type: "assistant",
+          text:
+            "**A new hub near Green Valley in Henderson (" + Cu.best.lat.toFixed(2) + "°N, " + Math.abs(Cu.best.lon).toFixed(2) + "°W) cuts the average distance an order travels from " +
+            Cu.baselineKm + " km to " + Cu.bestKm + " km, about " + Cu.reductionPct + "% less.** " +
+            "The map shows why: your Henderson accounts are 37% of orders and sit 6 to 10 km from the nearest hub, while the downtown and Summerlin customers are already within about 2.5 km of one.\n\n" +
+            "This is where you already sell, though. To see where you could sell more, I'd compare it with where higher-income residents live.",
+        },
+      ],
+      choices: [
+        { label: "🔍 Where could I sell more?", say: "That's where I sell today. Where could I sell more?", next: "carto-potential" },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-potential": {
+      id: "carto-potential",
+      title: "CARTO · Where could I sell more?",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Orders show where you already sell. To find where you could sell more, I'll estimate the higher-income residents in each hexagon from two public datasets: " +
+            "Kontur's resident counts times the share of households earning $100k or more in that census tract (US Census, American Community Survey). " +
+            "Then I'll keep only those who live more than " + P.radiusKm + " km from any of your current customers. That's your white space. " +
+            "Finally I'll score each possible hub by how much of it lies within " + C.sixthHub.gapKm + " km.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH cust AS ( … ),   -- the 12 geocoded accounts\n" +
+            "cells AS (   -- populated Kontur cells within ~50 km of central Las Vegas, with hi_income = residents * tract share of households earning $100k+ (ACS DP03)\n" +
+            "  SELECT h3, hi_income, pt, MIN(ST_DISTANCE(pt, cust.pt)) AS d_cust FROM … GROUP BY h3, hi_income, pt\n" +
+            ")\n" +
+            "-- for each candidate cell: SUM(hi_income) of cells within " + C.sixthHub.gapKm + " km that are more than " + P.radiusKm + " km from every customer\n" +
+            "SELECT h3, white_space FROM … ORDER BY white_space DESC LIMIT 3"
+          ),
+          summary: P.whiteSpace.toLocaleString("en-US") + " of " + P.hiIncome.toLocaleString("en-US") + " higher-income residents (" + P.whiteSpacePct + "%) are more than " + P.radiusKm + " km from any customer",
+          result:
+            "higher-income residents · " + P.hiIncome.toLocaleString("en-US") + "\n" +
+            "more than " + P.radiusKm + " km from any customer · " + P.whiteSpace.toLocaleString("en-US") + " (" + P.whiteSpacePct + "%)\n" +
+            "best cell for a new hub · " + P.best.h3 + " · " + P.best.lat.toFixed(4) + ", " + P.best.lon.toFixed(4) + " · " + P.best.score.toLocaleString("en-US") + "\n" +
+            "customers' pick (Green Valley) · " + Cu.best.h3 + " · " + P.atCustomerPick.toLocaleString("en-US"),
+        },
+        cartoMap(
+          "carto-potential.webp",
+          "Where you sell today vs. where you could sell more",
+          "Orange = higher-income residents more than " + P.radiusKm + " km from any customer (darker = more) · green dots = customers (bigger = more orders) · blue = hubs · dashed rings = " +
+            C.sixthHub.gapKm + " km around each hub pick",
+          [
+            { label: "Serve · Green Valley", x: P.serveXY.x, y: P.serveXY.y },
+            { label: "Grow · South-west", x: P.growXY.x, y: P.growXY.y, flip: true },
+          ],
+          {
+            layer: "H3 res 8 · white space",
+            source: "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population (H3 res 8) · income: ACS 2015–2019 by census tract",
+            note: "customers are illustrative",
+          }
+        ),
+        {
+          type: "chart",
+          title: "White-space higher-income residents within " + C.sixthHub.gapKm + " km of the hub",
+          bars: [
+            { label: "Customers' pick (Henderson)", value: P.atCustomerPick },
+            { label: "White-space pick (south-west)", value: P.best.score },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "**Two different hubs, and both are useful.** Green Valley in Henderson serves the customers you have, cutting the average order trip by " + Cu.reductionPct + "%. " +
+            "The south-west side of the valley (" + P.best.lat.toFixed(2) + "°N, " + Math.abs(P.best.lon).toFixed(2) + "°W) has about " + Math.round(P.best.score / P.atCustomerPick) +
+            " times as many higher-income residents with no customer nearby (" + P.best.score.toLocaleString("en-US") + " vs " + P.atCustomerPick.toLocaleString("en-US") + "), so that's where you'd grow.\n\n" +
+            P.whiteSpacePct + "% of the higher-income residents in the area live more than " + P.radiusKm + " km from any account, so there's room. " +
+            "Many fleets use the first hub to serve now and the second as the base for a sales push.",
+        },
+      ],
+      choices: [
+        { label: "🗺️ Put it on a map I can share", say: "Put it on a map I can share.", next: "carto-map-sites" },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-data": {
+      id: "carto-data",
+      title: "CARTO · Finding data to weight by",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "Kontur only counts residents, so for income or shops I need other data. Let me check what's on your CARTO connection first.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "explore_data",
+          args: { method: "search", connection_name: C.connection, query: "kontur" },
+          summary: "no match on this connection",
+          result: "// 0 results · searched 3 containers: organization data, Data Observatory subscriptions, demo data",
+        },
+        {
+          type: "assistant",
+          text:
+            "Nothing is subscribed on your account, but CARTO's public datasets can be queried directly, which is how I read the Kontur residents. " +
+            "Let me search the catalog for what I want to measure.",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "search_variables", body: { query: "households by income bracket, census block group", params: { countries: ["usa"] }, neighbors: 5 } },
+          summary: "5 matches · best: Households By Income Quintiles (Michael Bauer International)",
+          result:
+            "Households By Income Quintiles · Blockgroups · HH_I4: households in 4th income quintile\n" +
+            "Households By Income Quintiles · PC 5-digit · …\n" +
+            "Parcels · Regrid · census_blockgroup\n" +
+            "// 5 matches",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: { method: "get_dataset", id: "mbi_households__60466314" },
+          summary: "license: Premium data",
+          result: '{ "name": "Households By Income Quintiles - United States of America (Blockgroups)", "licenseName": "Premium data", … }\n// premium = needs a commercial arrangement',
+        },
+        {
+          type: "assistant",
+          text: "The best match is licensed premium data, so it needs a commercial arrangement with CARTO. Shops and restaurants are free: they're in CARTO's public Spatial Features table.",
+        },
+      ],
+      choices: [
+        {
+          label: "💸 Is there free income data?",
+          say: "Premium is out of my budget. Is there something free I can use for income instead?",
+          next: "carto-data-free",
+        },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-data-free": {
+      id: "carto-data-free",
+      title: "CARTO · Free income data from the Census",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text: "Yes. The US Census Bureau's American Community Survey is public and free to use, so I'll go with that:",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "search_data_observatory",
+          args: {
+            method: "search_variables",
+            body: { query: "households with income $100,000 to $149,999 and $150,000 or more", params: { countries: ["usa"], providers: ["usa_acs"] }, neighbors: 5 },
+          },
+          summary: "ACS DP03 Selected Economic Characteristics · census tract · public",
+          result:
+            "DP03_0059E: households earning $100,000 to $149,999\n" +
+            "// also DP03_0060E ($150,000 to $199,999), DP03_0061E ($200,000 or more) and DP03_0051E (total households)\n" +
+            "// available by census tract, ZIP code area, county, state …",
+        },
+        {
+          type: "assistant",
+          text:
+            "Tracts are the finest level. They are polygons, not hexagons, so each cell gets the tract it sits in. I'll check how well they match:",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "-- for each H3 cell: find its census tract (ST_CONTAINS on the cell center), then that tract's ACS row\n" +
+            "SELECT COUNT(*) AS cells, COUNTIF(a.geoid IS NOT NULL) AS with_acs, …\n" +
+            "FROM cells c LEFT JOIN tracts t ON ST_CONTAINS(t.geom, c.pt)\n" +
+            "LEFT JOIN `carto-do-public-data.usa_acs.demographics_dp3economic_usa_censustract_<year>_5year_<year>` a ON a.geoid = t.geoid"
+          ),
+          summary: "2019 data: " + O.acsMatch.y2019 + "% of residents matched to a tract with income data",
+          result:
+            "2019 ACS · " + O.acsMatch.y2019 + "% of residents matched\n" +
+            "// the 2019 tract boundaries on the connection are the same vintage as the 2019 ACS tables",
+        },
+        {
+          type: "assistant",
+          text:
+            "Every cell matches, since the 2019 tables use the same tract boundaries as the ones on your connection, " +
+            "and I'll join the shops and restaurants from Spatial Features by cell.\n\n" +
+            "A tip for next time: search the catalog by what you want to measure, check the license, and test the join before relying on it.\n\n" +
+            "So now I can score the sixth hub three ways: by **residents** (as before), by **higher-income residents**, and by **shops and restaurants**.",
+        },
+      ],
+      choices: [
+        {
+          label: "⚖️ Compare residents, income and shops",
+          say: "Run the sixth-hub search three ways (residents, higher-income residents, and shops and restaurants) and show me where each one lands.",
+          next: "carto-objective",
+        },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-objective": {
+      id: "carto-objective",
+      title: "CARTO · Optimize for something other than residents",
+      db: C.database,
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll run the same search with three different weights: residents (as before), **higher-income residents** (a demographic) and " +
+            "**shops and restaurants** (a stand-in for daytime foot traffic).",
+        },
+        {
+          type: "tool",
+          server: "carto",
+          name: "execute_query",
+          args: cartoSql(
+            "WITH hubs AS ( … ),   -- the five hubs from before\n" +
+            "cells AS (   -- the same " + O.study.cells.toLocaleString("en-US") + " populated cells\n" +
+            "  SELECT k.geoid AS h3, k.population,\n" +
+            "         sf.retail + sf.food_drink AS poi,                        -- Spatial Features\n" +
+            "         k.population * (hh_100k_plus / households) AS hi_income  -- ACS DP03 2019, by census tract\n" +
+            "  FROM … kontur … LEFT JOIN … spatialfeatures … LEFT JOIN … acs …\n" +
+            "), uncovered AS (SELECT * FROM cells WHERE dist_to_nearest_hub > " + C.sixthHub.gapKm * 1000 + ")\n" +
+            "-- for each candidate cell: SUM of each weight over uncovered cells within " + C.sixthHub.gapKm + " km; keep the top cell per goal"
+          ),
+          summary: "3 goals · best cell for each",
+          result:
+            "residents · " + O.people.h3 + " · " + O.people.lat.toFixed(4) + ", " + O.people.lon.toFixed(4) + " · same cell as the sixth-hub search\n" +
+            "higher-income residents · " + O.income.h3 + " · " + O.income.lat.toFixed(4) + ", " + O.income.lon.toFixed(4) + " · " + O.income.score.toLocaleString("en-US") + "\n" +
+            "shops + restaurants · " + O.poi.h3 + " · " + O.poi.lat.toFixed(4) + ", " + O.poi.lon.toFixed(4) + " · " + O.poi.score.toLocaleString("en-US") + "\n" +
+            "// study area: " + O.study.cells.toLocaleString("en-US") + " populated cells · " + O.study.residents.toLocaleString("en-US") + " residents · " +
+            O.study.poi.toLocaleString("en-US") + " shops and restaurants",
+        },
+        cartoIsoline(
+          O.income.lon.toFixed(4) + "," + O.income.lat.toFixed(4),
+          "Higher-income winner · 15-min drive area (GeoJSON)",
+          3
+        ),
+        // TODO(carto): the higher-income winner's drive-time area above is never shown or
+        // counted. Either draw it on this map and report residents newly covered (as
+        // carto-site does), or drop the call.
+        cartoMap(
+          "carto-goals.webp",
+          "Three goals, three different sixth hubs",
+          "Red = populated cells more than " + C.sixthHub.gapKm + " km from every hub · diamonds = best new hub per goal: " +
+            "navy = residents, purple = shops + restaurants, orange = higher-income residents",
+          // labels sit left of each diamond; the two south-east ones are nudged apart so they don't touch on narrow screens
+          [
+            { label: O.people.label, x: O.people.x - 1.5, y: O.people.y, flip: true },
+            { label: O.poi.label, x: O.poi.x - 1.5, y: O.poi.y - 2.5, flip: true },
+            { label: O.income.label, x: O.income.x - 1.5, y: O.income.y + 2.5, flip: true },
+          ],
+          {
+            layer: "H3 res 8 · best cell per goal",
+            source: "Drawn by the assistant from this session's CARTO query results · residents: Kontur Population · income: ACS 2015–2019 by census tract · shops: Spatial Features",
+          }
+        ),
+        {
+          type: "assistant",
+          text:
+            "**The goal changes the answer.** For residents it's still just east of Central (" + O.people.lat.toFixed(2) + "°N, " + Math.abs(O.people.lon).toFixed(2) + "°W). " +
+            "For higher-income residents it moves to the south-east of the valley, toward Henderson (" + O.income.lat.toFixed(2) + "°N, " + Math.abs(O.income.lon).toFixed(2) + "°W), about 17 km away, " +
+            "and shops and restaurants land about 3 km from that.\n\n" +
+            "One note: income is the average for each census tract, so it describes the area, not the people your drivers will serve, and I left race and ethnicity out on purpose.",
+        },
+      ],
+      choices: [
+        { label: "🤔 So which one should I pick?", say: "So which one should I pick?", next: "carto-objective-pick" },
+        { label: "🗺️ Put the three picks on a map I can share", say: "Put the three picks on a map I can share.", next: "carto-map-goals" },
+        {
+          label: "🧾 What about my actual customers?",
+          say: "Those are all public data. What if the hub should serve my actual customers? Can my own trips show where they are?",
+          next: "carto-trips",
+        },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+      ],
+    },
+
+    "carto-objective-pick": {
+      id: "carto-objective-pick",
+      title: "CARTO · Which goal should I pick?",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "It depends on what the hub is for, but the scores help. Choosing by residents would keep only " + O.cross.peopleWinner.income + "% of the best income score and " +
+            O.cross.peopleWinner.poi + "% of the best shops score. The shops-and-restaurants pick holds up best: it keeps " + O.cross.poiWinner.people + "% of the best residents score and " +
+            O.cross.poiWinner.income + "% of the best income score, so if you can't decide, it's the strongest all-rounder, on the Henderson side next to the income pick.",
+        },
+        {
+          type: "chart",
+          title: "Higher-income residents are the most often far from today's hubs · share more than " + C.sixthHub.gapKm + " km from every hub (%)",
+          bars: [
+            { label: O.income.label, value: O.income.uncoveredPct },
+            { label: O.people.label, value: O.people.uncoveredPct },
+            { label: O.poi.label, value: O.poi.uncoveredPct },
+          ],
+        },
+        {
+          type: "assistant",
+          text:
+            "The gap points the same way: " + O.income.uncoveredPct + "% of higher-income residents live more than " + C.sixthHub.gapKm + " km from every hub, against " +
+            O.people.uncoveredPct + "% of all residents and " + O.poi.uncoveredPct + "% of shops and restaurants. A hub on the Henderson side closes the biggest gap.",
+        },
+      ],
+      choices: [
+        { label: "🗺️ Put the three picks on a map I can share", say: "Put the three picks on a map I can share.", next: "carto-map-goals" },
+        {
+          label: "🧾 What about my actual customers?",
+          say: "Those are all public data. What if the hub should serve my actual customers? Can my own trips show where they are?",
+          next: "carto-trips",
+        },
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "↩︎ Ask something else", say: "Show me something else.", next: "hub" },
+      ],
+    },
+
+    "carto-map": {
+      id: "carto-map",
+      title: "CARTO · Put it on a map I can share",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll read CARTO's map format first rather than guess field names, check the map against it, then save it in " +
+            "Builder. I'll keep it private so you can choose who to share it with.",
+        },
+      ].concat(
+        cartoSaveMap(
+          {
+            title: "Las Vegas fleet hubs",
+            privacy: "private",
+            datasets: [
+              {
+                $ref: "vehicles", type: "query", connectionId: "…", geoColumn: "geom",
+                source: "SELECT …, IF(isDriving, 'Driving', 'Parked') AS status FROM UNNEST([ … ])   -- " + C.vehicles + " positions",
+              },
+              {
+                $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(parked) AS parked",
+                source: "SELECT h3, parked … -- the five hub cells + the proposed sixth site",
+              },
+              {
+                $ref: "cell_scores", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(population) AS population, AVG(dist_km_to_nearest_hub) AS dist_km_to_nearest_hub",
+                source: "SELECT h3, population, dist_km_to_nearest_hub, score … -- every cell, as in the site search",
+              },
+            ],
+            keplerMapConfig: {
+              config: {
+                visState: {
+                  layers: [
+                    {
+                      type: "point",
+                      config: { dataId: "$ref:vehicles", visConfig: { colorRange: { colorMap: [["Driving", "#0A74D6"], ["Parked", "#E5303A"]] } } },
+                      visualChannels: { colorField: { name: "status", type: "string" }, colorScale: "ordinal" },
+                    },
+                    { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                    {
+                      type: "h3",
+                      config: { dataId: "$ref:cell_scores", columns: { hex: "h3" } },
+                      visualChannels: { colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          "bundle valid · 3 datasets · SQL dry-run OK",
+          '{ "valid": true, "datasets": [ { "name": "vehicles", "rows": ' + C.vehicles + ' }, … ] }'
+        ),
+        [
+          {
+            type: "assistant",
+            text:
+              "I've saved it as a **private map in Builder**: the vehicles (blue driving, red parked), the five hubs plus the " +
+              "proposed sixth site, and distance to the nearest hub. If it didn't appear above, open it from the link: " +
+              "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.\n\n" +
+              "The next step is adding the drive-time areas: I'd save them to a table with `execute_query` and point the map at that table.",
+          },
+          { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Plain-English questions in, a shareable map out. The assistant wrote the SQL."] },
+        ]
+      ),
+      choices: [
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "carto-map-goals": {
+      id: "carto-map-goals",
+      title: "CARTO · Put the three picks on a map I can share",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll put the three picks on one map, colored by goal, over your five hubs and every cell's distance to the nearest hub. " +
+            "I'll check it against CARTO's map format first, then save it privately in Builder.",
+        },
+      ].concat(
+        cartoSaveMap(
+          {
+            title: "Las Vegas sixth hub: residents vs higher-income vs shops",
+            privacy: "private",
+            datasets: [
+              {
+                $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(parked) AS parked",
+                source: "SELECT h3, parked … -- the five hub cells",
+              },
+              {
+                $ref: "picks", type: "query", connectionId: "…", geoColumn: "geom",
+                source: "SELECT goal, ST_GEOGPOINT(lon, lat) AS geom FROM UNNEST([ … ])   -- the best cell for residents, higher-income, shops",
+              },
+              {
+                $ref: "cells", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(population) AS population, SUM(hi_income) AS hi_income, SUM(poi) AS poi, AVG(dist_km_to_nearest_hub) AS dist_km_to_nearest_hub",
+                source: "SELECT h3, population, hi_income, poi, dist_km_to_nearest_hub … -- every cell, as in the three-goal search",
+              },
+            ],
+            keplerMapConfig: {
+              config: {
+                visState: {
+                  layers: [
+                    {
+                      type: "h3",
+                      config: { dataId: "$ref:cells", columns: { hex: "h3" } },
+                      visualChannels: { colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                    },
+                    { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                    {
+                      type: "point",
+                      config: { dataId: "$ref:picks", visConfig: { colorRange: { colorMap: [["Residents", "#18294F"], ["Higher-income", "#D9480F"], ["Shops", "#7048E8"]] } } },
+                      visualChannels: { colorField: { name: "goal", type: "string" }, colorScale: "ordinal" },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          "bundle valid · 3 datasets · SQL dry-run OK",
+          '{ "valid": true, "datasets": [ { "name": "picks", "rows": 3 }, { "name": "cells", "rows": ' + O.study.cells + " }, … ] }"
+        ),
+        [
+          {
+            type: "assistant",
+            text:
+              "I've saved it as a **private map in Builder**: the three picks colored by goal (navy residents, orange higher-income residents, purple shops and restaurants) " +
+              "over your hubs, with each cell shaded by its distance to the nearest hub. If it didn't appear above, open it from the link: " +
+              "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.",
+          },
+          { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "Same question, three goals, three answers. The assistant wrote the SQL."] },
+        ]
+      ),
+      choices: [
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "carto-map-sites": {
+      id: "carto-map-sites",
+      title: "CARTO · Put the serve and grow picks on a map I can share",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "I'll put both picks on one map: the hub that serves your customers (Green Valley, Henderson) and the one that grows the market (the south-west), " +
+            "with your hubs, your accounts and the white space behind them. I'll check it against CARTO's map format first, then save it privately in Builder.",
+        },
+      ].concat(
+        cartoSaveMap(
+          {
+            title: "Las Vegas next hub: serve customers vs grow the market",
+            privacy: "private",
+            datasets: [
+              {
+                $ref: "hubs", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(parked) AS parked",
+                source: "SELECT h3, parked … -- the five hub cells",
+              },
+              {
+                $ref: "picks", type: "query", connectionId: "…", geoColumn: "geom",
+                source: "SELECT pick, ST_GEOGPOINT(lon, lat) AS geom FROM UNNEST([ … ])   -- serve (Green Valley), grow (south-west)",
+              },
+              {
+                $ref: "accounts", type: "query", connectionId: "…", geoColumn: "geom",
+                source: "SELECT name, orders, dist_km_to_nearest_hub, geom FROM …   -- the geocoded accounts",
+              },
+              {
+                $ref: "white_space", type: "query", connectionId: "…", geoColumn: "h3:h3", spatialIndex: "h3",
+                aggregationExp: "SUM(hi_income) AS hi_income",
+                source: "SELECT h3, hi_income FROM … WHERE dist_to_nearest_account > " + P.radiusKm * 1000 + "   -- higher-income residents far from any customer",
+              },
+            ],
+            keplerMapConfig: {
+              config: {
+                visState: {
+                  layers: [
+                    {
+                      type: "h3",
+                      config: { dataId: "$ref:white_space", columns: { hex: "h3" } },
+                      visualChannels: { colorField: { name: "hi_income", type: "real" } },
+                    },
+                    { type: "h3", config: { dataId: "$ref:hubs", columns: { hex: "h3" } } },
+                    {
+                      type: "point",
+                      config: { dataId: "$ref:accounts" },
+                      visualChannels: { sizeField: { name: "orders", type: "integer" }, colorField: { name: "dist_km_to_nearest_hub", type: "real" } },
+                    },
+                    {
+                      type: "point",
+                      config: { dataId: "$ref:picks", visConfig: { colorRange: { colorMap: [["Serve", "#0F7B6C"], ["Grow", "#D9480F"]] } } },
+                      visualChannels: { colorField: { name: "pick", type: "string" }, colorScale: "ordinal" },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          "bundle valid · 4 datasets · SQL dry-run OK",
+          '{ "valid": true, "datasets": [ { "name": "picks", "rows": 2 }, { "name": "accounts", "rows": ' + Cu.list.length + " }, … ] }",
+          "The accounts layer uses the illustrative customers."
+        ),
+        [
+          {
+            type: "assistant",
+            text:
+              "I've saved it as a **private map in Builder**: the serve pick in green and the grow pick in orange, over your hubs, " +
+              "your accounts sized by orders, and the white space shaded by higher-income residents. If it didn't appear above, open it from the link: " +
+              "`https://<your-carto-workspace>/builder/<mapId>`. Share it from there when you're ready.",
+          },
+          { type: "endcard", lines: ["Geotab MCP + CARTO MCP", "From “where is my fleet?” to “where do I grow?” The assistant wrote the SQL."] },
+        ]
+      ),
+      choices: [
+        { label: "🧐 What should I double-check?", say: "What should I double-check before acting on this?", next: "carto-caveats" },
+        { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
+        { label: "↻ Restart", action: "restart" },
+      ],
+    },
+
+    "carto-caveats": {
+      id: "carto-caveats",
+      title: "CARTO · What to double-check",
+      mode: "carto",
+      events: [
+        {
+          type: "assistant",
+          text:
+            "A few things, before anyone acts on it:\n" +
+            "- **The hubs are inferred** from one evening snapshot, not your depot list.\n" +
+            "- **Every pick is an area, not an address.** Neighboring cells score almost the same, and zoning, available yards and rent all still need a look.\n" +
+            "- **Most distances are straight lines.** Only a few spots got a drive-time check, so check drive times for your shortlist before deciding.\n" +
+            "- **Residents aren't demand.** Residents, income and shops describe the area; your own customers and orders are the better goal when you have them.\n" +
+            "- **Income, where used, is a census-tract average.** It describes the neighborhood, not the people your drivers will serve.\n" +
+            "- **Hexagons are counted by their center**, so edges are approximate.\n" +
+            "- **Drive times assume a car and one time of day.** Traffic changes by hour, so rerun them for your busiest time.",
+        },
+      ],
+      choices: [
+        { label: "↩︎ Back to where we were", say: "Thanks. Let's pick up where we left off.", action: "resume" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],

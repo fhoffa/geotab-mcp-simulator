@@ -102,6 +102,23 @@ body {
 .ghost-btn:hover { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
 .settings-trigger { font-weight: 650; }
 
+/* Language picker: a native <select> dressed as a ghost pill. */
+.lang-select {
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding: 6px 26px 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23667085' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.lang-select:hover { background-color: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+/* Hidden until app.js applies the Spanish overlay (head script sets the class). */
+html.i18n-pending body { visibility: hidden; }
+
 .ui-glyph {
   display: inline-grid;
   place-items: center;
@@ -477,6 +494,41 @@ body {
 }
 .chart-val { color: #fff; font-size: 11.5px; font-weight: 700; padding-right: 7px; }
 
+/* heatmap: rows × measures, each cell shaded against its column (one hue, 5 steps) */
+.heat-table { width: 100%; border-collapse: separate; border-spacing: 2px; table-layout: fixed; }
+.heat-table caption { text-align: left; caption-side: top; }
+.heat-table th { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); line-height: 1.2; padding: 0 2px 4px; text-align: center; vertical-align: bottom; hyphens: auto; overflow-wrap: anywhere; }
+.heat-table th[scope="row"] {
+  width: 84px;
+  padding: 0 8px 0 0;
+  text-align: right;
+  vertical-align: middle;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ink);
+}
+.heat-table td {
+  height: 28px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.heat-1 { background: color-mix(in srgb, var(--geotab) 8%, white); }
+.heat-2 { background: color-mix(in srgb, var(--geotab) 22%, white); }
+.heat-3 { background: color-mix(in srgb, var(--geotab) 40%, white); }
+.heat-4 { background: color-mix(in srgb, var(--geotab) 62%, white); }
+.heat-5 { background: var(--geotab); color: #fff; }
+.chart-note { font-size: 11.5px; color: var(--ink-soft); margin-top: 8px; }
+@media (max-width: 480px) {
+  .heat-table th[scope="row"] { width: 64px; padding-right: 4px; font-size: 11px; }
+  .heat-table th { font-size: 10px; }
+  .heat-table td { font-size: 11px; }
+}
+
 /* -------------------------------------------------------------------- map */
 .map-card {
   border: 1px solid color-mix(in srgb, var(--tool-line) 86%, white);
@@ -809,6 +861,49 @@ body {
 .chip.primary:hover { background: var(--accent-ink); color: #fff; }
 .chip.subtle { color: var(--ink-soft); }
 .tray-hint { width: 100%; font-size: 12px; color: var(--ink-soft); margin: 0 2px 2px; }
+.tool-hint { font-size: 12px; line-height: 1.45; color: var(--ink-soft); margin: 2px 2px 6px; }
+
+/* ------------------------------------------------------- fleet progress game */
+.progress-strip {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 10px;
+  margin: 0 2px 6px;
+}
+.progress-strip strong { color: var(--accent-ink); }
+.progress-track {
+  flex: 1 1 110px;
+  min-width: 70px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.progress-fill { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.progress-full { width: 100%; font-weight: 600; color: var(--accent-ink); }
+.chip.done { border-style: dashed; }
+.chip-check { color: var(--geotab); font-weight: 700; }
+.settings-flag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--notice);
+  background: var(--notice-bg);
+  border: 1px solid var(--notice-line);
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin-left: 6px;
+  vertical-align: 2px;
+}
 .tray-group {
   width: 100%;
   font-size: 11px;
@@ -952,6 +1047,8 @@ body {
 
 /* ------------------------------------------------------------------- hero */
 .landing-panel { width: min(680px, 100%); }
+.hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.hero-top .lang-select { margin-top: -4px; flex: 0 0 auto; }
 .hero-eyebrow {
   font-size: 10.5px;
   font-weight: 700;
@@ -1034,6 +1131,9 @@ body {
 .setup-docs { margin: 0 0 10px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .setup-heading { margin: 0 0 8px; font-weight: 600; color: var(--ink); }
 .setup-steps { margin: 0 0 10px; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.setup-steps + .setup-heading { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.setup-sub { margin: 0 0 6px; color: var(--ink-soft); }
+.setup-box code { overflow-wrap: anywhere; } /* the server URL must wrap on phones */
 .setup-shot {
   display: block;
   width: 100%;
@@ -1043,6 +1143,23 @@ body {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 .setup-foot { font-size: 12px; color: var(--ink-soft); margin: 0; }
+.video-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  margin: 6px 0 14px;
+}
+.video-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
 
 /* --------------------------------------------------------------- responsive */
 @media (max-width: 560px) {
@@ -1323,6 +1440,20 @@ body {
 }
 
 [data-server="motherduck"] .tool-dot { background: #6b5bd6; }
+[data-server="carto"] .tool-dot { background: #d6336c; }
+
+/* CARTO path — maps are pre-rendered query results (H3 population + layers),
+   shown at their own square framing instead of the wide street-map canvas. */
+.map-canvas-carto {
+  aspect-ratio: 760 / 723;
+  max-width: 480px;
+  background: #f7f9fc center / 100% 100% no-repeat;
+}
+.map-canvas-carto::before,
+.map-canvas-carto::after { display: none; }
+.map-pin-label { transform: translate(9px, -50%); }
+.map-pin-label.map-pin-flip { transform: translate(calc(-100% - 9px), -50%); }
+.map-pin-label .map-dot { display: none; }
 
 @media (max-width: 760px) {
   .motherduck-pane { top: 96px; }

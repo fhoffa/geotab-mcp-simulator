@@ -373,6 +373,42 @@ window.SAMPLE_DATA = {
           { name: "gold.trip_reconcile_log", rows: "101 rows", note: "50 retired · 51 re-split" },
         ] },
       ],
+      /* Side-quest stage: `quality` plus the ASOF-joined fault locations mart.
+         Only the warehouse-enrichment node shows it. */
+      enriched: [
+        { kind: "bronze", name: "Bronze", status: "audited", active: true, tables: [
+          { name: "bronze.gps_raw", rows: "698,323 rows" },
+          { name: "bronze.trips_raw", rows: "8,412 rows" },
+          { name: "bronze.driver_changes_raw", rows: "1,126 rows" },
+          { name: "bronze.status_data_raw", rows: "1.9M rows" },
+          { name: "bronze.exception_events_raw", rows: "42,806 rows" },
+          { name: "bronze.fault_data_raw", rows: "4,918 rows" },
+        ] },
+        { kind: "silver", name: "Silver", status: "checked", active: true, tables: [
+          { name: "silver.planet_gps_pings", rows: "698,308 rows" },
+          { name: "silver.trips", rows: "8,407 rows" },
+          { name: "silver.driver_assignments", rows: "1,118 rows" },
+          { name: "silver.status_data", rows: "1.9M rows" },
+          { name: "silver.exception_events", rows: "42,781 rows" },
+          { name: "silver.fault_data", rows: "4,912 rows" },
+          { name: "silver.dim_device", rows: "50 rows" },
+          { name: "silver.dim_user", rows: "113 rows" },
+          { name: "silver.dim_zone", rows: "37 rows" },
+          { name: "silver.dim_group", rows: "21 rows" },
+          { name: "silver.dim_rule", rows: "386 rows" },
+          { name: "silver.dim_diagnostic", rows: "2,184 rows" },
+        ] },
+        { kind: "gold", name: "Gold", status: "enriched", active: true, tables: [
+          { name: "gold.daily_device_km", rows: "1,550 rows" },
+          { name: "gold.driver_safety_score", rows: "50 rows" },
+          { name: "gold.maintenance_risk", rows: "50 rows" },
+          { name: "gold.idling_cost_daily", rows: "1,550 rows" },
+          { name: "gold.fault_locations", rows: "4,912 rows", note: "ASOF-joined to the nearest prior GPS ping", sample: [
+            { FaultId: "aF83…", DeviceName: "Demo - 31", fault_datetime_utc: "2026-06-29 14:02:17", lat: "39.4571", lon: "-0.3544", gps_gap: "2 s" },
+            { FaultId: "aF91…", DeviceName: "Demo - 08", fault_datetime_utc: "2026-06-29 16:44:03", lat: "39.4712", lon: "-0.3791", gps_gap: "5 s" },
+          ] },
+        ] },
+      ],
       /* The cost node reuses the `quality` stage above — same full warehouse,
          the panel just never shows pricing rows. The `answers` stage below is
          `quality` plus the answer-ready marts, so the pane only ever grows. */
@@ -414,6 +450,127 @@ window.SAMPLE_DATA = {
           { name: "gold.shop_worklist", rows: "9 rows" },
         ] },
       ],
+    },
+  },
+
+  /* ------------------------------- Geotab MCP + CARTO MCP (spatial analytics)
+   * REAL: captured from one live session on 1 Oct 2026 (~02:08 UTC) with both
+   * MCP servers connected — Geotab `demo_fh_vegas8`, CARTO connection
+   * `carto_dw`. Hubs are inferred from that single snapshot; the names are the
+   * assistant's descriptive labels, not depots in the database.
+   * Sources: every resident count (hub `residentsK`, `reach15k`, coverage, the
+   * study area and the sixth-hub figures) is Kontur Population (H3 res 8);
+   * retail/food/tourism/night light are CARTO Spatial Features. Kontur hub
+   * counts were reported in thousands, so they're kept that way. `x`/`y` place
+   * points on the assets/carto-*.webp renders (percent of the image), which all
+   * share one framing. `kind` is the assistant's one-word read of each hub's
+   * surroundings, from shops + restaurants per 1,000 residents (South ~270,
+   * Central ~48, South-east ~40, West ~16, North ~5). `sixthHub.candidates` is
+   * the real top-5 site-search result: neighboring cells within ~2 km of each
+   * other, scores within 2%.
+   */
+  carto: {
+    database: "demo_fh_vegas8",
+    connection: "carto_dw",
+    snapshot: "1 Oct 2026, ~02:08 UTC",
+    snapshotLocal: "7:08 pm Las Vegas time (30 Sep)",
+    vehicles: 50,
+    driving: 22,
+    parked: 28,
+    parkedAtHubs: 25,
+    h3Res: 8,
+    contextRings: 3,               // H3_KRING radius around each hub cell (~2.5 km at res 8)
+    hubs: [
+      { name: "West",       parked: 6, residentsK: 69.6, retail: 617,  food: 489,  tourism: 112, nightLight: 74,  reach15k: 419, x: 26.1, y: 47.6, kind: "homes" },
+      { name: "Central",    parked: 5, residentsK: 58.3, retail: 1582, food: 1193, tourism: 530, nightLight: 171, reach15k: 680, x: 53.8, y: 42.8, kind: "mixed" },
+      { name: "South-east", parked: 5, residentsK: 33.0, retail: 840,  food: 465,  tourism: 126, nightLight: 77,  reach15k: 492, x: 56.2, y: 67.6, kind: "mixed" },
+      { name: "South",      parked: 4, residentsK: 14.4, retail: 2140, food: 1758, tourism: 629, nightLight: 325, reach15k: 438, x: 49.3, y: 59.9, kind: "shops" },
+      { name: "North",      parked: 5, residentsK: 55.3, retail: 158,  food: 125,  tourism: 30,  nightLight: 45,  reach15k: 405, x: 44.8, y: 17.6, kind: "homes" },
+    ],
+    isoline: { operation: "isolines", range: "900", rangeType: "time" },   // calculate_isolines args; provider TravelTime, car
+    coverage: {
+      residents: "1.65M", pct: 80, straightLine8kmPct: 68,   // 68% = share within 8 km (straight line) of a hub
+      studyArea: "2.07M", studyAreaResidents: 2073195, studyAreaCells: 2090,
+      studyAreaDef: "populated cells within 55 H3 rings (about 50 km) of central Las Vegas",
+      center: { lon: -115.2, lat: 36.15 }, rings: 55, minResidents: 50,   // candidate cells need > minResidents
+    },
+    sixthHub: {
+      lon: -115.058, lat: 36.1718, within8km: "225k", newlyCovered: "+181k", newlyCoveredExact: 181015, pctWith: 88.5, gapKm: 8, x: 71.9, y: 41.3,
+      candidates: [
+        { rank: 1, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, uncovered8km: 225133 },
+        { rank: 2, h3: "88298616c7fffff", lat: 36.1701, lon: -115.0687, uncovered8km: 224552 },
+        { rank: 3, h3: "88298616c3fffff", lat: 36.1683, lon: -115.0795, uncovered8km: 222255 },
+        { rank: 4, h3: "88298616c5fffff", lat: 36.1636, lon: -115.0616, uncovered8km: 222076 },
+        { rank: 5, h3: "88298616c1fffff", lat: 36.1618, lon: -115.0724, uncovered8km: 221470 },
+      ],
+    },
+    /* REAL, from live calls on 8 Oct 2026 (~15:15 UTC): Geotab `demo_fh_vegas8`
+     * positions + CARTO `carto_dw`. The same site search as above with a different
+     * weight per cell. Residents are the same public Kontur table as the steps above
+     * (2,090 cells, 2,073,195 residents); shops + restaurants come from the public
+     * CARTO Spatial Features table; income = Kontur residents x the share of
+     * households earning $100k+ in their census tract (public ACS DP03, 2019
+     * 5-year, matched to the 2019 tract boundaries). "Uncovered" = more than 8 km
+     * in a straight line from every hub. For this simulation the five hubs are treated
+     * as the same ones as the first search. The 8 Oct run scored the residents cell
+     * 234,038 (225,133 in the first search, because the parked positions differ a
+     * little); the first-search figure is the one kept so the story reads as one
+     * session. */
+    objectives: {
+      snapshot: "8 Oct 2026, ~15:15 UTC", vehicles: 50, driving: 23, parked: 27, parkedAtHubs: 24,
+      study: { cells: 2090, residents: 2073195, income: 515898, poi: 32900 },
+      // x/y: each best cell on assets/carto-goals.webp (percent, shared framing)
+      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 225133, x: 71.7, y: 41.3 },
+      income: { label: "Higher-income residents", uncoveredPct: 35.9, h3: "8829868c51fffff", lat: 36.0242, lon: -115.0237, score: 51457,  x: 77.8, y: 74.8 },
+      poi:    { label: "Shops + restaurants",     uncoveredPct: 19.4, h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694,   x: 76.6, y: 68.1 },
+      // each winner's score on the other goals, as a share of that goal's best (rounded)
+      cross: { peopleWinner: { income: 64, poi: 60 }, incomeWinner: { people: 70, poi: 92 }, poiWinner: { people: 78, income: 92 } },
+      // discovery step: share of residents matched to an ACS tract, by tract vintage
+      acsMatch: { y2019: 100 },
+    },
+    /* REAL, 8 Oct 2026: what the two servers report about themselves (discovery
+     * steps) and what this demo fleet's trips look like. */
+    /* ILLUSTRATIVE customers (fictional companies and order counts, standing in for a
+     * Salesforce query), run through REAL calls on 8 Oct 2026: CARTO geocode on the
+     * street addresses (all matched at confidence 1.0) and a CARTO query that finds
+     * the new hub cell minimising the order-weighted straight-line distance from
+     * customers to their nearest hub. dHubKm = distance to the nearest of today's
+     * five hubs. */
+    customers: {
+      orders: 953, baselineKm: 5.72, bestKm: 3.16, reductionPct: 45,
+      // label positions on assets/carto-customers.webp (percent, shared framing)
+      mapLabels: { hub: { x: 44, y: 86 }, cluster: { x: 40, y: 66 } },
+      best: { h3: "8829868e8bfffff", lat: 36.0219, lon: -115.0845 },
+      // real query over the illustrative customers: higher-income residents (ACS tract income x Kontur residents)
+      // living more than 5 km from every customer = "white space"; the new-hub score is the white space within 8 km
+      potential: {
+        hiIncome: 515898, whiteSpace: 201147, whiteSpacePct: 39, radiusKm: 5,
+        best: { h3: "88298684b7fffff", lat: 36.0302, lon: -115.2202, score: 43538 },
+        atCustomerPick: 10987,
+        // map positions (percent of assets/carto-potential.webp, shared framing)
+        serveXY: { x: 66, y: 82.5 }, growXY: { x: 41.5, y: 66.5 },
+      },
+      list: [
+        { name: "Paseo Verde Pharmacy Supply",   address: "2000 Paseo Verde Pkwy, Henderson, NV",     orders: 142, lat: 36.0181, lon: -115.0720, dHubKm: 8.1 },
+        { name: "Horizon Ridge Dental Group",    address: "1500 W Horizon Ridge Pkwy, Henderson, NV", orders: 96,  lat: 36.0194, lon: -115.0532, dHubKm: 9.6 },
+        { name: "Green Valley Hardware Co.",     address: "1301 N Green Valley Pkwy, Henderson, NV",  orders: 118, lat: 36.0284, lon: -115.0876, dHubKm: 6.4 },
+        { name: "Boulder Highway Auto Parts",    address: "4600 Boulder Hwy, Las Vegas, NV",          orders: 74,  lat: 36.1212, lon: -115.0742, dHubKm: 9.1 },
+        { name: "Eastern Ave Fresh Market",      address: "8905 S Eastern Ave, Las Vegas, NV",        orders: 131, lat: 36.0274, lon: -115.1186, dHubKm: 4.3 },
+        { name: "Sahara Office Interiors",       address: "2300 W Sahara Ave, Las Vegas, NV",         orders: 62,  lat: 36.1454, lon: -115.1743, dHubKm: 2.2 },
+        { name: "Summerlin Festival Catering",   address: "1980 Festival Plaza Dr, Las Vegas, NV",    orders: 88,  lat: 36.1509, lon: -115.3340, dHubKm: 2.4 },
+        { name: "Flamingo West Clinic",          address: "9500 W Flamingo Rd, Las Vegas, NV",        orders: 54,  lat: 36.1165, lon: -115.2993, dHubKm: 3.4 },
+        { name: "Fort Apache Fitness",           address: "7075 S Fort Apache Rd, Las Vegas, NV",     orders: 47,  lat: 36.0590, lon: -115.2977, dHubKm: 9.7 },
+        { name: "Tenaya Way Print Shop",         address: "3200 N Tenaya Way, Las Vegas, NV",         orders: 39,  lat: 36.2183, lon: -115.2512, dHubKm: 7.5 },
+        { name: "Fourth Street Coffee Roasters", address: "300 S 4th St, Las Vegas, NV",              orders: 58,  lat: 36.1669, lon: -115.1440, dHubKm: 1.7 },
+        { name: "Decatur Garden Center",         address: "6600 N Decatur Blvd, Las Vegas, NV",       orders: 44,  lat: 36.2804, lon: -115.2064, dHubKm: 0.6 },
+      ],
+    },
+    explore: {
+      quota: 15000, quotaUsed: 9, quotaLeft: 14991,   // calculate_isolines capabilities
+      publicDemographics: 151, premiumUsa: 172,       // Data Observatory, US
+      // TODO(carto): add the six end places (lat/lon, trips per place, which one isn't a hub)
+      // from a real pull, so carto-trips can show a map instead of only text
+      trips: { from: "2026-10-07T00:00:00Z", to: "2026-10-07T06:00:00Z", hours: 6, count: 534, places: 6 },
     },
   },
 };

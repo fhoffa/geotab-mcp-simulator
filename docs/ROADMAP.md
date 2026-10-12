@@ -217,6 +217,32 @@ content must be reconciled. See **WS6**.
 - **Acceptance:** map artifact plots the real positions; Valencia vehicles stand
   out; labeled "illustrative — assistant-rendered, not a live map".
 
+### WS12 — Fleet Progress game  🟡 (v1 shipped as an experimental, off-by-default mode)
+- **Goal:** give explorers a progression loop — *your simulated fleet grows as
+  you learn Geotab + MCP* — so finishing one scenario pulls you into the next.
+- **Positioning:** the simulator stays a plain simulator by default. The game is
+  an **experimental toggle in Settings** (off unless the user opts in); while
+  off there is no tracking, no strip, no checkmarks.
+- **Shipped (v1):** localStorage-only progression (nothing leaves the browser):
+  - **Checkboxes** — hub chips get a ✓ once that scenario has been explored.
+  - **Points** — 25/scenario + 5 for every other distinct node reached
+    (cross-links and deep dives count, so exploration pays).
+  - **Growing fleet** — you start managing 5 vehicles; each scenario adds 2,
+    toward the full 50-vehicle demo fleet. A progress strip appears on the hub
+    (only after the first scenario, so a first-timer's hub stays clean); at 50
+    a 🏆 milestone points at **Connect real account** — the game's exit is the
+    real product.
+  - **Settings → Fleet progress** shows the tally and has the reset; Restart
+    deliberately does *not* wipe progress.
+- **Future ideas (not built):** per-theme badges ("Safety lead" after all 🛟
+  scenarios); fleet *upgrades* tied to what you learned (EV conversions unlock
+  after the EV episode, dashcams after the dashcam episode); a shareable
+  "my fleet" card; streaks for returning visitors. Keep it honest: progression
+  should reward *understanding scenarios*, never grind.
+- **Files:** `app.js` (progress store + hub strip + checkmarks), `index.html`
+  (settings section), `styles.css`.
+- **Depends on:** nothing. **Parallel:** yes.
+
 ### WS7 — Polish (later)  ⬜
 - Responsive/a11y pass across new pages; meta/OG tags for sharing; optional
   privacy-respecting analytics; favicon/og image; "copy link to this episode".
@@ -289,6 +315,55 @@ content must be reconciled. See **WS6**.
 >   no camera media enrolled on the demo DB. Confirmed dead end for *live*
 >   footage; revived as an **illustrative** episode instead (see Ep-Dashcam below).
 
+> **Grounding pass done 20 Jul 2026** against the live MCP, connected to a real
+> database — this pass exercised `Remove` for the first time (previously only
+> `Add` had been used; see note below). Test entities only, unmistakably named
+> (`ZTEST-DELETE-ME-…` / `RTEST-DELETE-ME-…`), cleaned up after and confirmed
+> gone. Folded into the simulator as `ep-zonelife-answer` → `-create` →
+> `-delete` → `-cascade` on `demo_fh_vegas4`. Captured facts:
+> - `Zone` `Add` requires `name` + `points` (closed polygon, `x`/`y` = lon/lat,
+>   first point repeated to close it). `groups` defaults, not required.
+> - `Rule` `Add` real validation error: `Undefined or empty
+>   ExceptionRule.Groups` — the connector's own schema marks `groups` as
+>   optional, but the live API rejects a rule without a non-empty one (every
+>   real stock rule carries `groups: [{ id: "GroupCompanyId" }]`).
+> - A rule tied to a zone uses `baseType: "ZoneStop"` +
+>   `condition: { conditionType: "ZoneStop", zone: { id: "<zoneId>" } }` — no
+>   pre-existing zone-based rule existed to copy, so this shape was confirmed
+>   live (persisted correctly, `Get` echoed `condition.zone.id` back intact).
+> - `Remove` is a **true hard delete**, not a retire via `activeTo` — a
+>   follow-up `Get` by id returns empty, not a record with a past `activeTo`.
+>   True for both `Zone` and `Rule`.
+> - Order test: removing a zone *before* its dependent `ZoneStop` rule does
+>   **not** error — the rule cascade-deletes along with it (confirmed via
+>   `Get` returning empty and `GetCountOf(Rule)` back at baseline). Not
+>   documented behavior, so scripted cleanup should still delete rule-then-zone
+>   explicitly rather than rely on the cascade.
+> - **Awareness gap, flagged by a reviewer and then verified:** editing or
+>   removing a `Rule` invalidates its attached `ExceptionEvent` history —
+>   expected behavior, since an exception tied to a rule definition that no
+>   longer exists (or no longer matches) isn't a meaningful record to keep.
+>   What's worth knowing: this isn't logged as its own audit event — the audit
+>   log captures the rule change itself, not an inventory of which exception
+>   rows were invalidated underneath it. Native MyGeotab shows a warning
+>   dialog before a delete that would do this; the MCP `Remove` tool does not
+>   — the test `Remove` calls above went through immediately because the test
+>   rule had zero exceptions attached. The real stock "Speeding" rule on
+>   `demo_fh_vegas4` carries **518** historical `ExceptionEvent` records
+>   (`GetCountOf`, read-only, untouched) — the scale of what a real rule
+>   deletion carries. Folded into the simulator as `ep-zonelife-safety`,
+>   reachable from the delete episode. Recommended habit for anyone scripting
+>   this for real: check `GetCountOf(ExceptionEvent,
+>   search:{ruleSearch:{id:...}})` before calling `Remove` on a `Rule`.
+>   `ExceptionEvent` only carries a rule id, not a zone id, so there's no
+>   direct filter for a `Zone` — find the rule(s) referencing it first
+>   (`Get(Rule)`, matching `condition.zone.id`), then run the same count per
+>   rule id. **Caught by codex review on this PR, not independently
+>   verified against a live `ExceptionEventSearch` call** — flagged here as
+>   the corrected assumption, not a second grounding pass.
+>   Get explicit human sign-off if the count isn't zero — the
+>   connector won't pause for you the way the native UI does.
+
 
 
 **Goal:** broaden the simulator beyond the fleet-manager lens. The original six
@@ -306,7 +381,9 @@ beat. Items marked SHIPPED were grounded against the live MCP and built into
 > the live Geotab MCP: `SearchMedia`, `GetMediaUrl`, `DownloadMediaFile`,
 > `GetEmissionComplianceDeadline`, `EmissionEnrollDevices`,
 > `GetPostedRoadSpeedsForDevice`, `SendReportProcessingRequest`, `DecodeVins`,
-> `GetDevicesInformation`, plus `Set`/`Remove` (only `Add` is used so far).
+> `GetDevicesInformation`, plus `Set` (still unused — `Remove` is now grounded,
+> see the 20 Jul 2026 pass above: it's a true delete, not a retire, and can
+> cascade to dependent `ZoneStop` rules).
 
 ### Backlog (each = one new hub choice + answer node, optional action node)
 
@@ -460,7 +537,86 @@ To make the "real" path and the connect beat authentic, these would help:
 Drop them in `assets/` (or share and I'll place them). PNG/SVG; please scrub any
 real PII before sending.
 
+## Review & improvement loop (standing plan)
+
+Added 1 Jul 2026 after the full-experience review. Two halves: **recurring
+review passes** (run on a cadence, or when the thing they guard changes) and a
+**prioritized build backlog**. Each item is self-contained so a future session
+or agent can pick it up cold. Every pass ends the same way: a findings-log
+entry below, and at most a handful of concrete changes — reviews that only
+produce reports rot as fast as the thing they review.
+
+### Recurring review passes
+
+**R1 — Grounding freshness** *(quarterly, or when the demo DBs change)*
+- The simulator's numbers were captured live 18–19 Jun 2026. Re-capture the
+  headline facts (fleet sizes, exception/fault counts, Ace rankings, live
+  positions) against the demo DBs and reconcile `data/sample-data.js`.
+- Valencia ZBE (Ep3) is *politically in flux by design* — re-verify the rules
+  via live web search before trusting the episode's claims.
+- Update the capture date in the footer, README, and landing copy together.
+- **Acceptance:** no simulator claim contradicts a fresh live capture.
+
+**R2 — Analytics path review** *(monthly)*
+- Cloudflare tracks a pageview per `?n=` node. Read the funnels: hub →
+  scenario click-through; drop-off inside long episodes; scenarios that are
+  never clicked (relabel, regroup, or retire); endcard-CTA → connect-real
+  opens; Fleet Progress engagement (this gates WS12 v2 — don't build badges
+  nobody will earn).
+- **Acceptance:** one findings-log entry + at most 2–3 content changes.
+
+**R3 — Conversation quality read-through** *(whenever episodes are added or edited)*
+- Read new nodes **as conversations, not diffs**: does the teaching beat land,
+  do honest caveats survive, do choices read like real follow-ups, does the
+  episode cross-link *into* and *out of* the rest of the graph, is the endcard
+  at the moment of impact?
+- Guardrails that have already been violated once each, so check explicitly:
+  the **skills framing** (worked example, never an official installable —
+  see Development expectations) and **map-doc sync** (now CI-enforced;
+  `node scripts/check-graph.js --map-table` regenerates).
+- **Acceptance:** `check-graph` passes; a stranger can land mid-episode via a
+  `?n=` deep link and not be lost.
+
+**R4 — Link & surface rot** *(quarterly)*
+- External links: the Geotab getting-started walkthrough, `mcp.geotab.com`
+  connector URL, `my.geotab.com/registration.html`, vibe-guide skill paths.
+- The MCP tool surface itself: diff the live connector's tools against the
+  episodes. New tools are new-episode candidates (Ep-Report still unprobed;
+  Emissions still blocked on device enrollment).
+- **Acceptance:** every user-facing link resolves; the episode backlog reflects
+  the current tool list.
+
+### Build backlog (prioritized)
+
+1. **CI browser smoke test.** The Playwright checks run by hand during reviews
+   (load → connect → one episode → no JS errors → endcard CTA opens
+   connect-real) belong in a workflow next to `check-graph.yml`. Dev-only
+   dependency; the site itself stays zero-build.
+2. **WS0 multi-page shell** (unchanged, still the biggest structural win): the
+   "what is MCP / get started" content is overlay-only today, invisible to
+   search. WS1/WS2/WS3a/WS5a unlock behind it.
+3. **Warehouse conversion beat.** The warehouse path ends by looping to the
+   hub — the fleet episodes' "try this with your own fleet" endcard has no
+   MotherDuck-flavored equivalent ("stand this up for real: free tier +
+   vibe-guide skill").
+4. **Fleet Progress v2** — theme badges, fleet upgrades earned from episodes
+   (EVs after the EV episode, dashcams after Ep-Dashcam), share card. **Gated
+   on R2 engagement data.**
+5. **WS7 polish** (a11y sweep across the new strip/hints, Lighthouse pass).
+
 ## Findings log (verified live)
+
+- **Conversation-path review (1 Jul 2026).** Full read-through plus graph metrics
+  across all 78 nodes: flagship beats (weekly review, agentic safety, ROI,
+  warehouse) are strong — teaching beats land, choices read like real follow-ups,
+  honest caveats survive. Structurally: only two nodes end with hub/restart alone
+  (both dispatch write-conclusions, both carry endcards); non-hub trays cap at 6
+  choices; single-parent nodes are all mid-chain steps, not orphans. Corrected a
+  framing slip introduced during review: `skills/geotab-weekly-review/SKILL.md`
+  is a **teaching example** (the lesson: conversations first, then build skills
+  relevant to your own fleet), never an official installable — ready-to-follow
+  shared skills live in `geotab-vibe-guide`. Hub intro now tells first-timers the
+  paths cross-link, so the 27-chip tray doesn't read as a commitment.
 
 - **VIN episode (Ep6) was scrapped** — too thin a story to feature. Underlying
   facts: you cannot create a vehicle from a VIN (`Add Device` needs a valid,

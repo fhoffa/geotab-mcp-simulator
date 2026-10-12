@@ -10,6 +10,161 @@
   var GRAPH = window.CONVERSATIONS;
   var NODES = GRAPH.nodes;
 
+  // ----------------------------------------------------------------- locale
+  // The head script in index.html picks window.SIM_LANG and loads the matching
+  // overlay(s) from data/i18n/, which register in window.SIM_I18N. English lives
+  // in the graph and in UI_EN below; an overlay only swaps display strings —
+  // node ids, tools, args and results are never translated. es-ES is a sparse
+  // layer over es-419 (just the strings that read differently in Spain).
+  var LANG_KEY = "geotab-mcp-sim-lang";
+  var LANG = window.SIM_LANG || "en";
+  var LOCALE = mergeLocales(LANG === "es-ES" ? ["es-419", "es-ES"] : LANG === "es-419" ? ["es-419"] : []);
+  var UI_EN = {
+    "conn.off": "Not connected",
+    "conn.geotab": "Connected · Geotab",
+    "conn.carto": "Connected · Geotab + CARTO",
+    "conn.motherduck": "Connected · Geotab + MotherDuck",
+    "speed.xfast": "xfast",
+    "speed.realistic": "realistic",
+    "game.off": "off",
+    "chat.you": "you",
+    "chat.database": "database · {db}",
+    "tool.calling": "Calling {name}…",
+    "tool.aria": "Tool call {name} — show request and response",
+    "tool.action": "action",
+    "tool.done": "done",
+    "tool.request": "Request",
+    "tool.response": "Response",
+    "tool.hint": "☝ That's an <strong>MCP tool call</strong> — the assistant using the Model Context Protocol to query MyGeotab. Click the card to see the exact request and response. Connect a real account and these calls run live against your fleet.",
+    "confirm.head": "✅ Done — here's what changed in MyGeotab",
+    "confirm.simulated": " (simulated)",
+    "endcard.foot": "Same connector works in Microsoft Copilot, ChatGPT, Cursor, Windsurf, and other MCP clients · geotab.com",
+    "endcard.cta": "Try this with your own fleet →",
+    "warehouse.title": "Warehouse",
+    "warehouse.sample": "Sample rows",
+    "warehouse.rows": "rows",
+    "warehouse.row": "row",
+    "warehouse.noRows": "0 rows",
+    "warehouse.show": "Show MotherDuck warehouse state",
+    "warehouse.hide": "Hide MotherDuck warehouse state",
+    "warehouse.table": "{n} table",
+    "warehouse.tables": "{n} tables",
+    "warehouse.empty": "empty",
+    "warehouse.updated": "Updated",
+    "warehouse.pointer": "Open the **MotherDuck** panel at the top to explore your bronze/silver/gold tables and schemas.",
+    "chart.aria": "Chart: ",
+    "map.aria": "Map. ",
+    "map.zone": "Zone: {label}",
+    "map.markers": "Markers: {labels}",
+    "map.street": "Street map",
+    "map.disclosure": "Illustrative overlay on © OpenStreetMap contributors, © CARTO basemap · not live tracking",
+    "media.disclosure": "Illustrative reconstruction · AI-generated, not a live MCP capture",
+    "media.fallback": "Clip not found — see media/README.md to generate and drop it in.",
+    "progress.fleet": "🚚 Fleet grown to <strong>{fleet}</strong> vehicles",
+    "progress.points": "{points} pts · {done}/{total} scenarios explored",
+    "progress.full": "🏆 Full 50-vehicle fleet unlocked — ready to run a real one? Use \"Connect real account\" above.",
+    "progress.summary": "🚚 {fleet} vehicles · {points} pts · {done}/{total} scenarios",
+    "tray.hint": "Choose a suggested prompt to continue the simulator:",
+    "chip.start": "Start here",
+    "chip.explored": "explored",
+  };
+  // Look up a UI string: the active locale first, then English. {name} slots are
+  // filled from vars.
+  function tr(key, vars) {
+    var s = LOCALE.ui[key] != null ? LOCALE.ui[key] : UI_EN[key] != null ? UI_EN[key] : key;
+    return vars ? s.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? String(vars[k]) : m; }) : s;
+  }
+  function mergeLocales(names) {
+    var out = { ui: {}, nodes: {} };
+    var all = window.SIM_I18N || {};
+    names.forEach(function (name) {
+      var loc = all[name];
+      if (!loc) return;
+      Object.assign(out.ui, loc.ui || {});
+      Object.keys(loc.nodes || {}).forEach(function (id) {
+        var over = loc.nodes[id], base = out.nodes[id] || { events: [], choices: [] };
+        out.nodes[id] = {
+          events: mergeSlots(base.events, over.events),
+          choices: mergeSlots(base.choices, over.choices),
+        };
+      });
+    });
+    return out;
+  }
+  // Positional merge: a later layer overrides whole fields, slot by slot.
+  function mergeSlots(base, over) {
+    var out = (base || []).slice();
+    (over || []).forEach(function (o, i) {
+      if (o) out[i] = Object.assign({}, out[i] || {}, o);
+    });
+    return out;
+  }
+  // Swap translated display strings into the graph. Events are cloned first —
+  // the same event object can be shared by several nodes.
+  function localizeGraph() {
+    Object.keys(LOCALE.nodes).forEach(function (id) {
+      var node = NODES[id], loc = LOCALE.nodes[id];
+      if (!node) return;
+      loc.events.forEach(function (o, i) {
+        if (!o || !node.events || !node.events[i]) return;
+        var ev = node.events[i] = JSON.parse(JSON.stringify(node.events[i]));
+        Object.keys(o).forEach(function (k) {
+          var v = o[k];
+          if (v == null) return;
+          if (k === "bars" || k === "pins" || k === "rows") {
+            v.forEach(function (label, j) { if (label != null && ev[k] && ev[k][j]) ev[k][j].label = label; });
+          } else if (k === "zone") {
+            if (ev.zone) ev.zone.label = v;
+          } else if (k === "stages") {
+            v.forEach(function (st, j) {
+              var dst = ev.stages && ev.stages[j];
+              if (!st || !dst) return;
+              if (st.name != null) dst.name = st.name;
+              (st.notes || []).forEach(function (note, m) { if (note != null && dst.tables && dst.tables[m]) dst.tables[m].note = note; });
+            });
+          } else if (Array.isArray(v) && Array.isArray(ev[k])) {
+            ev[k] = v.map(function (x, j) { return x != null ? x : ev[k][j]; });
+          } else {
+            ev[k] = v;
+          }
+        });
+      });
+      loc.choices.forEach(function (o, i) {
+        var c = node.choices && node.choices[i];
+        if (!o || !c) return;
+        c = node.choices[i] = Object.assign({}, c);
+        ["group", "label", "say"].forEach(function (k) { if (o[k] != null) c[k] = o[k]; });
+      });
+    });
+  }
+  // Static page copy: data-i18n="key" replaces innerHTML (overlay strings are
+  // repo-authored, like the English markup they replace); data-i18n-attr=
+  // "attr:key;attr:key" translates attributes.
+  function translatePage() {
+    var ui = LOCALE.ui;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (el) {
+      var s = ui[el.getAttribute("data-i18n")];
+      if (s != null) el.innerHTML = s;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-attr]"), function (el) {
+      el.getAttribute("data-i18n-attr").split(";").forEach(function (pair) {
+        var bits = pair.split(":"), s = ui[(bits[1] || "").trim()];
+        if (s != null) el.setAttribute(bits[0].trim(), s);
+      });
+    });
+  }
+  function setLang(lang) {
+    try { if (window.localStorage) window.localStorage.setItem(LANG_KEY, lang); } catch (_) {}
+    var params = new URLSearchParams(location.search);
+    if (lang === "en") params.delete("lang");
+    else params.set("lang", lang);
+    // From the welcome screen, come back to the welcome screen, not to the
+    // node playing behind it.
+    if (!landingOverlay.classList.contains("hidden")) params.delete("n");
+    var qs = params.toString();
+    location.href = location.pathname + (qs ? "?" + qs : "") + location.hash;
+  }
+
   var chatEl = document.getElementById("chat");
   var emptyStateEl = document.getElementById("emptyState");
   var trayEl = document.getElementById("tray");
@@ -46,7 +201,7 @@
   var SPEED_KEY = "geotabMcpSimulatorSpeed";
   var SPEEDS = {
     xfast: {
-      label: "xfast",
+      label: "speed.xfast",
       base: { tool: 360, think: 380, system: 300, gap: 200 },
       toolWrite: 260,
       toolWeb: 340,
@@ -57,7 +212,7 @@
       user: { chunk: 2, tick: 24 },
     },
     realistic: {
-      label: "realistic",
+      label: "speed.realistic",
       base: { tool: 1200, think: 800, system: 300, gap: 400 },
       toolApiReadMedium: 2200,
       toolWrite: 2800,
@@ -76,12 +231,84 @@
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
   var warehousePointerShown = false; // chat pointer to the pane: show once, then update silently
   var currentNodeId = null; // last id written to the ?n= URL param by playNode
+  var previousNodeId = null; // the node before it, for the "resume" action
   var REAL_ACCOUNT_HASH = "connect-real"; // shareable deep link straight to the "connect real account" overlay
   // Generic preamble before any "chapter" starts. When a deep link lands mid-flow,
   // we rebuild the lead-up transcript but trim everything up to and including the
   // last of these — so a warehouse link opens at warehouse-intro, not at "connect".
   var ENTRY_NODES = { connect: 1, authorize: 1, hub: 1 };
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // -------------------------------------------------------- fleet progress game
+  // EXPERIMENTAL, off by default — the simulator stays a plain simulator unless
+  // the user turns this on in Settings. When on: exploring scenarios "grows" your
+  // simulated fleet from a small 5-vehicle operation toward the full 50-vehicle
+  // demo fleet, plus points for every distinct node you reach. All local
+  // (localStorage) — nothing leaves the browser. Restart keeps progress; Settings
+  // has the toggle and the reset.
+  var GAME_KEY = "geotab-mcp-sim-game";
+  var gameMode = readGameMode();
+  function readGameMode() {
+    try {
+      return window.localStorage && window.localStorage.getItem(GAME_KEY) === "on" ? "on" : "off";
+    } catch (_) { return "off"; }
+  }
+  function gameOn() { return gameMode === "on"; }
+  function setGameMode(mode) {
+    gameMode = mode === "on" ? "on" : "off";
+    try { if (window.localStorage) window.localStorage.setItem(GAME_KEY, gameMode); } catch (_) {}
+  }
+
+  var PROGRESS_KEY = "geotab-mcp-sim-progress";
+  var FLEET_BASE = 5;
+  var FLEET_PER_SCENARIO = 2;
+  var FLEET_MAX = 50;
+  var PTS_SCENARIO = 25;
+  var PTS_NODE = 5;
+
+  var progress = readProgress();
+  function readProgress() {
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(PROGRESS_KEY);
+      var p = raw ? JSON.parse(raw) : null;
+      return p && typeof p === "object" && p.nodes ? p : { nodes: {} };
+    } catch (_) { return { nodes: {} }; }
+  }
+  function writeProgress() {
+    try { if (window.localStorage) window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); } catch (_) {}
+  }
+  function scenarioTargets() {
+    var t = {};
+    (((NODES.hub || {}).choices) || []).forEach(function (c) { if (c.next) t[c.next] = true; });
+    return t;
+  }
+  function progressStats() {
+    var targets = scenarioTargets();
+    var scenarios = 0, others = 0;
+    Object.keys(progress.nodes).forEach(function (id) {
+      if (ENTRY_NODES[id]) return; // connect/authorize/hub don't score
+      if (targets[id]) scenarios++;
+      else others++;
+    });
+    var fleet = Math.min(FLEET_MAX, FLEET_BASE + FLEET_PER_SCENARIO * scenarios);
+    return {
+      scenarios: scenarios,
+      totalScenarios: Object.keys(targets).length,
+      points: PTS_SCENARIO * scenarios + PTS_NODE * others,
+      fleet: fleet,
+      full: fleet >= FLEET_MAX,
+    };
+  }
+  function recordVisit(id) {
+    if (!gameOn()) return;
+    if (ENTRY_NODES[id] || progress.nodes[id]) return;
+    progress.nodes[id] = 1;
+    writeProgress();
+  }
+  function resetProgress() {
+    progress = { nodes: {} };
+    writeProgress();
+  }
 
   function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
   function jitter(ms) { return Math.round(ms * (0.85 + Math.random() * 0.3)); } // +/-15%, feels less robotic
@@ -126,7 +353,7 @@
     return ev && (ev.server === "gmail" || ev.server === "google-calendar" || ev.server === "salesforce");
   }
   function updateSpeedUi() {
-    if (speedModeLabel) speedModeLabel.textContent = timing().label;
+    if (speedModeLabel) speedModeLabel.textContent = tr(timing().label);
     speedOptionBtns.forEach(function (btn) {
       var active = btn.getAttribute("data-speed") === speedMode;
       btn.classList.toggle("active", active);
@@ -156,13 +383,14 @@
       if (isAceTool(ev)) return jitter(isAceHeavy(ev) ? t.toolAceHeavy : t.toolAceSimple);
       if (ev.server === "web") return jitter(t.toolWeb);
       if (ev.write || isExternalIntegration(ev)) return jitter(t.toolWrite);
+      if (ev.server === "carto") return jitter(t.toolApiReadMedium);
       if (isMediumApiRead(ev)) return jitter(t.toolApiReadMedium);
       return jitter(t.base.tool);
     }
     var d = t.base.tool;
     if (ev.write) d += t.toolWrite;
     if (ev.server === "web") d += t.toolWeb;
-    if (ev.server === "motherduck") d += 220;
+    if (ev.server === "motherduck" || ev.server === "carto") d += 220;
     return jitter(d);
   }
   function timedDelay(kind) { return jitter(timing().base[kind]); }
@@ -274,7 +502,7 @@
   /* ----------------------------------------------------------- renderers */
   function addBubbleShell(role) {
     var row = el("div", "row " + role);
-    row.appendChild(el("div", "avatar " + role, role === "user" ? "you" : ""));
+    row.appendChild(el("div", "avatar " + role, role === "user" ? tr("chat.you") : ""));
     var b = el("div", "bubble");
     var prose = el("div", "prose");
     b.appendChild(prose);
@@ -347,7 +575,7 @@
     var wrap = el("div", "row assistant");
     wrap.appendChild(el("div", "avatar assistant", ""));
     var b = el("div", "bubble");
-    b.appendChild(el("span", "db-badge", "database · " + db));
+    b.appendChild(el("span", "db-badge", tr("chat.database", { db: db })));
     wrap.appendChild(b);
     chatEl.appendChild(wrap);
     scrollDown();
@@ -358,11 +586,15 @@
     var row = el("div", "tool-pending");
     row.setAttribute("data-server", ev.server || "geotab");
     row.appendChild(el("span", "tool-dot pending"));
-    row.appendChild(el("span", "tool-pending-label", "Calling " + (ev.server || "geotab") + "." + ev.name + "…"));
+    row.appendChild(el("span", "tool-pending-label", tr("tool.calling", { name: (ev.server || "geotab") + "." + ev.name })));
     (container || chatEl).appendChild(row);
     scrollDown();
     return row;
   }
+
+  // One-time teaching beat: the first tool card a visitor sees is the heart of
+  // the whole demo (this *is* MCP), so explain it once, then stay quiet.
+  var toolHintShown = false;
 
   function addToolCard(ev, container) {
     var card = el("div", "tool-card");
@@ -371,20 +603,20 @@
     var head = el("button", "tool-head");
     head.type = "button";
     head.setAttribute("aria-expanded", ev.openByDefault ? "true" : "false");
-    head.setAttribute("aria-label", "Tool call " + (ev.server || "geotab") + "." + ev.name + " — show request and response");
+    head.setAttribute("aria-label", tr("tool.aria", { name: (ev.server || "geotab") + "." + ev.name }));
     head.appendChild(el("span", "tool-dot"));
     head.appendChild(el("span", "tool-server", ev.server || "geotab"));
     head.appendChild(el("span", "tool-name", ev.name));
-    if (ev.write) head.appendChild(el("span", "tool-badge", "action"));
-    var sum = el("span", "tool-summary", "→ " + escapeHtml(ev.summary || "done"));
+    if (ev.write) head.appendChild(el("span", "tool-badge", tr("tool.action")));
+    var sum = el("span", "tool-summary", "→ " + escapeHtml(ev.summary || tr("tool.done")));
     head.appendChild(sum);
     head.appendChild(el("span", "tool-caret", "▶"));
 
     var body = el("div", "tool-body");
-    body.appendChild(el("div", "lbl", "Request"));
+    body.appendChild(el("div", "lbl", tr("tool.request")));
     body.appendChild(el("pre", null, escapeHtml(JSON.stringify(ev.args || {}, null, 2))));
     if (ev.result != null) {
-      body.appendChild(el("div", "lbl", "Response"));
+      body.appendChild(el("div", "lbl", tr("tool.response")));
       body.appendChild(el("pre", null, escapeHtml(ev.result)));
     }
 
@@ -396,12 +628,20 @@
     card.appendChild(body);
     if (ev.openByDefault) card.classList.add("open");
     (container || chatEl).appendChild(card);
+    if (!toolHintShown) {
+      toolHintShown = true;
+      (container || chatEl).appendChild(el(
+        "div",
+        "tool-hint",
+        tr("tool.hint")
+      ));
+    }
     scrollDown();
   }
 
   function addConfirmCard(ev) {
     var c = el("div", "confirm-card");
-    c.appendChild(el("div", "cf-head", "✅ Done — here's what changed in MyGeotab" + (ev.simulated !== false ? " (simulated)" : "")));
+    c.appendChild(el("div", "cf-head", tr("confirm.head") + (ev.simulated !== false ? tr("confirm.simulated") : "")));
     var list = el("ul", "cf-list");
     (ev.changes || []).forEach(function (line) { list.appendChild(el("li", null, escapeHtml(line))); });
     c.appendChild(list);
@@ -413,9 +653,9 @@
     var c = el("div", "endcard");
     c.appendChild(el("div", "ec-1", escapeHtml(lines[0] || "")));
     if (lines[1]) c.appendChild(el("div", "ec-2", escapeHtml(lines[1])));
-    c.appendChild(el("div", "ec-foot", "Same connector works in Microsoft Copilot, ChatGPT, Cursor, Windsurf, and other MCP clients · geotab.com"));
+    c.appendChild(el("div", "ec-foot", tr("endcard.foot")));
     // turn the moment of impact into a next step: jump to the "connect for real" guide
-    var cta = el("button", "ec-cta", "Try this with your own fleet →");
+    var cta = el("button", "ec-cta", tr("endcard.cta"));
     cta.type = "button";
     cta.addEventListener("click", openTryReal);
     c.appendChild(cta);
@@ -550,7 +790,7 @@
     var rows = (t.sample && t.sample.length) ? t.sample : fallbackWarehouseSample(t);
     if (!rows.length) return null;
     var details = el("details", "warehouse-sample");
-    details.appendChild(el("summary", "warehouse-sample-toggle", "Sample rows"));
+    details.appendChild(el("summary", "warehouse-sample-toggle", tr("warehouse.sample")));
     var scroll = el("div", "warehouse-sample-scroll");
     // One grid for header + every data cell, so columns share tracks and always
     // line up (separate per-row grids size their columns independently and drift).
@@ -564,6 +804,11 @@
     scroll.appendChild(grid);
     details.appendChild(scroll);
     return details;
+  }
+
+  // Row counts are authored as "698,323 rows" / "1 row"; only the word is localized.
+  function localRows(s) {
+    return String(s).replace(/\brows\b/g, tr("warehouse.rows")).replace(/\brow\b/g, tr("warehouse.row"));
   }
 
   function renderWarehouseBody(ev, body) {
@@ -583,7 +828,7 @@
       (stage.tables || []).forEach(function (t) {
         var row = el("div", "warehouse-table-row");
         row.appendChild(el("code", null, escapeHtml(t.name || "table")));
-        row.appendChild(el("span", "warehouse-row-count", escapeHtml(t.rows || "0 rows")));
+        row.appendChild(el("span", "warehouse-row-count", escapeHtml(t.rows ? localRows(t.rows) : tr("warehouse.noRows"))));
         if (t.note) row.appendChild(el("span", "warehouse-table-note", escapeHtml(t.note)));
         var sample = renderWarehouseSample(t);
         if (sample) row.appendChild(sample);
@@ -601,17 +846,17 @@
     if (!motherduckPane || !motherduckPaneToggle) return;
     motherduckPane.classList.toggle("collapsed", !open);
     motherduckPaneToggle.setAttribute("aria-expanded", open ? "true" : "false");
-    motherduckPaneToggle.setAttribute("aria-label", (open ? "Hide" : "Show") + " MotherDuck warehouse state");
+    motherduckPaneToggle.setAttribute("aria-label", tr(open ? "warehouse.hide" : "warehouse.show"));
   }
 
   function addWarehousePane(ev) {
     if (!motherduckPane || !motherduckPaneBody) return;
     var tableCount = (ev.stages || []).reduce(function (n, stage) { return n + ((stage.tables || []).length); }, 0);
-    var summary = ev.summary || (tableCount ? tableCount + " tables" : "empty");
+    var summary = ev.summary || (tableCount ? tr(tableCount === 1 ? "warehouse.table" : "warehouse.tables", { n: tableCount }) : tr("warehouse.empty"));
 
     motherduckPane.classList.remove("hidden");
-    if (motherduckPaneTitle) motherduckPaneTitle.textContent = ev.title === "MotherDuck" ? "Warehouse" : (ev.title || "Warehouse");
-    if (motherduckPaneSubtitle) motherduckPaneSubtitle.textContent = ev.compactSubtitle || ev.subtitle || "Updated";
+    if (motherduckPaneTitle) motherduckPaneTitle.textContent = ev.title === "MotherDuck" || !ev.title ? tr("warehouse.title") : ev.title;
+    if (motherduckPaneSubtitle) motherduckPaneSubtitle.textContent = ev.compactSubtitle || ev.subtitle || tr("warehouse.updated");
     if (motherduckPaneSummary) motherduckPaneSummary.textContent = summary;
     renderWarehouseBody(ev, motherduckPaneBody);
 
@@ -626,18 +871,70 @@
       return s.kind === "bronze" || s.kind === "silver" || s.kind === "gold";
     });
     if (!warehousePointerShown && hasLayers) {
-      addSystem("Open the **MotherDuck** panel at the top to explore your bronze/silver/gold tables and schemas.");
+      addSystem(tr("warehouse.pointer"));
       warehousePointerShown = true;
     }
   }
 
+  // A chart with `columns` + `rows` is a heatmap: one row per item, one column per
+  // measure, each cell shaded against the other rows on that same measure (so
+  // measures in different units can sit side by side). A real <table>, so screen
+  // readers get the numbers.
+  function fmtCount(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, LANG === "es-ES" ? "." : ",");
+  }
+  function addHeatmap(ev) {
+    var card = el("div", "chart-card");
+    var table = document.createElement("table");
+    table.className = "heat-table";
+    if (ev.title) {
+      var cap = document.createElement("caption");
+      cap.className = "chart-title";
+      cap.textContent = ev.title;
+      table.appendChild(cap);
+    }
+    var maxes = ev.columns.map(function (_, j) {
+      return ev.rows.reduce(function (m, r) { return Math.max(m, r.values[j] || 0); }, 0) || 1;
+    });
+    var head = document.createElement("tr");
+    head.appendChild(document.createElement("th"));
+    ev.columns.forEach(function (c) {
+      var th = document.createElement("th");
+      th.setAttribute("scope", "col");
+      th.textContent = c;
+      head.appendChild(th);
+    });
+    table.appendChild(head);
+    ev.rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      var th = document.createElement("th");
+      th.setAttribute("scope", "row");
+      th.textContent = r.label;
+      tr.appendChild(th);
+      r.values.forEach(function (v, j) {
+        var td = document.createElement("td");
+        // five steps of one hue, lightest = lowest of the rows on this measure
+        td.className = "heat-" + Math.min(5, 1 + Math.floor(((v || 0) / maxes[j]) * 5));
+        td.textContent = fmtCount(v);
+        td.title = r.label + " · " + ev.columns[j] + ": " + fmtCount(v);
+        tr.appendChild(td);
+      });
+      table.appendChild(tr);
+    });
+    card.appendChild(table);
+    if (ev.note) card.appendChild(el("div", "chart-note", escapeHtml(ev.note)));
+    chatEl.appendChild(card);
+    scrollDown();
+  }
+
   function addChart(ev) {
-    var max = (ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
+    if (ev.rows && ev.columns) return addHeatmap(ev);
+    var max =(ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
     var card = el("div", "chart-card");
     // text alternative so the bar chart isn't invisible to screen readers
     card.setAttribute("role", "img");
     card.setAttribute("aria-label",
-      (ev.title ? ev.title + ": " : "Chart: ") +
+      (ev.title ? ev.title + ": " : tr("chart.aria")) +
       (ev.bars || []).map(function (b) { return b.label + " " + b.value; }).join(", "));
     if (ev.title) card.appendChild(el("div", "chart-title", escapeHtml(ev.title)));
     (ev.bars || []).forEach(function (b) {
@@ -746,13 +1043,15 @@
     // text alternative — the SVG zone + pins convey data screen readers can't see
     card.setAttribute("role", "img");
     card.setAttribute("aria-label",
-      (ev.title ? ev.title + ". " : "Map. ") +
-      (ev.zone && ev.zone.label ? "Zone: " + ev.zone.label + ". " : "") +
+      (ev.title ? ev.title + ". " : tr("map.aria")) +
+      (ev.zone && ev.zone.label ? tr("map.zone", { label: ev.zone.label }) + ". " : "") +
       (ev.summary ? ev.summary + ". " : "") +
-      (labeledPins.length ? "Markers: " + labeledPins.map(function (p) { return p.label; }).join(", ") + "." : ""));
+      (labeledPins.length ? tr("map.markers", { labels: labeledPins.map(function (p) { return p.label; }).join(", ") }) + "." : ""));
     if (ev.title) card.appendChild(el("div", "map-title", escapeHtml(ev.title)));
     var canvas = el("div", "map-canvas" + (ev.mapStyle ? " map-canvas-" + ev.mapStyle : ""));
-    var chrome = el("div", "map-chrome", '<span>Street map</span><span class="map-zoom">＋ −</span>');
+    // a pre-rendered map image (e.g. a CARTO result) instead of a street basemap
+    if (ev.image) canvas.style.backgroundImage = 'url("' + ev.image + '")';
+    var chrome = el("div", "map-chrome", "<span>" + escapeHtml(ev.layerLabel || tr("map.street")) + '</span><span class="map-zoom">＋ −</span>');
     chrome.setAttribute("aria-hidden", "true");
     canvas.appendChild(chrome);
     drawMapAreas(canvas, ev.areas || []);
@@ -776,7 +1075,7 @@
       canvas.appendChild(zoneTag);
     }
     (ev.pins || []).forEach(function (p) {
-      var pin = el("div", "map-pin map-pin-" + (p.status || "free") + (p.compact ? " map-pin-compact" : ""));
+      var pin = el("div", "map-pin map-pin-" + (p.status || "free") + (p.compact ? " map-pin-compact" : "") + (p.flip ? " map-pin-flip" : ""));
       pin.style.left = (p.x || 0) + "%";
       pin.style.top = (p.y || 0) + "%";
       if (p.title || p.label) pin.setAttribute("title", p.title || p.label);
@@ -788,11 +1087,12 @@
       canvas.appendChild(pin);
     });
     card.appendChild(canvas);
-    var scale = el("div", "map-scale", "200 m");
+    var scale = el("div", "map-scale", escapeHtml(ev.scale || "200 m"));
+    if (ev.scaleWidth) scale.style.width = ev.scaleWidth;
     scale.setAttribute("aria-hidden", "true");
     canvas.appendChild(scale);
     if (ev.summary) card.appendChild(el("div", "map-summary", escapeHtml(ev.summary)));
-    card.appendChild(el("div", "map-disclosure", ev.disclosure ? escapeHtml(ev.disclosure) : "Illustrative overlay on © OpenStreetMap contributors, © CARTO basemap · not live tracking"));
+    card.appendChild(el("div", "map-disclosure", escapeHtml(ev.disclosure || tr("map.disclosure"))));
     chatEl.appendChild(card);
     scrollDown();
   }
@@ -801,7 +1101,7 @@
     var card = el("div", "media-card");
     if (ev.illustrative) {
       card.appendChild(
-        el("div", "media-disclosure", "Illustrative reconstruction · AI-generated, not a live MCP capture")
+        el("div", "media-disclosure", tr("media.disclosure"))
       );
     }
     // Default to the fallback: a <video> with a missing/bad source doesn't reliably fire
@@ -811,7 +1111,7 @@
     var fallback = el(
       "div",
       "media-fallback show",
-      escapeHtml(ev.fallbackText || "Clip not found — see media/README.md to generate and drop it in.")
+      escapeHtml(ev.fallbackText || tr("media.fallback"))
     );
     var vid = document.createElement("video");
     vid.className = "media-video hidden";
@@ -844,8 +1144,8 @@
 
   /* --------------------------------------------------------- play a node */
   function setConn(connected) {
-    if (connected) { connEl.textContent = "Connected · Geotab"; connEl.className = "conn-pill conn-on"; }
-    else { connEl.textContent = "Not connected"; connEl.className = "conn-pill conn-off"; }
+    if (connected) { connEl.textContent = tr("conn.geotab"); connEl.className = "conn-pill conn-on"; }
+    else { connEl.textContent = tr("conn.off"); connEl.className = "conn-pill conn-off"; }
   }
 
   // Per-node URL for Cloudflare Web Analytics SPA tracking. The beacon hooks
@@ -859,7 +1159,9 @@
   }
   function writeNodeUrl(id, mode) {
     if (mode === "none" || !history.pushState) return; // "none": URL came from history already
-    var url = location.pathname + "?n=" + encodeURIComponent(id);
+    // keep an explicit ?lang= so a copied link opens in the same language
+    var lang = new URLSearchParams(location.search).get("lang");
+    var url = location.pathname + "?" + (lang ? "lang=" + encodeURIComponent(lang) + "&" : "") + "n=" + encodeURIComponent(id);
     // push = a counted, user-initiated step; replace = silent (boot / auto-advance)
     if (mode === "push") history.pushState({ n: id }, "", url);
     else history.replaceState({ n: id }, "", url);
@@ -873,15 +1175,18 @@
     trayEl.innerHTML = "";
     if (emptyStateEl) { emptyStateEl.remove(); emptyStateEl = null; }
     setConn(id !== "connect");
+    if (node.mode === "carto") connEl.textContent = tr("conn.carto");
     if (node.mode === "warehouse") {
-      connEl.textContent = "Connected · Geotab + MotherDuck";
+      connEl.textContent = tr("conn.motherduck");
     } else if (motherduckPane) {
       // Left the warehouse path — drop the MotherDuck pane so it's clear we're
       // back on the live fleet (Geotab only), not still working in MotherDuck.
       motherduckPane.classList.add("hidden", "collapsed");
     }
+    if (id !== currentNodeId) previousNodeId = currentNodeId;
     currentNodeId = id;
     writeNodeUrl(id, navMode || "replace");
+    recordVisit(id);
 
     var toolContainer = null;
 
@@ -948,19 +1253,47 @@
     else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next, "replace"); }
   }
 
+  // "resume" (a side question like "what should I double-check?") brings back the
+  // previous node's choices, minus the one that led here, so the conversation goes on
+  function resumeChoices() {
+    var prev = previousNodeId && NODES[previousNodeId];
+    return ((prev && prev.choices) || []).filter(function (c) { return c.next !== currentNodeId && c.action !== "resume"; });
+  }
   function renderChoices(choices) {
+    choices = choices.filter(function (c) { return c.action !== "resume" || resumeChoices().length; });
     trayEl.innerHTML = "";
-    trayEl.appendChild(el("div", "tray-hint", "Choose a suggested prompt to continue the simulator:"));
+    var atHub = currentNodeId === "hub" && gameOn();
+    if (atHub) {
+      var st = progressStats();
+      // only once there's something to show — a first-timer's hub stays clean
+      if (st.scenarios > 0) {
+        var pct = st.totalScenarios ? Math.round((st.scenarios / st.totalScenarios) * 100) : 0;
+        var strip = el("div", "progress-strip");
+        strip.innerHTML =
+          '<span>' + tr("progress.fleet", { fleet: st.fleet }) + "</span>" +
+          "<span>" + tr("progress.points", { points: st.points, done: st.scenarios, total: st.totalScenarios }) + "</span>" +
+          '<span class="progress-track" aria-hidden="true"><span class="progress-fill" style="width:' + pct + '%"></span></span>' +
+          (st.full
+            ? '<span class="progress-full">' + escapeHtml(tr("progress.full")) + "</span>"
+            : "");
+        trayEl.appendChild(strip);
+      }
+    }
+    trayEl.appendChild(el("div", "tray-hint", tr("tray.hint")));
     var lastGroup = null;
     choices.forEach(function (c, idx) {
       if (c.group && c.group !== lastGroup) {
         trayEl.appendChild(el("div", "tray-group", escapeHtml(c.group)));
         lastGroup = c.group;
       }
-      var primary = c.recommended || (idx === 0 && c.next);
-      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action ? " subtle" : ""));
+      var primary = c.recommended || (idx === 0 && (c.next || c.action === "resume"));
+      var done = atHub && c.next && progress.nodes[c.next];
+      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action && c.action !== "resume" ? " subtle" : "") + (done ? " done" : ""));
       btn.type = "button";
-      btn.innerHTML = (c.recommended ? '<span class="chip-badge">Start here</span>' : "") + escapeHtml(c.label);
+      btn.innerHTML =
+        (c.recommended ? '<span class="chip-badge">' + tr("chip.start") + "</span>" : "") +
+        escapeHtml(c.label) +
+        (done ? ' <span class="chip-check" aria-label="' + tr("chip.explored") + '">✓</span>' : "");
       btn.addEventListener("click", function () { onChoice(c); });
       trayEl.appendChild(btn);
     });
@@ -970,6 +1303,7 @@
 
   async function onChoice(c) {
     if (c.action === "restart") { restart(); return; }
+    if (c.action === "video") { openAbout(); return; }
     var myToken = playToken; // still the node whose choices are showing
     trayEl.innerHTML = ""; // one shot — no double-clicking another chip mid-type
     if (c.say || c.label) {
@@ -977,6 +1311,7 @@
       if (!(await typeUserText(prose, c.say || c.label, myToken))) return;
     }
     if (myToken !== playToken) return;
+    if (c.action === "resume") { renderChoices(resumeChoices()); return; }
     if (c.next) playNode(c.next, "push"); // user-initiated step → new history entry + analytics pageview
   }
 
@@ -1045,6 +1380,7 @@
     var start = 0;
     for (var i = 0; i < chain.length - 1; i++) { if (ENTRY_NODES[chain[i].id]) start = i + 1; }
     if (start > chain.length - 1) { playNode(id, finalMode); return; }
+    currentNodeId = chain.length > 1 ? chain[chain.length - 2].id : null;
     for (var j = start; j < chain.length; j++) {
       if (chain[j].say) addBubble("user", chain[j].say);
       if (j < chain.length - 1) renderNodeInstant(chain[j].id);
@@ -1101,8 +1437,19 @@
       writeNodeUrl(currentNodeId, "replace");
     }
   }
-  function openAbout() { openOverlay(aboutOverlay); }
-  function closeAbout() { closeOverlay(aboutOverlay); }
+  var aboutVideoFrame = document.getElementById("aboutVideoFrame");
+  function openAbout() {
+    if (aboutVideoFrame && !aboutVideoFrame.src) aboutVideoFrame.src = aboutVideoFrame.dataset.src;
+    openOverlay(aboutOverlay);
+  }
+  function closeAbout() {
+    closeOverlay(aboutOverlay);
+    // Closing only hides the overlay via CSS — clear the iframe src too, otherwise a
+    // playing video keeps running invisibly in the background. removeAttribute (not
+    // src = "") so a later read of .src comes back empty instead of resolving to this
+    // page's own URL, which would stop openAbout() from ever re-embedding the video.
+    if (aboutVideoFrame) aboutVideoFrame.removeAttribute("src");
+  }
 
   /* ------------------------------------------------------------- controls */
   function clearChat() {
@@ -1117,11 +1464,40 @@
   startSimBtn.addEventListener("click", closeLanding);
   if (startWarehouseBtn) startWarehouseBtn.addEventListener("click", function () { closeLanding(); playToken++; clearChat(); playNode("warehouse-intro", "push"); });
   if (motherduckPaneToggle) motherduckPaneToggle.addEventListener("click", function () { setMotherduckPaneOpen(motherduckPane.classList.contains("collapsed")); });
-  settingsBtn.addEventListener("click", openSettings);
+  settingsBtn.addEventListener("click", function () { updateProgressUi(); openSettings(); });
   settingsClose.addEventListener("click", closeSettings);
   settingsOverlay.addEventListener("click", function (e) { if (e.target === settingsOverlay) closeSettings(); });
   speedOptionBtns.forEach(function (btn) {
     btn.addEventListener("click", function () { setSpeedMode(btn.getAttribute("data-speed")); });
+  });
+  var progressSummaryEl = document.getElementById("progressSummary");
+  var progressResetBtn = document.getElementById("progressResetBtn");
+  var gameOptionBtns = Array.prototype.slice.call(document.querySelectorAll(".game-option"));
+  function updateProgressUi() {
+    gameOptionBtns.forEach(function (btn) {
+      var active = btn.getAttribute("data-game") === gameMode;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-checked", active ? "true" : "false");
+    });
+    if (!progressSummaryEl) return;
+    if (!gameOn()) { progressSummaryEl.textContent = tr("game.off"); return; }
+    var st = progressStats();
+    progressSummaryEl.textContent = tr("progress.summary", { fleet: st.fleet, points: st.points, done: st.scenarios, total: st.totalScenarios });
+  }
+  function redrawHubTray() {
+    if (currentNodeId === "hub") renderChoices((NODES.hub && NODES.hub.choices) || []);
+  }
+  gameOptionBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setGameMode(btn.getAttribute("data-game"));
+      updateProgressUi();
+      redrawHubTray(); // strip + checkmarks follow the toggle immediately
+    });
+  });
+  if (progressResetBtn) progressResetBtn.addEventListener("click", function () {
+    resetProgress();
+    updateProgressUi();
+    redrawHubTray();
   });
   tryRealBtn.addEventListener("click", openTryReal);
   tryRealBtnLanding.addEventListener("click", openTryReal);
@@ -1133,7 +1509,10 @@
   document.addEventListener("keydown", function (e) {
     var open = activeOverlay();
     if (!open) return;
-    if (e.key === "Escape") { closeOverlay(open); return; }
+    if (e.key === "Escape") {
+      if (open === aboutOverlay) closeAbout(); else closeOverlay(open);
+      return;
+    }
     if (e.key === "Tab") {
       // keep focus inside the open dialog
       var f = focusables(open);
@@ -1162,6 +1541,16 @@
   });
 
   /* ---------------------------------------------------------------- boot */
+  // Localize before anything reads the graph (pathTo replays c.say || c.label).
+  localizeGraph();
+  translatePage();
+  ["langSelect", "langSelectLanding"].forEach(function (id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    sel.value = LANG;
+    sel.addEventListener("change", function () { setLang(sel.value); });
+  });
+  document.documentElement.classList.remove("i18n-pending");
   updateSpeedUi();
   checkGraph();
   var bootId = idFromUrl();

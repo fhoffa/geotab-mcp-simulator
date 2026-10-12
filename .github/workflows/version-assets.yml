@@ -14,6 +14,8 @@ on:
       - styles.css
       - data/sample-data.js
       - data/conversations.js
+      - data/i18n/es-419.js
+      - data/i18n/es-ES.js
       - assets/geotab-mark.png
       - assets/og-image.png
       - scripts/version-assets.js
