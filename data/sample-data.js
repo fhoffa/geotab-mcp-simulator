@@ -305,6 +305,9 @@ window.SAMPLE_DATA = {
       ],
       // dimension ExecuteMultiCall: only fields each Get asks for (built-in rule, diagnostic and unit ids;
       // 1986-01-01 / 2050-01-01 are MyGeotab's open-ended dates; the LEZ is the zone the scenarios create)
+      // the fleet-roster Get runs in the operational step; the two stages before it list the table but haven't loaded it
+      "silver.dim_device@layered": [],
+      "silver.dim_device@incremental": [],
       "silver.dim_device": [   // real names + VINs from demo_fh4
         { name: "Demo - 06", vehicleIdentificationNumber: "WDB9076571P106588" },
         { name: "Demo - 08", vehicleIdentificationNumber: "WDB9076571P106590" },
