@@ -4663,7 +4663,7 @@ window.CONVERSATIONS = {
           name: "ListEntities",
           args: { database: "demo_fh4" },
           summary: "52 entity types available",
-          result: "LogRecord, Trip, StatusData, ExceptionEvent, FaultData, Device, User, Zone, Group, Diagnostic, Rule, FuelTransaction, FillUp, ...",
+          result: "LogRecord, Trip, DriverChange, StatusData, ExceptionEvent, FaultData, Device, User, Zone, Group, Diagnostic, Rule, FuelTransaction, FillUp, ...",
         },
         {
           type: "tool",
@@ -4672,10 +4672,10 @@ window.CONVERSATIONS = {
           args: {
             database: "demo_fh4",
             new_chat: true,
-            prompt: "For each fact table — Trip, StatusData, ExceptionEvent, FaultData — return rows after its current watermark with exact columns needed for a warehouse load. Use UTC. Do not summarize or aggregate.",
+            prompt: "For each fact table — Trip, DriverChange, StatusData, ExceptionEvent, FaultData — return rows after its current watermark with exact columns needed for a warehouse load. Use UTC. Do not summarize or aggregate.",
           },
-          summary: "4 bulk fact extracts queued",
-          result: "trips CSV · status_data CSV · exception_events CSV · fault_data CSV · each includes returned SQL + signed URL",
+          summary: "5 bulk fact extracts queued",
+          result: "trips CSV · driver_changes CSV · status_data CSV · exception_events CSV · fault_data CSV · each includes returned SQL + signed URL",
         },
         {
           type: "tool",
@@ -5085,7 +5085,7 @@ window.CONVERSATIONS = {
           server: "motherduck",
           name: "query_rw",
           write: true,
-          args: { sql: "CREATE OR REPLACE TABLE gold.fault_locations AS SELECT f.*, g.latitude AS lat, g.longitude AS lon, g.speed AS speed_at_fault, date_diff('second', g.gps_datetime_utc, f.fault_datetime_utc) AS gps_gap_s FROM silver.fault_data f ASOF JOIN silver.planet_gps_pings g ON f.DeviceId = g.DeviceId AND g.gps_datetime_utc <= f.fault_datetime_utc;" },
+          args: { sql: "CREATE OR REPLACE TABLE gold.fault_locations AS SELECT f.*, g.latitude AS lat, g.longitude AS lon, g.speed_kmh AS speed_at_fault, date_diff('second', g.gps_datetime_utc, f.fault_datetime_utc) AS gps_gap_s FROM silver.fault_data f ASOF JOIN silver.planet_gps_pings g ON f.DeviceId = g.DeviceId AND g.gps_datetime_utc <= f.fault_datetime_utc;" },
           summary: "every fault located in one query",
           result: "gold.fault_locations: 4,912 faults · 100% matched · median gap to nearest ping 2 s · p95 23 s",
         },

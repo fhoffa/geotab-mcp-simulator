@@ -286,9 +286,9 @@ window.SAMPLE_DATA = {
         { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", driver_id: "u_demo_31" },
         { TripId: "b10F7C03", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", driver_id: "UnknownDriverId" },
       ],
-      "bronze.driver_changes_raw": [   // DriverChange login/logout events, as the restated stage describes them
-        { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-29 23:18:24", type: "login" },
-        { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-30 02:41:10", type: "logout" },
+      "bronze.driver_changes_raw": [   // the operational step's Ace extract (DriverChange: device, driver, dateTime)
+        { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-29 23:18:24" },
+        { device: "Demo - 08", driver: "u_demo_17", dateTime: "2026-06-30 07:06:00" },
       ],
       // warehouse-operational SQL: these three tables are built from literal VALUES, so the sample is those rows
       "silver.dim_user": [
