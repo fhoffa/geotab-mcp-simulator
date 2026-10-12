@@ -676,10 +676,9 @@
       { device: "Demo - 14", event_time: "2026-06-30 08:14:25", speed: "0 km/h", lat: "39.4731", lon: "-0.3808" },
       { device: "Demo - 31", event_time: "2026-06-30 08:14:27", speed: "67 km/h", lat: "39.4564", lon: "-0.3521" }
     ];
+    // only the mapping the restated step proves with a real Get Trip (the 23:18 drive)
     if (/reconcile/.test(name)) return [
-      { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEE52", new_trip_id: "b11011A1", action: "re-split" },
-      { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEE31", new_trip_id: "b1101196", action: "re-split" },
-      { run_at: "2026-06-30 00:12", retired_trip_id: "b10FEDF7", new_trip_id: "b11011C4", action: "re-split" }
+      { retired_trip_id: "b10FEE52", new_trip_id: "b11011A1", device: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24" }
     ];
     if (/trip/.test(name)) return [
       { device: "Demo - 08", trip_start: "2026-06-30 07:10", driver_id: "u_demo_17", distance_km: "18.4", duration_min: "31" },
@@ -695,11 +694,10 @@
       { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-30 02:41:10", type: "logout" },
       { device: "Demo - 14", driver: "u_demo_14", dateTime: "2026-06-30 06:02:11", type: "login" }
     ];
-    // columns and first two rows as in the warehouse-operational SQL
+    // the rows the warehouse-operational SQL inserts
     if (/driver_assignment/.test(name)) return [
       { device_name: "Demo - 08", driver_id: "u_demo_17", active_from_utc: "2026-06-30 07:06:00" },
-      { device_name: "Demo - 14", driver_id: "UnknownDriverId", active_from_utc: "2026-06-30 08:00:00" },
-      { device_name: "Demo - 21", driver_id: "u_demo_04", active_from_utc: "2026-06-30 07:38:00" }
+      { device_name: "Demo - 14", driver_id: "UnknownDriverId", active_from_utc: "2026-06-30 08:00:00" }
     ];
     if (/status_data/.test(name)) return [
       { device: "Demo - 21", diagnostic: "EngineSpeed", event_time: "2026-06-30 08:12", value: "1420" },
@@ -727,11 +725,10 @@
       { name: "Demo - 08", vin: "WDB9076571P106590" },
       { name: "Demo - 12", vin: "WDF9634031C001659" }
     ];
-    // columns and first two rows as in the warehouse-operational SQL
+    // the rows the warehouse-operational SQL inserts
     if (/dim_user/.test(name)) return [
       { id: "u_demo_17", display_name: "Driver 17", is_driver: "true" },
-      { id: "u_demo_31", display_name: "Driver 31", is_driver: "true" },
-      { id: "u_demo_04", display_name: "Driver 04", is_driver: "true" }
+      { id: "u_demo_31", display_name: "Driver 31", is_driver: "true" }
     ];
     // the Get Zone call asks for id, name, groups; the LEZ is the zone the scenarios create
     if (/dim_zone/.test(name)) return [
@@ -761,11 +758,11 @@
       { date: "2026-06-30", device: "Demo - 14", km: "88.3" },
       { date: "2026-06-30", device: "Demo - 31", km: "205.1" }
     ];
-    // columns as in the warehouse-operational SQL: assignment rows per driver, unassigned kept as UnknownDriverId
+    // what the warehouse-operational SQL returns: its two assignment rows grouped by driver
+    // (u_demo_17 → "Driver 17" via dim_user; the unassigned row keeps UnknownDriverId)
     if (/driver_safety_score/.test(name)) return [
-      { driver: "UnknownDriverId", assigned_events: "118" },
-      { driver: "Driver 17", assigned_events: "42" },
-      { driver: "Driver 31", assigned_events: "37" }
+      { driver: "Driver 17", assigned_events: "1" },
+      { driver: "UnknownDriverId", assigned_events: "1" }
     ];
     if (/coaching/.test(name)) return [
       { driver: "Driver 31", score: "72", reason: "speed exceptions per km" },
