@@ -721,9 +721,9 @@
       { device: "Demo - 31", diagnostic: "Low tire pressure", event_time: "2026-06-29 14:37", fault_state: "active" }
     ];
     if (/dim_device/.test(name)) return [
-      { name: "Demo - 06", vin: "WDB9076571P106588" },
-      { name: "Demo - 08", vin: "WDB9076571P106590" },
-      { name: "Demo - 12", vin: "WDF9634031C001659" }
+      { name: "Demo - 06", vehicleIdentificationNumber: "WDB9076571P106588" },
+      { name: "Demo - 08", vehicleIdentificationNumber: "WDB9076571P106590" },
+      { name: "Demo - 12", vehicleIdentificationNumber: "WDF9634031C001659" }
     ];
     // the rows the warehouse-operational SQL inserts
     if (/dim_user/.test(name)) return [
