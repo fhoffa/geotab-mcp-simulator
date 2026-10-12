@@ -1866,7 +1866,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "warehouse-incremental": {
-    h: "6776b756",
+    h: "b4c62aab",
     events: [
       /*0 assistant*/ { text: "Ahora puedo correr la versión diaria de forma segura: le pido a MotherDuck la marca de agua de silver, le paso ese timestamp a Ace, dejo el nuevo CSV en bronze y luego inserto en silver solo las filas más recientes que la marca de agua.\n" +
         "\n" +
@@ -1885,8 +1885,6 @@ window.SIM_I18N["es-419"] = {
         say: "Esto es útil, pero los puntos GPS solos no son un almacén de datos. Agrega viajes, fallas, datos de estado, excepciones y las dimensiones que los hacen legibles." },
       { label: "⏱ ¿Qué tan actualizado está esto, en realidad?",
         say: "¿Qué tan actualizado está este almacén, en realidad? El propio adapter de Geotab consulta cada pocos segundos: ¿por qué no usamos su feed?" },
-      { label: "🩺 ¿Y si se queda atrás?",
-        say: "¿Qué pasa si el almacén se queda atrás: una programación pausada, unas vacaciones, una caída? ¿Cómo me daría cuenta siquiera?" },
       { label: "🧱 Repetir desde la configuración",
         say: "Repite la configuración de MotherDuck desde el principio." },
       { label: "⚡ Probar preguntas de flota",
@@ -2022,7 +2020,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "warehouse-answers": {
-    h: "64b7a24d",
+    h: "e2dd33eb",
     events: [
       /*0 assistant*/ { text: "Una vez que los viajes, las excepciones, las fallas, los datos de estado y las dimensiones están en el mismo almacén, las preguntas se vuelven más grandes que cualquier llamada MCP individual. Ahora el asistente puede cruzar el historial:\n" +
         "\n" +
@@ -2041,8 +2039,6 @@ window.SIM_I18N["es-419"] = {
           { notes: [null, null, null, null, "50 retirados · 51 redivididos", null, null, null] }] },
     ],
     choices: [
-      { label: "📍 Poner las fallas en el mapa",
-        say: "¿Puedo poner las fallas en un mapa? No recuerdo que las filas de fallas tuvieran coordenadas." },
       { label: "✅ Revisar otra vez los controles de calidad",
         say: "Muestra de nuevo los controles de calidad del almacén." },
       { label: "🧱 Repetir desde la configuración",
@@ -2052,34 +2048,30 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "warehouse-freshness": {
-    h: "6e2f4f43",
+    h: "3439524c",
     events: [
       /*0 assistant*/ { text: "Pregunta justa, y es la diferencia arquitectónica honesta entre esta ruta y el adapter propio de Geotab.\n" +
         "\n" +
         "El MyGeotab API Adapter se sincroniza con **`GetFeed`**: una API oficial que devuelve un **cursor de versión** por tipo de entidad, así que el servicio puede consultar cada pocos segundos (configurable hasta 2 s) y nunca perder ni volver a traer una fila, incluso tras reinicios. **El conector MCP no expone `GetFeed`**: la skill auditó las 20 herramientas MCP y ninguna acepta un token de feed.\n" +
         "\n" +
-        "Así que este almacén usa el sustituto compatible con MCP: **marca de agua + deduplicación por clave natural**. Pide las filas más recientes que el último timestamp ya guardado y deja que la deduplicación absorba el solapamiento en los límites (recuerda: Ace solo respeta los límites hasta el segundo). Es la misma idea que un cursor de feed, reconstruida con lo que MCP sí ofrece.\n" +
+        "Así que este almacén usa el sustituto compatible con MCP: **marca de agua + deduplicación por clave natural**. Pide las filas más recientes que el último timestamp ya guardado y deja que la deduplicación absorba el solapamiento en los límites (Ace solo respeta los límites hasta el segundo). Es la misma idea que un cursor de feed, reconstruida con lo que MCP sí ofrece.\n" +
         "\n" +
         "Lo que gana y lo que cuesta ese intercambio:\n" +
         "- **Cadencia:** este almacén se refresca cuando corre un agente, bajo demanda o con un calendario, normalmente de minutos a diario. El adapter es un servicio 24/7 que se refresca en segundos.\n" +
-        "- **Exactitud:** equivalente para eventos inmutables (la deduplicación maneja el solapamiento); los viajes necesitan su paso de conciliación en cualquiera de las dos rutas.\n" +
+        "- **Exactitud:** equivalente para eventos inmutables (la deduplicación maneja el solapamiento); los viajes necesitan un paso de conciliación en cualquiera de las dos rutas, porque Geotab puede redividirlos.\n" +
         "- **El límite que hay que respetar:** analítica, dashboards, resúmenes programados: esta ruta alcanza. Despacho en vivo o alertas sobre datos de hace segundos: eso le toca al conector en vivo, o al adapter.\n" +
         "\n" +
         "La skill mantiene una comparación completa de las dos: **[MCP → MotherDuck vs GetFeed → API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MCP_TO_MOTHERDUCK_VS_GETFEED_API_ADAPTER.md)**, incluida la ruta de graduación: haz el prototipo aquí sin infraestructura y pasa al adapter si alguna vez necesitas actualización de menos de un minuto. Los conceptos se transfieren directamente; ambos reflejan las mismas entidades." },
     ],
     choices: [
-      { label: "🩺 ¿Y si se queda atrás?",
-        say: "Entonces, si los refrescos solo corren cuando corre un agente, ¿qué pasa cuando el almacén se queda atrás? ¿Cómo me daría cuenta siquiera?" },
-      { label: "🦆 Empezar a construir (filas GPS)",
-        say: "Suficiente para analítica. Construye el almacén, empezando por los puntos GPS." },
-      { label: "↩︎ Volver al ciclo de refresco",
-        say: "Vuelve al paso de refresco incremental." },
+      { label: "↩︎ Volver a donde estábamos",
+        say: "Suficiente para analítica. Sigamos donde lo dejamos." },
       { label: "⚡ Volver al simulador de flota",
         say: "Llévame de vuelta al simulador principal." },
     ],
   },
   "warehouse-backfill": {
-    h: "736408fe",
+    h: "c133e7f7",
     events: [
       /*0 assistant*/ { text: "En esa pregunta se esconden dos problemas distintos: **darte cuenta de que vas atrasado** y **ponerte al día de forma segura**. La mayoría solo piensa en el segundo.\n" +
         "\n" +
@@ -2099,18 +2091,16 @@ window.SIM_I18N["es-419"] = {
           { notes: [null, null, null, null, "50 retirados · 51 redivididos"] }] },
     ],
     choices: [
-      { label: "✅ Continuar a los controles de calidad",
-        say: "Bien. Ahora agrega los controles de calidad y la detección de huecos." },
+      { label: "✅ Volver a los controles de calidad",
+        say: "Bien. Volvamos a los controles de calidad." },
       { label: "⏱ ¿Por qué marcas de agua y no GetFeed?",
         say: "Un paso atrás: ¿por qué este almacén usa marcas de agua en lugar de la API de feed oficial de Geotab?" },
-      { label: "↩︎ Volver al ciclo de refresco",
-        say: "Vuelve al paso de refresco incremental." },
       { label: "⚡ Volver al simulador de flota",
         say: "Llévame de vuelta al simulador principal." },
     ],
   },
   "warehouse-enrichment": {
-    h: "6e75b2a6",
+    h: "f7fa1c89",
     events: [
       /*0 assistant*/ { text: "Buena observación: **`FaultData` y `StatusData` no traen coordenadas**. En el modelo de Geotab, la ubicación vive en `LogRecord`; una falla solo conoce su dispositivo y su timestamp. El API Adapter dedica **dos servicios en segundo plano completos** a interpolar lat/lon/velocidad/rumbo desde los LogRecords cercanos hacia las filas de fallas y de estado.\n" +
         "\n" +
@@ -2118,16 +2108,14 @@ window.SIM_I18N["es-419"] = {
       /*1 tool*/ { summary: "cada falla ubicada en una sola consulta" },
       /*2 assistant*/ { text: "Las **4,912 fallas obtuvieron coordenadas**, y la distribución de la brecha dice que la coincidencia es honesta: mediana de 2 segundos al ping más cercano, p95 de 23 segundos. (La skill validó este mismo patrón en vivo con **822,203 eventos, 100% emparejados**: aguanta a escala.)\n" +
         "\n" +
-        "Una trampa, y es la misma lección de datos tardíos que enseñaron los viajes: **el GPS también llega tarde**. Una falla registrada hace 30 segundos puede no tener todavía en silver los pings que la rodean, así que la unión tomaría un ping de hace minutos. O bien **solo enriqueces eventos más antiguos que un pequeño margen**, o simplemente **reconstruyes este mart en cada refresco**: a este tamaño la reconstrucción es barata, así que eso es lo que programamos." },
+        "Una trampa: **el GPS llega tarde**. Una falla registrada hace 30 segundos puede no tener todavía en silver los pings que la rodean, así que la unión tomaría un ping de hace minutos. O bien **solo enriqueces eventos más antiguos que un pequeño margen**, o simplemente **reconstruyes este mart en cada refresco**: a este tamaño la reconstrucción es barata, así que eso es lo que programamos." },
       /*3 warehouse*/ { compactSubtitle: "Fallas ubicadas",
         note: "El adapter necesita dos servicios de interpolación dedicados para esto; el almacén lo hace en una consulta. Es el momento más claro de 'por qué un almacén' en toda la construcción.",
         stages: [null, null, { notes: [null, null, null, null, "unido con ASOF al ping GPS previo más cercano"] }] },
     ],
     choices: [
-      { label: "📊 Mostrar lo que ya podemos responder",
-        say: "Muestra qué nuevas preguntas de flota puede responder ahora este almacén." },
-      { label: "✅ Agregar controles de calidad",
-        say: "Ahora agrega controles de calidad, controles de actualización y detección de huecos para que pueda confiar en este almacén." },
+      { label: "⚠️ Por qué los viajes y conductores no pueden solo anexarse",
+        say: "Volvamos a los hechos: los viajes y las asignaciones de conductores no son de solo anexar como el GPS, ¿verdad? Muéstrame qué se rompe y cómo conciliarlo." },
       { label: "↩︎ Volver al espejo operativo",
         say: "Vuelve a la vista del espejo operativo." },
       { label: "⚡ Volver al simulador de flota",
@@ -2135,7 +2123,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "warehouse-deletions": {
-    h: "b2afc27a",
+    h: "f6cc6815",
     events: [
       /*0 assistant*/ { text: "No por sí solo, y esta es una de las trampas más silenciosas de la replicación incremental. **Una eliminación nunca aparece en una extracción incremental.** Una zona eliminada no llega marcada como 'eliminada'; simplemente deja de aparecer. Los ciclos con marca de agua solo ven filas *nuevas*, así que `dim_zone` seguiría sirviendo tan tranquila una zona que ya no existe.\n" +
         "\n" +
@@ -2156,9 +2144,7 @@ window.SIM_I18N["es-419"] = {
     ],
     choices: [
       { label: "🧩 Cómo se redividen los viajes",
-        say: "Recuérdame cómo funciona la conciliación de redivisión de viajes." },
-      { label: "✅ Continuar a los controles de calidad",
-        say: "Ahora agrega controles de calidad, controles de actualización y detección de huecos para que pueda confiar en este almacén." },
+        say: "Muéstrame cómo funciona la conciliación de redivisión de viajes." },
       { label: "↩︎ Volver al espejo operativo",
         say: "Vuelve a la vista del espejo operativo." },
       { label: "⚡ Volver al simulador de flota",

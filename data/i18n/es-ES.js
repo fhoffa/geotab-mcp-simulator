@@ -870,7 +870,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "warehouse-incremental": {
-    h: "6776b756",
+    h: "b4c62aab",
     events: [
       { text: "Ahora puedo ejecutar la versión diaria de forma segura: le pido a MotherDuck la marca de agua de silver, le paso ese timestamp a Ace, dejo el nuevo CSV en bronze y luego inserto en silver solo las filas más recientes que la marca de agua.\n\nEn este paso es donde rinden las capas anteriores: **Ace solo respeta los límites de subsegundo hasta el segundo**, así que el solapamiento es normal, y **lee el SQL devuelto cada vez** antes de cargar, porque Ace puede inyectar predicados." },
       null,
@@ -937,27 +937,21 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "warehouse-answers": {
-    h: "64b7a24d",
+    h: "e2dd33eb",
     events: [
       { text: "Una vez que los viajes, las excepciones, las averías, los datos de estado y las dimensiones están en el mismo almacén, las preguntas se vuelven más grandes que cualquier llamada MCP individual. Ahora el asistente puede cruzar el historial:\n\n- **Utilización:** ¿Qué vehículos están subutilizados considerando viajes, GPS y grupos?\n- **Seguridad:** ¿Qué conductores son de riesgo por excepciones por milla, no solo por recuentos brutos de eventos?\n- **Mantenimiento:** ¿Qué grupos de averías se correlacionan con el tiempo de inactividad, las horas de motor y el tipo de vehículo?\n- **Coste:** ¿Dónde se acumulan el ralentí, las rutas y el exceso de velocidad en desperdicio de combustible?\n\nEsa es la verdadera historia: el conector MCP de Geotab es excelente para preguntas en vivo, y MotherDuck convierte esas extracciones MCP en memoria institucional duradera y consultable." },
       null,
       { text: "Ahí está: una **cola de coaching de 14 conductores** y una **lista de trabajo de taller de 9 vehículos**, ambas construidas con historial que ninguna llamada en vivo podría preparar sola. A partir de aquí convertirías esto en **dashboards internos** para tu equipo: MotherDuck tiene notebooks y dashboards integrados, así que puedes graficarlos y compartirlos justo donde viven los datos. Vale la pena explorar sus funciones en [motherduck.com](https://motherduck.com)." },
     ],
-    choices: [
-      { label: "📍 Poner las averías en el mapa", say: "¿Puedo poner las averías en un mapa? No recuerdo que las filas de averías tuvieran coordenadas." },
-    ],
   },
   "warehouse-freshness": {
-    h: "6e2f4f43",
+    h: "3439524c",
     events: [
-      { text: "Pregunta justa, y es la diferencia arquitectónica honesta entre esta ruta y el adapter propio de Geotab.\n\nEl MyGeotab API Adapter se sincroniza con **`GetFeed`**: una API oficial que devuelve un **cursor de versión** por tipo de entidad, así que el servicio puede consultar cada pocos segundos (configurable hasta 2 s) y nunca perder ni volver a traer una fila, incluso tras reinicios. **El conector MCP no expone `GetFeed`**: la skill auditó las 20 herramientas MCP y ninguna acepta un token de feed.\n\nAsí que este almacén usa el sustituto compatible con MCP: **marca de agua + deduplicación por clave natural**. Pide las filas más recientes que el último timestamp ya guardado y deja que la deduplicación absorba el solapamiento en los límites (recuerda: Ace solo respeta los límites hasta el segundo). Es la misma idea que un cursor de feed, reconstruida con lo que MCP sí ofrece.\n\nLo que gana y lo que cuesta ese intercambio:\n- **Cadencia:** este almacén se refresca cuando se ejecuta un agente, bajo demanda o con un calendario, normalmente de minutos a diario. El adapter es un servicio 24/7 que se refresca en segundos.\n- **Exactitud:** equivalente para eventos inmutables (la deduplicación gestiona el solapamiento); los viajes necesitan su paso de conciliación en cualquiera de las dos rutas.\n- **El límite que hay que respetar:** analítica, dashboards, resúmenes programados: esta ruta alcanza. Despacho en vivo o alertas sobre datos de hace segundos: eso le toca al conector en vivo, o al adapter.\n\nLa skill mantiene una comparación completa de las dos: **[MCP → MotherDuck vs GetFeed → API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MCP_TO_MOTHERDUCK_VS_GETFEED_API_ADAPTER.md)**, incluida la ruta de graduación: haz el prototipo aquí sin infraestructura y pasa al adapter si alguna vez necesitas actualización de menos de un minuto. Los conceptos se transfieren directamente; ambos reflejan las mismas entidades." },
-    ],
-    choices: [
-      { say: "Entonces, si los refrescos solo se ejecutan cuando se ejecuta un agente, ¿qué pasa cuando el almacén se queda atrás? ¿Cómo me daría cuenta siquiera?" },
+      { text: "Pregunta justa, y es la diferencia arquitectónica honesta entre esta ruta y el adapter propio de Geotab.\n\nEl MyGeotab API Adapter se sincroniza con **`GetFeed`**: una API oficial que devuelve un **cursor de versión** por tipo de entidad, así que el servicio puede consultar cada pocos segundos (configurable hasta 2 s) y nunca perder ni volver a traer una fila, incluso tras reinicios. **El conector MCP no expone `GetFeed`**: la skill auditó las 20 herramientas MCP y ninguna acepta un token de feed.\n\nAsí que este almacén usa el sustituto compatible con MCP: **marca de agua + deduplicación por clave natural**. Pide las filas más recientes que el último timestamp ya guardado y deja que la deduplicación absorba el solapamiento en los límites (Ace solo respeta los límites hasta el segundo). Es la misma idea que un cursor de feed, reconstruida con lo que MCP sí ofrece.\n\nLo que gana y lo que cuesta ese intercambio:\n- **Cadencia:** este almacén se refresca cuando se ejecuta un agente, bajo demanda o con un calendario, normalmente de minutos a diario. El adapter es un servicio 24/7 que se refresca en segundos.\n- **Exactitud:** equivalente para eventos inmutables (la deduplicación gestiona el solapamiento); los viajes necesitan un paso de conciliación en cualquiera de las dos rutas, porque Geotab puede redividirlos.\n- **El límite que hay que respetar:** analítica, dashboards, resúmenes programados: esta ruta alcanza. Despacho en vivo o alertas sobre datos de hace segundos: eso le toca al conector en vivo, o al adapter.\n\nLa skill mantiene una comparación completa de las dos: **[MCP → MotherDuck vs GetFeed → API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MCP_TO_MOTHERDUCK_VS_GETFEED_API_ADAPTER.md)**, incluida la ruta de graduación: haz el prototipo aquí sin infraestructura y pasa al adapter si alguna vez necesitas actualización de menos de un minuto. Los conceptos se transfieren directamente; ambos reflejan las mismas entidades." },
     ],
   },
   "warehouse-backfill": {
-    h: "736408fe",
+    h: "c133e7f7",
     events: [
       null,
       null,
@@ -967,32 +961,24 @@ window.SIM_I18N["es-ES"] = {
       { note: "Ejecuta la vista de salud al inicio de cada refresco: es la diferencia entre encontrar un hueco ahora y encontrarlo en el informe del mes que viene." },
     ],
     choices: [
-      { say: "Bien. Ahora añade los controles de calidad y la detección de huecos." },
+      { say: "Bien. Volvamos a los controles de calidad." },
     ],
   },
   "warehouse-enrichment": {
-    h: "6e75b2a6",
+    h: "f7fa1c89",
     events: [
       { text: "Buena observación: **`FaultData` y `StatusData` no traen coordenadas**. En el modelo de Geotab, la ubicación vive en `LogRecord`; una avería solo conoce su dispositivo y su timestamp. El API Adapter dedica **dos servicios en segundo plano completos** a interpolar lat/lon/velocidad/rumbo desde los LogRecords cercanos hacia las filas de averías y de estado.\n\nEn un almacén columnar eso es una sola consulta. El **`ASOF JOIN`** de DuckDB toma, para cada avería, el ping GPS más cercano en o antes del timestamp de la avería, por dispositivo:" },
       { summary: "cada avería ubicada en una sola consulta" },
-      { text: "Las **4.912 averías obtuvieron coordenadas**, y la distribución de la brecha dice que la coincidencia es honesta: mediana de 2 segundos al ping más cercano, p95 de 23 segundos. (La skill validó este mismo patrón en vivo con **822.203 eventos, 100% emparejados**: aguanta a escala.)\n\nUna trampa, y es la misma lección de datos tardíos que enseñaron los viajes: **el GPS también llega tarde**. Una avería registrada hace 30 segundos puede no tener todavía en silver los pings que la rodean, así que la unión tomaría un ping de hace minutos. O bien **solo enriqueces eventos más antiguos que un pequeño margen**, o simplemente **reconstruyes este mart en cada refresco**: a este tamaño la reconstrucción es barata, así que eso es lo que programamos." },
+      { text: "Las **4.912 averías obtuvieron coordenadas**, y la distribución de la brecha dice que la coincidencia es honesta: mediana de 2 segundos al ping más cercano, p95 de 23 segundos. (La skill validó este mismo patrón en vivo con **822.203 eventos, 100% emparejados**: aguanta a escala.)\n\nUna trampa: **el GPS llega tarde**. Una avería registrada hace 30 segundos puede no tener todavía en silver los pings que la rodean, así que la unión tomaría un ping de hace minutos. O bien **solo enriqueces eventos más antiguos que un pequeño margen**, o simplemente **reconstruyes este mart en cada refresco**: a este tamaño la reconstrucción es barata, así que eso es lo que programamos." },
       { compactSubtitle: "Averías ubicadas" },
-    ],
-    choices: [
-      null,
-      { label: "✅ Añadir controles de calidad", say: "Ahora añade controles de calidad, controles de actualización y detección de huecos para que pueda confiar en este almacén." },
     ],
   },
   "warehouse-deletions": {
-    h: "b2afc27a",
+    h: "f6cc6815",
     events: [
       { text: "No por sí solo, y esta es una de las trampas más silenciosas de la replicación incremental. **Una eliminación nunca aparece en una extracción incremental.** Una zona eliminada no llega marcada como 'eliminada'; simplemente deja de aparecer. Los ciclos con marca de agua solo ven filas *nuevas*, así que `dim_zone` seguiría sirviendo tan tranquila una zona que ya no existe.\n\nLa respuesta del adapter, que este almacén ya sigue sin haber dicho por qué, es que **las dimensiones reciben una instantánea completa periódica, nunca una incremental**. Por eso cada dim aquí es `Get` → `CREATE OR REPLACE`: sin bronze, sin marca de agua. Cada refresco reemplaza el inventario completo, así que una desaparición *es* la señal. También es la razón por la que **las dimensiones se cargan antes que los hechos**: las filas de hechos nunca deberían llegar antes que las filas que las decodifican.\n\nDos refinamientos:\n- Geotab a menudo **retira en lugar de eliminar**: `activeFrom`/`activeTo` en Users y similares. Conserva las filas retiradas con sus fechas: el historial todavía se une a ellas.\n- El atajo del subconjunto hereda la regla: si conservas solo los ~56 diagnósticos que tus averías realmente referencian (de 65K), ese subconjunto también debe **derivarse completo de nuevo** en cada refresco, o un diagnóstico recién referenciado nunca aparece." },
       null,
       { text: "El hábito general que enseña el adapter: antes de cargar cualquier entidad nueva, pregúntate **\"¿esta fila cambia después de crearse?\"**\n\n- **Nunca** (GPS, estado, excepciones, averías, `DriverChange`) → anexar + deduplicar por la clave natural.\n- **Sí: se reemplaza** (`Trip`: se redivide con un id completamente nuevo) → el paso de conciliación que ya viste.\n- **Sí: se actualiza en el lugar** (`DVIRLog`: un defecto luego obtiene su estado de reparación) → vuelve a extraer una ventana reciente, gana la última versión.\n- **Dimensiones** (Device, User, Zone, Rule, Diagnostic) → instantánea completa; las eliminaciones se resuelven por construcción.\n\nUna fila de esa lista es engañosa: `DriverChange` es en sí de solo anexar, pero su *llegada* dispara redivisiones de viajes: un evento inmutable que modifica otra tabla." },
-    ],
-    choices: [
-      null,
-      { say: "Ahora añade controles de calidad, controles de actualización y detección de huecos para que pueda confiar en este almacén." },
     ],
   },
   "warehouse-downsample": {

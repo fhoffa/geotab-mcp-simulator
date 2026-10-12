@@ -4639,7 +4639,6 @@ window.CONVERSATIONS = {
       choices: [
         { label: "🧩 Add trips, faults, status and dimensions", say: "This is useful, but GPS points alone are not a warehouse. Add trips, faults, status data, exceptions and the dimensions that make them readable.", next: "warehouse-operational" },
         { label: "⏱ How fresh is this, really?", say: "How fresh is this warehouse, really? Geotab's own adapter polls every few seconds — why aren't we using its feed?", next: "warehouse-freshness" },
-        { label: "🩺 What if it falls behind?", say: "What happens if the warehouse falls behind — a paused schedule, a vacation, an outage? How would I even notice?", next: "warehouse-backfill" },
         { label: "🧱 Replay from setup", say: "Replay the MotherDuck setup from the beginning.", next: "warehouse-intro" },
         { label: "⚡ Try fleet questions", say: "Take me back to the fleet simulator.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
@@ -4969,7 +4968,6 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "📍 Put faults on the map", say: "Can I put faults on a map? I don't remember fault rows having coordinates.", next: "warehouse-enrichment" },
         { label: "✅ Review quality checks again", say: "Show the warehouse quality checks again.", next: "warehouse-quality" },
         { label: "🧱 Replay from setup", say: "Replay the MotherDuck warehouse story from setup.", next: "warehouse-intro" },
         { label: "⚡ Try fleet questions", say: "Take me back to the fleet simulator.", next: "hub" },
@@ -4986,18 +4984,17 @@ window.CONVERSATIONS = {
           text:
             "Fair question — and it's the honest architectural difference between this path and Geotab's own adapter.\n\n" +
             "The MyGeotab API Adapter syncs with **`GetFeed`**: an official API that returns a **version cursor** per entity type, so the service can poll every few seconds (configurable down to 2s) and never miss or re-fetch a row, even across restarts. **The MCP connector doesn't expose `GetFeed`** — the skill audited all 20 MCP tools, and none accepts a feed token.\n\n" +
-            "So this warehouse uses the MCP-compatible substitute: **watermark + natural-key dedup**. Ask for rows newer than the latest timestamp already stored, and let the dedup absorb the boundary overlap (remember: Ace only honors boundaries to the second). It's the same idea as a feed cursor, rebuilt from what MCP does offer.\n\n" +
+            "So this warehouse uses the MCP-compatible substitute: **watermark + natural-key dedup**. Ask for rows newer than the latest timestamp already stored, and let the dedup absorb the boundary overlap (Ace only honors boundaries to the second). It's the same idea as a feed cursor, rebuilt from what MCP does offer.\n\n" +
             "What that trade buys and costs:\n" +
             "- **Cadence:** this warehouse refreshes when an agent runs — on demand or on a schedule, typically minutes to daily. The adapter is a 24/7 service refreshing in seconds.\n" +
-            "- **Correctness:** equivalent for immutable events (dedup handles the overlap); trips need their reconcile pass on either path.\n" +
+            "- **Correctness:** equivalent for immutable events (dedup handles the overlap); trips need a reconcile pass on either path, because Geotab can re-split them.\n" +
             "- **The line to respect:** analytics, dashboards, scheduled briefs — this path is enough. Live dispatch or alerting on seconds-old data — that's a job for the live connector itself, or the adapter.\n\n" +
             "The skill keeps a full side-by-side of the two: **[MCP → MotherDuck vs GetFeed → API Adapter](https://github.com/fhoffa/geotab-vibe-guide/blob/main/guides/MCP_TO_MOTHERDUCK_VS_GETFEED_API_ADAPTER.md)** — including the graduation path: prototype here with zero infrastructure, move to the adapter if sub-minute freshness ever becomes the requirement. The concepts transfer directly; both mirror the same entities.",
         },
       ],
       choices: [
-        { label: "🩺 What if it falls behind?", say: "So if refreshes only run when an agent runs — what happens when the warehouse falls behind? How would I even notice?", next: "warehouse-backfill" },
-        { label: "🦆 Start the build (GPS rows)", say: "Good enough for analytics. Build the warehouse, starting with GPS points.", next: "warehouse-setup" },
-        { label: "↩︎ Back to the refresh loop", say: "Go back to the incremental refresh step.", next: "warehouse-incremental" },
+        // reached from the recommendation, the refresh loop and the health view: go back to whichever it was
+        { label: "↩︎ Back to where we were", say: "Good enough for analytics. Let's pick up where we left off.", action: "resume" },
         { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
@@ -5062,9 +5059,8 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "✅ Continue to quality checks", say: "Good. Now add the quality checks and gap detection.", next: "warehouse-quality" },
+        { label: "✅ Back to quality checks", say: "Good. Back to the quality checks.", next: "warehouse-quality" },
         { label: "⏱ Why watermarks, not GetFeed?", say: "Back up — why is this warehouse on watermarks instead of Geotab's official feed API?", next: "warehouse-freshness" },
-        { label: "↩︎ Back to the refresh loop", say: "Go back to the incremental refresh step.", next: "warehouse-incremental" },
         { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
     },
@@ -5093,7 +5089,7 @@ window.CONVERSATIONS = {
           type: "assistant",
           text:
             "All **4,912 faults picked up coordinates**, and the gap distribution says the match is honest: median 2 seconds from the nearest ping, p95 23 seconds. (The skill validated this exact pattern live at **822,203 events, 100% matched** — it holds at scale.)\n\n" +
-            "One trap, and it's the same late-data lesson trips taught: **GPS arrives late too**. A fault logged 30 seconds ago may not have its bracketing pings in silver yet, so the join would grab a ping minutes stale. Either **only enrich events older than a small buffer**, or simply **rebuild this mart on every refresh** — at this size the rebuild is cheap, so that's what we schedule.",
+            "One trap: **GPS arrives late**. A fault logged 30 seconds ago may not have its bracketing pings in silver yet, so the join would grab a ping minutes stale. Either **only enrich events older than a small buffer**, or simply **rebuild this mart on every refresh** — at this size the rebuild is cheap, so that's what we schedule.",
         },
         {
           type: "warehouse",
@@ -5111,8 +5107,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "📊 Show what we can answer now", say: "Show what new fleet questions this warehouse can answer now.", next: "warehouse-answers" },
-        { label: "✅ Add quality checks", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
+        { label: "⚠️ Why trips & drivers can't just append", say: "Back to the facts: trips and driver assignments aren't append-only like GPS, are they? Show me what breaks and how to reconcile.", next: "warehouse-restated" },
         { label: "↩︎ Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
         { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
@@ -5152,8 +5147,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
-        { label: "🧩 How trips re-split", say: "Remind me how the trip re-split reconcile works.", next: "warehouse-restated" },
-        { label: "✅ Continue to quality checks", say: "Now add quality checks, freshness checks and gap detection so I can trust this warehouse.", next: "warehouse-quality" },
+        { label: "🧩 How trips re-split", say: "Show me how the trip re-split reconcile works.", next: "warehouse-restated" },
         { label: "↩︎ Back to operational mirror", say: "Go back to the operational mirror view.", next: "warehouse-operational" },
         { label: "⚡ Back to fleet simulator", say: "Take me back to the main simulator.", next: "hub" },
       ],
