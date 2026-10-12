@@ -231,6 +231,7 @@
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
   var warehousePointerShown = false; // chat pointer to the pane: show once, then update silently
   var currentNodeId = null; // last id written to the ?n= URL param by playNode
+  var previousNodeId = null; // the node before it, for the "resume" action
   var REAL_ACCOUNT_HASH = "connect-real"; // shareable deep link straight to the "connect real account" overlay
   // Generic preamble before any "chapter" starts. When a deep link lands mid-flow,
   // we rebuild the lead-up transcript but trim everything up to and including the
@@ -1127,6 +1128,7 @@
       // back on the live fleet (Geotab only), not still working in MotherDuck.
       motherduckPane.classList.add("hidden", "collapsed");
     }
+    if (id !== currentNodeId) previousNodeId = currentNodeId;
     currentNodeId = id;
     writeNodeUrl(id, navMode || "replace");
     recordVisit(id);
@@ -1196,7 +1198,14 @@
     else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next, "replace"); }
   }
 
+  // "resume" (a side question like "what should I double-check?") brings back the
+  // previous node's choices, minus the one that led here, so the conversation goes on
+  function resumeChoices() {
+    var prev = previousNodeId && NODES[previousNodeId];
+    return ((prev && prev.choices) || []).filter(function (c) { return c.next !== currentNodeId && c.action !== "resume"; });
+  }
   function renderChoices(choices) {
+    choices = choices.filter(function (c) { return c.action !== "resume" || resumeChoices().length; });
     trayEl.innerHTML = "";
     var atHub = currentNodeId === "hub" && gameOn();
     if (atHub) {
@@ -1222,9 +1231,9 @@
         trayEl.appendChild(el("div", "tray-group", escapeHtml(c.group)));
         lastGroup = c.group;
       }
-      var primary = c.recommended || (idx === 0 && c.next);
+      var primary = c.recommended || (idx === 0 && (c.next || c.action === "resume"));
       var done = atHub && c.next && progress.nodes[c.next];
-      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action ? " subtle" : "") + (done ? " done" : ""));
+      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action && c.action !== "resume" ? " subtle" : "") + (done ? " done" : ""));
       btn.type = "button";
       btn.innerHTML =
         (c.recommended ? '<span class="chip-badge">' + tr("chip.start") + "</span>" : "") +
@@ -1247,6 +1256,7 @@
       if (!(await typeUserText(prose, c.say || c.label, myToken))) return;
     }
     if (myToken !== playToken) return;
+    if (c.action === "resume") { renderChoices(resumeChoices()); return; }
     if (c.next) playNode(c.next, "push"); // user-initiated step → new history entry + analytics pageview
   }
 
@@ -1315,6 +1325,7 @@
     var start = 0;
     for (var i = 0; i < chain.length - 1; i++) { if (ENTRY_NODES[chain[i].id]) start = i + 1; }
     if (start > chain.length - 1) { playNode(id, finalMode); return; }
+    currentNodeId = chain.length > 1 ? chain[chain.length - 2].id : null;
     for (var j = start; j < chain.length; j++) {
       if (chain[j].say) addBubble("user", chain[j].say);
       if (j < chain.length - 1) renderNodeInstant(chain[j].id);

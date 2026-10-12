@@ -1205,7 +1205,7 @@ window.SIM_I18N["es-ES"] = {
     ],
   },
   "carto-caveats": {
-    h: "4bcfb94a",
+    h: "aef11d5e",
     events: [
       { text: "Algunas cosas, antes de que alguien actúe con esto:\n- **Los hubs son inferidos** a partir de una sola instantánea nocturna, no de tu lista de bases.\n- **Cada opción es una zona, no una dirección.** Las celdas vecinas tienen casi la misma puntuación, y la zonificación, las campas disponibles y el alquiler todavía hay que revisarlos.\n- **La mayoría de las distancias son en línea recta.** Solo unos pocos puntos pasaron por una revisión de tiempo de conducción, así que revisa los tiempos de conducción de tu lista corta antes de decidir.\n- **Los residentes no son demanda.** Residentes, ingresos y comercios describen la zona; tus propios clientes y pedidos son un mejor objetivo cuando los tienes.\n- **El ingreso, donde se usó, es un promedio por sección censal.** Describe el barrio, no a las personas que atenderán tus conductores.\n- **Los hexágonos se cuentan por su centro**, así que los bordes son aproximados.\n- **Los tiempos de conducción suponen un coche y una sola hora del día.** El tráfico cambia según la hora, así que vuelve a ejecutarlos para tu hora de más actividad." },
     ],

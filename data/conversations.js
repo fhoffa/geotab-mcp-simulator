@@ -6547,6 +6547,7 @@ window.CONVERSATIONS = {
         },
       ],
       choices: [
+        { label: "↩︎ Back to where we were", say: "Thanks. Let's pick up where we left off.", action: "resume" },
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],

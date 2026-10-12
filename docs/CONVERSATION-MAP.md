@@ -232,7 +232,7 @@ flowchart TD
 | `carto-map` | CARTO · Put it on a map I can share | — | `carto-caveats`, `hub`, restart |
 | `carto-map-goals` | CARTO · Put the three picks on a map I can share | — | `carto-caveats`, `hub`, restart |
 | `carto-map-sites` | CARTO · Put the serve and grow picks on a map I can share | — | `carto-caveats`, `hub`, restart |
-| `carto-caveats` | CARTO · What to double-check | — | `hub`, restart |
+| `carto-caveats` | CARTO · What to double-check | — | back to the previous step, `hub`, restart |
 
 Episodes **cross-link** as well as branch to their own action node — e.g.
 maintenance → fleet composition → Valencia exposure, or speeding → posted-speed

@@ -2632,7 +2632,7 @@ window.SIM_I18N["es-419"] = {
     ],
   },
   "carto-caveats": {
-    h: "4bcfb94a",
+    h: "aef11d5e",
     events: [
       /*0 assistant*/ { text: "Algunas cosas, antes de que alguien actúe con esto:\n" +
         "- **Los hubs son inferidos** a partir de una sola instantánea nocturna, no de tu lista de bases.\n" +
@@ -2644,6 +2644,8 @@ window.SIM_I18N["es-419"] = {
         "- **Los tiempos de manejo suponen un auto y una sola hora del día.** El tráfico cambia según la hora, así que vuelve a correrlos para tu hora de más actividad." },
     ],
     choices: [
+      { label: "↩︎ Volver a donde estábamos",
+        say: "Gracias. Sigamos donde lo dejamos." },
       { label: "⚡ Probar otro",
         say: "Muéstrame otra cosa." },
       { label: "↻ Reiniciar" },

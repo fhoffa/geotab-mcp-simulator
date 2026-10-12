@@ -43,7 +43,7 @@ Object.keys(NODES).forEach(function (id) {
     if (!c.next && !c.action) {
       problems.push(id + " → choice '" + (c.label || "") + "' has neither 'next' nor 'action'");
     }
-    if (c.action && c.action !== "restart" && c.action !== "map" && c.action !== "video") {
+    if (c.action && c.action !== "restart" && c.action !== "map" && c.action !== "video" && c.action !== "resume") {
       problems.push(id + " → choice '" + (c.label || "") + "' has unknown action '" + c.action + "'");
     }
   });
@@ -117,6 +117,7 @@ function mapTable() {
     (n.choices || []).forEach(function (c) {
       if (c.next && targets.indexOf("`" + c.next + "`") < 0) targets.push("`" + c.next + "`");
       else if (c.action === "restart" && targets.indexOf("restart") < 0) targets.push("restart");
+      else if (c.action === "resume" && targets.indexOf("back to the previous step") < 0) targets.push("back to the previous step");
     });
     lines.push("| `" + id + "` | " + (n.title || "") + " | " + (n.db || "—") + " | " + (targets.join(", ") || "—") + " |");
   });
