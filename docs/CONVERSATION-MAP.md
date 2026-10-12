@@ -116,7 +116,7 @@ flowchart TD
     epROI -->|"🛠️ skill"| epROIsk["Skill · Quarterly ROI case"]
 
     %% --- Warehouse (MotherDuck teaching path) ---
-    hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → quality → costs → answers"]
+    hub -->|"🦆 Build a MotherDuck warehouse"| wh["Warehouse · intro → setup → first load → layering → incremental → operational mirror → restated trips → quality → costs → answers<br/>side steps: enrichment and deletions (after operational), health view (after quality), freshness (anywhere, returns to where you were)"]
 ```
 
 ## Nodes (110)
@@ -201,16 +201,16 @@ flowchart TD
 | `warehouse-setup` | Warehouse · get many points | — | `warehouse-first-load`, `hub` |
 | `warehouse-first-load` | Warehouse · one-table load | — | `warehouse-layering`, `hub` |
 | `warehouse-layering` | Warehouse · why layers appear | — | `warehouse-incremental`, `hub` |
-| `warehouse-incremental` | Warehouse · incremental refresh | — | `warehouse-operational`, `warehouse-freshness`, `warehouse-backfill`, `warehouse-intro`, `hub`, restart |
+| `warehouse-incremental` | Warehouse · incremental refresh | — | `warehouse-operational`, `warehouse-freshness`, `warehouse-intro`, `hub`, restart |
 | `warehouse-operational` | Warehouse · operational mirror | — | `warehouse-restated`, `warehouse-enrichment`, `warehouse-deletions`, `hub` |
 | `warehouse-restated` | Warehouse · trips aren't append-only | — | `warehouse-quality`, `warehouse-operational`, `hub` |
 | `warehouse-quality` | Warehouse · quality and gaps | — | `warehouse-costs`, `warehouse-answers`, `warehouse-backfill`, `warehouse-restated`, `hub` |
 | `warehouse-costs` | Warehouse · cost estimate | — | `warehouse-downsample`, `warehouse-answers`, `warehouse-quality`, `hub` |
-| `warehouse-answers` | Warehouse · answer-ready marts | — | `warehouse-enrichment`, `warehouse-quality`, `warehouse-intro`, `hub` |
-| `warehouse-freshness` | Warehouse · why watermarks, not GetFeed | — | `warehouse-backfill`, `warehouse-setup`, `warehouse-incremental`, `hub` |
-| `warehouse-backfill` | Warehouse · falling behind, and noticing | — | `warehouse-quality`, `warehouse-freshness`, `warehouse-incremental`, `hub` |
-| `warehouse-enrichment` | Warehouse · faults get coordinates | — | `warehouse-answers`, `warehouse-quality`, `warehouse-operational`, `hub` |
-| `warehouse-deletions` | Warehouse · deletions & mutability | — | `warehouse-restated`, `warehouse-quality`, `warehouse-operational`, `hub` |
+| `warehouse-answers` | Warehouse · answer-ready marts | — | `warehouse-quality`, `warehouse-intro`, `hub` |
+| `warehouse-freshness` | Warehouse · why watermarks, not GetFeed | — | back to the previous step, `hub` |
+| `warehouse-backfill` | Warehouse · falling behind, and noticing | — | `warehouse-quality`, `warehouse-freshness`, `hub` |
+| `warehouse-enrichment` | Warehouse · faults get coordinates | — | `warehouse-restated`, `warehouse-operational`, `hub` |
+| `warehouse-deletions` | Warehouse · deletions & mutability | — | `warehouse-restated`, `warehouse-operational`, `hub` |
 | `warehouse-downsample` | Warehouse · downsample, never at ingest | — | `warehouse-answers`, `warehouse-costs`, `hub` |
 | `ep-roi` | ROI · Where the fleet leaks money | demo_fh_vegas4 | `ep-roi-onepager`, `ep-roi-skill`, `ep2-action`, `ep-agentic-coaching`, `hub` |
 | `ep-roi-onepager` | ROI · Draft the business case | demo_fh_vegas4 | `ep-roi-send`, `ep2-action`, `hub` |
@@ -247,6 +247,10 @@ refer to "the five hubs" whichever way the user came; the branches then split
 on who the next hub should serve (residents, income or shops, customers) and
 each ends on its own shareable map. Keep it that way: a step should only quote
 results from steps every route into it has already shown.
+The MotherDuck warehouse path follows the same rule: each step's pane stage
+and SQL assume the steps before it, so side steps hang off the step that
+builds what they need, and a side question reachable from several places
+(freshness) uses "↩︎ Back to where we were" instead of a fixed link.
 
 CARTO TODOs:
 - Map of trip end points for `carto-trips`. It needs a real `Get Trip` stopPoint
