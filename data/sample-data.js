@@ -241,6 +241,127 @@ window.SAMPLE_DATA = {
     incrementalRows: 157419,
     silverRows: 679577,
     dimensionRows: 50,
+
+    /* Sample rows shown under a table in the MotherDuck pane, keyed by table
+     * name and attached to every stage that lists the table (bottom of file);
+     * "table@stage" overrides it for one stage.
+     * Rule: a table the flow builds with SQL or a Get call shows that SQL's
+     * columns — and its literal rows where the SQL inserts them. A table the
+     * flow only reports in a tool result shows just the reported numbers. A
+     * table nothing builds gets no sample: the pane shows name + row count. */
+    samples: {
+      // first-load CSV (all_varchar) and its layered copies; same three pings throughout
+      gps_points: [
+        { DeviceName: "Demo - 02", GpsDateTime: "2026-06-26 01:42:41", Speed: "48", Latitude: "39.4699", Longitude: "-0.3763" },
+        { DeviceName: "Demo - 14", GpsDateTime: "2026-06-26 01:42:42", Speed: "0", Latitude: "39.4731", Longitude: "-0.3808" },
+        { DeviceName: "Demo - 31", GpsDateTime: "2026-06-26 01:42:43", Speed: "67", Latitude: "39.4564", Longitude: "-0.3521" },
+      ],
+      "bronze.gps_raw": [   // SELECT *, now() AS _loaded_at, … FROM gps_points
+        { DeviceName: "Demo - 02", GpsDateTime: "2026-06-26 01:42:41", Speed: "48", Latitude: "39.4699", Longitude: "-0.3763", _loaded_at: "2026-06-29 23:58:20" },
+        { DeviceName: "Demo - 14", GpsDateTime: "2026-06-26 01:42:42", Speed: "0", Latitude: "39.4731", Longitude: "-0.3808", _loaded_at: "2026-06-29 23:58:20" },
+        { DeviceName: "Demo - 31", GpsDateTime: "2026-06-26 01:42:43", Speed: "67", Latitude: "39.4564", Longitude: "-0.3521", _loaded_at: "2026-06-29 23:58:20" },
+      ],
+      "silver.planet_gps_pings": [   // typed: latitude, longitude, gps_datetime_utc, speed_kmh
+        { DeviceName: "Demo - 02", gps_datetime_utc: "2026-06-26 01:42:41", latitude: "39.4699", longitude: "-0.3763", speed_kmh: "48" },
+        { DeviceName: "Demo - 14", gps_datetime_utc: "2026-06-26 01:42:42", latitude: "39.4731", longitude: "-0.3808", speed_kmh: "0" },
+        { DeviceName: "Demo - 31", gps_datetime_utc: "2026-06-26 01:42:43", latitude: "39.4564", longitude: "-0.3521", speed_kmh: "67" },
+      ],
+      // trips: Start/Stop arrive as "… UTC" strings; the restated SQL strips that, keeps one row per TripId
+      // and maps a null Driver to UnknownDriverId. Two versions of Demo - 31's 23:18 drive are on disk.
+      "bronze.trips_raw": [
+        { TripId: "b10FEE52", DeviceName: "Demo - 31", Start: "2026-06-29 23:18:24 UTC", Stop: "2026-06-29 23:28:51 UTC", Driver: "u_demo_31", _batch_id: "forward" },
+        { TripId: "b11011A1", DeviceName: "Demo - 31", Start: "2026-06-29 23:18:24 UTC", Stop: "2026-06-29 23:42:07 UTC", Driver: "u_demo_31", _batch_id: "reconcile:2026-06-29 21:28:52" },
+        { TripId: "b10F7C03", DeviceName: "Demo - 14", Start: "2026-06-29 22:51:09 UTC", Stop: "2026-06-29 23:05:44 UTC", Driver: "", _batch_id: "forward" },
+      ],
+      // before the restated step: only the forward batch has landed, and silver still holds the retired id
+      "bronze.trips_raw@operational": [
+        { TripId: "b10FEE52", DeviceName: "Demo - 31", Start: "2026-06-29 23:18:24 UTC", Stop: "2026-06-29 23:28:51 UTC", Driver: "u_demo_31", _batch_id: "forward" },
+        { TripId: "b10F7C03", DeviceName: "Demo - 14", Start: "2026-06-29 22:51:09 UTC", Stop: "2026-06-29 23:05:44 UTC", Driver: "", _batch_id: "forward" },
+      ],
+      "silver.trips@operational": [
+        { TripId: "b10FEE52", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:28:51", driver_id: "u_demo_31" },
+        { TripId: "b10F7C03", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", driver_id: "UnknownDriverId" },
+      ],
+      "silver.trips": [
+        { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", driver_id: "u_demo_31" },
+        { TripId: "b10F7C03", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", driver_id: "UnknownDriverId" },
+      ],
+      "bronze.driver_changes_raw": [   // DriverChange login/logout events, as the restated stage describes them
+        { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-29 23:18:24", type: "login" },
+        { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-30 02:41:10", type: "logout" },
+      ],
+      // warehouse-operational SQL: these three tables are built from literal VALUES, so the sample is those rows
+      "silver.dim_user": [
+        { id: "u_demo_17", display_name: "Driver 17", is_driver: "true" },
+        { id: "u_demo_31", display_name: "Driver 31", is_driver: "true" },
+      ],
+      "silver.driver_assignments": [
+        { device_name: "Demo - 08", driver_id: "u_demo_17", active_from_utc: "2026-06-30 07:06:00" },
+        { device_name: "Demo - 14", driver_id: "UnknownDriverId", active_from_utc: "2026-06-30 08:00:00" },
+      ],
+      "gold.driver_safety_score": [   // the two assignment rows grouped by driver (u_demo_17 → Driver 17 via dim_user)
+        { driver: "Driver 17", assigned_events: "1" },
+        { driver: "UnknownDriverId", assigned_events: "1" },
+      ],
+      // dimension ExecuteMultiCall: only fields each Get asks for (built-in rule, diagnostic and unit ids;
+      // 1986-01-01 / 2050-01-01 are MyGeotab's open-ended dates; the LEZ is the zone the scenarios create)
+      "silver.dim_device": [   // real names + VINs from demo_fh4
+        { name: "Demo - 06", vehicleIdentificationNumber: "WDB9076571P106588" },
+        { name: "Demo - 08", vehicleIdentificationNumber: "WDB9076571P106590" },
+        { name: "Demo - 12", vehicleIdentificationNumber: "WDF9634031C001659" },
+      ],
+      "silver.dim_zone": [
+        { id: "z_val_depot", name: "Valencia depot", groups: "Valencia" },
+        { id: "z_val_zbe", name: "ZBE València", groups: "Valencia" },
+        { id: "z_mad_hub", name: "Madrid hub", groups: "Madrid" },
+      ],
+      "silver.dim_group": [
+        { id: "g_valencia", name: "Valencia", parent: "Company Group" },
+        { id: "g_barcelona", name: "Barcelona", parent: "Company Group" },
+        { id: "g_madrid", name: "Madrid", parent: "Company Group" },
+      ],
+      "silver.dim_rule": [
+        { id: "RulePostedSpeedingId", name: "Posted speed", activeFrom: "1986-01-01", activeTo: "2050-01-01" },
+        { id: "RuleHarshBrakingId", name: "Harsh braking", activeFrom: "1986-01-01", activeTo: "2050-01-01" },
+        { id: "RuleIdlingId", name: "Idling", activeFrom: "1986-01-01", activeTo: "2050-01-01" },
+      ],
+      "silver.dim_diagnostic": [
+        { id: "DiagnosticEngineSpeedId", name: "EngineSpeed", unitOfMeasure: "UnitOfMeasureRevolutionsPerMinuteId" },
+        { id: "DiagnosticEngineCoolantTemperatureId", name: "Engine coolant temp", unitOfMeasure: "UnitOfMeasureDegreesCelsiusId" },
+        { id: "DiagnosticFuelLevelId", name: "Fuel level", unitOfMeasure: "UnitOfMeasurePercentageId" },
+      ],
+      // warehouse-quality SQL
+      "silver.fact_freshness": [   // gps lag 2 min, as the quality check reports
+        { table_name: "planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" },
+        { table_name: "trips", max_event_time: "2026-06-30 08:11", lag_minutes: "6" },
+        { table_name: "status_data", max_event_time: "2026-06-30 08:14", lag_minutes: "3" },
+      ],
+      "silver.coverage_by_device": [
+        { device_id: "b3", device_name: "Demo - 02", gps_seen_today: "true" },
+        { device_id: "b26", device_name: "Demo - 37", gps_seen_today: "false" },
+        { device_id: "b10", device_name: "Demo - 14", gps_seen_today: "true" },
+      ],
+      "silver.driver_assignment_coverage": [   // one aggregate row over silver.trips (8,407 rows, 88% assigned)
+        { assigned_trips: "7,398", unassigned_trips: "1,009", pct_assigned: "88" },
+      ],
+      "silver.ingest_anomalies": [   // the two rows the SQL inserts
+        { detected_at: "2026-06-30 08:16", source_table: "status_data", check_name: "ace_added_unrequested_filter", severity: "warn", detail: "Ace injected Speed != 0 into a raw status prompt" },
+        { detected_at: "2026-06-30 08:16", source_table: "trips", check_name: "ace_source_table_changed", severity: "warn", detail: "Two equivalent trip prompts resolved to different FROM tables" },
+      ],
+      // warehouse-enrichment SQL: fault_data f.* + the nearest earlier ping (median gap 2 s, as reported)
+      "gold.fault_locations": [
+        { FaultId: "aF83…", DeviceName: "Demo - 31", fault_datetime_utc: "2026-06-29 14:02:17", lat: "39.4571", lon: "-0.3544", speed_at_fault: "38", gps_gap_s: "2" },
+        { FaultId: "aF91…", DeviceName: "Demo - 08", fault_datetime_utc: "2026-06-29 16:44:03", lat: "39.4712", lon: "-0.3791", speed_at_fault: "0", gps_gap_s: "5" },
+      ],
+      // restated step: the one mapping it proves with a real Get Trip
+      "gold.trip_reconcile_log": [
+        { retired_trip_id: "b10FEE52", new_trip_id: "b11011A1", device: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24" },
+      ],
+      // answers step: only the numbers its tool result reports
+      "gold.fleet_ops_overview": [
+        { vehicles: "50", coaching_queue_drivers: "14", shop_worklist_vehicles: "9" },
+      ],
+    },
     stages: {
       empty: [
         { kind: "default", name: "Database", status: "empty", tables: [] },
@@ -249,11 +370,7 @@ window.SAMPLE_DATA = {
         { kind: "default", name: "Database", status: "ready", active: true, tables: [{ name: "gps_points", rows: "0 rows" }] },
       ],
       loaded: [
-        { kind: "default", name: "Database", status: "loaded", active: true, tables: [{ name: "gps_points", rows: "157,419 rows", sample: [
-          { DeviceName: "Demo - 02", GpsDateTime: "2026-06-26 01:42:41", Speed: "48", Latitude: "39.4699", Longitude: "-0.3763" },
-          { DeviceName: "Demo - 14", GpsDateTime: "2026-06-26 01:42:42", Speed: "0", Latitude: "39.4731", Longitude: "-0.3808" },
-          { DeviceName: "Demo - 31", GpsDateTime: "2026-06-26 01:42:43", Speed: "67", Latitude: "39.4564", Longitude: "-0.3521" },
-        ] }] },
+        { kind: "default", name: "Database", status: "loaded", active: true, tables: [{ name: "gps_points", rows: "157,419 rows" }] },
       ],
       layered: [
         { kind: "bronze", name: "Bronze", status: "append-only", active: true, tables: [{ name: "bronze.gps_raw", rows: "679,581 rows", }] },
@@ -298,27 +415,15 @@ window.SAMPLE_DATA = {
       restated: [
         { kind: "bronze", name: "Bronze", status: "every version kept", active: true, tables: [
           { name: "bronze.gps_raw", rows: "698,323 rows", },
-          { name: "bronze.trips_raw", rows: "8,412 rows", note: "append-only: retired + current trip ids both on disk", sample: [
-            { TripId: "b10FEE52", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:28:51", _batch_id: "forward" },
-            { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", _batch_id: "reconcile" },
-            { TripId: "b10F7C03", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", _batch_id: "forward" },
-          ] },
-          { name: "bronze.driver_changes_raw", rows: "1,126 rows", note: "DriverChange login/logout — append-only events", sample: [
-            { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-29 23:18:24", type: "login" },
-            { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-30 02:41:10", type: "logout" },
-            { device: "Demo - 14", driver: "u_demo_14", dateTime: "2026-06-30 06:02:11", type: "login" },
-          ] },
+          { name: "bronze.trips_raw", rows: "8,412 rows", note: "append-only: retired + current trip ids both on disk" },
+          { name: "bronze.driver_changes_raw", rows: "1,126 rows", note: "DriverChange login/logout — append-only events" },
           { name: "bronze.status_data_raw", rows: "1.9M rows", },
           { name: "bronze.exception_events_raw", rows: "42,806 rows", },
           { name: "bronze.fault_data_raw", rows: "4,918 rows", },
         ] },
         { kind: "silver", name: "Silver", status: "reconciled", active: true, tables: [
           { name: "silver.planet_gps_pings", rows: "698,308 rows", },
-          { name: "silver.trips", rows: "8,407 rows", note: "1 row per drive · key (DeviceId, trip_start_utc) · latest load wins", sample: [
-            { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", driver_id: "u_demo_31" },
-            { TripId: "b10F7C03", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", driver_id: "UnknownDriverId" },
-            { TripId: "b1100F42", DeviceName: "Demo - 08", trip_start_utc: "2026-06-30 07:10:02", trip_end_utc: "2026-06-30 07:41:19", driver_id: "u_demo_17" },
-          ] },
+          { name: "silver.trips", rows: "8,407 rows", note: "1 row per drive · key (DeviceId, trip_start_utc) · latest load wins" },
           { name: "silver.driver_assignments", rows: "1,118 rows", note: "Trip.driver → dim_user.id or UnknownDriverId" },
           { name: "silver.status_data", rows: "1.9M rows", },
           { name: "silver.exception_events", rows: "42,781 rows", },
@@ -403,10 +508,7 @@ window.SAMPLE_DATA = {
           { name: "gold.driver_safety_score", rows: "50 rows" },
           { name: "gold.maintenance_risk", rows: "50 rows" },
           { name: "gold.idling_cost_daily", rows: "1,550 rows" },
-          { name: "gold.fault_locations", rows: "4,912 rows", note: "ASOF-joined to the nearest prior GPS ping", sample: [
-            { FaultId: "aF83…", DeviceName: "Demo - 31", fault_datetime_utc: "2026-06-29 14:02:17", lat: "39.4571", lon: "-0.3544", gps_gap: "2 s" },
-            { FaultId: "aF91…", DeviceName: "Demo - 08", fault_datetime_utc: "2026-06-29 16:44:03", lat: "39.4712", lon: "-0.3791", gps_gap: "5 s" },
-          ] },
+          { name: "gold.fault_locations", rows: "4,912 rows", note: "ASOF-joined to the nearest prior GPS ping" },
         ] },
       ],
       /* The cost node reuses the `quality` stage above — same full warehouse,
@@ -574,3 +676,17 @@ window.SAMPLE_DATA = {
     },
   },
 };
+
+// Attach each warehouse table's sample rows (above) to every stage that lists it;
+// a "table@stage" key wins for that stage.
+(function () {
+  var W = window.SAMPLE_DATA.warehouse;
+  Object.keys(W.stages).forEach(function (k) {
+    W.stages[k].forEach(function (layer) {
+      (layer.tables || []).forEach(function (t) {
+        var rows = W.samples[t.name + "@" + k] || W.samples[t.name];
+        if (rows && !/^0\b/.test(t.rows || "")) t.sample = rows;
+      });
+    });
+  });
+})();
