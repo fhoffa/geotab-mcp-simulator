@@ -686,15 +686,20 @@
       { device: "Demo - 21", trip_start: "2026-06-30 07:42", driver_id: "u_demo_04", distance_km: "9.7", duration_min: "22" },
       { device: "Demo - 14", trip_start: "2026-06-30 08:05", driver_id: "UnknownDriverId", distance_km: "5.1", duration_min: "14" }
     ];
+    // matches the warehouse-quality SQL: one aggregate row over silver.trips (8,407 rows, 88% assigned)
     if (/driver_assignment_coverage/.test(name)) return [
-      { device: "Demo - 08", trips_today: "6", assigned: "6", unknown_driver: "0" },
-      { device: "Demo - 14", trips_today: "4", assigned: "3", unknown_driver: "1" },
-      { device: "Demo - 21", trips_today: "5", assigned: "5", unknown_driver: "0" }
+      { assigned_trips: "7,398", unassigned_trips: "1,009", pct_assigned: "88" }
     ];
-    if (/driver_assignment|driver_assignments|driver_changes/.test(name)) return [
-      { device: "Demo - 08", driver_id: "u_demo_17", active_from: "2026-06-30 07:06", source: "DriverChange" },
-      { device: "Demo - 14", driver_id: "UnknownDriverId", active_from: "2026-06-30 08:00", source: "unassigned" },
-      { device: "Demo - 21", driver_id: "u_demo_04", active_from: "2026-06-30 07:38", source: "DriverChange" }
+    if (/driver_changes/.test(name)) return [
+      { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-29 23:18:24", type: "login" },
+      { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-30 02:41:10", type: "logout" },
+      { device: "Demo - 14", driver: "u_demo_14", dateTime: "2026-06-30 06:02:11", type: "login" }
+    ];
+    // columns and first two rows as in the warehouse-operational SQL
+    if (/driver_assignment/.test(name)) return [
+      { device_name: "Demo - 08", driver_id: "u_demo_17", active_from_utc: "2026-06-30 07:06:00" },
+      { device_name: "Demo - 14", driver_id: "UnknownDriverId", active_from_utc: "2026-06-30 08:00:00" },
+      { device_name: "Demo - 21", driver_id: "u_demo_04", active_from_utc: "2026-06-30 07:38:00" }
     ];
     if (/status_data/.test(name)) return [
       { device: "Demo - 21", diagnostic: "EngineSpeed", event_time: "2026-06-30 08:12", value: "1420" },
@@ -706,6 +711,12 @@
       { device: "Demo - 14", rule: "Harsh braking", event_time: "2026-06-30 08:09", severity: "coach" },
       { device: "Demo - 08", rule: "Idling", event_time: "2026-06-30 08:22", severity: "info" }
     ];
+    // gold.fault_locations = silver.fault_data f.* + the nearest earlier GPS point (warehouse-enrichment SQL)
+    if (/fault_locations/.test(name)) return [
+      { device: "Demo - 08", diagnostic: "Engine coolant temp", fault_datetime_utc: "2026-06-29 21:44:10", lat: "39.4702", lon: "-0.3768", speed_at_fault: "0", gps_gap_s: "4" },
+      { device: "Demo - 22", diagnostic: "DPF regeneration", fault_datetime_utc: "2026-06-29 18:02:37", lat: "39.4891", lon: "-0.4012", speed_at_fault: "52", gps_gap_s: "2" },
+      { device: "Demo - 31", diagnostic: "Low tire pressure", fault_datetime_utc: "2026-06-29 14:37:05", lat: "39.4566", lon: "-0.3529", speed_at_fault: "38", gps_gap_s: "7" }
+    ];
     if (/fault/.test(name)) return [
       { device: "Demo - 08", diagnostic: "Engine coolant temp", event_time: "2026-06-29 21:44", fault_state: "active" },
       { device: "Demo - 22", diagnostic: "DPF regeneration", event_time: "2026-06-29 18:02", fault_state: "cleared" },
@@ -716,37 +727,47 @@
       { name: "Demo - 08", vin: "WDB9076571P106590" },
       { name: "Demo - 12", vin: "WDF9634031C001659" }
     ];
+    // columns and first two rows as in the warehouse-operational SQL
     if (/dim_user/.test(name)) return [
-      { user_id: "u_demo_17", display_name: "Driver 17", home_group: "Valencia" },
-      { user_id: "u_demo_04", display_name: "Driver 04", home_group: "Barcelona" },
-      { user_id: "u_demo_31", display_name: "Driver 31", home_group: "Madrid" }
+      { id: "u_demo_17", display_name: "Driver 17", is_driver: "true" },
+      { id: "u_demo_31", display_name: "Driver 31", is_driver: "true" },
+      { id: "u_demo_04", display_name: "Driver 04", is_driver: "true" }
     ];
+    // the Get Zone call asks for id, name, groups; the LEZ is the zone the scenarios create
     if (/dim_zone/.test(name)) return [
-      { zone_id: "z_val_depot", name: "Valencia depot", type: "Office" },
-      { zone_id: "z_val_zbe", name: "Valencia ZBE", type: "Low emission zone (custom)" },
-      { zone_id: "z_mad_hub", name: "Madrid hub", type: "Office" }
+      { id: "z_val_depot", name: "Valencia depot", groups: "Valencia" },
+      { id: "z_val_zbe", name: "ZBE València", groups: "Valencia" },
+      { id: "z_mad_hub", name: "Madrid hub", groups: "Madrid" }
     ];
     if (/dim_group/.test(name)) return [
-      { group_id: "g_valencia", name: "Valencia", parent: "Company Group" },
-      { group_id: "g_barcelona", name: "Barcelona", parent: "Company Group" },
-      { group_id: "g_madrid", name: "Madrid", parent: "Company Group" }
+      { id: "g_valencia", name: "Valencia", parent: "Company Group" },
+      { id: "g_barcelona", name: "Barcelona", parent: "Company Group" },
+      { id: "g_madrid", name: "Madrid", parent: "Company Group" }
     ];
+    // Get Rule: id, name, activeFrom, activeTo (stock rules use built-in ids; 2050-01-01 = no end date)
     if (/dim_rule/.test(name)) return [
-      { rule_id: "r_posted_speed", name: "Posted speed", active: "true" },
-      { rule_id: "r_harsh_brake", name: "Harsh braking", active: "true" },
-      { rule_id: "r_idling", name: "Idling", active: "true" }
+      { id: "RulePostedSpeedingId", name: "Posted speed", activeFrom: "1986-01-01", activeTo: "2050-01-01" },
+      { id: "RuleHarshBrakingId", name: "Harsh braking", activeFrom: "1986-01-01", activeTo: "2050-01-01" },
+      { id: "RuleIdlingId", name: "Idling", activeFrom: "1986-01-01", activeTo: "2050-01-01" }
     ];
+    // Get Diagnostic asks for id, name, source, unitOfMeasure; shown: built-in diagnostic and unit ids
     if (/dim_diagnostic/.test(name)) return [
-      { diagnostic_id: "d_engine_speed", name: "EngineSpeed", unit: "rpm" },
-      { diagnostic_id: "d_coolant_temp", name: "Engine coolant temp", unit: "°C" },
-      { diagnostic_id: "d_fuel_level", name: "Fuel level", unit: "%" }
+      { id: "DiagnosticEngineSpeedId", name: "EngineSpeed", unitOfMeasure: "UnitOfMeasureRevolutionsPerMinuteId" },
+      { id: "DiagnosticEngineCoolantTemperatureId", name: "Engine coolant temp", unitOfMeasure: "UnitOfMeasureDegreesCelsiusId" },
+      { id: "DiagnosticFuelLevelId", name: "Fuel level", unitOfMeasure: "UnitOfMeasurePercentageId" }
     ];
     if (/daily_device_km/.test(name)) return [
       { date: "2026-06-30", device: "Demo - 02", km: "142.8" },
       { date: "2026-06-30", device: "Demo - 14", km: "88.3" },
       { date: "2026-06-30", device: "Demo - 31", km: "205.1" }
     ];
-    if (/driver_safety_score|coaching/.test(name)) return [
+    // columns as in the warehouse-operational SQL: assignment rows per driver, unassigned kept as UnknownDriverId
+    if (/driver_safety_score/.test(name)) return [
+      { driver: "UnknownDriverId", assigned_events: "118" },
+      { driver: "Driver 17", assigned_events: "42" },
+      { driver: "Driver 31", assigned_events: "37" }
+    ];
+    if (/coaching/.test(name)) return [
       { driver: "Driver 31", score: "72", reason: "speed exceptions per km" },
       { driver: "Driver 14", score: "81", reason: "harsh braking events" },
       { driver: "Driver 04", score: "93", reason: "clean week" }
@@ -761,19 +782,22 @@
       { date: "2026-06-30", group: "Barcelona", estimated_cost_usd: "24" },
       { date: "2026-06-30", group: "Madrid", estimated_cost_usd: "51" }
     ];
+    // table_name values as the warehouse-quality SQL writes them
     if (/freshness/.test(name)) return [
-      { table_name: "silver.planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" },
-      { table_name: "silver.status_data", max_event_time: "2026-06-30 08:14", lag_minutes: "3" },
-      { table_name: "silver.exception_events", max_event_time: "2026-06-30 08:09", lag_minutes: "8" }
+      { table_name: "planet_gps_pings", max_event_time: "2026-06-30 08:15", lag_minutes: "2" },
+      { table_name: "trips", max_event_time: "2026-06-30 08:11", lag_minutes: "6" },
+      { table_name: "status_data", max_event_time: "2026-06-30 08:14", lag_minutes: "3" }
     ];
+    // columns as in the warehouse-quality SQL
     if (/coverage/.test(name)) return [
-      { device: "Demo - 02", gps_seen: "true", expected_today: "true" },
-      { device: "Demo - 37", gps_seen: "false", expected_today: "true" },
-      { device: "Demo - 14", gps_seen: "true", expected_today: "true" }
+      { device_id: "b3", device_name: "Demo - 02", gps_seen_today: "true" },
+      { device_id: "b26", device_name: "Demo - 37", gps_seen_today: "false" },
+      { device_id: "b10", device_name: "Demo - 14", gps_seen_today: "true" }
     ];
+    // the two rows the warehouse-quality SQL inserts
     if (/anomal/.test(name)) return [
-      { check_name: "returned_sql_filter", severity: "warn", status: "needs review" },
-      { check_name: "gps_gap > 30min", severity: "warn", status: "needs review" }
+      { detected_at: "2026-06-30 08:16", source_table: "status_data", check_name: "ace_added_unrequested_filter", severity: "warn", detail: "Ace injected Speed != 0 into a raw status prompt" },
+      { detected_at: "2026-06-30 08:16", source_table: "trips", check_name: "ace_source_table_changed", severity: "warn", detail: "Two equivalent trip prompts resolved to different FROM tables" }
     ];
     if (/fleet_ops_overview/.test(name)) return [
       { vehicles: "50", active_today: "26", open_faults: "9", coaching_queue: "14" }

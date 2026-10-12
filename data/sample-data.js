@@ -362,7 +362,7 @@ window.SAMPLE_DATA = {
           { name: "silver.dim_diagnostic", rows: "2,184 rows" },
           { name: "silver.fact_freshness", rows: "5 rows", note: "trust check" },
           { name: "silver.coverage_by_device", rows: "50 rows", note: "trust check" },
-          { name: "silver.driver_assignment_coverage", rows: "50 rows", note: "trust check" },
+          { name: "silver.driver_assignment_coverage", rows: "1 row", note: "trust check" },
           { name: "silver.ingest_anomalies", rows: "2 rows", note: "trust check" },
         ] },
         { kind: "gold", name: "Gold", status: "ops marts", active: true, tables: [
@@ -436,7 +436,7 @@ window.SAMPLE_DATA = {
           { name: "silver.dim_diagnostic", rows: "2,184 rows" },
           { name: "silver.fact_freshness", rows: "5 rows", note: "trust check" },
           { name: "silver.coverage_by_device", rows: "50 rows", note: "trust check" },
-          { name: "silver.driver_assignment_coverage", rows: "50 rows", note: "trust check" },
+          { name: "silver.driver_assignment_coverage", rows: "1 row", note: "trust check" },
           { name: "silver.ingest_anomalies", rows: "2 rows", note: "trust check" },
         ] },
         { kind: "gold", name: "Gold", status: "answer-ready", active: true, tables: [
