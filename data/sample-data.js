@@ -460,8 +460,11 @@ window.SAMPLE_DATA = {
    * retail/food/tourism/night light are CARTO Spatial Features. Kontur hub
    * counts were reported in thousands, so they're kept that way. `x`/`y` place
    * points on the assets/carto-*.webp renders (percent of the image), which all
-   * share one framing. `sixthHub.candidates` is the real top-5 site-search
-   * result: neighboring cells within ~2 km of each other, scores within 2%.
+   * share one framing. `kind` is the assistant's one-word read of each hub's
+   * surroundings, from shops + restaurants per 1,000 residents (South ~270,
+   * Central ~48, South-east ~40, West ~16, North ~5). `sixthHub.candidates` is
+   * the real top-5 site-search result: neighboring cells within ~2 km of each
+   * other, scores within 2%.
    */
   carto: {
     database: "demo_fh_vegas8",
@@ -475,11 +478,11 @@ window.SAMPLE_DATA = {
     h3Res: 8,
     contextRings: 3,               // H3_KRING radius around each hub cell (~2.5 km at res 8)
     hubs: [
-      { name: "West",       parked: 6, residentsK: 69.6, retail: 617,  food: 489,  tourism: 112, nightLight: 74,  reach15k: 419, x: 26.1, y: 47.6 },
-      { name: "Central",    parked: 5, residentsK: 58.3, retail: 1582, food: 1193, tourism: 530, nightLight: 171, reach15k: 680, x: 53.8, y: 42.8 },
-      { name: "South-east", parked: 5, residentsK: 33.0, retail: 840,  food: 465,  tourism: 126, nightLight: 77,  reach15k: 492, x: 56.2, y: 67.6 },
-      { name: "South",      parked: 4, residentsK: 14.4, retail: 2140, food: 1758, tourism: 629, nightLight: 325, reach15k: 438, x: 49.3, y: 59.9 },
-      { name: "North",      parked: 5, residentsK: 55.3, retail: 158,  food: 125,  tourism: 30,  nightLight: 45,  reach15k: 405, x: 44.8, y: 17.6 },
+      { name: "West",       parked: 6, residentsK: 69.6, retail: 617,  food: 489,  tourism: 112, nightLight: 74,  reach15k: 419, x: 26.1, y: 47.6, kind: "homes" },
+      { name: "Central",    parked: 5, residentsK: 58.3, retail: 1582, food: 1193, tourism: 530, nightLight: 171, reach15k: 680, x: 53.8, y: 42.8, kind: "mixed" },
+      { name: "South-east", parked: 5, residentsK: 33.0, retail: 840,  food: 465,  tourism: 126, nightLight: 77,  reach15k: 492, x: 56.2, y: 67.6, kind: "mixed" },
+      { name: "South",      parked: 4, residentsK: 14.4, retail: 2140, food: 1758, tourism: 629, nightLight: 325, reach15k: 438, x: 49.3, y: 59.9, kind: "shops" },
+      { name: "North",      parked: 5, residentsK: 55.3, retail: 158,  food: 125,  tourism: 30,  nightLight: 45,  reach15k: 405, x: 44.8, y: 17.6, kind: "homes" },
     ],
     isoline: { operation: "isolines", range: "900", rangeType: "time" },   // calculate_isolines args; provider TravelTime, car
     coverage: {
@@ -513,9 +516,10 @@ window.SAMPLE_DATA = {
     objectives: {
       snapshot: "8 Oct 2026, ~15:15 UTC", vehicles: 50, driving: 23, parked: 27, parkedAtHubs: 24,
       study: { cells: 2090, residents: 2073195, income: 515898, poi: 32900 },
-      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 225133 },
-      income: { label: "Higher-income residents", uncoveredPct: 35.9, h3: "8829868c51fffff", lat: 36.0242, lon: -115.0237, score: 51457 },
-      poi:    { label: "Shops + restaurants",     uncoveredPct: 19.4, h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694 },
+      // x/y: each best cell on assets/carto-goals.webp (percent, shared framing)
+      people: { label: "Residents",               uncoveredPct: 32.6, h3: "88298616ebfffff", lat: 36.1718, lon: -115.0580, score: 225133, x: 71.7, y: 41.3 },
+      income: { label: "Higher-income residents", uncoveredPct: 35.9, h3: "8829868c51fffff", lat: 36.0242, lon: -115.0237, score: 51457,  x: 77.8, y: 74.8 },
+      poi:    { label: "Shops + restaurants",     uncoveredPct: 19.4, h3: "8829868c13fffff", lat: 36.0537, lon: -115.0306, score: 2694,   x: 76.6, y: 68.1 },
       // each winner's score on the other goals, as a share of that goal's best (rounded)
       cross: { peopleWinner: { income: 64, poi: 60 }, incomeWinner: { people: 70, poi: 92 }, poiWinner: { people: 78, income: 92 } },
       // discovery step: share of residents matched to an ACS tract, by tract vintage
@@ -561,6 +565,8 @@ window.SAMPLE_DATA = {
     explore: {
       quota: 15000, quotaUsed: 9, quotaLeft: 14991,   // calculate_isolines capabilities
       publicDemographics: 151, premiumUsa: 172,       // Data Observatory, US
+      // TODO(carto): add the six end places (lat/lon, trips per place, which one isn't a hub)
+      // from a real pull, so carto-trips can show a map instead of only text
       trips: { from: "2026-10-07T00:00:00Z", to: "2026-10-07T06:00:00Z", hours: 6, count: 534, places: 6 },
     },
   },

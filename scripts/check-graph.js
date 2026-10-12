@@ -43,7 +43,7 @@ Object.keys(NODES).forEach(function (id) {
     if (!c.next && !c.action) {
       problems.push(id + " → choice '" + (c.label || "") + "' has neither 'next' nor 'action'");
     }
-    if (c.action && c.action !== "restart" && c.action !== "map" && c.action !== "video") {
+    if (c.action && c.action !== "restart" && c.action !== "map" && c.action !== "video" && c.action !== "resume") {
       problems.push(id + " → choice '" + (c.label || "") + "' has unknown action '" + c.action + "'");
     }
   });
@@ -117,6 +117,7 @@ function mapTable() {
     (n.choices || []).forEach(function (c) {
       if (c.next && targets.indexOf("`" + c.next + "`") < 0) targets.push("`" + c.next + "`");
       else if (c.action === "restart" && targets.indexOf("restart") < 0) targets.push("restart");
+      else if (c.action === "resume" && targets.indexOf("back to the previous step") < 0) targets.push("back to the previous step");
     });
     lines.push("| `" + id + "` | " + (n.title || "") + " | " + (n.db || "—") + " | " + (targets.join(", ") || "—") + " |");
   });
@@ -185,7 +186,7 @@ var EVENT_FIELDS = {
   system: { all: ["text"], req: ["text"] },
   endcard: { all: ["lines"], req: ["lines"] },
   tool: { all: ["summary"], req: ["summary"] },
-  chart: { all: ["title", "bars"], req: ["title"] },
+  chart: { all: ["title", "bars", "columns", "rows", "note"], req: ["title"] },
   map: { all: ["title", "summary", "layerLabel", "disclosure", "zone", "pins"], req: ["title", "summary"] },
   media: { all: ["caption", "fallbackText"], req: ["caption", "fallbackText"] },
   confirm: { all: ["changes"], req: ["changes"] },
@@ -202,7 +203,7 @@ function englishOf(n) {
     spec.all.forEach(function (k) {
       var v = ev[k];
       if (v == null) return;
-      if (k === "bars" || k === "pins") v = v.map(function (x) { return x.label; });
+      if (k === "bars" || k === "pins" || k === "rows") v = v.map(function (x) { return x.label; });
       else if (k === "zone") v = v.label;
       else if (k === "stages") v = v.map(function (st) {
         return [st.name].concat((st.tables || []).map(function (t) { return t.note || ""; }));

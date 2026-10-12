@@ -494,6 +494,41 @@ html.i18n-pending body { visibility: hidden; }
 }
 .chart-val { color: #fff; font-size: 11.5px; font-weight: 700; padding-right: 7px; }
 
+/* heatmap: rows × measures, each cell shaded against its column (one hue, 5 steps) */
+.heat-table { width: 100%; border-collapse: separate; border-spacing: 2px; table-layout: fixed; }
+.heat-table caption { text-align: left; caption-side: top; }
+.heat-table th { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); line-height: 1.2; padding: 0 2px 4px; text-align: center; vertical-align: bottom; hyphens: auto; overflow-wrap: anywhere; }
+.heat-table th[scope="row"] {
+  width: 84px;
+  padding: 0 8px 0 0;
+  text-align: right;
+  vertical-align: middle;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ink);
+}
+.heat-table td {
+  height: 28px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.heat-1 { background: color-mix(in srgb, var(--geotab) 8%, white); }
+.heat-2 { background: color-mix(in srgb, var(--geotab) 22%, white); }
+.heat-3 { background: color-mix(in srgb, var(--geotab) 40%, white); }
+.heat-4 { background: color-mix(in srgb, var(--geotab) 62%, white); }
+.heat-5 { background: var(--geotab); color: #fff; }
+.chart-note { font-size: 11.5px; color: var(--ink-soft); margin-top: 8px; }
+@media (max-width: 480px) {
+  .heat-table th[scope="row"] { width: 64px; padding-right: 4px; font-size: 11px; }
+  .heat-table th { font-size: 10px; }
+  .heat-table td { font-size: 11px; }
+}
+
 /* -------------------------------------------------------------------- map */
 .map-card {
   border: 1px solid color-mix(in srgb, var(--tool-line) 86%, white);

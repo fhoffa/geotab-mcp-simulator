@@ -111,7 +111,7 @@
         Object.keys(o).forEach(function (k) {
           var v = o[k];
           if (v == null) return;
-          if (k === "bars" || k === "pins") {
+          if (k === "bars" || k === "pins" || k === "rows") {
             v.forEach(function (label, j) { if (label != null && ev[k] && ev[k][j]) ev[k][j].label = label; });
           } else if (k === "zone") {
             if (ev.zone) ev.zone.label = v;
@@ -231,6 +231,7 @@
   var playToken = 0; // invalidates an in-flight playback when we jump elsewhere
   var warehousePointerShown = false; // chat pointer to the pane: show once, then update silently
   var currentNodeId = null; // last id written to the ?n= URL param by playNode
+  var previousNodeId = null; // the node before it, for the "resume" action
   var REAL_ACCOUNT_HASH = "connect-real"; // shareable deep link straight to the "connect real account" overlay
   // Generic preamble before any "chapter" starts. When a deep link lands mid-flow,
   // we rebuild the lead-up transcript but trim everything up to and including the
@@ -820,8 +821,60 @@
     }
   }
 
+  // A chart with `columns` + `rows` is a heatmap: one row per item, one column per
+  // measure, each cell shaded against the other rows on that same measure (so
+  // measures in different units can sit side by side). A real <table>, so screen
+  // readers get the numbers.
+  function fmtCount(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, LANG === "es-ES" ? "." : ",");
+  }
+  function addHeatmap(ev) {
+    var card = el("div", "chart-card");
+    var table = document.createElement("table");
+    table.className = "heat-table";
+    if (ev.title) {
+      var cap = document.createElement("caption");
+      cap.className = "chart-title";
+      cap.textContent = ev.title;
+      table.appendChild(cap);
+    }
+    var maxes = ev.columns.map(function (_, j) {
+      return ev.rows.reduce(function (m, r) { return Math.max(m, r.values[j] || 0); }, 0) || 1;
+    });
+    var head = document.createElement("tr");
+    head.appendChild(document.createElement("th"));
+    ev.columns.forEach(function (c) {
+      var th = document.createElement("th");
+      th.setAttribute("scope", "col");
+      th.textContent = c;
+      head.appendChild(th);
+    });
+    table.appendChild(head);
+    ev.rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      var th = document.createElement("th");
+      th.setAttribute("scope", "row");
+      th.textContent = r.label;
+      tr.appendChild(th);
+      r.values.forEach(function (v, j) {
+        var td = document.createElement("td");
+        // five steps of one hue, lightest = lowest of the rows on this measure
+        td.className = "heat-" + Math.min(5, 1 + Math.floor(((v || 0) / maxes[j]) * 5));
+        td.textContent = fmtCount(v);
+        td.title = r.label + " · " + ev.columns[j] + ": " + fmtCount(v);
+        tr.appendChild(td);
+      });
+      table.appendChild(tr);
+    });
+    card.appendChild(table);
+    if (ev.note) card.appendChild(el("div", "chart-note", escapeHtml(ev.note)));
+    chatEl.appendChild(card);
+    scrollDown();
+  }
+
   function addChart(ev) {
-    var max = (ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
+    if (ev.rows && ev.columns) return addHeatmap(ev);
+    var max =(ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
     var card = el("div", "chart-card");
     // text alternative so the bar chart isn't invisible to screen readers
     card.setAttribute("role", "img");
@@ -1075,6 +1128,7 @@
       // back on the live fleet (Geotab only), not still working in MotherDuck.
       motherduckPane.classList.add("hidden", "collapsed");
     }
+    if (id !== currentNodeId) previousNodeId = currentNodeId;
     currentNodeId = id;
     writeNodeUrl(id, navMode || "replace");
     recordVisit(id);
@@ -1144,7 +1198,14 @@
     else if (node.next) { await wait(timedDelay("gap")); if (myToken === playToken) playNode(node.next, "replace"); }
   }
 
+  // "resume" (a side question like "what should I double-check?") brings back the
+  // previous node's choices, minus the one that led here, so the conversation goes on
+  function resumeChoices() {
+    var prev = previousNodeId && NODES[previousNodeId];
+    return ((prev && prev.choices) || []).filter(function (c) { return c.next !== currentNodeId && c.action !== "resume"; });
+  }
   function renderChoices(choices) {
+    choices = choices.filter(function (c) { return c.action !== "resume" || resumeChoices().length; });
     trayEl.innerHTML = "";
     var atHub = currentNodeId === "hub" && gameOn();
     if (atHub) {
@@ -1170,9 +1231,9 @@
         trayEl.appendChild(el("div", "tray-group", escapeHtml(c.group)));
         lastGroup = c.group;
       }
-      var primary = c.recommended || (idx === 0 && c.next);
+      var primary = c.recommended || (idx === 0 && (c.next || c.action === "resume"));
       var done = atHub && c.next && progress.nodes[c.next];
-      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action ? " subtle" : "") + (done ? " done" : ""));
+      var btn = el("button", "chip" + (primary ? " primary" : "") + (c.action && c.action !== "resume" ? " subtle" : "") + (done ? " done" : ""));
       btn.type = "button";
       btn.innerHTML =
         (c.recommended ? '<span class="chip-badge">' + tr("chip.start") + "</span>" : "") +
@@ -1195,6 +1256,7 @@
       if (!(await typeUserText(prose, c.say || c.label, myToken))) return;
     }
     if (myToken !== playToken) return;
+    if (c.action === "resume") { renderChoices(resumeChoices()); return; }
     if (c.next) playNode(c.next, "push"); // user-initiated step → new history entry + analytics pageview
   }
 
@@ -1263,6 +1325,7 @@
     var start = 0;
     for (var i = 0; i < chain.length - 1; i++) { if (ENTRY_NODES[chain[i].id]) start = i + 1; }
     if (start > chain.length - 1) { playNode(id, finalMode); return; }
+    currentNodeId = chain.length > 1 ? chain[chain.length - 2].id : null;
     for (var j = start; j < chain.length; j++) {
       if (chain[j].say) addBubble("user", chain[j].say);
       if (j < chain.length - 1) renderNodeInstant(chain[j].id);
