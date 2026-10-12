@@ -722,9 +722,9 @@
       { user_id: "u_demo_31", display_name: "Driver 31", home_group: "Madrid" }
     ];
     if (/dim_zone/.test(name)) return [
-      { zone_id: "z_val_depot", name: "Valencia depot", type: "Customer" },
-      { zone_id: "z_bcn_lez", name: "Barcelona LEZ", type: "Zone" },
-      { zone_id: "z_mad_hub", name: "Madrid hub", type: "Customer" }
+      { zone_id: "z_val_depot", name: "Valencia depot", type: "Office" },
+      { zone_id: "z_val_zbe", name: "Valencia ZBE", type: "Low emission zone (custom)" },
+      { zone_id: "z_mad_hub", name: "Madrid hub", type: "Office" }
     ];
     if (/dim_group/.test(name)) return [
       { group_id: "g_valencia", name: "Valencia", parent: "Company Group" },

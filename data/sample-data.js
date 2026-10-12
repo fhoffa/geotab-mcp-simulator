@@ -301,7 +301,7 @@ window.SAMPLE_DATA = {
           { name: "bronze.trips_raw", rows: "8,412 rows", note: "append-only: retired + current trip ids both on disk", sample: [
             { TripId: "b10FEE52", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:28:51", _batch_id: "forward" },
             { TripId: "b11011A1", DeviceName: "Demo - 31", trip_start_utc: "2026-06-29 23:18:24", trip_end_utc: "2026-06-29 23:42:07", _batch_id: "reconcile" },
-            { TripId: "b10FED90", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", _batch_id: "forward" },
+            { TripId: "b10F7C03", DeviceName: "Demo - 14", trip_start_utc: "2026-06-29 22:51:09", trip_end_utc: "2026-06-29 23:05:44", _batch_id: "forward" },
           ] },
           { name: "bronze.driver_changes_raw", rows: "1,126 rows", note: "DriverChange login/logout — append-only events", sample: [
             { device: "Demo - 31", driver: "u_demo_31", dateTime: "2026-06-29 23:18:24", type: "login" },
