@@ -25,7 +25,6 @@
   --radius: 16px;
   --maxw: 820px;
   --content-zoom: 1; /* Settings → Conversation size; set by app.js */
-  --chrome-zoom: 1; /* 1 / browser zoom; set by app.js */
   font-synthesis: none;
 }
 
@@ -36,11 +35,6 @@
 .chat,
 .tray,
 .motherduck-pane > * { zoom: var(--content-zoom); }
-/* ...and undo browser zoom on the header and footer, so Cmd/Ctrl + enlarges
-   only the conversation. The MotherDuck strip's sticky offsets follow the
-   header's shrunken height. */
-.app-header,
-.app-footer { zoom: var(--chrome-zoom); }
 
 * { box-sizing: border-box; }
 
@@ -1240,7 +1234,7 @@ html.i18n-pending body { visibility: hidden; }
 /* ---------------------------------------------------------- MotherDuck state strip */
 .motherduck-pane {
   position: sticky;
-  top: calc(59px * var(--chrome-zoom));
+  top: 59px;
   z-index: 4;
   width: 100%;
   border-top: 2px solid color-mix(in srgb, var(--md) 55%, var(--line));
@@ -1473,7 +1467,7 @@ html.i18n-pending body { visibility: hidden; }
 .map-pin-label .map-dot { display: none; }
 
 @media (max-width: 760px) {
-  .motherduck-pane { top: calc(96px * var(--chrome-zoom)); }
+  .motherduck-pane { top: 96px; }
   .motherduck-pane-toggle { grid-template-columns: auto minmax(0, 1fr) auto; padding-inline: 12px; }
   .warehouse-summary { display: none; }
   .warehouse-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }

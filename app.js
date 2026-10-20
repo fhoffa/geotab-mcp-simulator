@@ -390,19 +390,6 @@
       btn.setAttribute("aria-checked", active ? "true" : "false");
     });
   }
-  // Browser zoom (Cmd/Ctrl +) is the presenter's reflex, but it blows up the
-  // header and footer along with the conversation. Counter-zoom those two via
-  // --chrome-zoom so they keep their physical size. Browsers don't expose the
-  // zoom level; outerWidth / innerWidth approximates it, and only snapping to a
-  // standard zoom step keeps a docked devtools or side panel (which also shrink
-  // innerWidth) from being mistaken for zoom.
-  var ZOOM_STEPS = [1.1, 1.15, 1.2, 1.25, 1.33, 1.5, 1.7, 1.75, 2, 2.4, 2.5, 3, 4, 5];
-  function syncChromeZoom() {
-    var ratio = window.innerWidth ? window.outerWidth / window.innerWidth : 1;
-    var step = 1;
-    ZOOM_STEPS.forEach(function (s) { if (Math.abs(ratio - s) / s < 0.02) step = s; });
-    document.documentElement.style.setProperty("--chrome-zoom", String(1 / step));
-  }
   function setSizeMode(mode) {
     sizeMode = SIZES.indexOf(mode) >= 0 ? mode : "100";
     try { if (window.localStorage) window.localStorage.setItem(SIZE_KEY, sizeMode); } catch (_) {}
@@ -1475,8 +1462,6 @@
   document.documentElement.classList.remove("i18n-pending");
   updateSpeedUi();
   applySizeMode();
-  syncChromeZoom();
-  window.addEventListener("resize", syncChromeZoom); // browser zoom fires resize
   checkGraph();
   var bootId = idFromUrl();
   var hasNode = !!NODES[bootId];
