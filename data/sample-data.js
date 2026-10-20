@@ -481,7 +481,8 @@ window.SAMPLE_DATA = {
           { name: "gold.trip_reconcile_log", rows: "101 rows", note: "50 retired · 51 re-split" },
         ] },
       ],
-      /* Side-quest stage: `quality` plus the ASOF-joined fault locations mart.
+      /* Side-quest stage: `operational` plus the ASOF-joined fault locations mart
+         (the branch leaves from the operational step, before the restatement).
          Only the warehouse-enrichment node shows it. */
       enriched: [
         { kind: "bronze", name: "Bronze", status: "audited", active: true, tables: [
