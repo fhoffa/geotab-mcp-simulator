@@ -24,8 +24,23 @@
   --notice-line: #dfce74;
   --radius: 16px;
   --maxw: 820px;
+  --content-zoom: 1; /* Settings → Conversation size; set by app.js */
+  --chrome-zoom: 1; /* 1 / browser zoom; set by app.js */
   font-synthesis: none;
 }
+
+/* Conversation size: zoom the transcript, the choice tray and the MotherDuck
+   strip's contents — not the header — so a stage demo can be enlarged without
+   the header eating the screen the way browser zoom does. The strip's children
+   (not the strip) are zoomed so its sticky top offset stays under the header. */
+.chat,
+.tray,
+.motherduck-pane > * { zoom: var(--content-zoom); }
+/* ...and undo browser zoom on the header and footer, so Cmd/Ctrl + enlarges
+   only the conversation. The MotherDuck strip's sticky offsets follow the
+   header's shrunken height. */
+.app-header,
+.app-footer { zoom: var(--chrome-zoom); }
 
 * { box-sizing: border-box; }
 
@@ -838,7 +853,9 @@ html.i18n-pending body { visibility: hidden; }
   /* When a node offers many choices (e.g. the hub), the chip list can exceed the
      viewport. Without a cap, sticky pins the tray bottom and clips the top chips
      with no way to reach them — so cap the height and scroll within the tray. */
-  max-height: min(58vh, 560px);
+  /* vh is divided by the Conversation size zoom so the cap stays 58% of the
+     real viewport; the px cap zooms along with the chips. */
+  max-height: min(calc(58vh / var(--content-zoom)), 560px);
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -1199,7 +1216,7 @@ html.i18n-pending body { visibility: hidden; }
     bottom: 0;
     z-index: 12;
     max-width: none;
-    max-height: min(42vh, 260px);
+    max-height: min(calc(42vh / var(--content-zoom)), 260px);
     margin: 0;
     padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
     background: linear-gradient(180deg, rgba(243, 247, 251, 0.94), var(--bg) 34%);
@@ -1223,7 +1240,7 @@ html.i18n-pending body { visibility: hidden; }
 /* ---------------------------------------------------------- MotherDuck state strip */
 .motherduck-pane {
   position: sticky;
-  top: 59px;
+  top: calc(59px * var(--chrome-zoom));
   z-index: 4;
   width: 100%;
   border-top: 2px solid color-mix(in srgb, var(--md) 55%, var(--line));
@@ -1252,7 +1269,7 @@ html.i18n-pending body { visibility: hidden; }
 .motherduck-pane-body {
   display: block;
   width: min(100%, var(--maxw));
-  max-height: 42vh;
+  max-height: calc(42vh / var(--content-zoom));
   overflow: auto;
   margin: 0 auto;
   border-top: 1px dashed var(--line);
@@ -1456,7 +1473,7 @@ html.i18n-pending body { visibility: hidden; }
 .map-pin-label .map-dot { display: none; }
 
 @media (max-width: 760px) {
-  .motherduck-pane { top: 96px; }
+  .motherduck-pane { top: calc(96px * var(--chrome-zoom)); }
   .motherduck-pane-toggle { grid-template-columns: auto minmax(0, 1fr) auto; padding-inline: 12px; }
   .warehouse-summary { display: none; }
   .warehouse-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
