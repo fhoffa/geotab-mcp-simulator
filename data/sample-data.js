@@ -481,7 +481,8 @@ window.SAMPLE_DATA = {
           { name: "gold.trip_reconcile_log", rows: "101 rows", note: "50 retired · 51 re-split" },
         ] },
       ],
-      /* Side-quest stage: `quality` plus the ASOF-joined fault locations mart.
+      /* Side-quest stage: `operational` plus the ASOF-joined fault locations mart
+         (the branch leaves from the operational step, before the restatement).
          Only the warehouse-enrichment node shows it. */
       enriched: [
         { kind: "bronze", name: "Bronze", status: "audited", active: true, tables: [
@@ -684,6 +685,9 @@ window.SAMPLE_DATA = {
 // a "table@stage" key wins for that stage.
 (function () {
   var W = window.SAMPLE_DATA.warehouse;
+  // the enrichment branch leaves from the operational step, before the restatement
+  W.samples["bronze.trips_raw@enriched"] = W.samples["bronze.trips_raw@operational"];
+  W.samples["silver.trips@enriched"] = W.samples["silver.trips@operational"];
   Object.keys(W.stages).forEach(function (k) {
     W.stages[k].forEach(function (layer) {
       (layer.tables || []).forEach(function (t) {
