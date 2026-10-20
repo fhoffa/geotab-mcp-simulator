@@ -367,6 +367,35 @@
     updateSpeedUi();
   }
 
+  // Conversation size (Settings): zooms the transcript and the choice tray via
+  // --content-zoom (see styles.css) for screen sharing and stage demos. Browser
+  // zoom would blow up the header too; this leaves it compact.
+  var SIZE_KEY = "geotab-mcp-sim-size";
+  var SIZES = ["100", "125", "150", "200"];
+  var sizeModeLabel = document.getElementById("sizeModeLabel");
+  var sizeOptionBtns = Array.prototype.slice.call(document.querySelectorAll(".size-option"));
+  var sizeMode = readSizeMode();
+  function readSizeMode() {
+    try {
+      var stored = window.localStorage && window.localStorage.getItem(SIZE_KEY);
+      return SIZES.indexOf(stored) >= 0 ? stored : "100";
+    } catch (_) { return "100"; }
+  }
+  function applySizeMode() {
+    document.documentElement.style.setProperty("--content-zoom", String(Number(sizeMode) / 100));
+    if (sizeModeLabel) sizeModeLabel.textContent = sizeMode + "%";
+    sizeOptionBtns.forEach(function (btn) {
+      var active = btn.getAttribute("data-size") === sizeMode;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-checked", active ? "true" : "false");
+    });
+  }
+  function setSizeMode(mode) {
+    sizeMode = SIZES.indexOf(mode) >= 0 ? mode : "100";
+    try { if (window.localStorage) window.localStorage.setItem(SIZE_KEY, sizeMode); } catch (_) {}
+    applySizeMode();
+  }
+
   // "thinking" pause before the assistant starts streaming a reply — longer answers
   // get a longer beat, like the model taking more time to plan them.
   function thinkDelay(text) {
@@ -554,9 +583,9 @@
   // final text once typing finishes.
   function typeUserText(prose, text, myToken) {
     var bubble = prose.parentElement;
-    var row = bubble.parentElement;
-    var maxWidth = row.getBoundingClientRect().width * 0.8; // matches .row.user .bubble's max-width: 80%
-    bubble.style.width = Math.floor(maxWidth) + "px";
+    // A percentage (not a measured px width) so it stays right under the
+    // Conversation size zoom.
+    bubble.style.width = "80%"; // matches .row.user .bubble's max-width: 80%
     var t = timing().user;
     return revealText(prose, text, myToken, { chunk: t.chunk, tick: t.tick, jitterTick: true, caret: true }).then(function (ok) {
       bubble.style.width = "";
@@ -1347,6 +1376,9 @@
   speedOptionBtns.forEach(function (btn) {
     btn.addEventListener("click", function () { setSpeedMode(btn.getAttribute("data-speed")); });
   });
+  sizeOptionBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () { setSizeMode(btn.getAttribute("data-size")); });
+  });
   var progressSummaryEl = document.getElementById("progressSummary");
   var progressResetBtn = document.getElementById("progressResetBtn");
   var gameOptionBtns = Array.prototype.slice.call(document.querySelectorAll(".game-option"));
@@ -1429,6 +1461,7 @@
   });
   document.documentElement.classList.remove("i18n-pending");
   updateSpeedUi();
+  applySizeMode();
   checkGraph();
   var bootId = idFromUrl();
   var hasNode = !!NODES[bootId];

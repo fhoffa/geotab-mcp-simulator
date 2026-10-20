@@ -76,7 +76,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=9ee8749" />
+    <link rel="stylesheet" href="styles.css?v=a7db6db" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png?v=d4e1997" />
   </head>
   <body>
@@ -214,6 +214,33 @@
               <button class="settings-option speed-option" type="button" role="radio" aria-checked="false" data-speed="realistic">
                 <span class="settings-option-title" data-i18n="speed.realistic">realistic</span>
                 <span class="settings-option-copy" data-i18n="speed.realisticCopy">Measured API/Ace timing — API calls take seconds, Ace can take 30–50s. Click the transcript to fast-forward.</span>
+              </button>
+            </div>
+          </section>
+          <section class="settings-section" aria-labelledby="settingsSizeTitle">
+            <div class="settings-row-head">
+              <div>
+                <h3 id="settingsSizeTitle" data-i18n="settings.size">Conversation size</h3>
+                <p data-i18n="settings.sizeBody">Enlarge the conversation and suggested prompts for screen sharing or a stage demo, while the header stays compact. Use this instead of browser zoom.</p>
+              </div>
+              <span class="settings-value" id="sizeModeLabel">100%</span>
+            </div>
+            <div class="settings-options" role="radiogroup" aria-label="Conversation size" data-i18n-attr="aria-label:settings.sizeAria">
+              <button class="settings-option size-option" type="button" role="radio" aria-checked="true" data-size="100">
+                <span class="settings-option-title">100%</span>
+                <span class="settings-option-copy" data-i18n="size.100Copy">Normal, for reading on your own screen.</span>
+              </button>
+              <button class="settings-option size-option" type="button" role="radio" aria-checked="false" data-size="125">
+                <span class="settings-option-title">125%</span>
+                <span class="settings-option-copy" data-i18n="size.125Copy">A notch up for screen sharing.</span>
+              </button>
+              <button class="settings-option size-option" type="button" role="radio" aria-checked="false" data-size="150">
+                <span class="settings-option-title">150%</span>
+                <span class="settings-option-copy" data-i18n="size.150Copy">Projector or meeting-room screen.</span>
+              </button>
+              <button class="settings-option size-option" type="button" role="radio" aria-checked="false" data-size="200">
+                <span class="settings-option-title">200%</span>
+                <span class="settings-option-copy" data-i18n="size.200Copy">Stage demo, readable from the back of the room.</span>
               </button>
             </div>
           </section>
@@ -396,7 +423,7 @@
 
     <script src="data/sample-data.js?v=b5029b7"></script>
     <script src="data/conversations.js?v=9ada2b3"></script>
-    <script id="i18nLoader" data-es-419-src="data/i18n/es-419.js?v=8eac185" data-es-es-src="data/i18n/es-ES.js?v=bcfec59">
+    <script id="i18nLoader" data-es-419-src="data/i18n/es-419.js?v=60647f9" data-es-es-src="data/i18n/es-ES.js?v=bcfec59">
       // Spanish overlays load only for Spanish visitors. document.write keeps them
       // parser-blocking, so they run before app.js (an injected script wouldn't be
       // ordered). es-ES is a sparse layer on top of es-419.
@@ -406,7 +433,7 @@
         srcs.forEach(function (a) { document.write('<script src="' + me.getAttribute(a) + '"><\/script>'); });
       })();
     </script>
-    <script src="app.js?v=e914a27"></script>
+    <script src="app.js?v=6bf0ead"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6", "spa": true}'></script>
     <!-- End Cloudflare Web Analytics -->
