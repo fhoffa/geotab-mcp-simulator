@@ -5,10 +5,9 @@ A live-demo runbook: one assistant with **Geotab** (`demo_fh_vegas8`) and **CART
 It covers what happened in this year's floods, who was on the road, which stops are
 exposed, and how to be ready for the next storm.
 
-> Status (11 Nov 2026): the **Geotab** numbers below are REAL, pulled live from
-> `demo_fh_vegas8` today. The **CARTO** steps are written but **not yet run**: the
-> CARTO MCP wasn't connected in the prep session. Run them once before going on stage
-> and paste the real results into the "Captured" lines.
+> Status (11 Nov 2026): the **Geotab** numbers are REAL, pulled live from `demo_fh_vegas8`.
+> Step 3 (terrain, via CARTO) is also captured live. Steps 2 and 5 still need the NWS
+> warning polygons loaded into `carto_dw`.
 
 ## The real events (2026)
 
@@ -81,19 +80,64 @@ stops sized by trips (`validate_map` → `create_map`, as in the existing CARTO 
 
 ### 3 · "Which of my stops and hubs sit in flood-prone ground, not just in this storm?"
 
-CARTO: join the stops and the five hubs in `SAMPLE_DATA.carto.hubs` against a flood-hazard
-layer. In order of preference:
-1. **FEMA National Flood Hazard Layer** (zones A/AE = 1% annual chance) for Clark County.
-   This is the standard answer.
-2. **Clark County Regional Flood Control District** channels and detention basins: buffer the
-   channels by 250 m and count the stops inside the buffer.
-3. A proxy you already have, if 1 and 2 aren't loaded: *low-lying cells*. Use H3 res 8
-   elevation relative to the neighbouring rings, if your Spatial Features subscription has
-   an elevation variable.
+CARTO: join the stops and the five hubs in `SAMPLE_DATA.carto.hubs` against a terrain or
+flood-hazard layer. See "CARTO datasets that help" below for what this account can use.
 
-Check which of these actually exist on `carto_dw` first (the CARTO discovery tools /
-Data Observatory search) and say on stage which one you used.
-**Captured:** _(run before the demo)_.
+**Captured (real, 11 Nov 2026):** CARTO Spatial Features (public, H3 res 8). The stop's
+cell elevation, the lowest and highest cell within 3 rings (~2.5 km), and the WorldClim
+average rainfall for Oct:
+
+| Stop | Elevation | Low–high within ~2.5 km | Avg Oct rain |
+|---|---|---|---|
+| downtown | **623 m** | 595–657 m | 6 mm |
+| south of airport | 648 m | 613–687 m | 6 mm |
+| west of Strip | 668 m | 630–704 m | 6 mm |
+| north valley | 697 m | 663–713 m | 6 mm |
+| north-west | 780 m | 723–863 m | 6 mm |
+| Summerlin | **874 m** | 804–928 m | 7 mm |
+
+Talking point: *"Our stops drop 250 m from Summerlin to downtown, and water runs the same
+way. The two lowest stops are downtown and south of the airport. The demo fleet visits
+those stops more than 90 times in a 3-hour window. In an average October, Las Vegas gets
+about 6 mm of rain all month. On 11 Oct it got 27 mm (1.08 in.) in a single day."*
+Elevation is a proxy for exposure, not a flood map. Say so, then show the Fathom/FEMA
+upgrade path.
+
+NASADEM (≈100 m cells) gives a sharper picture: downtown's 121 surrounding cells range
+from 614 to 629 m. But that one query scanned about 10 GB, so pre-compute it before the
+demo.
+
+## CARTO datasets that help
+
+Checked live on `carto_dw` on 11 Nov 2026. The org has **no Data Observatory
+subscriptions**, and no flood table exists in the connection. The public tables below can
+already be queried directly.
+
+**Free, usable today**
+| Dataset | Table | Use in the demo |
+|---|---|---|
+| CARTO Spatial Features, USA (H3 res 8; also quadgrid 15/18) | `carto-do-public-data.carto.derived_spatialfeatures_usa_h3res8_v1_yearly_v4` | `elevation`, monthly `prec_*` (WorldClim normals), plus `population`/POIs for "who's affected". This is the proxy above |
+| NASADEM, USA and Spain (quadgrid 18, ≈100 m) | `carto-do-public-data.nasa.environmental_nasadem_{usa,esp}_quadgrid18_v1_static_v1` | Fine-grained terrain: find the low spots and sinks around each stop. Large scans, so filter by quadbin |
+| Avg precipitation 2000–2023 (raster, global) | `carto-demo-data.demo_rasters.avg_precipitation_june2000_to_may2023` | Too coarse for the city (~20 km pixels). Only good for a world/region intro slide |
+| Kontur Population / ACS (already used in the CARTO path) | — | Count the residents and customers inside an exposed area |
+
+**Premium (needs a commercial arrangement; can't be subscribed from the MCP)**
+| Dataset | Why it's the real answer |
+|---|---|
+| **Fathom Flood Risk Scores** (USA, Spain + ~140 countries, H3 res 11 ≈ 25 m) | `risk_category` 0–100 by `type_of_flood`, including **PLUV (pluvial)**, the flash-flood type Las Vegas gets, plus climate scenarios to 2050+. Best single layer for both fleets |
+| **Weather Source Historic Weather, hourly** (USA, 5 km grid, 2000–present) | Actual rainfall per hour, so you can line the 30 Oct and 11 Oct storms up with each trip. Also a 15-day **forecast** table for the "next storm" step |
+| **Regrid Parcels** (USA) | A `fema_flood_zone` field per parcel (FEMA flood insurance map zones) for depots and customer sites |
+| **AGS Climate and Weather Risk** (USA, block / H3 res 7) | Hazard indices (storm surge etc.). Less relevant inland |
+| **Gloval Environmental Risks** (Spain, census section) | `river_flood_risk` at 10/50/100/500-year return periods. The Valencia DANA story |
+
+**Free, but you load it yourself** (`import_data` from a URL into `carto_dw`): the FEMA
+National Flood Hazard Layer for Clark County, the Clark County Regional Flood Control
+District channels, the NWS warning polygons, and Spain's official flood-zone maps (SNCZI)
+for Valencia.
+
+Suggested pitch: **free terrain now, Fathom pluvial risk when it's for real.** Run the
+Spatial Features query live. Then show the Fathom sample (`search_data_observatory` →
+`sample` on `fathom_floodrisk_1418445b`) as the production version of the same question.
 
 ### 4 · "Set it up so I hear about it next time"
 
