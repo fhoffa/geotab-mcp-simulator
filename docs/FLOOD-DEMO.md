@@ -11,6 +11,8 @@ exposed, and how to be ready for the next storm.
 > 2026 flash flood warnings* (Builder id `c3a5c57d-7ce8-4824-a491-8a3a509e7462`, private
 > to the org).
 
+> Next level: the 10-year analysis and readiness plan are in [FLOOD-PLAN.md](FLOOD-PLAN.md).
+
 ## The real events (2026)
 
 | Date (local) | Area | What happened |
