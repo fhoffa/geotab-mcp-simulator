@@ -19,6 +19,8 @@
         if (q) try { localStorage.setItem(KEY, q); } catch (e) {}
         window.SIM_LANG = lang;
         var root = document.documentElement;
+        var entry = new URLSearchParams(location.search).get("n") || location.hash.slice(1);
+        if (/^altitude(?:-|$)/.test(entry)) root.classList.add("altitude-demo");
         root.lang = lang;
         if (lang !== "en") {
           root.classList.add("i18n-pending");
@@ -76,7 +78,7 @@
       }
     </script>
 
-    <link rel="stylesheet" href="styles.css?v=a7db6db" />
+    <link rel="stylesheet" href="styles.css?v=435c930" />
     <link rel="icon" type="image/png" href="assets/geotab-mark.png?v=d4e1997" />
   </head>
   <body>
@@ -421,9 +423,9 @@
       </div>
     </div>
 
-    <script src="data/sample-data.js?v=b5029b7"></script>
-    <script src="data/conversations.js?v=9ada2b3"></script>
-    <script id="i18nLoader" data-es-419-src="data/i18n/es-419.js?v=60647f9" data-es-es-src="data/i18n/es-ES.js?v=bcfec59">
+    <script src="data/sample-data.js?v=3be6d6c"></script>
+    <script src="data/conversations.js?v=95f401d"></script>
+    <script id="i18nLoader" data-es-419-src="data/i18n/es-419.js?v=0055161" data-es-es-src="data/i18n/es-ES.js?v=14790c4">
       // Spanish overlays load only for Spanish visitors. document.write keeps them
       // parser-blocking, so they run before app.js (an injected script wouldn't be
       // ordered). es-ES is a sparse layer on top of es-419.
@@ -433,7 +435,7 @@
         srcs.forEach(function (a) { document.write('<script src="' + me.getAttribute(a) + '"><\/script>'); });
       })();
     </script>
-    <script src="app.js?v=6bf0ead"></script>
+    <script src="app.js?v=07b2f9a"></script>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "180c426920c04604b145ff6190dc82d6", "spa": true}'></script>
     <!-- End Cloudflare Web Analytics -->

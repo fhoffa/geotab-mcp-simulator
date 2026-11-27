@@ -5,7 +5,7 @@
  * (app.js) just walks it. To add a branch: add a node here and point a choice
  * at it. See README.md → "Extending the graph".
  *
- * Every number, vehicle name and decode below was pulled from the live Geotab
+ * In the main MCP graph, every number, vehicle name and decode was pulled from the live Geotab
  * MCP demo databases on 18-19 Jun 2026. Answers are pre-recorded (this is a
  * simulator) but grounded in real data.
  *
@@ -6552,6 +6552,187 @@ window.CONVERSATIONS = {
         { label: "⚡ Try another", say: "Show me something else.", next: "hub" },
         { label: "↻ Restart", action: "restart" },
       ],
+    },
+  },
+};
+
+/* Unlisted, separate API lesson. Never attach these nodes to the MCP graph.
+ * All numerical examples come from the wholly fictional SAMPLE_DATA.altitude.
+ * REST shapes follow the public Altitude v2 guide; no SDK implementation copied.
+ */
+var Ad = D.altitude;
+function altitudeRequest(road) {
+  return {
+    aggregationUnit: "hour", dateFrom: Ad.dateFrom, dateTo: Ad.dateTo,
+    timeFrom: Ad.timeFrom, timeTo: Ad.timeTo, daysOfWeek: [],
+    isDirectional: true, isMetric: false, percentiles: [85],
+    segmentsDirectional: [{ segmentId: road.code, direction: 1 }],
+  };
+}
+function altitudeJob(path, args, key, excerpt) {
+  var id = "<example-job-" + key + ">";
+  return [
+    { type: "tool", server: "altitude-api", name: "POST " + path, args: args,
+      summary: "Fictional example · job accepted",
+      result: "// Fictional 202 response; substitute the real returned id.\n" + JSON.stringify({ id: id, status: "PENDING", links: { self: "/api/v2/jobs/" + id, result: path + "/" + id } }, null, 2) },
+    { type: "tool", server: "altitude-api", name: "GET /api/v2/jobs/{id}", args: { id: id },
+      summary: "Fictional example · polling reaches DONE",
+      result: "// Fictional status excerpt; continue polling while pending.\n" + JSON.stringify({ id: id, status: "DONE" }, null, 2) },
+    { type: "tool", server: "altitude-api", name: "GET " + path + "/{id}", args: { id: id },
+      summary: "Fictional example · result excerpt",
+      result: "// Fictional excerpt, NOT live observations; other rows/geometry omitted.\n" + JSON.stringify(excerpt, null, 2) },
+  ];
+}
+function altitudePair(title, dry, rain) {
+  return { type: "chart", title: "Illustrative · " + title,
+    bars: [{ label: "Comparable dry", value: dry, color: Ad.colors.dry }, { label: "Modeled rain", value: rain, color: Ad.colors.rain }] };
+}
+function altitudeMercator(latitude) {
+  return Math.log(Math.tan(Math.PI / 4 + latitude * Math.PI / 360));
+}
+var altitudeLocator = Ad.locator;
+var altitudeLocatorPins = Ad.roads.map(function (r) {
+  return { label: r.name, status: "locator", flip: r.key === "market" || r.key === "mission",
+    x: 100 * (r.longitude - altitudeLocator.west) / (altitudeLocator.east - altitudeLocator.west),
+    y: 100 * (altitudeMercator(altitudeLocator.north) - altitudeMercator(r.latitude)) /
+      (altitudeMercator(altitudeLocator.north) - altitudeMercator(altitudeLocator.south)) };
+});
+var altitudeSpeedPins = altitudeLocatorPins.map(function (p, i) {
+  var delta = Ad.roads[i].rain - Ad.roads[i].dry;
+  return Object.assign({}, p, { label: p.label + " · " + (delta < 0 ? "−" : "+") + Math.abs(delta) + " mph" });
+});
+var altitudeLocatorWidth = 6378137 * Math.cos((altitudeLocator.north + altitudeLocator.south) * Math.PI / 360) *
+  (altitudeLocator.east - altitudeLocator.west) * Math.PI / 180;
+var altitudeGeography = {
+  asOfDate: Ad.asOfDate, isMetric: false, radius: Ad.radiusMiles,
+  excludeServiceRoads: true, roadTypes: ["motorway", "trunk", "primary", "secondary", "tertiary"],
+  coordinates: Ad.roads.map(function (r) { return { latitude: r.latitude, longitude: r.longitude }; }),
+};
+var altitudeFeatures = Ad.roads.map(function (r) {
+  return { type: "Feature", properties: { id: r.id, code: r.code, name: r.name, type: "Segment" } };
+});
+var altitudeHourlyEvents = [];
+Ad.roads.forEach(function (r) {
+  var row = {
+    aggregationPeriodFrom: Ad.wetHour, corridorDirection: 1, cardinalDirection: r.cardinal,
+    segmentsDirectional: [{ segmentId: r.code, direction: 1 }], corridorLength: r.lengthMiles,
+    travelSpeedAvg: r.rain, travelTimeAvg: r.rainTime, speedLimitAvg: r.limit,
+    travelSpeedPctOverSpeedLimit: r.rainOver, travelTimePercentiles: [{ percentile: 85, value: r.rainP85 }],
+    observedCount: Ad.exampleObservedCount, vehicleCount: Ad.exampleVehicleCount,
+  };
+  altitudeHourlyEvents = altitudeHourlyEvents.concat(altitudeJob("/api/v2/traffic/speed-trend", altitudeRequest(r), r.key, [row,
+    { aggregationPeriodFrom: Ad.wetHour, corridorDirection: -1, travelSpeedAvg: null, travelTimeAvg: null, observedCount: null }]));
+});
+window.ALTITUDE_CONVERSATIONS = {
+  meta: { title: "Altitude — Conversation Simulator", fictional: true },
+  start: "altitude",
+  nodes: {
+    "altitude": {
+      id: "altitude", title: "An Altitude conversation, not MCP",
+      events: [
+        { type: "system", text: "Standalone API simulation, not an MCP connector. Use of real data in this public demo is pending review and approval with the Altitude team. Until then, all numbers, returned identities and result excerpts remain fictional teaching examples. No live API calls or account connection." },
+        { type: "assistant", text: "Trying this with real data? Start with [Altitude by Geotab](https://altitude.geotab.com/) and an account with API access enabled. In the [Altitude portal](https://altitudeportal.geotab.com), open `User Management`, select your user profile, then open `API Access` and select `Generate API Key`. The key is shown only once: store it securely. The [official setup guide](https://altitudehelp.geotab.com/api-guide/getting-started/before-you-begin#Getting-Altitude-Credentials) walks through the steps.\n\nConfigure the key in your own assistant's protected backend or secret store, outside the conversation. REST requests use `Authorization: Bearer <your-api-key>`; see the [request guide](https://altitudehelp.geotab.com/api-guide/getting-started/making-an-api-request). Never paste keys or passwords into this public simulator or ordinary chat. This recorded demo needs no credentials and does not connect an account.\n\nWhat would you like to investigate? I can help turn a traffic question into a specific request for aggregate road data, then explain the comparison. Pick a suggested question to try a recorded conversation." },
+      ],
+      choices: [{ label: "Does traffic slow down when it rains?", say: "I'm studying San Francisco. Does traffic slow down when it rains?", next: "altitude-scope" }],
+    },
+    "altitude-scope": {
+      id: "altitude-scope", title: "Define the places and comparison",
+      events: [{ type: "assistant", text: "Let's make that more useful than a city average. How about short sections near Market Street at Church, Mission at 24th, Sunset Boulevard at Judah and I-280 near Ocean?\n\nWe can use January 6–February 16, 2025, from 7 a.m. to 7 p.m., keeping each direction separate. We'll compare each road with its own similar dry hours—not a different road or a quieter time. These are fictional examples, not findings about those streets." },
+        { type: "map", mapStyle: "altitude-locator", image: altitudeLocator.image,
+          title: "Illustrative · four proposed San Francisco search locations",
+          layerLabel: "Search locators · north ↑", pins: altitudeLocatorPins,
+          scale: "≈ " + altitudeLocator.scaleMeters / 1000 + " km",
+          scaleWidth: 100 * altitudeLocator.scaleMeters / altitudeLocatorWidth + "%",
+          summary: "Dots mark approximate public search coordinates—not vehicles, measured traffic or API-returned section boundaries. All section selections and results in this lesson are fictional.",
+          disclosure: "Public basemap: © OpenStreetMap contributors · ODbL · openstreetmap.org/copyright. Static illustration, not a live map." },
+        { type: "assistant", text: "Basemap data: [© OpenStreetMap contributors](" + altitudeLocator.source + ") under the Open Database License. The map gives city context for the proposed searches; it does not confirm a selected segment's geometry or direction." },
+      ],
+      choices: [
+        { label: "Use those sections and dates", say: "Yes. Find those short sections and keep the dates and directions fixed.", next: "altitude-segments" },
+        { label: "Why not just use a city average?", next: "altitude-why" },
+      ],
+    },
+    "altitude-why": {
+      id: "altitude-why", title: "Why compare fixed sections?",
+      events: [{ type: "assistant", text: "A city average can change because a different mix of roads, hours or vehicles was observed. Fixing the sections and comparing like hours makes the question clearer. It still doesn't isolate rain as the cause." }],
+      choices: [{ label: "Got it. Use those four sections", next: "altitude-segments" }],
+    },
+    "altitude-segments": {
+      id: "altitude-segments", title: "Resolve the road segments",
+      events: [{ type: "assistant", text: "I'll search near the public coordinates, then inspect the returned geometry, road name and map date to choose the intended section. A road name isn't a segment identifier, and direction 1 follows the stored geometry—it doesn't always mean northbound.\n\nThe cards below show the real request structure with fictional response excerpts. In real use, retain the returned segment code and confirm its direction before the traffic query. The search radius is in miles here." }].concat(
+        altitudeJob("/api/v2/zones/segments", altitudeGeography, "geometry", altitudeFeatures),
+        [{ type: "assistant", text: "The fictional selection has four short sections. `properties.code` supplies the `segmentId` for an ordered directional request; `properties.id` is instead an encoded zone ID. They are not interchangeable.\n\nThese jobs are asynchronous: keep the accepted job ID, poll its status, then retrieve the result. Follow any `Link` header with `rel=\"next\"` for remaining pages; don't treat the first page as the entire dataset." }]
+      ),
+      choices: [{ label: "Get dated hourly speeds and crossing times", say: "For each selected section, get dated hourly average travel speed, crossing time, above-limit share and the 85th-percentile crossing time. Keep the directions separate.", next: "altitude-hours" }],
+    },
+    "altitude-hours": {
+      id: "altitude-hours", title: "Ask for dated hours, not a typical hour",
+      events: [{ type: "assistant", text: "I'll run one bounded speed-trend job per section so we retain its dated hourly measurements and sample counts. Combining all sections into a route would answer a different question.\n\nI'm using `aggregationUnit: \"hour\"` with `speed-trend`. A pooled hour-of-day profile from `speed-per-segment` is not a dated time series and must not be joined directly to dated weather. Here speeds are mph and times are seconds." }].concat(altitudeHourlyEvents,
+        [{ type: "assistant", text: "Those are fictional excerpts, not every returned hour. I keep the requested direction, remove rows with null measurements and check coverage on all four sections before comparing them. Observed passes are samples, not total road traffic or linked individual journeys." }]),
+      choices: [{ label: "Match those hours to rain and dry weather", next: "altitude-weather" }],
+    },
+    "altitude-weather": {
+      id: "altitude-weather", title: "Weather is a separate source",
+      events: [
+        { type: "assistant", text: "Altitude supplies traffic observations, not the rain labels in this example. I'll obtain historical modeled rain separately from Open-Meteo, then do the matching locally. An area weather estimate is not a pavement sensor." },
+        { type: "tool", server: "web", name: "GET https://archive-api.open-meteo.com/v1/archive",
+          args: { latitude: Ad.weatherLatitude, longitude: Ad.weatherLongitude, start_date: Ad.dateFrom, end_date: Ad.dateTo, hourly: "rain", timezone: Ad.timezone },
+          summary: "Fictional weather excerpt · separate public source",
+          result: "// Fictional weather values; no weather service called by this simulator.\n" + JSON.stringify({ timezone: Ad.timezone, hourly_units: { rain: "mm" }, hourly: { time: [Ad.wetHour.slice(0, 10) + "T" + Ad.weatherMatch.weatherEnd, Ad.dryHour.slice(0, 10) + "T" + Ad.weatherMatch.weatherEnd], rain: [Ad.weatherRain, Ad.weatherMatch.dryGuard[2].rain] } }, null, 2) },
+        { type: "system", text: "Assistant calculation, not an Altitude API endpoint. Synthetic traffic hours are defined here as local hour-starts. Open-Meteo rain is the preceding-hour sum, so traffic hour T joins weather timestamp T+1. The previous two dry hours use weather timestamps T and T−1." },
+        { type: "assistant", text: "In a real run, I must verify the traffic API's time-label convention before interpreting a weather join. This demo declares a local-clock assumption; it is not confirmation of the API's clock.\n\nI mark rain at " + Ad.rainThresholdMm + " mm or more. Dry controls need zero rain in that hour and the previous " + Ad.dryGuardHours + " hours. I match the same section, direction, weekday and clock hour on nearby dry dates, excluding holiday controls.\n\nThe fictional panel retains " + Ad.sharedWetHours + " common rainy hours across " + Ad.episodes + " episodes. A synthetic ±1-hour alignment check changes the Mission speed difference from " + Ad.alignmentSensitivity.minusHour + " to " + Ad.alignmentSensitivity.plusHour + " mph (primary: " + Ad.alignmentSensitivity.primary + "). That's sensitivity testing, not proof of the UTC/local convention." },
+        { type: "assistant", text: "Illustrative interval key · " + Ad.timezone + ":\n- Traffic starts at `" + Ad.wetHour.slice(11, 16) + "` (T): `" + Ad.weatherMatch.trafficInterval + "` joins weather ending at `" + Ad.weatherMatch.weatherEnd + "` (T+1). The matched dates are " + Ad.dryHour.slice(0, 10) + " (dry) and " + Ad.wetHour.slice(0, 10) + " (rain).\n- Dry guard, invented local example: " + Ad.weatherMatch.dryGuard.map(function (h) { return "`" + h.end + "` → `" + h.interval + "`: " + h.rain + " mm"; }).join("; ") + ". The first two intervals are guard hours, not extra matched traffic observations. All three must be zero.\n\nThis key uses the demo's declared traffic hour-start assumption, not a verified API clock." },
+      ],
+      choices: [{ label: "Do the four sections behave the same way?", next: "altitude-compare" }],
+    },
+    "altitude-compare": {
+      id: "altitude-compare", title: "Compare the same rainy hours",
+      events: [{ type: "assistant", text: "Not in this fictional panel. The map locates each speed change: modeled rain minus matched dry, not an improvement or safety measure. I first average nearby dry comparisons for each rainy hour, then weight the matched rainy hours equally. The charts below compare each section with itself in mph; their colors mean weather condition. These are invented results, not observations about San Francisco." },
+        { type: "map", mapStyle: "altitude-speed-map", image: altitudeLocator.image,
+          title: "Fictional · mean hourly speed change (mph)",
+          layerLabel: "Modeled rain − matched dry · north ↑", pins: altitudeSpeedPins,
+          scale: "≈ " + altitudeLocator.scaleMeters / 1000 + " km",
+          scaleWidth: 100 * altitudeLocator.scaleMeters / altitudeLocatorWidth + "%",
+          summary: "Fictional differences: positive = faster, negative = slower in the modeled rain sample, not cause or safety. Dots are approximate public search locations—not vehicles or returned/measured section boundaries. These are not observations of these real streets; dry and rain speeds appear in the charts below.",
+          disclosure: "Public basemap: © OpenStreetMap contributors · ODbL · openstreetmap.org/copyright. Static illustration with invented speed changes, not a live map." },
+      ].concat(
+        Ad.roads.map(function (r) { return altitudePair(r.name + " · mean hourly travel speed (mph)", r.dry, r.rain); }),
+        [{ type: "assistant", text: "An apparently faster expressway during rain isn't evidence that rain improves driving. Different demand, roadwork, incidents or vehicle mix could explain a pattern. Section averages tell us what to investigate next, not why it happened." }]
+      ),
+      choices: [
+        { label: "Could driving change without much extra time?", next: "altitude-behavior" },
+        { label: "What happens to the slower crossings?", next: "altitude-tail" },
+      ],
+    },
+    "altitude-behavior": {
+      id: "altitude-behavior", title: "Progress and above-limit driving are different",
+      events: [
+        { type: "assistant", text: "Look at the fictional Sunset section. Its mean crossing time changes from " + Ad.roads[2].dryTime + " to " + Ad.roads[2].rainTime + " seconds, while the mean hourly share above its illustrative " + Ad.roads[2].limit + " mph limit changes from " + Ad.roads[2].dryOver + "% to " + Ad.roads[2].rainOver + "%. The speed spread can change even when the average changes only a little. This is invented teaching data, not a safety finding about this road." },
+        altitudePair("Sunset · mean crossing time (seconds)", Ad.roads[2].dryTime, Ad.roads[2].rainTime),
+        altitudePair("Sunset · mean hourly share with section-average speed above " + Ad.roads[2].limit + " mph (%)", Ad.roads[2].dryOver, Ad.roads[2].rainOver),
+        { type: "assistant", text: "That share uses `travelSpeedPctOverSpeedLimit`: each pass's average speed across the section, not its fastest moment. We average hourly percentages here; we are not reporting a pooled-trip percentage. It does not establish collision risk or what a street redesign would achieve." },
+      ],
+      choices: [{ label: "Show the slower crossings too", next: "altitude-tail" }, { label: "What should I double-check?", next: "altitude-limits" }],
+    },
+    "altitude-tail": {
+      id: "altitude-tail", title: "Look beyond the average",
+      events: [
+        { type: "assistant", text: "For the fictional " + Ad.roads[1].lengthMiles + "-mile Mission section, the average crossing time and the slower-end marker both rise. These are seconds on one short section, not a whole commute." },
+        altitudePair("Mission · mean crossing time (seconds)", Ad.roads[1].dryTime, Ad.roads[1].rainTime),
+        altitudePair("Mission · average of hourly 85th-percentile crossing times (seconds)", Ad.roads[1].dryP85, Ad.roads[1].rainP85),
+        { type: "assistant", text: "For each hour, the 85th-percentile time is a value about 85% of observed crossings were quicker than. This chart averages those hourly values. It is not the 85th percentile of all pooled trips, a worst case or a forecast. Averages and slower crossings answer different questions." },
+      ],
+      choices: [{ label: "What about above-limit driving?", next: "altitude-behavior" }, { label: "What should I double-check?", next: "altitude-limits" }],
+    },
+    "altitude-limits": {
+      id: "altitude-limits", title: "What would make this defensible?",
+      events: [{ type: "assistant", text: "Before using real results, check the segment boundaries and direction, map date, metric definitions, traffic clock and weather intervals. Keep a coverage ledger, compare enough independent rain episodes and test whether one episode dominates. Sample counts aren't all-traffic counts.\n\nUse the same vehicle filters and explain the weighting. A vehicle class is not automatically a delivery vocation. None of these aggregate observations identifies an individual driver or their lane.\n\nThis public demo intentionally contains only fictional outputs. It illustrates a reproducible sequence of requests and comparisons, not a validated study or a live connection." }],
+      choices: [{ label: "What would be a good follow-up?", next: "altitude-next" }],
+    },
+    "altitude-next": {
+      id: "altitude-next", title: "Leave the next question open",
+      events: [{ type: "assistant", text: "When delivery traffic slows in rain, do harsh events fall too? A follow-up could examine harsh-braking and acceleration event rates among identifiable delivery-vehicle groups, accounting for how much driving takes place.\n\nWe haven't answered that here. First check the available event definitions, vehicle grouping and exposure measures. Slower driving alone doesn't establish safer driving.\n\nTo try the workflow for real, use your authorized Altitude API access with an assistant capable of calling it; this is not an Altitude MCP connector. Start with a narrow place, period and measurement. The [public API guide](https://altitudehelp.geotab.com/api-guide) describes the supported requests." }],
+      choices: [{ label: "Restart this Altitude conversation", action: "restart" }],
     },
   },
 };

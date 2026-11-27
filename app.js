@@ -7,7 +7,9 @@
 (function () {
   "use strict";
 
-  var GRAPH = window.CONVERSATIONS;
+  // Query links retain precedence over hashes, including mixed-mode URLs.
+  var ALTITUDE_MODE = /^altitude(?:-|$)/.test(idFromUrl());
+  var GRAPH = ALTITUDE_MODE ? window.ALTITUDE_CONVERSATIONS : window.CONVERSATIONS;
   var NODES = GRAPH.nodes;
 
   // ----------------------------------------------------------------- locale
@@ -68,6 +70,32 @@
     "chip.start": "Start here",
     "chip.explored": "explored",
   };
+  var ALTITUDE_UI = {
+    "meta.title": "Altitude — Conversation Simulator",
+    "hdr.sub": "Illustrative API conversation · not live",
+    "hdr.connect": "Altitude API guide",
+    "conn.off": "Recorded example · not connected",
+    "conn.geotab": "Recorded API steps · not connected",
+    "empty.kicker": "Illustrative Altitude demo",
+    "empty.title": "Explore an aggregate traffic question.",
+    "empty.body": "Choose prompts to replay fictional results using documented API requests.",
+    "footer.note": "<strong>Illustrative simulation.</strong> All traffic, weather and response values are fictional, not findings about these roads. No live API connection or credentials. This separate API demonstration is not an MCP connector.",
+    "tool.calling": "Showing {name}…",
+    "tool.aria": "Recorded API step {name} — show example request and response",
+    "tool.hint": "These are <strong>recorded API examples</strong>, not live calls. Expand a card to inspect the documented request shape and fictional response excerpt. Real jobs require authorized API access, polling and pagination.",
+    "settings.playbackBody": "Choose how fast the recorded API conversation plays back.",
+    "speed.realisticCopy": "Slower illustrative playback, not a latency guarantee. Click the transcript to fast-forward.",
+    "endcard.foot": "Illustrative aggregate-data workflow · not a live connection",
+    "endcard.cta": "Read the Altitude API guide →",
+  };
+  if (ALTITUDE_MODE) {
+    // Core locales first; Altitude English, then its locale layers take priority.
+    LOCALE.ui = Object.assign({}, LOCALE.ui, ALTITUDE_UI);
+    (LANG === "es-ES" ? ["es-419", "es-ES"] : LANG === "es-419" ? ["es-419"] : []).forEach(function (lang) {
+      var alt = ((window.SIM_I18N || {})[lang] || {}).altitude || {};
+      Object.assign(LOCALE.ui, alt.ui || {});
+    });
+  }
   // Look up a UI string: the active locale first, then English. {name} slots are
   // filled from vars.
   function tr(key, vars) {
@@ -81,8 +109,9 @@
       var loc = all[name];
       if (!loc) return;
       Object.assign(out.ui, loc.ui || {});
-      Object.keys(loc.nodes || {}).forEach(function (id) {
-        var over = loc.nodes[id], base = out.nodes[id] || { events: [], choices: [] };
+      var nodeLocale = ALTITUDE_MODE ? (loc.altitude || {}) : loc;
+      Object.keys(nodeLocale.nodes || {}).forEach(function (id) {
+        var over = nodeLocale.nodes[id], base = out.nodes[id] || { events: [], choices: [] };
         out.nodes[id] = {
           events: mergeSlots(base.events, over.events),
           choices: mergeSlots(base.choices, over.choices),
@@ -253,7 +282,7 @@
       return window.localStorage && window.localStorage.getItem(GAME_KEY) === "on" ? "on" : "off";
     } catch (_) { return "off"; }
   }
-  function gameOn() { return gameMode === "on"; }
+  function gameOn() { return !ALTITUDE_MODE && gameMode === "on"; }
   function setGameMode(mode) {
     gameMode = mode === "on" ? "on" : "off";
     try { if (window.localStorage) window.localStorage.setItem(GAME_KEY, gameMode); } catch (_) {}
@@ -833,6 +862,9 @@
     scrollDown();
   }
 
+  function chartValue(value) {
+    return ALTITUDE_MODE ? Number(value).toLocaleString(LANG) : String(value);
+  }
   function addChart(ev) {
     if (ev.rows && ev.columns) return addHeatmap(ev);
     var max =(ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
@@ -841,7 +873,7 @@
     card.setAttribute("role", "img");
     card.setAttribute("aria-label",
       (ev.title ? ev.title + ": " : tr("chart.aria")) +
-      (ev.bars || []).map(function (b) { return b.label + " " + b.value; }).join(", "));
+      (ev.bars || []).map(function (b) { return b.label + " " + chartValue(b.value); }).join(", "));
     if (ev.title) card.appendChild(el("div", "chart-title", escapeHtml(ev.title)));
     (ev.bars || []).forEach(function (b) {
       var row = el("div", "chart-row");
@@ -849,7 +881,8 @@
       var track = el("span", "chart-track");
       var fill = el("span", "chart-fill");
       fill.style.width = Math.round(((b.value || 0) / max) * 100) + "%";
-      fill.appendChild(el("span", "chart-val", String(b.value)));
+      if (b.color && /^#[0-9a-f]{6}$/i.test(b.color)) fill.style.background = b.color;
+      fill.appendChild(el("span", "chart-val", chartValue(b.value)));
       track.appendChild(fill);
       row.appendChild(track);
       card.appendChild(row);
@@ -1050,6 +1083,7 @@
 
   /* --------------------------------------------------------- play a node */
   function setConn(connected) {
+    if (ALTITUDE_MODE) { connEl.textContent = tr("conn.geotab"); connEl.className = "conn-pill conn-off"; return; }
     if (connected) { connEl.textContent = tr("conn.geotab"); connEl.className = "conn-pill conn-on"; }
     else { connEl.textContent = tr("conn.off"); connEl.className = "conn-pill conn-off"; }
   }
@@ -1067,7 +1101,9 @@
     if (mode === "none" || !history.pushState) return; // "none": URL came from history already
     // keep an explicit ?lang= so a copied link opens in the same language
     var lang = new URLSearchParams(location.search).get("lang");
-    var url = location.pathname + "?" + (lang ? "lang=" + encodeURIComponent(lang) + "&" : "") + "n=" + encodeURIComponent(id);
+    var url = ALTITUDE_MODE
+      ? location.pathname + (lang ? "?lang=" + encodeURIComponent(lang) : "") + "#" + encodeURIComponent(id)
+      : location.pathname + "?" + (lang ? "lang=" + encodeURIComponent(lang) + "&" : "") + "n=" + encodeURIComponent(id);
     // push = a counted, user-initiated step; replace = silent (boot / auto-advance)
     if (mode === "push") history.pushState({ n: id }, "", url);
     else history.replaceState({ n: id }, "", url);
@@ -1332,6 +1368,7 @@
   }
   function closeSettings() { closeOverlay(settingsOverlay); }
   function openTryReal() {
+    if (ALTITUDE_MODE) { window.open("https://altitudehelp.geotab.com/api-guide", "_blank", "noopener,noreferrer"); return; }
     var trigger = document.activeElement;
     closeLanding();
     openOverlay(tryRealOverlay, trigger);
@@ -1442,17 +1479,27 @@
   // Back/forward: ?n= URLs are History-API entries (pushed on each user-chosen
   // step), so a popstate replays that node fresh. "none" mode = don't re-write the
   // URL (it already reflects where we are).
-  window.addEventListener("popstate", function () {
+  function navigateFromUrl() {
     var id = idFromUrl();
+    if (/^altitude(?:-|$)/.test(id) !== ALTITUDE_MODE) { location.reload(); return; }
     if (id === REAL_ACCOUNT_HASH) { openTryReal(); return; }
     closeTryReal();
+    if (id === currentNodeId) return; // popstate + hashchange can describe one move
     if (NODES[id]) { closeLanding(); jumpToNode(id, "none"); }
-  });
+    else if (ALTITUDE_MODE) { jumpToNode(GRAPH.start, "replace"); }
+  }
+  window.addEventListener("popstate", navigateFromUrl);
+  window.addEventListener("hashchange", navigateFromUrl);
 
   /* ---------------------------------------------------------------- boot */
   // Localize before anything reads the graph (pathTo replays c.say || c.label).
   localizeGraph();
   translatePage();
+  if (ALTITUDE_MODE) {
+    document.querySelector(".brand-text strong").textContent = "Altitude by Geotab";
+    document.title = tr("meta.title");
+    document.documentElement.classList.add("altitude-ready");
+  }
   ["langSelect", "langSelectLanding"].forEach(function (id) {
     var sel = document.getElementById(id);
     if (!sel) return;
@@ -1465,7 +1512,7 @@
   checkGraph();
   var bootId = idFromUrl();
   var hasNode = !!NODES[bootId];
-  if (hasNode) closeLanding();
+  if (hasNode || ALTITUDE_MODE) closeLanding();
   // Deep link to a mid-flow node → rebuild its lead-up context; otherwise start fresh.
   if (hasNode && bootId !== GRAPH.start) jumpToNode(bootId, "replace");
   else playNode(GRAPH.start, "replace");

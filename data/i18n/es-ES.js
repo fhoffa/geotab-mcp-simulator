@@ -1212,3 +1212,66 @@ window.SIM_I18N["es-ES"] = {
   },
   },
 };
+
+// ---------------------------------------------------------------------------
+// Altitude: sparse Spain-Spanish layer over es-419's altitude namespace.
+// Spanish number format (0,5; 0,28) and Spain wording only; chart values are
+// numeric data and are formatted by the app, not here.
+window.SIM_I18N["es-ES"].altitude = { ui: {}, nodes: {} };
+window.SIM_I18N["es-ES"].altitude.ui = {
+  "settings.playbackBody": "Elige a qué velocidad se reproduce la conversación de API grabada.",
+};
+window.SIM_I18N["es-ES"].altitude.nodes = {
+  "altitude-scope": {
+    h: "49a2c1c4",
+    events: [
+      { text: "Hagamos que esto sea más útil que un promedio de la ciudad. ¿Qué tal tramos cortos cerca de Market Street a la altura de Church, Mission a la altura de 24th, Sunset Boulevard a la altura de Judah y la I-280 cerca de Ocean?\n\nPodemos usar del 6 de enero al 16 de febrero de 2025, de 7:00 a 19:00, manteniendo cada sentido por separado. Compararemos cada vía con sus propias horas secas similares, no con otra vía ni con una hora más tranquila. Son ejemplos ficticios, no hallazgos sobre esas calles." },
+    ],
+  },
+  "altitude-hours": {
+    h: "0aa32138",
+    events: [
+      { text: "Ejecutaré un trabajo acotado de speed-trend por tramo para conservar sus mediciones por hora con fecha y sus recuentos de muestra. Combinar todos los tramos en una ruta respondería otra pregunta.\n\nUso `aggregationUnit: \"hour\"` con `speed-trend`. Un perfil agrupado por hora del día de `speed-per-segment` no es una serie temporal con fechas y no debe unirse directamente con datos meteorológicos fechados. Aquí las velocidades están en mph y los tiempos en segundos." },
+    ],
+  },
+  "altitude-weather": {
+    h: "2bc0f281",
+    events: [
+      null,
+      null,
+      null,
+      { text: "En una ejecución real, debo verificar la convención de etiquetas de tiempo de la API de tráfico antes de interpretar una unión con datos meteorológicos. Esta demo declara un supuesto de reloj local; no confirma el reloj de la API.\n\nMarco como lluvia 0,5 mm o más. Los controles secos necesitan cero lluvia en esa hora y en las 2 horas previas. Emparejo el mismo tramo, sentido, día de la semana y hora del reloj en fechas secas cercanas, excluyendo controles en días festivos.\n\nEl panel ficticio conserva 24 horas lluviosas comunes en 6 episodios. Una verificación sintética de alineación de ±1 hora cambia la diferencia de velocidad de Mission de -5 a -3 mph (principal: -4). Es un análisis de sensibilidad, no una prueba de la convención UTC/local." },
+    ],
+  },
+  "altitude-compare": {
+    h: "77426624",
+    events: [
+      null,
+      { pins: window.SAMPLE_DATA.altitude.roads.map(function (r) {
+        var delta = r.rain - r.dry;
+        return r.name + " · " + (delta < 0 ? "−" : "+") + String(Math.abs(delta)).replace(".", ",") + " mph";
+      }) },
+    ],
+  },
+  "altitude-tail": {
+    h: "fb07d635",
+    events: [
+      { text: "En el tramo ficticio de Mission de 0,28 millas, aumentan tanto el tiempo medio de recorrido como el indicador del extremo más lento. Son segundos en un tramo corto, no un trayecto completo al trabajo." },
+      null,
+      null,
+      { text: "Para cada hora, el tiempo del percentil 85 es un valor por debajo del cual quedó cerca del 85% de los tiempos de recorrido observados. Este gráfico promedia esos valores por hora. No es el percentil 85 de todos los viajes agrupados, ni el peor caso, ni una previsión. Los promedios y los recorridos más lentos responden preguntas distintas." },
+    ],
+  },
+  "altitude-limits": {
+    h: "f72f5e55",
+    events: [
+      { text: "Antes de usar resultados reales, revisa los límites y la dirección del segmento, la fecha del mapa, las definiciones de las métricas, el reloj del tráfico y los intervalos meteorológicos. Lleva un registro de cobertura, compara suficientes episodios de lluvia independientes y prueba si un solo episodio domina. Los recuentos de muestra no son recuentos de todo el tráfico.\n\nUsa los mismos filtros de vehículos y explica la ponderación. Una clase de vehículo no es automáticamente una vocación de reparto. Ninguna de estas observaciones agregadas identifica a un conductor individual ni su carril.\n\nEsta demo pública contiene intencionalmente solo resultados ficticios. Ilustra una secuencia reproducible de solicitudes y comparaciones, no un estudio validado ni una conexión en vivo." },
+    ],
+  },
+  "altitude-next": {
+    h: "c89cd36f",
+    events: [
+      { text: "Cuando el tráfico de reparto se vuelve más lento con lluvia, ¿también bajan los eventos bruscos? Un seguimiento podría examinar las tasas de eventos de frenado brusco y aceleración brusca entre grupos identificables de vehículos de reparto, teniendo en cuenta cuánto se conduce.\n\nEso no lo hemos respondido aquí. Primero revisa las definiciones de eventos disponibles, la agrupación de vehículos y las medidas de exposición. Conducir más lento no basta para demostrar una conducción más segura.\n\nPara probar el flujo de trabajo de verdad, usa tu acceso autorizado a la API de Altitude con un asistente capaz de llamarla; esto no es un conector MCP de Altitude. Empieza con un lugar, un periodo y una medición acotados. La [guía pública de la API](https://altitudehelp.geotab.com/api-guide) describe las solicitudes admitidas." },
+    ],
+  },
+};

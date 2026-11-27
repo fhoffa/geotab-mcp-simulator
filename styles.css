@@ -1,3 +1,14 @@
+/* Unlisted Altitude mode: suppress unrelated onboarding before first paint. */
+.altitude-demo #landingOverlay,
+.altitude-demo #tryRealOverlay,
+.altitude-demo #aboutOverlay,
+.altitude-demo #aboutBtn,
+.altitude-demo [aria-labelledby="settingsProgressTitle"] { display: none !important; }
+.altitude-demo:not(.altitude-ready) .app-header,
+.altitude-demo:not(.altitude-ready) .app-footer,
+.altitude-demo:not(.altitude-ready) #emptyState { visibility: hidden; }
+[data-server="altitude-api"] .tool-dot { background: #0072b2; }
+
 /* ------------------------------------------------------------------ tokens */
 :root {
   --bg: #f3f7fb;
@@ -1452,6 +1463,41 @@ html.i18n-pending body { visibility: hidden; }
 
 [data-server="motherduck"] .tool-dot { background: #6b5bd6; }
 [data-server="carto"] .tool-dot { background: #d6336c; }
+
+/* Altitude locators: fixed public-geography framing, dots anchored independently of labels. */
+.map-canvas-altitude-locator {
+  aspect-ratio: 1024 / 800;
+  background: #f1f0eb center / 100% 100% no-repeat;
+}
+.map-canvas-altitude-locator::before,
+.map-canvas-altitude-locator::after { display: none; }
+.map-canvas-altitude-locator .map-pin { transform: translate(-6.5px, -50%); }
+.map-canvas-altitude-locator .map-pin-flip {
+  flex-direction: row-reverse;
+  transform: translate(calc(-100% + 6.5px), -50%);
+}
+.map-canvas-altitude-locator .map-dot { width: 13px; height: 13px; background: #334155; }
+.map-canvas-altitude-locator .map-tag { font-size: 11px; }
+
+/* Comparison annotations use neutral signs, not weather or improvement colors.
+   Keep the dot center at its projected coordinate, even when labels flip. */
+.map-canvas-altitude-speed-map {
+  aspect-ratio: 1024 / 800;
+  background: #f1f0eb center / 100% 100% no-repeat;
+}
+.map-canvas-altitude-speed-map::before,
+.map-canvas-altitude-speed-map::after { display: none; }
+.map-canvas-altitude-speed-map .map-pin { transform: translate(-6.5px, -50%); }
+.map-canvas-altitude-speed-map .map-pin-flip {
+  flex-direction: row-reverse;
+  transform: translate(calc(-100% + 6.5px), -50%);
+}
+.map-canvas-altitude-speed-map .map-dot { width: 13px; height: 13px; background: #334155; }
+.map-canvas-altitude-speed-map .map-tag { font-size: 11px; }
+/* Separate the ordered eastern callouts above/below Sunset at mobile width.
+   Only labels move; the projected dot anchors stay unchanged. */
+.map-canvas-altitude-speed-map .map-pin-flip .map-tag { transform: translateY(-12px); }
+.map-canvas-altitude-speed-map .map-pin-flip + .map-pin-flip .map-tag { transform: translateY(12px); }
 
 /* CARTO path — maps are pre-rendered query results (H3 population + layers),
    shown at their own square framing instead of the wide street-map canvas. */
