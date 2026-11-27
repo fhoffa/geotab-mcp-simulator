@@ -2742,7 +2742,7 @@ window.SIM_I18N["es-419"].altitude.nodes = {
     ],
   },
   "altitude-hours": {
-    h: "0aa32138",
+    h: "d4322e86",
     events: [
       /*0 assistant*/ { text: "Ejecutaré un trabajo acotado de speed-trend por tramo para conservar sus mediciones por hora con fecha y sus conteos de muestra. Combinar todos los tramos en una ruta respondería otra pregunta.\n" +
         "\n" +
@@ -2759,14 +2759,25 @@ window.SIM_I18N["es-419"].altitude.nodes = {
       /*10 tool*/ { summary: "Ejemplo ficticio · trabajo aceptado" },
       /*11 tool*/ { summary: "Ejemplo ficticio · el sondeo llega a DONE" },
       /*12 tool*/ { summary: "Ejemplo ficticio · extracto del resultado" },
-      /*13 assistant*/ { text: "Son extractos ficticios, no todas las horas devueltas. Conservo el sentido solicitado, elimino las filas con mediciones nulas y reviso la cobertura en los cuatro tramos antes de compararlos. Los pasos observados son muestras, no el tráfico total de la vía ni trayectos individuales vinculados." },
+      /*13 hour-card*/ { kicker: "Vista legible · misma fila de respuesta ficticia",
+        title: "Una hora devuelta en un tramo corto", ariaLabel: "Una hora ficticia devuelta para Mission Street",
+        fields: [
+          { label: "Fecha e intervalo", value: window.SAMPLE_DATA.altitude.wetHour.slice(0, 10) + " · " + window.SAMPLE_DATA.altitude.weatherMatch.trafficInterval },
+          { label: "Tramo y sentido", value: window.SAMPLE_DATA.altitude.roads[1].name + " · " + window.SAMPLE_DATA.altitude.roads[1].cardinal + " · direction 1" },
+          { label: "Velocidad media de recorrido", value: window.SAMPLE_DATA.altitude.roads[1].rain + " mph" },
+          { label: "Tiempo de cruce del tramo", value: window.SAMPLE_DATA.altitude.roads[1].rainTime + " segundos" },
+          { label: "Pasos muestreados", value: String(window.SAMPLE_DATA.altitude.exampleObservedCount) },
+          { label: "Longitud del tramo", value: window.SAMPLE_DATA.altitude.roads[1].lengthMiles + " millas" },
+        ],
+        note: "Describe un tramo corto y una fila horaria, no un trayecto completo, todo el tráfico de la vía ni recorridos vinculados." },
+      /*14 assistant*/ { text: "Son extractos ficticios, no todas las horas devueltas. Conservo el sentido solicitado, elimino las filas con mediciones nulas y reviso la cobertura en los cuatro tramos antes de compararlos. Los pasos observados son muestras, no el tráfico total de la vía ni trayectos individuales vinculados." },
     ],
     choices: [
       { label: "Emparejar esas horas con clima de lluvia y seco" },
     ],
   },
   "altitude-weather": {
-    h: "2bc0f281",
+    h: "1f0f8101",
     events: [
       /*0 assistant*/ { text: "Altitude aporta observaciones de tráfico, no las etiquetas de lluvia de este ejemplo. Obtendré por separado la lluvia histórica modelada de Open-Meteo y luego haré el emparejamiento localmente. Una estimación meteorológica de área no es un sensor del pavimento." },
       /*1 tool*/ { summary: "Extracto meteorológico ficticio · fuente pública independiente" },
@@ -2776,7 +2787,13 @@ window.SIM_I18N["es-419"].altitude.nodes = {
         "Marco como lluvia 0.5 mm o más. Los controles secos necesitan cero lluvia en esa hora y en las 2 horas previas. Emparejo el mismo tramo, sentido, día de la semana y hora del reloj en fechas secas cercanas, excluyendo controles en días feriados.\n" +
         "\n" +
         "El panel ficticio conserva 24 horas lluviosas comunes en 6 episodios. Una verificación sintética de alineación de ±1 hora cambia la diferencia de velocidad de Mission de -5 a -3 mph (principal: -4). Es un análisis de sensibilidad, no una prueba de la convención UTC/local." },
-      /*4 assistant*/ { text: "Guía ilustrativa de intervalos · America/Los_Angeles:\n- El tráfico empieza a las `08:00` (T): `08:00–09:00` se une con el dato meteorológico que termina a las `09:00` (T+1). Las fechas emparejadas son el 2025-01-15 (seco) y el 2025-01-08 (lluvia).\n- Margen seco previo, ejemplo local inventado: `07:00` → `06:00–07:00`: 0 mm; `08:00` → `07:00–08:00`: 0 mm; `09:00` → `08:00–09:00`: 0 mm. Los dos primeros intervalos son horas de margen previo, no observaciones de tráfico emparejadas adicionales. Los tres deben tener cero lluvia.\n\nEsta guía usa el supuesto declarado de inicios de hora del tráfico de la demo, no un reloj verificado de la API." },
+      /*4 timeline*/ { title: "Alineación ilustrativa · mismo día de la semana e intervalo",
+        ariaLabel: "Ejemplos ficticios de lluvia y seco alineados. Ambos comparan de 08:00 a 09:00 en miércoles. Los dos intervalos secos anteriores son márgenes de control, no observaciones de tráfico emparejadas.",
+        summary: "La visual alinea intervalos horarios; no compara la magnitud de la lluvia.",
+        wetLabel: "Ejemplo con lluvia modelada", dryLabel: "Ejemplo seco emparejado",
+        matchedLabel: "Hora de tráfico emparejada", guardLabel: "Solo margen seco", notUsedLabel: "No es otra coincidencia",
+        weatherLabel: "Etiqueta meteorológica",
+        note: "El tráfico 08:00–09:00 se etiqueta en T=08:00; el clima modelado que termina a las 09:00 cubre esa hora anterior (T+1). Un análisis real debe verificar el reloj de la API de tráfico. El supuesto de reloj local y la sensibilidad de ±1 hora no prueban un contrato de zona horaria." },
     ],
     choices: [
       { label: "¿Los cuatro tramos se comportan igual?" },
@@ -2821,14 +2838,15 @@ window.SIM_I18N["es-419"].altitude.nodes = {
     ],
   },
   "altitude-tail": {
-    h: "fb07d635",
+    h: "68fcc041",
     events: [
       /*0 assistant*/ { text: "En el tramo ficticio de Mission de 0.28 millas, aumentan tanto el tiempo medio de recorrido como el indicador del extremo más lento. Son segundos en un tramo corto, no un trayecto completo al trabajo." },
-      /*1 chart*/ { title: "Ilustrativo · Mission · tiempo medio de recorrido (segundos)",
-        bars: ["Seco comparable", "Lluvia modelada"] },
-      /*2 chart*/ { title: "Ilustrativo · Mission · promedio de los tiempos de recorrido horarios del percentil 85 (segundos)",
-        bars: ["Seco comparable", "Lluvia modelada"] },
-      /*3 assistant*/ { text: "Para cada hora, el tiempo del percentil 85 es un valor por debajo del cual quedó cerca del 85% de los tiempos de recorrido observados. Este gráfico promedia esos valores por hora. No es el percentil 85 de todos los viajes agrupados, ni el peor caso, ni un pronóstico. Los promedios y los recorridos más lentos responden preguntas distintas." },
+      /*1 dotplot*/ { title: "Ilustrativo · comparación de tiempos de cruce de Mission (segundos)",
+        ariaLabel: "Comparación ficticia de Mission en segundos. Tiempo medio: seco comparable 84, lluvia modelada 126. Marcador p85 horario medio: seco comparable 156, lluvia modelada 264.",
+        dryLabel: "Seco comparable", rainLabel: "Lluvia modelada", unit: "segundos",
+        items: ["Tiempo medio de cruce", "Marcador p85 horario medio"],
+        note: "Eje compartido en segundos. La fila p85 promedia valores p85 horarios; no es una distribución de recorridos agrupados, un peor caso ni un pronóstico." },
+      /*2 assistant*/ { text: "Para cada hora, el tiempo del percentil 85 es un valor por debajo del cual quedó cerca del 85% de los tiempos de recorrido observados. Esta visual promedia esos valores por hora. No es el percentil 85 de todos los viajes agrupados, ni el peor caso, ni un pronóstico. Los promedios y los recorridos más lentos responden preguntas distintas." },
     ],
     choices: [
       { label: "¿Y la conducción por encima del límite?" },

@@ -1229,13 +1229,22 @@ window.SIM_I18N["es-ES"].altitude.nodes = {
     ],
   },
   "altitude-hours": {
-    h: "0aa32138",
+    h: "d4322e86",
     events: [
       { text: "Ejecutaré un trabajo acotado de speed-trend por tramo para conservar sus mediciones por hora con fecha y sus recuentos de muestra. Combinar todos los tramos en una ruta respondería otra pregunta.\n\nUso `aggregationUnit: \"hour\"` con `speed-trend`. Un perfil agrupado por hora del día de `speed-per-segment` no es una serie temporal con fechas y no debe unirse directamente con datos meteorológicos fechados. Aquí las velocidades están en mph y los tiempos en segundos." },
+      null, null, null, null, null, null, null, null, null, null, null, null,
+      { fields: [
+        { label: "Fecha e intervalo", value: window.SAMPLE_DATA.altitude.wetHour.slice(0, 10) + " · " + window.SAMPLE_DATA.altitude.weatherMatch.trafficInterval },
+        { label: "Tramo y sentido", value: window.SAMPLE_DATA.altitude.roads[1].name + " · " + window.SAMPLE_DATA.altitude.roads[1].cardinal + " · direction 1" },
+        { label: "Velocidad media de recorrido", value: window.SAMPLE_DATA.altitude.roads[1].rain + " mph" },
+        { label: "Tiempo de cruce del tramo", value: window.SAMPLE_DATA.altitude.roads[1].rainTime + " segundos" },
+        { label: "Pasos muestreados", value: String(window.SAMPLE_DATA.altitude.exampleObservedCount) },
+        { label: "Longitud del tramo", value: String(window.SAMPLE_DATA.altitude.roads[1].lengthMiles).replace(".", ",") + " millas" },
+      ] },
     ],
   },
   "altitude-weather": {
-    h: "2bc0f281",
+    h: "1f0f8101",
     events: [
       null,
       null,
@@ -1254,12 +1263,11 @@ window.SIM_I18N["es-ES"].altitude.nodes = {
     ],
   },
   "altitude-tail": {
-    h: "fb07d635",
+    h: "68fcc041",
     events: [
       { text: "En el tramo ficticio de Mission de 0,28 millas, aumentan tanto el tiempo medio de recorrido como el indicador del extremo más lento. Son segundos en un tramo corto, no un trayecto completo al trabajo." },
-      null,
-      null,
-      { text: "Para cada hora, el tiempo del percentil 85 es un valor por debajo del cual quedó cerca del 85% de los tiempos de recorrido observados. Este gráfico promedia esos valores por hora. No es el percentil 85 de todos los viajes agrupados, ni el peor caso, ni una previsión. Los promedios y los recorridos más lentos responden preguntas distintas." },
+      { note: "Eje compartido en segundos. La fila p85 promedia valores p85 horarios; no es una distribución de recorridos agrupados, un peor caso ni una previsión." },
+      { text: "Para cada hora, el tiempo del percentil 85 es un valor por debajo del cual quedó cerca del 85% de los tiempos de recorrido observados. Esta visual promedia esos valores por hora. No es el percentil 85 de todos los viajes agrupados, ni el peor caso, ni una previsión. Los promedios y los recorridos más lentos responden preguntas distintas." },
     ],
   },
   "altitude-limits": {

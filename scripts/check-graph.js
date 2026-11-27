@@ -28,6 +28,9 @@ var VALID_EVENT_TYPES = {
   endcard: true,
   tool: true,
   chart: true,
+  "hour-card": true,
+  timeline: true,
+  dotplot: true,
   warehouse: true,
   media: true,
   map: true,
@@ -188,6 +191,9 @@ var EVENT_FIELDS = {
   endcard: { all: ["lines"], req: ["lines"] },
   tool: { all: ["summary"], req: ["summary"] },
   chart: { all: ["title", "bars", "columns", "rows", "note"], req: ["title"] },
+  "hour-card": { all: ["kicker", "title", "ariaLabel", "fields", "note"], req: ["title", "fields", "note"] },
+  timeline: { all: ["title", "ariaLabel", "summary", "wetLabel", "dryLabel", "matchedLabel", "guardLabel", "notUsedLabel", "weatherLabel", "note"], req: ["title", "summary", "wetLabel", "dryLabel", "matchedLabel", "guardLabel", "notUsedLabel", "weatherLabel", "note"] },
+  dotplot: { all: ["title", "ariaLabel", "dryLabel", "rainLabel", "unit", "items", "note"], req: ["title", "dryLabel", "rainLabel", "unit", "items", "note"] },
   map: { all: ["title", "summary", "layerLabel", "disclosure", "zone", "pins"], req: ["title", "summary"] },
   media: { all: ["caption", "fallbackText"], req: ["caption", "fallbackText"] },
   confirm: { all: ["changes"], req: ["changes"] },
@@ -204,7 +210,8 @@ function englishOf(n) {
     spec.all.forEach(function (k) {
       var v = ev[k];
       if (v == null) return;
-      if (k === "bars" || k === "pins" || k === "rows") v = v.map(function (x) { return x.label; });
+      if (k === "bars" || k === "pins" || k === "rows" || k === "items") v = v.map(function (x) { return x.label; });
+      else if (k === "fields") v = v.map(function (x) { return [x.label, x.value]; });
       else if (k === "zone") v = v.label;
       else if (k === "stages") v = v.map(function (st) {
         return [st.name].concat((st.tables || []).map(function (t) { return t.note || ""; }));

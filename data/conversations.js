@@ -6623,6 +6623,22 @@ Ad.roads.forEach(function (r) {
   altitudeHourlyEvents = altitudeHourlyEvents.concat(altitudeJob("/api/v2/traffic/speed-trend", altitudeRequest(r), r.key, [row,
     { aggregationPeriodFrom: Ad.wetHour, corridorDirection: -1, travelSpeedAvg: null, travelTimeAvg: null, observedCount: null }]));
 });
+var altitudeExampleRoad = Ad.roads[1];
+var altitudeExampleHour = {
+  type: "hour-card",
+  kicker: "Readable view · same fictional response row",
+  title: "One returned hour on one short section",
+  ariaLabel: "One fictional returned hour for Mission Street",
+  fields: [
+    { label: "Date and interval", value: Ad.wetHour.slice(0, 10) + " · " + Ad.weatherMatch.trafficInterval },
+    { label: "Section and direction", value: altitudeExampleRoad.name + " · " + altitudeExampleRoad.cardinal + " · direction 1" },
+    { label: "Average travel speed", value: altitudeExampleRoad.rain + " mph" },
+    { label: "Section crossing time", value: altitudeExampleRoad.rainTime + " seconds" },
+    { label: "Sampled passes", value: String(Ad.exampleObservedCount) },
+    { label: "Section length", value: altitudeExampleRoad.lengthMiles + " miles" },
+  ],
+  note: "This describes one short section and one hourly response row—not a whole commute, all road traffic or linked journeys.",
+};
 window.ALTITUDE_CONVERSATIONS = {
   meta: { title: "Altitude — Conversation Simulator", fictional: true },
   start: "altitude",
@@ -6668,7 +6684,7 @@ window.ALTITUDE_CONVERSATIONS = {
     "altitude-hours": {
       id: "altitude-hours", title: "Ask for dated hours, not a typical hour",
       events: [{ type: "assistant", text: "I'll run one bounded speed-trend job per section so we retain its dated hourly measurements and sample counts. Combining all sections into a route would answer a different question.\n\nI'm using `aggregationUnit: \"hour\"` with `speed-trend`. A pooled hour-of-day profile from `speed-per-segment` is not a dated time series and must not be joined directly to dated weather. Here speeds are mph and times are seconds." }].concat(altitudeHourlyEvents,
-        [{ type: "assistant", text: "Those are fictional excerpts, not every returned hour. I keep the requested direction, remove rows with null measurements and check coverage on all four sections before comparing them. Observed passes are samples, not total road traffic or linked individual journeys." }]),
+        [altitudeExampleHour, { type: "assistant", text: "Those are fictional excerpts, not every returned hour. I keep the requested direction, remove rows with null measurements and check coverage on all four sections before comparing them. Observed passes are samples, not total road traffic or linked individual journeys." }]),
       choices: [{ label: "Match those hours to rain and dry weather", next: "altitude-weather" }],
     },
     "altitude-weather": {
@@ -6681,7 +6697,15 @@ window.ALTITUDE_CONVERSATIONS = {
           result: "// Fictional weather values; no weather service called by this simulator.\n" + JSON.stringify({ timezone: Ad.timezone, hourly_units: { rain: "mm" }, hourly: { time: [Ad.wetHour.slice(0, 10) + "T" + Ad.weatherMatch.weatherEnd, Ad.dryHour.slice(0, 10) + "T" + Ad.weatherMatch.weatherEnd], rain: [Ad.weatherRain, Ad.weatherMatch.dryGuard[2].rain] } }, null, 2) },
         { type: "system", text: "Assistant calculation, not an Altitude API endpoint. Synthetic traffic hours are defined here as local hour-starts. Open-Meteo rain is the preceding-hour sum, so traffic hour T joins weather timestamp T+1. The previous two dry hours use weather timestamps T and T−1." },
         { type: "assistant", text: "In a real run, I must verify the traffic API's time-label convention before interpreting a weather join. This demo declares a local-clock assumption; it is not confirmation of the API's clock.\n\nI mark rain at " + Ad.rainThresholdMm + " mm or more. Dry controls need zero rain in that hour and the previous " + Ad.dryGuardHours + " hours. I match the same section, direction, weekday and clock hour on nearby dry dates, excluding holiday controls.\n\nThe fictional panel retains " + Ad.sharedWetHours + " common rainy hours across " + Ad.episodes + " episodes. A synthetic ±1-hour alignment check changes the Mission speed difference from " + Ad.alignmentSensitivity.minusHour + " to " + Ad.alignmentSensitivity.plusHour + " mph (primary: " + Ad.alignmentSensitivity.primary + "). That's sensitivity testing, not proof of the UTC/local convention." },
-        { type: "assistant", text: "Illustrative interval key · " + Ad.timezone + ":\n- Traffic starts at `" + Ad.wetHour.slice(11, 16) + "` (T): `" + Ad.weatherMatch.trafficInterval + "` joins weather ending at `" + Ad.weatherMatch.weatherEnd + "` (T+1). The matched dates are " + Ad.dryHour.slice(0, 10) + " (dry) and " + Ad.wetHour.slice(0, 10) + " (rain).\n- Dry guard, invented local example: " + Ad.weatherMatch.dryGuard.map(function (h) { return "`" + h.end + "` → `" + h.interval + "`: " + h.rain + " mm"; }).join("; ") + ". The first two intervals are guard hours, not extra matched traffic observations. All three must be zero.\n\nThis key uses the demo's declared traffic hour-start assumption, not a verified API clock." },
+        { type: "timeline",
+          title: "Illustrative alignment · same weekday and clock interval",
+          ariaLabel: "Aligned fictional rainy and dry examples. Both compare 08:00 to 09:00 on Wednesdays. The two earlier dry intervals are guards, not matched traffic observations.",
+          summary: "The visual aligns clock intervals; it does not compare rainfall magnitude.",
+          wetDate: Ad.wetHour.slice(0, 10), dryDate: Ad.dryHour.slice(0, 10),
+          wetLabel: "Modeled-rain example", dryLabel: "Matched dry example",
+          matchedLabel: "Matched traffic hour", guardLabel: "Dry guard only", notUsedLabel: "Not an extra match",
+          weatherLabel: "Weather label", weatherEnd: Ad.weatherMatch.weatherEnd, guard: Ad.weatherMatch.dryGuard,
+          note: "Traffic 08:00–09:00 is labeled at T=08:00; modeled weather ending 09:00 covers that preceding hour (T+1). A real analysis must verify the traffic API clock. The local-clock assumption and ±1-hour sensitivity check do not prove an API timezone contract." },
       ],
       choices: [{ label: "Do the four sections behave the same way?", next: "altitude-compare" }],
     },
@@ -6718,8 +6742,16 @@ window.ALTITUDE_CONVERSATIONS = {
       id: "altitude-tail", title: "Look beyond the average",
       events: [
         { type: "assistant", text: "For the fictional " + Ad.roads[1].lengthMiles + "-mile Mission section, the average crossing time and the slower-end marker both rise. These are seconds on one short section, not a whole commute." },
-        altitudePair("Mission · mean crossing time (seconds)", Ad.roads[1].dryTime, Ad.roads[1].rainTime),
-        altitudePair("Mission · average of hourly 85th-percentile crossing times (seconds)", Ad.roads[1].dryP85, Ad.roads[1].rainP85),
+        { type: "dotplot", title: "Illustrative · Mission crossing-time comparison (seconds)",
+          ariaLabel: "Mission fictional crossing-time comparison in seconds. Mean crossing time: comparable dry 84, modeled rain 126. Average hourly 85th-percentile marker: comparable dry 156, modeled rain 264.",
+          dryLabel: "Comparable dry", rainLabel: "Modeled rain", unit: "seconds",
+          dryColor: Ad.colors.dry, rainColor: Ad.colors.rain,
+          max: Math.ceil(Math.max(Ad.roads[1].dryTime, Ad.roads[1].rainTime, Ad.roads[1].dryP85, Ad.roads[1].rainP85) / 60) * 60,
+          items: [
+            { label: "Mean crossing time", dry: Ad.roads[1].dryTime, rain: Ad.roads[1].rainTime },
+            { label: "Average hourly p85 marker", dry: Ad.roads[1].dryP85, rain: Ad.roads[1].rainP85 },
+          ],
+          note: "Shared seconds axis. The p85 row averages hourly p85 values; it is not a pooled-journey distribution, worst case or forecast." },
         { type: "assistant", text: "For each hour, the 85th-percentile time is a value about 85% of observed crossings were quicker than. This chart averages those hourly values. It is not the 85th percentile of all pooled trips, a worst case or a forecast. Averages and slower crossings answer different questions." },
       ],
       choices: [{ label: "What about above-limit driving?", next: "altitude-behavior" }, { label: "What should I double-check?", next: "altitude-limits" }],

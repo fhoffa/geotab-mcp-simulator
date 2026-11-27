@@ -43,7 +43,7 @@ To reproduce the public source extract, submit this query to Overpass (the date 
 out geom;
 ```
 
-The weather panel keeps an interval key without a redundant rainfall chart; outcome charts compare speed, time and above-limit share. The dry guard's extra zero values are an explicitly invented **local** example, not additional retrieved weather records. Weather labels end their intervals; synthetic traffic labels start them. This remains a declared example assumption, not verification of an Altitude clock contract.
+The weather panel uses two aligned rows for the rainy and matched-dry Wednesdays. The final 08:00–09:00 cells are the matched traffic observations; the two earlier dry cells are guard intervals only, not extra matches. It explains T/T+1 alignment without plotting rainfall magnitude. The hourly-results step also renders one readable response-row card from the same Mission fixture while retaining the exact request/response in expandable tool cards. The slower-crossing step uses a shared seconds axis for mean time and the average hourly p85 marker; it does not imply a journey distribution, worst case or forecast. Weather labels end their intervals; synthetic traffic labels start them. These remain declared example assumptions, not verification of an Altitude clock contract.
 
 ## Routing and maintenance
 

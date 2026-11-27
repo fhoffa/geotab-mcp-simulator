@@ -543,6 +543,72 @@ html.i18n-pending body { visibility: hidden; }
 .heat-4 { background: color-mix(in srgb, var(--geotab) 62%, white); }
 .heat-5 { background: var(--geotab); color: #fff; }
 .chart-note { font-size: 11.5px; color: var(--ink-soft); margin-top: 8px; }
+
+/* Altitude explanation cards: fixture-driven, compact, and separate from MCP UI. */
+.altitude-demo .altitude-hour-card,
+.altitude-demo .altitude-timeline-card,
+.altitude-demo .altitude-dotplot-card {
+  border: 1px solid color-mix(in srgb, var(--tool-line) 88%, white);
+  background: color-mix(in srgb, var(--tool-bg) 82%, white);
+  border-radius: 14px;
+  padding: 14px;
+  margin: 6px 0;
+  animation: rise 0.25s ease both;
+}
+.altitude-card-kicker {
+  color: #52627a;
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.altitude-card-title { color: var(--ink); font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.altitude-card-note,
+.altitude-timeline-summary { color: var(--ink-soft); font-size: 11.5px; line-height: 1.45; }
+.altitude-card-note { border-top: 1px solid var(--tool-line); margin-top: 12px; padding-top: 9px; }
+.altitude-hour-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--tool-line); border: 1px solid var(--tool-line); border-radius: 10px; overflow: hidden; }
+.altitude-hour-field { background: #fff; padding: 9px 10px; min-width: 0; }
+.altitude-hour-field dt { color: var(--ink-soft); font-size: 10.5px; margin: 0 0 2px; }
+.altitude-hour-field dd { color: var(--ink); font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; margin: 0; overflow-wrap: anywhere; }
+.altitude-timeline-summary { margin: -4px 0 12px; }
+.altitude-timeline-row { display: grid; grid-template-columns: 136px minmax(0, 1fr); gap: 10px; align-items: stretch; margin: 8px 0; }
+.altitude-timeline-head { display: flex; flex-direction: column; justify-content: center; }
+.altitude-timeline-head strong { color: var(--ink); font-size: 11.5px; }
+.altitude-timeline-head span { color: var(--ink-soft); font-size: 10.5px; text-transform: capitalize; }
+.altitude-timeline-track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.altitude-timeline-cell { min-height: 62px; border: 1px solid var(--tool-line); border-radius: 8px; padding: 7px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+.altitude-timeline-cell.is-match { background: color-mix(in srgb, #0072b2 10%, white); border-color: color-mix(in srgb, #0072b2 42%, white); }
+.altitude-timeline-cell.is-guard { background: color-mix(in srgb, #64748b 9%, white); border-style: dashed; }
+.altitude-timeline-cell.is-empty { color: #94a3b8; background: #f8fafc; }
+.altitude-timeline-time { color: var(--ink); font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.altitude-timeline-role { color: var(--ink-soft); font-size: 9.5px; line-height: 1.2; margin-top: 3px; }
+.altitude-timeline-weather { color: #075985; font-size: 9px; margin-top: 3px; }
+.altitude-dotplot-legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--ink-soft); font-size: 10.5px; margin-bottom: 12px; }
+.altitude-dotplot-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.altitude-dotplot-legend i { width: 9px; height: 9px; border-radius: 50%; }
+.altitude-dotplot-row { display: grid; grid-template-columns: 138px minmax(0, 1fr); gap: 12px; align-items: center; margin: 14px 0; }
+.altitude-dotplot-label { color: var(--ink); font-size: 11.5px; line-height: 1.25; }
+.altitude-dotplot-track { position: relative; height: 3px; margin: 16px 20px 16px 0; border-radius: 2px; background: #dce6ee; }
+.altitude-dot { position: absolute; top: 50%; width: 31px; height: 22px; border: 2px solid #fff; border-radius: 12px; transform: translate(-50%, -50%); display: grid; place-items: center; color: #fff; font-size: 9.5px; font-weight: 750; font-variant-numeric: tabular-nums; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.22); }
+.altitude-dot-dry { margin-top: -7px; }
+.altitude-dot-rain { margin-top: 7px; }
+.altitude-dotplot-axis { display: flex; justify-content: space-between; margin: -4px 18px 0 150px; color: var(--ink-soft); font-size: 9.5px; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) {
+  .altitude-timeline-row { grid-template-columns: 1fr; gap: 5px; }
+  .altitude-timeline-head { flex-direction: row; justify-content: space-between; gap: 8px; }
+  .altitude-timeline-cell { min-height: 68px; padding: 5px 3px; }
+  .altitude-timeline-time { font-size: 9.5px; }
+  .altitude-timeline-role { font-size: 8.5px; }
+  .altitude-dotplot-row { grid-template-columns: 96px minmax(0, 1fr); gap: 8px; }
+  .altitude-dotplot-label { font-size: 10.5px; }
+  .altitude-dotplot-axis { margin-left: 104px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .altitude-demo .altitude-hour-card,
+  .altitude-demo .altitude-timeline-card,
+  .altitude-demo .altitude-dotplot-card { animation: none; }
+}
 @media (max-width: 480px) {
   .heat-table th[scope="row"] { width: 64px; padding-right: 4px; font-size: 11px; }
   .heat-table th { font-size: 10px; }
