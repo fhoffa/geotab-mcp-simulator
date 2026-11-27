@@ -1235,10 +1235,10 @@ window.SIM_I18N["es-ES"].altitude.nodes = {
       null, null, null, null, null, null, null, null, null, null, null, null,
       { fields: [
         { label: "Fecha e intervalo", value: window.SAMPLE_DATA.altitude.wetHour.slice(0, 10) + " · " + window.SAMPLE_DATA.altitude.weatherMatch.trafficInterval },
-        { label: "Tramo y sentido", value: window.SAMPLE_DATA.altitude.roads[1].name + " · " + window.SAMPLE_DATA.altitude.roads[1].cardinal + " · direction 1" },
+        { label: "Tramo y sentido", value: window.SAMPLE_DATA.altitude.roads[1].name + " · " + window.SAMPLE_DATA.altitude.roads[1].cardinal + " · sentido 1" },
         { label: "Velocidad media de recorrido", value: window.SAMPLE_DATA.altitude.roads[1].rain + " mph" },
         { label: "Tiempo de cruce del tramo", value: window.SAMPLE_DATA.altitude.roads[1].rainTime + " segundos" },
-        { label: "Pasos muestreados", value: String(window.SAMPLE_DATA.altitude.exampleObservedCount) },
+        { label: "Pasadas muestreadas", value: String(window.SAMPLE_DATA.altitude.exampleObservedCount) },
         { label: "Longitud del tramo", value: String(window.SAMPLE_DATA.altitude.roads[1].lengthMiles).replace(".", ",") + " millas" },
       ] },
     ],

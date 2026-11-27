@@ -2763,14 +2763,14 @@ window.SIM_I18N["es-419"].altitude.nodes = {
         title: "Una hora devuelta en un tramo corto", ariaLabel: "Una hora ficticia devuelta para Mission Street",
         fields: [
           { label: "Fecha e intervalo", value: window.SAMPLE_DATA.altitude.wetHour.slice(0, 10) + " · " + window.SAMPLE_DATA.altitude.weatherMatch.trafficInterval },
-          { label: "Tramo y sentido", value: window.SAMPLE_DATA.altitude.roads[1].name + " · " + window.SAMPLE_DATA.altitude.roads[1].cardinal + " · direction 1" },
+          { label: "Tramo y sentido", value: window.SAMPLE_DATA.altitude.roads[1].name + " · " + window.SAMPLE_DATA.altitude.roads[1].cardinal + " · sentido 1" },
           { label: "Velocidad media de recorrido", value: window.SAMPLE_DATA.altitude.roads[1].rain + " mph" },
           { label: "Tiempo de cruce del tramo", value: window.SAMPLE_DATA.altitude.roads[1].rainTime + " segundos" },
-          { label: "Pasos muestreados", value: String(window.SAMPLE_DATA.altitude.exampleObservedCount) },
+          { label: "Pasadas muestreadas", value: String(window.SAMPLE_DATA.altitude.exampleObservedCount) },
           { label: "Longitud del tramo", value: window.SAMPLE_DATA.altitude.roads[1].lengthMiles + " millas" },
         ],
         note: "Describe un tramo corto y una fila horaria, no un trayecto completo, todo el tráfico de la vía ni recorridos vinculados." },
-      /*14 assistant*/ { text: "Son extractos ficticios, no todas las horas devueltas. Conservo el sentido solicitado, elimino las filas con mediciones nulas y reviso la cobertura en los cuatro tramos antes de compararlos. Los pasos observados son muestras, no el tráfico total de la vía ni trayectos individuales vinculados." },
+      /*14 assistant*/ { text: "Son extractos ficticios, no todas las horas devueltas. Conservo el sentido solicitado, elimino las filas con mediciones nulas y reviso la cobertura en los cuatro tramos antes de compararlos. Las pasadas observadas son muestras, no el tráfico total de la vía ni trayectos individuales vinculados." },
     ],
     choices: [
       { label: "Emparejar esas horas con clima de lluvia y seco" },
