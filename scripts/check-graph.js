@@ -18,7 +18,8 @@ global.window = {};
 require(path.join(__dirname, "..", "data", "sample-data.js"));
 require(path.join(__dirname, "..", "data", "conversations.js"));
 
-var GRAPH = global.window.CONVERSATIONS;
+var ALTITUDE = process.argv.indexOf("--altitude") >= 0;
+var GRAPH = ALTITUDE ? global.window.ALTITUDE_CONVERSATIONS : global.window.CONVERSATIONS;
 var NODES = GRAPH.nodes;
 var problems = [];
 var VALID_EVENT_TYPES = {
@@ -27,6 +28,9 @@ var VALID_EVENT_TYPES = {
   endcard: true,
   tool: true,
   chart: true,
+  "hour-card": true,
+  timeline: true,
+  dotplot: true,
   warehouse: true,
   media: true,
   map: true,
@@ -101,7 +105,7 @@ if (!NODES[GRAPH.start]) problems.push("start node '" + GRAPH.start + "' does no
 // see .github/workflows/check-graph.yml), `--map-table` prints it to stdout,
 // and the default run still fails on drift as the backstop for forks/local.
 var fs = require("fs");
-var MAP_DOC = path.join(__dirname, "..", "docs", "CONVERSATION-MAP.md");
+var MAP_DOC = path.join(__dirname, "..", "docs", ALTITUDE ? "ALTITUDE-CONVERSATION-MAP.md" : "CONVERSATION-MAP.md");
 
 function mapTable() {
   var lines = [
@@ -187,6 +191,9 @@ var EVENT_FIELDS = {
   endcard: { all: ["lines"], req: ["lines"] },
   tool: { all: ["summary"], req: ["summary"] },
   chart: { all: ["title", "bars", "columns", "rows", "note"], req: ["title"] },
+  "hour-card": { all: ["kicker", "title", "ariaLabel", "fields", "note"], req: ["title", "fields", "note"] },
+  timeline: { all: ["title", "ariaLabel", "summary", "wetLabel", "dryLabel", "matchedLabel", "wetMatchedLabel", "dryMatchedLabel", "guardLabel", "notUsedLabel", "weatherLabel", "wetWeatherLabel", "dryWeatherLabel", "note"], req: ["title", "summary", "wetLabel", "dryLabel", "wetMatchedLabel", "dryMatchedLabel", "guardLabel", "notUsedLabel", "wetWeatherLabel", "dryWeatherLabel", "note"] },
+  dotplot: { all: ["title", "ariaLabel", "dryLabel", "rainLabel", "unit", "items", "note"], req: ["title", "dryLabel", "rainLabel", "unit", "items", "note"] },
   map: { all: ["title", "summary", "layerLabel", "disclosure", "zone", "pins"], req: ["title", "summary"] },
   media: { all: ["caption", "fallbackText"], req: ["caption", "fallbackText"] },
   confirm: { all: ["changes"], req: ["changes"] },
@@ -203,7 +210,8 @@ function englishOf(n) {
     spec.all.forEach(function (k) {
       var v = ev[k];
       if (v == null) return;
-      if (k === "bars" || k === "pins" || k === "rows") v = v.map(function (x) { return x.label; });
+      if (k === "bars" || k === "pins" || k === "rows" || k === "items") v = v.map(function (x) { return x.label; });
+      else if (k === "fields") v = v.map(function (x) { return [x.label, x.value]; });
       else if (k === "zone") v = v.label;
       else if (k === "stages") v = v.map(function (st) {
         return [st.name].concat((st.tables || []).map(function (t) { return t.note || ""; }));
@@ -233,6 +241,10 @@ LOCALES.forEach(function (lang) {
   else problems.push("data/i18n/" + lang + ".js is missing");
 });
 var I18N = global.window.SIM_I18N;
+if (ALTITUDE) {
+  I18N = {};
+  LOCALES.forEach(function (lang) { I18N[lang] = (global.window.SIM_I18N[lang] || {}).altitude; });
+}
 
 if (process.argv.indexOf("--stamp-i18n") >= 0) {
   LOCALES.forEach(function (lang) {
@@ -253,6 +265,7 @@ if (process.argv.indexOf("--stamp-i18n") >= 0) {
     fs.writeFileSync(file, src);
     console.log("[check-graph] " + lang + ": " + stamped + " node hash(es) updated.");
   });
+  if (!ALTITUDE) require("child_process").execFileSync(process.execPath, [__filename, "--altitude", "--stamp-i18n"], { stdio: "inherit" });
   process.exit(0);
 }
 
@@ -345,8 +358,13 @@ while ((m = reKey.exec(htmlSrc))) uiUsed[m[1]] = "index.html";
 while ((m = reAttr.exec(htmlSrc))) {
   m[1].split(";").forEach(function (pair) { uiUsed[(pair.split(":")[1] || "").trim()] = "index.html"; });
 }
-var uiEnMatch = appSrc.match(/var UI_EN = (\{[\s\S]*?\n {2}\});/);
+var uiEnMatch = appSrc.match(ALTITUDE ? /var ALTITUDE_UI = (\{[\s\S]*?\n {2}\});/ : /var UI_EN = (\{[\s\S]*?\n {2}\});/);
 var UI_EN = uiEnMatch ? Function("return " + uiEnMatch[1])() : {};
+if (ALTITUDE) {
+  // Other chrome inherits the already-validated core locale. Overrides must be complete.
+  uiUsed = {};
+  Object.keys(UI_EN).forEach(function (k) { uiUsed[k] = "app.js"; });
+}
 if (!uiEnMatch) problems.push("app.js: couldn't find the UI_EN table");
 Object.keys(uiUsed).forEach(function (k) {
   if (uiUsed[k] === "app.js" && UI_EN[k] == null) problems.push("app.js: tr(\"" + k + "\") has no English in UI_EN");
@@ -369,3 +387,7 @@ if (problems.length) {
 }
 
 console.log("[check-graph] ok — " + Object.keys(NODES).length + " nodes, all links resolve, all reachable from '" + GRAPH.start + "'.");
+if (!ALTITUDE) {
+  require("child_process").execFileSync(process.execPath, [__filename, "--altitude"], { stdio: "inherit" });
+  require("./check-altitude.js");
+}

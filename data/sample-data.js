@@ -19,6 +19,8 @@
  *     reports). The demo accounts are sparse; this store fills them out so the
  *     simulator shows the fully-instrumented experience.
  *   - Driver names are FICTIONAL. No real PII.
+ *   - The separate Altitude fixture at the end is wholly fictional teaching
+ *     data, not demo-fleet data or observations about its named public roads.
  *
  * To add a grounded scenario: add its data here, then have the node build its
  * chart/result from `window.SAMPLE_DATA` (see conversations.js → "Grounding on
@@ -693,3 +695,56 @@ window.SAMPLE_DATA = {
     });
   });
 })();
+
+// Standalone Altitude lesson: independently invented values, NOT study results.
+// Street names/approximate search coordinates are public. All returned identities,
+// lengths, directions, weather and traffic values below are fictional examples.
+window.SAMPLE_DATA.altitude = {
+  fictional: true,
+  dateFrom: "2025-01-06", dateTo: "2025-02-16", asOfDate: "2025-02-16",
+  timeFrom: "07:00:00", timeTo: "18:59:59.999", requestedHours: 504,
+  sharedWetHours: 24, episodes: 6, rainThresholdMm: 0.5, dryGuardHours: 2,
+  holidayControlsExcluded: ["2025-01-20"],
+  wetHour: "2025-01-08T08:00:00", dryHour: "2025-01-15T08:00:00",
+  weatherRain: 1.2, weatherLatitude: 37.76, weatherLongitude: -122.44,
+  timezone: "America/Los_Angeles", radiusMiles: 0.15,
+  colors: { dry: "#64748b", rain: "#0072b2" },
+  // Public OSM geography only; these frame approximate search locators, not results.
+  locator: {
+    image: "assets/map-sf-altitude.webp", projection: "EPSG:3857",
+    west: -122.523, east: -122.403, south: 37.711, north: 37.785,
+    width: 1024, height: 800, scaleMeters: 2000,
+    source: "https://www.openstreetmap.org/copyright",
+    osmBase: "2026-11-25T20:42:08Z",
+  },
+  // Extra zeros are invented local matching examples, not retrieved weather rows.
+  weatherMatch: {
+    trafficInterval: "08:00–09:00", weatherEnd: "09:00",
+    dryGuard: [
+      { end: "07:00", interval: "06:00–07:00", rain: 0 },
+      { end: "08:00", interval: "07:00–08:00", rain: 0 },
+      { end: "09:00", interval: "08:00–09:00", rain: 0 },
+    ],
+  },
+  // Explicit placeholders: code is a segmentId, id is an encoded zoneId.
+  roads: [
+    { key: "market", name: "Market Street", cardinal: "NE", latitude: 37.7671, longitude: -122.4295,
+      code: "<market-segment-code>", id: "<market-encoded-zone-id>", lengthMiles: 0.25,
+      dry: 9, rain: 10, dryTime: 100, rainTime: 90, dryP85: 180, rainP85: 162,
+      limit: 25, dryOver: 7, rainOver: 9, validHours: 462 },
+    { key: "mission", name: "Mission Street", cardinal: "SW", latitude: 37.7523, longitude: -122.4183,
+      code: "<mission-segment-code>", id: "<mission-encoded-zone-id>", lengthMiles: 0.28,
+      dry: 12, rain: 8, dryTime: 84, rainTime: 126, dryP85: 156, rainP85: 264,
+      limit: 25, dryOver: 5, rainOver: 3, validHours: 451 },
+    { key: "sunset", name: "Sunset Boulevard", cardinal: "S", latitude: 37.7612, longitude: -122.495,
+      code: "<sunset-segment-code>", id: "<sunset-encoded-zone-id>", lengthMiles: 0.20,
+      dry: 24, rain: 22.5, dryTime: 30, rainTime: 32, dryP85: 54, rainP85: 57,
+      limit: 30, dryOver: 14, rainOver: 23, validHours: 433 },
+    { key: "i280", name: "I-280", cardinal: "NE", latitude: 37.727, longitude: -122.447,
+      code: "<i280-segment-code>", id: "<i280-encoded-zone-id>", lengthMiles: 0.95,
+      dry: 57, rain: 60, dryTime: 60, rainTime: 57, dryP85: 96, rainP85: 87,
+      limit: 65, dryOver: 9, rainOver: 11, validHours: 470 },
+  ],
+  exampleObservedCount: 48, exampleVehicleCount: 41,
+  alignmentSensitivity: { minusHour: -5, primary: -4, plusHour: -3 },
+};
