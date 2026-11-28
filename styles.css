@@ -164,6 +164,7 @@ html.i18n-pending body { visibility: hidden; }
   flex-direction: column;
   gap: 18px;
 }
+.altitude-demo .chat { padding-bottom: 104px; }
 
 .empty-state {
   border: 1px dashed var(--tool-line);
@@ -578,7 +579,8 @@ html.i18n-pending body { visibility: hidden; }
 .altitude-timeline-head span { color: var(--ink-soft); font-size: 10.5px; text-transform: capitalize; }
 .altitude-timeline-track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
 .altitude-timeline-cell { min-height: 62px; border: 1px solid var(--tool-line); border-radius: 8px; padding: 7px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
-.altitude-timeline-cell.is-match { background: color-mix(in srgb, #0072b2 10%, white); border-color: color-mix(in srgb, #0072b2 42%, white); }
+.altitude-timeline-wet .altitude-timeline-cell.is-match { background: color-mix(in srgb, #0072b2 12%, white); border-color: color-mix(in srgb, #0072b2 48%, white); }
+.altitude-timeline-dry .altitude-timeline-cell.is-match { background: color-mix(in srgb, #64748b 11%, white); border-color: color-mix(in srgb, #64748b 42%, white); }
 .altitude-timeline-cell.is-guard { background: color-mix(in srgb, #64748b 9%, white); border-style: dashed; }
 .altitude-timeline-cell.is-empty { color: #94a3b8; background: #f8fafc; }
 .altitude-timeline-time { color: var(--ink); font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -932,6 +934,19 @@ html.i18n-pending body { visibility: hidden; }
   -webkit-overflow-scrolling: touch;
 }
 .tray:empty { display: none; }
+.skip-playback {
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 90%, var(--accent-soft));
+  color: var(--accent-ink);
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.skip-playback:hover { border-color: var(--accent); background: #fff; }
 .chip {
   font: inherit;
   font-size: 14px;

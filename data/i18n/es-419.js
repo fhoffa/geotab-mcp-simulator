@@ -140,6 +140,7 @@ window.SIM_I18N["es-419"] = {
     "progress.full": "🏆 Flota completa de 50 vehículos desbloqueada. ¿Listo para manejar una real? Usa \"Conectar cuenta real\" arriba.",
     "progress.summary": "🚚 {fleet} vehículos · {points} pts · {done}/{total} escenarios",
     "tray.hint": "Elige un prompt sugerido para continuar el simulador:",
+    "playback.skip": "Mostrar este paso ahora",
     "chip.start": "Empieza aquí",
     "chip.explored": "explorado",
   },
@@ -2681,6 +2682,7 @@ window.SIM_I18N["es-419"].altitude.ui = {
   "tool.hint": "Estos son <strong>ejemplos de API grabados</strong>, no llamadas en vivo. Expande una tarjeta para revisar la estructura documentada de la solicitud y un extracto de respuesta ficticio. Los trabajos reales requieren acceso autorizado a la API, sondeo y paginación.",
   "settings.playbackBody": "Elige qué tan rápido se reproduce la conversación de API grabada.",
   "speed.realisticCopy": "Reproducción ilustrativa más lenta, no una garantía de latencia. Haz clic en la transcripción para adelantar.",
+  "playback.skip": "Mostrar este paso ahora",
   "endcard.foot": "Flujo de trabajo ilustrativo con datos agregados · no es una conexión en vivo",
   "endcard.cta": "Lee la guía de la API de Altitude →",
 };
@@ -2697,31 +2699,19 @@ window.SIM_I18N["es-419"].altitude.nodes = {
     ],
   },
   "altitude-scope": {
-    h: "49a2c1c4",
+    h: "d385090c",
     events: [
-      /*0 assistant*/ { text: "Hagamos que esto sea más útil que un promedio de la ciudad. ¿Qué tal tramos cortos cerca de Market Street a la altura de Church, Mission a la altura de 24th, Sunset Boulevard a la altura de Judah y la I-280 cerca de Ocean?\n" +
+      /*0 assistant*/ { text: "Hagamos que esto sea más útil que un promedio de la ciudad. Una cifra para toda la ciudad puede cambiar porque se observó una combinación distinta de vías, horas o vehículos, así que mantendremos fijos los lugares y las horas del reloj. ¿Qué tal tramos cortos cerca de Market Street a la altura de Church, Mission a la altura de 24th, Sunset Boulevard a la altura de Judah y la I-280 cerca de Ocean?\n" +
         "\n" +
-        "Podemos usar del 6 de enero al 16 de febrero de 2025, de 7 a. m. a 7 p. m., manteniendo cada sentido por separado. Compararemos cada vía con sus propias horas secas similares, no con otra vía ni con una hora más tranquila. Son ejemplos ficticios, no hallazgos sobre esas calles." },
+        "Podemos usar del 6 de enero al 16 de febrero de 2025, de 7 a. m. a 7 p. m., manteniendo cada sentido por separado. Compararemos cada vía con sus propias horas secas similares, no con otra vía ni con una hora más tranquila. Esto aclara la pregunta, pero no aísla la lluvia como causa. Son ejemplos ficticios, no hallazgos sobre esas calles." },
       /*1 map*/ { title: "Ilustrativo · cuatro ubicaciones de búsqueda propuestas en San Francisco",
         layerLabel: "Ubicaciones de búsqueda · norte ↑",
         summary: "Los puntos marcan coordenadas públicas aproximadas de búsqueda, no vehículos, tráfico medido ni límites de tramos devueltos por la API. Todas las selecciones de tramos y los resultados de esta lección son ficticios.",
         disclosure: "Mapa base público: © colaboradores de OpenStreetMap · ODbL · openstreetmap.org/copyright. Ilustración estática, no un mapa en vivo." },
       /*2 assistant*/ { text: "Datos del mapa base: [© colaboradores de OpenStreetMap](https://www.openstreetmap.org/copyright), bajo la Licencia Abierta de Bases de Datos. El mapa da contexto urbano a las búsquedas propuestas; no confirma la geometría ni el sentido de un segmento seleccionado." },
     ],
-    choices: [
-      { label: "Usar esos tramos y fechas",
-        say: "Sí. Encuentra esos tramos cortos y mantén fijas las fechas y los sentidos." },
-      { label: "¿Por qué no usar simplemente un promedio de la ciudad?" },
-    ],
-  },
-  "altitude-why": {
-    h: "5fe6250e",
-    events: [
-      /*0 assistant*/ { text: "Un promedio de la ciudad puede cambiar porque se observó una combinación distinta de vías, horas o vehículos. Fijar los tramos y comparar horas equivalentes hace que la pregunta sea más clara. Aun así, no aísla la lluvia como causa." },
-    ],
-    choices: [
-      { label: "Entendido. Usa esos cuatro tramos" },
-    ],
+    choices: [{ label: "Usar esos tramos y fechas",
+      say: "Sí. Encuentra esos tramos cortos y mantén fijas las fechas y los sentidos." }],
   },
   "altitude-segments": {
     h: "9dc245ce",
@@ -2742,7 +2732,7 @@ window.SIM_I18N["es-419"].altitude.nodes = {
     ],
   },
   "altitude-hours": {
-    h: "d4322e86",
+    h: "26ce28ed",
     events: [
       /*0 assistant*/ { text: "Ejecutaré un trabajo acotado de speed-trend por tramo para conservar sus mediciones por hora con fecha y sus conteos de muestra. Combinar todos los tramos en una ruta respondería otra pregunta.\n" +
         "\n" +
@@ -2750,72 +2740,63 @@ window.SIM_I18N["es-419"].altitude.nodes = {
       /*1 tool*/ { summary: "Ejemplo ficticio · trabajo aceptado" },
       /*2 tool*/ { summary: "Ejemplo ficticio · el sondeo llega a DONE" },
       /*3 tool*/ { summary: "Ejemplo ficticio · extracto del resultado" },
-      /*4 tool*/ { summary: "Ejemplo ficticio · trabajo aceptado" },
-      /*5 tool*/ { summary: "Ejemplo ficticio · el sondeo llega a DONE" },
-      /*6 tool*/ { summary: "Ejemplo ficticio · extracto del resultado" },
-      /*7 tool*/ { summary: "Ejemplo ficticio · trabajo aceptado" },
-      /*8 tool*/ { summary: "Ejemplo ficticio · el sondeo llega a DONE" },
-      /*9 tool*/ { summary: "Ejemplo ficticio · extracto del resultado" },
-      /*10 tool*/ { summary: "Ejemplo ficticio · trabajo aceptado" },
-      /*11 tool*/ { summary: "Ejemplo ficticio · el sondeo llega a DONE" },
-      /*12 tool*/ { summary: "Ejemplo ficticio · extracto del resultado" },
-      /*13 hour-card*/ { kicker: "Vista legible · misma fila de respuesta ficticia",
+      /*4 system*/ { text: "Para que el recorrido sea legible, la demo expande una sola vez las tarjetas de solicitud, sondeo y resultado de Mission. La misma solicitud acotada se ejecuta por separado para Market, Sunset y la I-280; solo cambian el ID del tramo y las filas ficticias devueltas." },
+      /*5 hour-card*/ { kicker: "Vista legible · misma fila de respuesta ficticia",
         title: "Una hora devuelta en un tramo corto", ariaLabel: "Una hora ficticia devuelta para Mission Street",
         fields: [
           { label: "Fecha e intervalo", value: window.SAMPLE_DATA.altitude.wetHour.slice(0, 10) + " · " + window.SAMPLE_DATA.altitude.weatherMatch.trafficInterval },
-          { label: "Tramo y sentido", value: window.SAMPLE_DATA.altitude.roads[1].name + " · " + window.SAMPLE_DATA.altitude.roads[1].cardinal + " · sentido 1" },
+          { label: "Tramo y sentido de viaje", value: window.SAMPLE_DATA.altitude.roads[1].name + " · sentido suroeste (SW)" },
           { label: "Velocidad media de recorrido", value: window.SAMPLE_DATA.altitude.roads[1].rain + " mph" },
           { label: "Tiempo de cruce del tramo", value: window.SAMPLE_DATA.altitude.roads[1].rainTime + " segundos" },
           { label: "Pasadas muestreadas", value: String(window.SAMPLE_DATA.altitude.exampleObservedCount) },
           { label: "Longitud del tramo", value: window.SAMPLE_DATA.altitude.roads[1].lengthMiles + " millas" },
         ],
         note: "Describe un tramo corto y una fila horaria, no un trayecto completo, todo el tráfico de la vía ni recorridos vinculados." },
-      /*14 assistant*/ { text: "Son extractos ficticios, no todas las horas devueltas. Conservo el sentido solicitado, elimino las filas con mediciones nulas y reviso la cobertura en los cuatro tramos antes de compararlos. Las pasadas observadas son muestras, no el tráfico total de la vía ni trayectos individuales vinculados." },
+      /*6 assistant*/ { text: "Son extractos ficticios, no todas las horas devueltas. Conservo el sentido solicitado, elimino las filas con mediciones nulas y reviso la cobertura en los cuatro tramos antes de compararlos. Las pasadas observadas son muestras, no el tráfico total de la vía ni trayectos individuales vinculados." },
     ],
     choices: [
       { label: "Emparejar esas horas con clima de lluvia y seco" },
     ],
   },
   "altitude-weather": {
-    h: "1f0f8101",
+    h: "96e5d46f",
     events: [
       /*0 assistant*/ { text: "Altitude aporta observaciones de tráfico, no las etiquetas de lluvia de este ejemplo. Obtendré por separado la lluvia histórica modelada de Open-Meteo y luego haré el emparejamiento localmente. Una estimación meteorológica de área no es un sensor del pavimento." },
       /*1 tool*/ { summary: "Extracto meteorológico ficticio · fuente pública independiente" },
-      /*2 system*/ { text: "Cálculo del asistente, no un endpoint de la API de Altitude. Aquí las horas de tráfico sintéticas se definen como inicios de hora locales. La lluvia de Open-Meteo es la suma de la hora anterior, así que la hora de tráfico T se une con la marca de tiempo meteorológica T+1. Las dos horas secas previas usan las marcas de tiempo meteorológicas T y T−1." },
+      /*2 system*/ { text: "Cálculo del asistente, no un endpoint de la API de Altitude. La demo etiqueta el tráfico por el inicio de la hora. Open-Meteo etiqueta el total de lluvia de la hora anterior por el final de la hora, así que el tráfico de 08:00–09:00 se alinea con el clima que termina a las 09:00. Los dos intervalos anteriores sin lluvia son márgenes secos, no coincidencias adicionales de tráfico." },
       /*3 assistant*/ { text: "En una ejecución real, debo verificar la convención de etiquetas de tiempo de la API de tráfico antes de interpretar una unión con datos meteorológicos. Esta demo declara un supuesto de reloj local; no confirma el reloj de la API.\n" +
         "\n" +
-        "Marco como lluvia 0.5 mm o más. Los controles secos necesitan cero lluvia en esa hora y en las 2 horas previas. Emparejo el mismo tramo, sentido, día de la semana y hora del reloj en fechas secas cercanas, excluyendo controles en días feriados.\n" +
-        "\n" +
-        "El panel ficticio conserva 24 horas lluviosas comunes en 6 episodios. Una verificación sintética de alineación de ±1 hora cambia la diferencia de velocidad de Mission de -5 a -3 mph (principal: -4). Es un análisis de sensibilidad, no una prueba de la convención UTC/local." },
+        "Marco como lluvia 0.5 mm o más. Los controles secos necesitan cero lluvia en esa hora y en las 2 horas previas. Emparejo el mismo tramo, sentido, día de la semana y hora del reloj en fechas secas cercanas, excluyendo controles en días feriados. El panel ficticio conserva 24 horas lluviosas comunes en 6 episodios." },
       /*4 timeline*/ { title: "Alineación ilustrativa · mismo día de la semana e intervalo",
         ariaLabel: "Ejemplos ficticios de lluvia y seco alineados. Ambos comparan de 08:00 a 09:00 en miércoles. Los dos intervalos secos anteriores son márgenes de control, no observaciones de tráfico emparejadas.",
         summary: "La visual alinea intervalos horarios; no compara la magnitud de la lluvia.",
         wetLabel: "Ejemplo con lluvia modelada", dryLabel: "Ejemplo seco emparejado",
-        matchedLabel: "Hora de tráfico emparejada", guardLabel: "Solo margen seco", notUsedLabel: "No es otra coincidencia",
-        weatherLabel: "Etiqueta meteorológica",
-        note: "El tráfico 08:00–09:00 se etiqueta en T=08:00; el clima modelado que termina a las 09:00 cubre esa hora anterior (T+1). Un análisis real debe verificar el reloj de la API de tráfico. El supuesto de reloj local y la sensibilidad de ±1 hora no prueban un contrato de zona horaria." },
+        wetMatchedLabel: "Hora de tráfico etiquetada con lluvia", dryMatchedLabel: "Hora seca de comparación", guardLabel: "Solo margen sin lluvia", notUsedLabel: "No es otra coincidencia",
+        wetWeatherLabel: "La lluvia modelada termina", dryWeatherLabel: "La etiqueta sin lluvia termina",
+        note: "El tráfico de 08:00–09:00 se etiqueta por su inicio; el total meteorológico modelado de la hora anterior se etiqueta por su final a las 09:00. Un análisis real debe verificar el reloj de la API de tráfico antes de hacer esta unión." },
     ],
     choices: [
       { label: "¿Los cuatro tramos se comportan igual?" },
     ],
   },
   "altitude-compare": {
-    h: "77426624",
+    h: "4276e82b",
     events: [
       /*0 assistant*/ { text: "No en este panel ficticio. El mapa ubica cada cambio de velocidad: lluvia modelada menos seco emparejado, no una mejora ni una medida de seguridad. Primero promedio las comparaciones secas cercanas de cada hora lluviosa y luego doy el mismo peso a las horas lluviosas emparejadas. Los gráficos de abajo comparan cada tramo consigo mismo en mph; sus colores indican la condición del clima. Son resultados inventados, no observaciones sobre San Francisco." },
       /*1 map*/ { title: "Ficticio · cambio de velocidad media horaria (mph)",
         layerLabel: "Lluvia modelada − seco emparejado · norte ↑",
         summary: "Diferencias ficticias: positivo = más rápido, negativo = más lento en la muestra de lluvia modelada, no causa ni seguridad. Los puntos son ubicaciones públicas aproximadas de búsqueda, no vehículos ni límites de tramos devueltos o medidos. No son observaciones de estas calles reales; las velocidades en seco y con lluvia aparecen en los gráficos de abajo.",
         disclosure: "Mapa base público: © colaboradores de OpenStreetMap · ODbL · openstreetmap.org/copyright. Ilustración estática con cambios de velocidad inventados, no un mapa en vivo." },
-      /*2 chart*/ { title: "Ilustrativo · Market Street · velocidad media horaria de recorrido (mph)",
-        bars: ["Seco comparable", "Lluvia modelada"] },
-      /*3 chart*/ { title: "Ilustrativo · Mission Street · velocidad media horaria de recorrido (mph)",
-        bars: ["Seco comparable", "Lluvia modelada"] },
-      /*4 chart*/ { title: "Ilustrativo · Sunset Boulevard · velocidad media horaria de recorrido (mph)",
-        bars: ["Seco comparable", "Lluvia modelada"] },
-      /*5 chart*/ { title: "Ilustrativo · I-280 · velocidad media horaria de recorrido (mph)",
-        bars: ["Seco comparable", "Lluvia modelada"] },
-      /*6 assistant*/ { text: "Que una vía rápida parezca más rápida con lluvia no es evidencia de que la lluvia mejore la conducción. Una demanda distinta, obras, incidentes o la combinación de vehículos podrían explicar un patrón. Los promedios por tramo nos dicen qué investigar después, no por qué ocurrió." },
+      /*2 assistant*/ { text: "El mapa ya muestra la diferencia ficticia principal de Mission: -4 mph. Desplazar una hora la alineación meteorológica declarada cambia esa diferencia sintética de -5 a -3 mph. Ese rango de sensibilidad advierte que hay que verificar los relojes; no demuestra una convención de zona horaria." },
+      /*3 chart*/ { title: "Ilustrativo · Market Street · velocidad media horaria de recorrido (mph)",
+        bars: ["Seco comparable", "Lluvia modelada"], note: "Escala compartida de 0–60 mph en las cuatro tarjetas de tramos." },
+      /*4 chart*/ { title: "Ilustrativo · Mission Street · velocidad media horaria de recorrido (mph)",
+        bars: ["Seco comparable", "Lluvia modelada"], note: "Escala compartida de 0–60 mph en las cuatro tarjetas de tramos." },
+      /*5 chart*/ { title: "Ilustrativo · Sunset Boulevard · velocidad media horaria de recorrido (mph)",
+        bars: ["Seco comparable", "Lluvia modelada"], note: "Escala compartida de 0–60 mph en las cuatro tarjetas de tramos." },
+      /*6 chart*/ { title: "Ilustrativo · I-280 · velocidad media horaria de recorrido (mph)",
+        bars: ["Seco comparable", "Lluvia modelada"], note: "Escala compartida de 0–60 mph en las cuatro tarjetas de tramos." },
+      /*7 assistant*/ { text: "Que una vía rápida parezca más rápida con lluvia no es evidencia de que la lluvia mejore la conducción. Una demanda distinta, obras, incidentes o la combinación de vehículos podrían explicar un patrón. Los promedios por tramo nos dicen qué investigar después, no por qué ocurrió." },
     ],
     choices: [
       { label: "¿Podría cambiar la conducción sin mucho tiempo extra?" },
@@ -2823,14 +2804,14 @@ window.SIM_I18N["es-419"].altitude.nodes = {
     ],
   },
   "altitude-behavior": {
-    h: "14729a73",
+    h: "080e9e8f",
     events: [
       /*0 assistant*/ { text: "Mira el tramo ficticio de Sunset. Su tiempo medio de recorrido cambia de 30 a 32 segundos, mientras que la proporción horaria media por encima de su límite ilustrativo de 30 mph cambia del 14% al 23%. La dispersión de velocidades puede cambiar aunque el promedio cambie solo un poco. Son datos didácticos inventados, no un hallazgo de seguridad sobre esta vía." },
       /*1 chart*/ { title: "Ilustrativo · Sunset · tiempo medio de recorrido (segundos)",
-        bars: ["Seco comparable", "Lluvia modelada"] },
+        bars: ["Seco comparable", "Lluvia modelada"], note: "Escala fija de 0–40 segundos." },
       /*2 chart*/ { title: "Ilustrativo · Sunset · proporción horaria media con velocidad promedio del tramo superior a 30 mph (%)",
-        bars: ["Seco comparable", "Lluvia modelada"] },
-      /*3 assistant*/ { text: "Esa proporción usa `travelSpeedPctOverSpeedLimit`: la velocidad promedio de cada paso a lo largo del tramo, no su momento más rápido. Aquí promediamos porcentajes por hora; no presentamos un porcentaje de viajes agrupados. No establece un riesgo de colisión ni lo que lograría un rediseño de la calle." },
+        bars: ["Seco comparable", "Lluvia modelada"], note: "Escala fija de 0–100%." },
+      /*3 assistant*/ { text: "El campo de la API `travelSpeedPctOverSpeedLimit` significa la proporción de pasadas observadas cuya velocidad promedio a lo largo de todo el tramo superó el límite, no su momento más rápido. Aquí promediamos esos porcentajes por hora; no presentamos un porcentaje de viajes agrupados. No establece un riesgo de colisión ni lo que lograría un rediseño de la calle." },
     ],
     choices: [
       { label: "Mostrar también los recorridos más lentos" },
@@ -2838,7 +2819,7 @@ window.SIM_I18N["es-419"].altitude.nodes = {
     ],
   },
   "altitude-tail": {
-    h: "68fcc041",
+    h: "dfbec2f4",
     events: [
       /*0 assistant*/ { text: "En el tramo ficticio de Mission de 0.28 millas, aumentan tanto el tiempo medio de recorrido como el indicador del extremo más lento. Son segundos en un tramo corto, no un trayecto completo al trabajo." },
       /*1 dotplot*/ { title: "Ilustrativo · comparación de tiempos de cruce de Mission (segundos)",
@@ -2848,10 +2829,7 @@ window.SIM_I18N["es-419"].altitude.nodes = {
         note: "Eje compartido en segundos. La fila p85 promedia valores p85 horarios; no es una distribución de recorridos agrupados, un peor caso ni un pronóstico." },
       /*2 assistant*/ { text: "Para cada hora, el tiempo del percentil 85 es un valor por debajo del cual quedó cerca del 85% de los tiempos de recorrido observados. Esta visual promedia esos valores por hora. No es el percentil 85 de todos los viajes agrupados, ni el peor caso, ni un pronóstico. Los promedios y los recorridos más lentos responden preguntas distintas." },
     ],
-    choices: [
-      { label: "¿Y la conducción por encima del límite?" },
-      { label: "¿Qué debería verificar?" },
-    ],
+    choices: [{ label: "¿Qué debería verificar?" }],
   },
   "altitude-limits": {
     h: "f72f5e55",

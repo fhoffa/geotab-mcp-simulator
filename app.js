@@ -67,6 +67,7 @@
     "progress.full": "🏆 Full 50-vehicle fleet unlocked — ready to run a real one? Use \"Connect real account\" above.",
     "progress.summary": "🚚 {fleet} vehicles · {points} pts · {done}/{total} scenarios",
     "tray.hint": "Choose a suggested prompt to continue the simulator:",
+    "playback.skip": "Show this step now",
     "chip.start": "Start here",
     "chip.explored": "explored",
   };
@@ -85,6 +86,7 @@
     "tool.hint": "These are <strong>recorded API examples</strong>, not live calls. Expand a card to inspect the documented request shape and fictional response excerpt. Real jobs require authorized API access, polling and pagination.",
     "settings.playbackBody": "Choose how fast the recorded API conversation plays back.",
     "speed.realisticCopy": "Slower illustrative playback, not a latency guarantee. Click the transcript to fast-forward.",
+    "playback.skip": "Show this step now",
     "endcard.foot": "Illustrative aggregate-data workflow · not a live connection",
     "endcard.cta": "Read the Altitude API guide →",
   };
@@ -873,13 +875,14 @@
   }
   function addChart(ev) {
     if (ev.rows && ev.columns) return addHeatmap(ev);
-    var max =(ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
+    var max = ev.max || (ev.bars || []).reduce(function (m, b) { return Math.max(m, b.value || 0); }, 0) || 1;
     var card = el("div", "chart-card");
     // text alternative so the bar chart isn't invisible to screen readers
     card.setAttribute("role", "img");
     card.setAttribute("aria-label",
       (ev.title ? ev.title + ": " : tr("chart.aria")) +
-      (ev.bars || []).map(function (b) { return b.label + " " + chartValue(b.value); }).join(", "));
+      (ev.bars || []).map(function (b) { return b.label + " " + chartValue(b.value); }).join(", ") +
+      (ev.note ? ". " + ev.note : ""));
     if (ev.title) card.appendChild(el("div", "chart-title", escapeHtml(ev.title)));
     (ev.bars || []).forEach(function (b) {
       var row = el("div", "chart-row");
@@ -893,6 +896,7 @@
       row.appendChild(track);
       card.appendChild(row);
     });
+    if (ev.note) card.appendChild(el("div", "chart-note", escapeHtml(ev.note)));
     chatEl.appendChild(card);
     scrollDown();
   }
@@ -934,8 +938,12 @@
         var guard = rowData.kind === "dry" && !matched;
         var cell = el("div", "altitude-timeline-cell" + (matched ? " is-match" : guard ? " is-guard" : " is-empty"));
         cell.appendChild(el("span", "altitude-timeline-time", escapeHtml(interval)));
-        cell.appendChild(el("span", "altitude-timeline-role", escapeHtml(matched ? ev.matchedLabel : guard ? ev.guardLabel : ev.notUsedLabel)));
-        if (matched) cell.appendChild(el("span", "altitude-timeline-weather", escapeHtml(ev.weatherLabel + " " + ev.weatherEnd)));
+        var matchedLabel = rowData.kind === "wet" ? (ev.wetMatchedLabel || ev.matchedLabel) : (ev.dryMatchedLabel || ev.matchedLabel);
+        cell.appendChild(el("span", "altitude-timeline-role", escapeHtml(matched ? matchedLabel : guard ? ev.guardLabel : ev.notUsedLabel)));
+        if (matched) {
+          var weatherLabel = rowData.kind === "wet" ? (ev.wetWeatherLabel || ev.weatherLabel) : (ev.dryWeatherLabel || ev.weatherLabel);
+          cell.appendChild(el("span", "altitude-timeline-weather", escapeHtml(weatherLabel + " " + ev.weatherEnd)));
+        }
         track.appendChild(cell);
       });
       row.appendChild(track);
@@ -1207,6 +1215,12 @@
     var myToken = ++playToken;
     skip = false;
     trayEl.innerHTML = "";
+    if (ALTITUDE_MODE) {
+      var skipButton = el("button", "skip-playback", escapeHtml(tr("playback.skip")));
+      skipButton.type = "button";
+      skipButton.addEventListener("click", function () { skip = true; });
+      trayEl.appendChild(skipButton);
+    }
     if (emptyStateEl) { emptyStateEl.remove(); emptyStateEl = null; }
     setConn(id !== "connect");
     if (node.mode === "carto") connEl.textContent = tr("conn.carto");

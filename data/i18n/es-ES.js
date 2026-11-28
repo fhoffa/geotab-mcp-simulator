@@ -1223,19 +1223,19 @@ window.SIM_I18N["es-ES"].altitude.ui = {
 };
 window.SIM_I18N["es-ES"].altitude.nodes = {
   "altitude-scope": {
-    h: "49a2c1c4",
+    h: "d385090c",
     events: [
-      { text: "Hagamos que esto sea más útil que un promedio de la ciudad. ¿Qué tal tramos cortos cerca de Market Street a la altura de Church, Mission a la altura de 24th, Sunset Boulevard a la altura de Judah y la I-280 cerca de Ocean?\n\nPodemos usar del 6 de enero al 16 de febrero de 2025, de 7:00 a 19:00, manteniendo cada sentido por separado. Compararemos cada vía con sus propias horas secas similares, no con otra vía ni con una hora más tranquila. Son ejemplos ficticios, no hallazgos sobre esas calles." },
+      { text: "Hagamos que esto sea más útil que un promedio de la ciudad. Una cifra para toda la ciudad puede cambiar porque se observó una combinación distinta de vías, horas o vehículos, así que mantendremos fijos los lugares y las horas del reloj. ¿Qué tal tramos cortos cerca de Market Street a la altura de Church, Mission a la altura de 24th, Sunset Boulevard a la altura de Judah y la I-280 cerca de Ocean?\n\nPodemos usar del 6 de enero al 16 de febrero de 2025, de 7:00 a 19:00, manteniendo cada sentido por separado. Compararemos cada vía con sus propias horas secas similares, no con otra vía ni con una hora más tranquila. Esto aclara la pregunta, pero no aísla la lluvia como causa. Son ejemplos ficticios, no hallazgos sobre esas calles." },
     ],
   },
   "altitude-hours": {
-    h: "d4322e86",
+    h: "26ce28ed",
     events: [
       { text: "Ejecutaré un trabajo acotado de speed-trend por tramo para conservar sus mediciones por hora con fecha y sus recuentos de muestra. Combinar todos los tramos en una ruta respondería otra pregunta.\n\nUso `aggregationUnit: \"hour\"` con `speed-trend`. Un perfil agrupado por hora del día de `speed-per-segment` no es una serie temporal con fechas y no debe unirse directamente con datos meteorológicos fechados. Aquí las velocidades están en mph y los tiempos en segundos." },
-      null, null, null, null, null, null, null, null, null, null, null, null,
+      null, null, null, null,
       { fields: [
         { label: "Fecha e intervalo", value: window.SAMPLE_DATA.altitude.wetHour.slice(0, 10) + " · " + window.SAMPLE_DATA.altitude.weatherMatch.trafficInterval },
-        { label: "Tramo y sentido", value: window.SAMPLE_DATA.altitude.roads[1].name + " · " + window.SAMPLE_DATA.altitude.roads[1].cardinal + " · sentido 1" },
+        { label: "Tramo y sentido de viaje", value: window.SAMPLE_DATA.altitude.roads[1].name + " · sentido suroeste (SW)" },
         { label: "Velocidad media de recorrido", value: window.SAMPLE_DATA.altitude.roads[1].rain + " mph" },
         { label: "Tiempo de cruce del tramo", value: window.SAMPLE_DATA.altitude.roads[1].rainTime + " segundos" },
         { label: "Pasadas muestreadas", value: String(window.SAMPLE_DATA.altitude.exampleObservedCount) },
@@ -1244,16 +1244,16 @@ window.SIM_I18N["es-ES"].altitude.nodes = {
     ],
   },
   "altitude-weather": {
-    h: "1f0f8101",
+    h: "96e5d46f",
     events: [
       null,
       null,
       null,
-      { text: "En una ejecución real, debo verificar la convención de etiquetas de tiempo de la API de tráfico antes de interpretar una unión con datos meteorológicos. Esta demo declara un supuesto de reloj local; no confirma el reloj de la API.\n\nMarco como lluvia 0,5 mm o más. Los controles secos necesitan cero lluvia en esa hora y en las 2 horas previas. Emparejo el mismo tramo, sentido, día de la semana y hora del reloj en fechas secas cercanas, excluyendo controles en días festivos.\n\nEl panel ficticio conserva 24 horas lluviosas comunes en 6 episodios. Una verificación sintética de alineación de ±1 hora cambia la diferencia de velocidad de Mission de -5 a -3 mph (principal: -4). Es un análisis de sensibilidad, no una prueba de la convención UTC/local." },
+      { text: "En una ejecución real, debo verificar la convención de etiquetas de tiempo de la API de tráfico antes de interpretar una unión con datos meteorológicos. Esta demo declara un supuesto de reloj local; no confirma el reloj de la API.\n\nMarco como lluvia 0,5 mm o más. Los controles secos necesitan cero lluvia en esa hora y en las 2 horas previas. Emparejo el mismo tramo, sentido, día de la semana y hora del reloj en fechas secas cercanas, excluyendo controles en días festivos. El panel ficticio conserva 24 horas lluviosas comunes en 6 episodios." },
     ],
   },
   "altitude-compare": {
-    h: "77426624",
+    h: "4276e82b",
     events: [
       null,
       { pins: window.SAMPLE_DATA.altitude.roads.map(function (r) {
@@ -1263,7 +1263,7 @@ window.SIM_I18N["es-ES"].altitude.nodes = {
     ],
   },
   "altitude-tail": {
-    h: "68fcc041",
+    h: "dfbec2f4",
     events: [
       { text: "En el tramo ficticio de Mission de 0,28 millas, aumentan tanto el tiempo medio de recorrido como el indicador del extremo más lento. Son segundos en un tramo corto, no un trayecto completo al trabajo." },
       { note: "Eje compartido en segundos. La fila p85 promedia valores p85 horarios; no es una distribución de recorridos agrupados, un peor caso ni una previsión." },

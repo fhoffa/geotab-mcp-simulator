@@ -192,7 +192,7 @@ var EVENT_FIELDS = {
   tool: { all: ["summary"], req: ["summary"] },
   chart: { all: ["title", "bars", "columns", "rows", "note"], req: ["title"] },
   "hour-card": { all: ["kicker", "title", "ariaLabel", "fields", "note"], req: ["title", "fields", "note"] },
-  timeline: { all: ["title", "ariaLabel", "summary", "wetLabel", "dryLabel", "matchedLabel", "guardLabel", "notUsedLabel", "weatherLabel", "note"], req: ["title", "summary", "wetLabel", "dryLabel", "matchedLabel", "guardLabel", "notUsedLabel", "weatherLabel", "note"] },
+  timeline: { all: ["title", "ariaLabel", "summary", "wetLabel", "dryLabel", "matchedLabel", "wetMatchedLabel", "dryMatchedLabel", "guardLabel", "notUsedLabel", "weatherLabel", "wetWeatherLabel", "dryWeatherLabel", "note"], req: ["title", "summary", "wetLabel", "dryLabel", "wetMatchedLabel", "dryMatchedLabel", "guardLabel", "notUsedLabel", "wetWeatherLabel", "dryWeatherLabel", "note"] },
   dotplot: { all: ["title", "ariaLabel", "dryLabel", "rainLabel", "unit", "items", "note"], req: ["title", "dryLabel", "rainLabel", "unit", "items", "note"] },
   map: { all: ["title", "summary", "layerLabel", "disclosure", "zone", "pins"], req: ["title", "summary"] },
   media: { all: ["caption", "fallbackText"], req: ["caption", "fallbackText"] },
