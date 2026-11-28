@@ -140,7 +140,6 @@ window.SIM_I18N["es-419"] = {
     "progress.full": "🏆 Flota completa de 50 vehículos desbloqueada. ¿Listo para manejar una real? Usa \"Conectar cuenta real\" arriba.",
     "progress.summary": "🚚 {fleet} vehículos · {points} pts · {done}/{total} escenarios",
     "tray.hint": "Elige un prompt sugerido para continuar el simulador:",
-    "playback.skip": "Mostrar este paso ahora",
     "chip.start": "Empieza aquí",
     "chip.explored": "explorado",
   },
@@ -2682,7 +2681,6 @@ window.SIM_I18N["es-419"].altitude.ui = {
   "tool.hint": "Estos son <strong>ejemplos de API grabados</strong>, no llamadas en vivo. Expande una tarjeta para revisar la estructura documentada de la solicitud y un extracto de respuesta ficticio. Los trabajos reales requieren acceso autorizado a la API, sondeo y paginación.",
   "settings.playbackBody": "Elige qué tan rápido se reproduce la conversación de API grabada.",
   "speed.realisticCopy": "Reproducción ilustrativa más lenta, no una garantía de latencia. Haz clic en la transcripción para adelantar.",
-  "playback.skip": "Mostrar este paso ahora",
   "endcard.foot": "Flujo de trabajo ilustrativo con datos agregados · no es una conexión en vivo",
   "endcard.cta": "Lee la guía de la API de Altitude →",
 };

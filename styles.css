@@ -164,7 +164,6 @@ html.i18n-pending body { visibility: hidden; }
   flex-direction: column;
   gap: 18px;
 }
-.altitude-demo .chat { padding-bottom: 104px; }
 
 .empty-state {
   border: 1px dashed var(--tool-line);
@@ -934,19 +933,6 @@ html.i18n-pending body { visibility: hidden; }
   -webkit-overflow-scrolling: touch;
 }
 .tray:empty { display: none; }
-.skip-playback {
-  margin-left: auto;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--panel) 90%, var(--accent-soft));
-  color: var(--accent-ink);
-  padding: 7px 12px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.skip-playback:hover { border-color: var(--accent); background: #fff; }
 .chip {
   font: inherit;
   font-size: 14px;

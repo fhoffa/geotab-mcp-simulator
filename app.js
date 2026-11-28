@@ -67,7 +67,6 @@
     "progress.full": "🏆 Full 50-vehicle fleet unlocked — ready to run a real one? Use \"Connect real account\" above.",
     "progress.summary": "🚚 {fleet} vehicles · {points} pts · {done}/{total} scenarios",
     "tray.hint": "Choose a suggested prompt to continue the simulator:",
-    "playback.skip": "Show this step now",
     "chip.start": "Start here",
     "chip.explored": "explored",
   };
@@ -86,7 +85,6 @@
     "tool.hint": "These are <strong>recorded API examples</strong>, not live calls. Expand a card to inspect the documented request shape and fictional response excerpt. Real jobs require authorized API access, polling and pagination.",
     "settings.playbackBody": "Choose how fast the recorded API conversation plays back.",
     "speed.realisticCopy": "Slower illustrative playback, not a latency guarantee. Click the transcript to fast-forward.",
-    "playback.skip": "Show this step now",
     "endcard.foot": "Illustrative aggregate-data workflow · not a live connection",
     "endcard.cta": "Read the Altitude API guide →",
   };
@@ -1215,12 +1213,6 @@
     var myToken = ++playToken;
     skip = false;
     trayEl.innerHTML = "";
-    if (ALTITUDE_MODE) {
-      var skipButton = el("button", "skip-playback", escapeHtml(tr("playback.skip")));
-      skipButton.type = "button";
-      skipButton.addEventListener("click", function () { skip = true; });
-      trayEl.appendChild(skipButton);
-    }
     if (emptyStateEl) { emptyStateEl.remove(); emptyStateEl = null; }
     setConn(id !== "connect");
     if (node.mode === "carto") connEl.textContent = tr("conn.carto");
